@@ -1,110 +1,107 @@
-# Museon CLI
+<p align="center">
+  <img src="./assets/readme/museon-icon.png" width="84" alt="Museon Logo">
+</p>
 
-> 让任何能够执行 Shell 命令的 AI Agent，通过 Museon 完成社媒调研、创作、
-> 发布和复盘。
+<h1 align="center">Museon CLI</h1>
 
-[English](README.md)
+<p align="center">
+  <strong>让你正在使用的 Agent 接手社媒运营。</strong><br>
+  调研、创作、发布、复盘；重要操作仍由你决定。
+</p>
 
-[![CI](https://github.com/Museon-AI/museon-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Museon-AI/museon-cli/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB)
+<p align="center">
+  <a href="https://www.museon.ai/zh/cli">产品页面</a> ·
+  <a href="./skills/museon-cli/SKILL.md">Agent Skill</a> ·
+  <a href="./README.md">English</a>
+</p>
 
-Museon CLI 是 Museon 托管式社媒运营平台的开源客户端。它为 Agent 提供可发现的
-命令 Schema、稳定的 JSON 输出、工作区鉴权，以及写操作所需的风险与确认信息。
+Museon CLI 给你正在使用的 AI Agent 一套真正能执行的社媒工具：寻找内容机会、
+了解内容为什么有效、生成新内容、经过你确认后发布，再根据真实表现调整下一轮。
 
-## 为什么适合 Agent
+你不需要换掉现在的 Agent。Museon 会给它完成社媒工作所需的能力，让一个想法
+真正变成可以执行的运营工作。
 
-- **可发现：** `museoncli schema` 是命令、参数、示例、风险等级和执行方式的
-  唯一事实来源。
-- **结构稳定：** stdout 始终返回 JSON，Agent 不需要解析终端文案。
-- **工作区鉴权：** 通过浏览器登录，将本地 CLI 连接到用户有权访问的工作区。
-- **操作克制：** 写入和破坏性操作会在 Schema 中声明 dry-run 与确认要求。
-- **容易接入：** wheel 内置通用 Agent Skill，可交给不同的 Agent 使用。
+## 把这段话交给 Agent
 
-## 安装
+将下面这段话复制给 Codex、Claude Code、Cursor，或其他能够安装 Skill 并执行
+Shell 命令的 Agent：
 
-首个 PyPI 版本正在准备中。目前拥有私有仓库权限的协作者可以从源码安装：
-
-```bash
-git clone https://github.com/Museon-AI/museon-cli.git
-cd museon-cli
-uv tool install .
+```text
+请从下面的地址安装 Museon CLI Skill：
+https://github.com/Museon-AI/museon-cli/tree/main/skills/museon-cli
+然后使用这个 Skill 安装 Museon CLI，带我完成登录授权，并在可以开始社媒运营时
+告诉我。
 ```
 
-安装后可以使用 `museoncli`，也可以使用更短的别名 `museon`。
+这是推荐的安装方式。你不需要自己克隆仓库、研究 CLI 参数或手动配置凭证。
 
-## 登录授权
+## 接下来会发生什么
 
-先启动设备授权，在浏览器里选择并确认工作区，然后完成登录：
+1. **Agent 安装 Museon Skill。** Skill 会告诉 Agent 如何完成社媒工作、什么时候
+   需要向你确认，以及遇到登录问题时如何恢复。
+2. **Skill 安装 Museon CLI。** 它会检查 Agent 所在的环境，安装 CLI，并确认安装
+   成功。
+3. **你在浏览器里完成授权。** 登录 Museon，然后选择允许 Agent 使用的工作区。
+4. **你只需要描述工作。** Agent 会自己找到合适的 Museon 能力并继续完成任务，
+   不需要你提供命令。
+
+连接完成后，可以先试试这样的需求：
+
+```text
+调研最近在 TikTok 和 Instagram 上增长较快的 AI 笔记产品内容，告诉我反复出现的
+开场方式和用户问题，再为我们的产品提出 3 个多页图文方向。没有经过我确认，先
+不要发布。
+```
+
+## Agent 可以做什么
+
+- **找到真实的内容机会：** 调研不同平台、创作者、帖子、评论、社区和公开网页。
+- **了解内容为什么有效：** 把内容结构与账号、帖子的真实表现放在一起分析。
+- **把发现变成内容：** 生成图片内容和多页图文，而不是停留在一份文字建议里。
+- **连接账号并推进排期：** 安排内容、准备发布，同时保留必要的人工确认。
+- **复盘并积累有效经验：** 把结果带回下一份 Brief、定期任务、报告或创作方向。
+
+Museon 关注的是完整循环：**调研 → 判断 → 创作 → 确认 → 发布 → 复盘 → 复用**。
+
+## Skill、CLI 和 Museon 分别做什么
+
+它们共同组成 Agent 的社媒工作能力：
+
+- **Museon Skill** 告诉 Agent 应该怎样完成社媒任务，以及怎样安全地使用工具。
+- **Museon CLI** 是 Agent 在自己环境里调用 Museon 能力的连接方式。
+- **Museon** 在服务端完成调研、生成、账号、排期、发布和表现分析等工作。
+
+CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用户、工作区成员关系、
+角色和目标资源。
+
+## 重要操作仍由你决定
+
+- 调研和其他只读工作可以直接服务于当前任务。
+- 创建、修改、排期、发布或删除内容时，Agent 必须遵守对应操作的确认要求。
+- 重要操作执行前，Agent 会先说明具体要改变什么。
+- 凭证保存在 Agent 所在的本地环境，最终的权限判断始终由 Museon 服务端完成。
+
+## 不通过 Agent 手动安装
+
+如果你希望自己安装，请准备 Python 3.11+ 和
+[uv](https://docs.astral.sh/uv/)：
 
 ```bash
+uv tool install "git+https://github.com/Museon-AI/museon-cli.git"
 museoncli auth start
 museoncli auth finish --wait
 museoncli whoami
 ```
 
-凭证只保存在本机。Museon API 会根据当前用户的组织、工作区成员关系、角色和
-目标资源，对每一次操作进行鉴权。
+安装后可以使用 `museoncli`，也可以使用更短的别名 `museon`。
 
-## 先发现，再执行
+> 首个公开版本仍在准备中，目前仓库是私有的，安装时需要拥有仓库访问权限。
 
-```bash
-# 查看所有能力域
-museoncli schema
+<details>
+<summary><strong>参与 Museon CLI 开发</strong></summary>
 
-# 查看调研相关命令
-museoncli schema research
-
-# 执行前读取一个命令的完整契约
-museoncli schema research.social-media-search
-```
-
-每个命令都会返回稳定的 JSON Envelope：
-
-```json
-{
-  "ok": true,
-  "data": {},
-  "run": null,
-  "warnings": [],
-  "next_steps": []
-}
-```
-
-## 能力范围
-
-| 目标 | Domain |
-| --- | --- |
-| 查找市场、创作者、内容、社区与视觉证据 | `research`、`campaign-monitor` |
-| 分析内容并沉淀可复用知识 | `content-analysis`、`asset`、`artifacts`、`skills` |
-| 生成图片与轮播内容 | `generation` |
-| 连接账号、安排内容、发布并查看效果 | `social-account`、`account-operation` |
-| 执行一次性或周期性的运营循环 | `routines`、`evaluator` |
-
-当前生成的契约包含 11 个 Domain、95 个命令。Agent 应读取实时 Schema，而不是
-复用旧对话中的参数。
-
-## 交给 Agent
-
-可以把下面这段话直接交给 Agent：
-
-```text
-帮我安装 Museon CLI：https://github.com/Museon-AI/museon-cli。
-通过浏览器完成授权，先运行 `museoncli schema`，每次执行前读取对应命令的完整
-Schema。写入或破坏性操作需要单独向我确认。
-```
-
-仓库内置的 [Agent Skill](museoncli/bundled_skills/museon-cli/SKILL.md) 包含调研、
-创作、发布、复盘、Artifact 与鉴权恢复等工作流说明。
-
-## 仓库边界
-
-这个仓库只包含可安装的 CLI、命令注册表、生成的契约、文档、测试和通用 Agent
-Skill。鉴权、权限判断、业务执行、平台集成与客户数据由 Museon 托管服务负责。
-
-CLI 不区分所谓 public/internal 命令。登录后的用户与 Agent 看到同一份命令契约，
-服务端根据当前身份判断是否允许执行具体操作。
-
-## 本地开发
+[![CI](https://github.com/Museon-AI/museon-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Museon-AI/museon-cli/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11%2B-7C65C1)
 
 ```bash
 uv sync --frozen --all-groups
@@ -115,12 +112,15 @@ uv run python scripts/gen_command_contract.py --check
 uv build
 ```
 
-修改命令时，需要同时重新生成文档和 JSON 契约：
+命令定义位于 `museoncli/domains/`。修改命令后，需要重新生成文档和可移植的命令
+契约：
 
 ```bash
 uv run python scripts/gen_command_docs.py
 uv run python scripts/gen_command_contract.py
 ```
 
-完整检查清单见 [CONTRIBUTING.md](CONTRIBUTING.md)，安全问题请阅读
-[SECURITY.md](SECURITY.md)。
+</details>
+
+参与贡献请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。安全问题请按照
+[SECURITY.md](SECURITY.md) 私下报告。

@@ -5,6 +5,7 @@
 .pytest_cache/
 .ruff_cache/
 .venv/
+.smoke-venv/
 __pycache__/
 *.egg-info/
 *.py[cod]

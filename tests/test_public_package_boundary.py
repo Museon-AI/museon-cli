@@ -27,3 +27,9 @@ def test_generated_contract_hides_monorepo_implementation_paths() -> None:
     serialized = json.dumps(contract, ensure_ascii=False)
     for private_reference in ("apps/api", "apps/agents", "gcs_path", "/admin/"):
         assert private_reference not in serialized
+
+
+def test_agent_skill_is_available_before_cli_installation() -> None:
+    skill = ROOT / "skills" / "museon-cli" / "SKILL.md"
+    assert skill.is_file()
+    assert "Install the CLI when needed" in skill.read_text(encoding="utf-8")
