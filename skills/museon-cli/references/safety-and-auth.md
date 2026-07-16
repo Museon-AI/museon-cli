@@ -9,9 +9,9 @@ Use `museoncli version` when CLI availability or version is genuinely in
 question. Do not perform version, health, authentication, and workspace checks
 as unconditional preflight before every task.
 
-If neither `museoncli` nor its `museon` alias exists, stop and report that the
-CLI integration is not installed. Do not invent a package name or installation
-command; follow the repository's current installation instructions.
+If neither `museoncli` nor its `museon` alias exists, return to the Skill's
+**Install the CLI when needed** section and follow that bootstrap flow. Verify
+the installed command before resuming the original task.
 
 ## Authentication recovery
 

@@ -1,4 +1,4 @@
-"""Drift guards for generated docs, prompts, and bundled Agent skills."""
+"""Drift guards for generated docs, prompts, and the installable Agent Skill."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 from museoncli.domains import command_specs
 
 ROOT = Path(__file__).resolve().parents[1]
-BUNDLED_SKILL_ROOT = ROOT / "museoncli" / "bundled_skills" / "museon-cli"
+SKILL_ROOT = ROOT / "skills" / "museon-cli"
 
 
 def _mentioned_commands(text: str) -> set[str]:
@@ -49,23 +49,25 @@ def test_docs_mention_only_registered_commands() -> None:
         assert unknown == [], f"{doc.name} references unregistered commands: {unknown}"
 
 
-def test_bundled_agent_skill_is_complete_and_portable() -> None:
-    skill = (BUNDLED_SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+def test_agent_skill_is_complete_and_portable() -> None:
+    skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
 
     assert skill.startswith("---\nname: museon-cli\n")
     assert "TODO" not in skill
     assert "museon-research-task" not in skill
     assert "museon-social-media-workflow" not in skill
     assert "AskUserQuestion" not in skill
-    assert (BUNDLED_SKILL_ROOT / "agents" / "openai.yaml").is_file()
+    assert (SKILL_ROOT / "agents" / "openai.yaml").is_file()
+    assert "uv tool install" in skill
+    assert "museoncli version" in skill
 
     linked_references = set(re.findall(r"\(references/([a-z0-9-]+\.md)\)", skill))
-    actual_references = {path.name for path in (BUNDLED_SKILL_ROOT / "references").glob("*.md")}
+    actual_references = {path.name for path in (SKILL_ROOT / "references").glob("*.md")}
     assert linked_references == actual_references
 
 
-def test_bundled_agent_skill_mentions_only_registered_commands() -> None:
+def test_agent_skill_mentions_only_registered_commands() -> None:
     registered = {spec.schema_name for spec in command_specs()}
-    for doc in BUNDLED_SKILL_ROOT.rglob("*.md"):
+    for doc in SKILL_ROOT.rglob("*.md"):
         unknown = sorted(_mentioned_commands(doc.read_text(encoding="utf-8")) - registered)
         assert unknown == [], f"{doc.relative_to(ROOT)} references unknown commands: {unknown}"

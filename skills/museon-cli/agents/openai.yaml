@@ -1,0 +1,4 @@
+interface:
+  display_name: "Museon CLI"
+  short_description: "Let your Agent research, create, publish, and learn"
+  default_prompt: "Use $museon-cli to install Museon CLI if needed, help me sign in, and then turn my social-media goal into a safe operating plan."

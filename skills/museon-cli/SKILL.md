@@ -1,12 +1,42 @@
 ---
 name: museon-cli
-description: "Use Museon CLI for end-to-end social-media operations: research markets, competitors, creators, and posts; analyze video and visual content; build reusable product, persona, topic, and format assets; generate images and slideshows; connect or operate social accounts; automate routines; schedule or publish content; review performance; and preserve reusable reports and assets. Trigger when the user mentions Museon or asks an Agent to run social media, including 调研、内容分析、做图、slideshow、自动化、发布、复盘或沉淀。"
+description: "Install and use Museon CLI for end-to-end social-media operations: research markets, competitors, creators, and posts; analyze content; generate images and slideshows; connect accounts; automate routines; schedule or publish content; review performance; and preserve reusable reports and assets. Trigger when the user asks to install Museon, mentions Museon, or asks an Agent to run social media, including 调研、内容分析、做图、slideshow、自动化、发布、复盘或沉淀。"
 ---
 
 # Museon CLI
 
 Use Museon CLI as the operating layer between the Agent and real social-media
 work. The executable is `museoncli`; `museon` is an equivalent alias.
+
+## Install the CLI when needed
+
+Check whether `museoncli` or `museon` is already available. If neither command
+exists and the user asked to install Museon or complete a Museon task:
+
+1. Confirm that Python 3.11 or newer is available.
+2. Prefer an existing isolated-tool installer:
+
+   ```bash
+   uv tool install "git+https://github.com/Museon-AI/museon-cli.git"
+   ```
+
+   If `uv` is unavailable but `pipx` is already installed, use:
+
+   ```bash
+   pipx install "git+https://github.com/Museon-AI/museon-cli.git"
+   ```
+
+3. Do not install or replace Python, `uv`, or `pipx` without the user's
+   approval. If no isolated-tool installer is available, explain what is
+   missing and ask before changing the environment.
+4. Verify the result with `museoncli version`. Do not claim installation
+   succeeded until that command works.
+5. Continue the original task. If the user asked to sign in, start the browser
+   authorization flow described in
+   [safety-and-auth.md](references/safety-and-auth.md).
+
+The repository is private while the first public release is being prepared.
+Until it opens, installation requires GitHub access to `Museon-AI/museon-cli`.
 
 ## Operating contract
 

@@ -52,6 +52,13 @@ jobs:
           leaked = sorted(forbidden & names)
           if leaked:
               raise SystemExit(f"private runtime files leaked into wheel: {leaked}")
+          required = {
+              "museoncli/bundled_skills/museon-cli/SKILL.md",
+              "museoncli/bundled_skills/museon-cli/agents/openai.yaml",
+          }
+          missing = sorted(required - names)
+          if missing:
+              raise SystemExit(f"Agent Skill files missing from wheel: {missing}")
           PY
       - name: Smoke install wheel
         run: |

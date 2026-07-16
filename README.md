@@ -1,124 +1,121 @@
-# Museon CLI
+<p align="center">
+  <img src="./assets/readme/museon-icon.png" width="84" alt="Museon logo">
+</p>
 
-> Give any shell-capable AI agent a structured way to research, create,
-> publish, and review social content with Museon.
+<h1 align="center">Museon CLI</h1>
 
-[简体中文](README.zh-CN.md)
+<p align="center">
+  <strong>Turn the AI agent you already use into a social media operator.</strong><br>
+  Research, create, publish, and learn — with your approval where it matters.
+</p>
 
-[![CI](https://github.com/Museon-AI/museon-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Museon-AI/museon-cli/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB)
+<p align="center">
+  <a href="https://www.museon.ai/cli">Website</a> ·
+  <a href="./skills/museon-cli/SKILL.md">Agent Skill</a> ·
+  <a href="./README.zh-CN.md">简体中文</a>
+</p>
 
-Museon CLI is the open client for Museon's hosted social-media operating
-platform. It gives Agents a discoverable command schema, predictable JSON
-output, workspace-aware authentication, and explicit safety metadata for
-state-changing operations.
+Museon CLI gives the AI agent you already use the tools to research social
+content, understand what works, create new material, publish with your
+approval, and learn from real performance.
 
-## Why it works well with Agents
+You keep working with your Agent. Museon gives it the social-media capabilities
+needed to move from an idea to real work.
 
-- **Discoverable:** `museoncli schema` is the source of truth for commands,
-  inputs, examples, risk levels, and execution modes.
-- **Structured:** stdout is always a JSON envelope; Agents do not need to
-  scrape terminal prose.
-- **Workspace-aware:** browser authorization connects the CLI to a Museon user
-  and one accessible workspace.
-- **Guarded:** write and destructive commands declare dry-run and confirmation
-  requirements in their schemas.
-- **Portable:** the wheel includes a reusable Agent Skill under
-  `museoncli/bundled_skills/museon-cli/`.
+## Give this to your Agent
 
-## Install
+Copy the instruction below into Codex, Claude Code, Cursor, or another Agent
+that can install Skills and run shell commands:
 
-The first PyPI release is being prepared. Until then, authorized repository
-collaborators can install from a checkout:
-
-```bash
-git clone https://github.com/Museon-AI/museon-cli.git
-cd museon-cli
-uv tool install .
+```text
+Install the Museon CLI Skill from
+https://github.com/Museon-AI/museon-cli/tree/main/skills/museon-cli.
+Then use the Skill to install Museon CLI, help me sign in, and tell me when
+you're ready to work on my social media.
 ```
 
-The installed commands are `museoncli` and the shorter alias `museon`.
+That is the recommended installation path. You do not need to clone the
+repository, choose CLI flags, or configure credentials by hand.
 
-## Authenticate
+## What happens next
 
-Start the device flow, approve the requested workspace in the browser, then
-finish the login:
+1. **Your Agent installs the Skill.** The Skill teaches it how to use Museon,
+   when to ask for approval, and how to recover from authentication problems.
+2. **The Skill installs Museon CLI.** It checks the Agent's environment,
+   installs the CLI, and verifies that it is available.
+3. **You approve access in the browser.** Sign in to Museon and choose the
+   workspace the Agent may use.
+4. **You describe the work, not the commands.** The Agent discovers the right
+   Museon actions and keeps the task moving.
+
+Once connected, try a request like this:
+
+```text
+Research the AI note-taking content gaining momentum on TikTok and Instagram.
+Explain the repeated hooks and audience questions, then propose three carousel
+ideas for our product. Do not publish anything until I approve it.
+```
+
+## What your Agent can do
+
+- **Find real content signals** across social platforms, creators, posts,
+  comments, communities, and the public web.
+- **Understand why content works** by comparing creative structure with account
+  and post performance.
+- **Turn findings into content** such as image posts and multi-page slideshows.
+- **Connect accounts and keep a schedule moving** while leaving approval gates
+  in place for publishing and other important changes.
+- **Review results and reuse what worked** in the next brief, routine, report,
+  or creative direction.
+
+Museon is designed for the full loop: **research → decide → create → approve →
+publish → review → reuse**.
+
+## Skill, CLI, and Museon
+
+These three parts work together:
+
+- **Museon Skill** teaches your Agent how to approach social-media work and how
+  to use the available tools safely.
+- **Museon CLI** is the connection the Agent uses to take action from its own
+  environment.
+- **Museon** runs the hosted research, generation, account, scheduling,
+  publishing, and performance workflows behind that connection.
+
+The CLI never grants access by itself. Museon checks the signed-in user,
+workspace membership, role, and target resource for every operation.
+
+## You stay in control
+
+- Research and other read-only work can run as part of the task.
+- Creating, changing, scheduling, publishing, or deleting something requires
+  the approval rules described by the command.
+- The Agent must explain the intended change before a sensitive operation.
+- Credentials stay in the Agent's local environment; authorization decisions
+  remain on Museon's servers.
+
+## Install without an Agent
+
+If you prefer to install the CLI yourself, use Python 3.11+ and
+[uv](https://docs.astral.sh/uv/):
 
 ```bash
+uv tool install "git+https://github.com/Museon-AI/museon-cli.git"
 museoncli auth start
 museoncli auth finish --wait
 museoncli whoami
 ```
 
-Credentials remain local to the machine. The hosted Museon API validates the
-credential and authorizes every operation against the user's organization,
-workspace membership, role, and requested resource.
+The shorter `museon` command is an alias for `museoncli`.
 
-## Discover before executing
+> The repository is private while the first public release is being prepared,
+> so installation currently requires collaborator access.
 
-```bash
-# See every capability area.
-museoncli schema
+<details>
+<summary><strong>Develop Museon CLI</strong></summary>
 
-# Narrow to research commands.
-museoncli schema research
-
-# Inspect one exact contract before using it.
-museoncli schema research.social-media-search
-```
-
-Every command returns a stable envelope:
-
-```json
-{
-  "ok": true,
-  "data": {},
-  "run": null,
-  "warnings": [],
-  "next_steps": []
-}
-```
-
-## Capability map
-
-| Outcome | Domains |
-| --- | --- |
-| Find market, creator, post, community, and visual evidence | `research`, `campaign-monitor` |
-| Analyze content and preserve reusable knowledge | `content-analysis`, `asset`, `artifacts`, `skills` |
-| Create images and slideshows | `generation` |
-| Connect accounts, schedule work, publish, and review results | `social-account`, `account-operation` |
-| Run recurring or one-off operating loops | `routines`, `evaluator` |
-
-The current generated catalog contains 95 commands across 11 domains. Use the
-live schema rather than copying flags from an old transcript.
-
-## Give it to an Agent
-
-An Agent can start with this instruction:
-
-```text
-Install Museon CLI from https://github.com/Museon-AI/museon-cli.
-Authenticate me with the browser flow, run `museoncli schema`, and inspect the
-exact command schema before executing any operation. Ask for separate approval
-before writes or destructive actions.
-```
-
-The bundled [Agent Skill](museoncli/bundled_skills/museon-cli/SKILL.md) adds
-workflow guidance for research, creation, publishing, review, artifacts, and
-authentication recovery.
-
-## Repository boundary
-
-This repository contains the installable CLI, its command registry, generated
-contract, documentation, tests, and reusable Agent Skill. Museon's hosted API
-contains authentication, authorization, business execution, integrations, and
-customer data.
-
-There is no separate public/internal command flag in the CLI. Authenticated
-users and Agents discover the same command contract; the server decides whether
-the current identity may execute a requested operation.
-
-## Development
+[![CI](https://github.com/Museon-AI/museon-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/Museon-AI/museon-cli/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11%2B-7C65C1)
 
 ```bash
 uv sync --frozen --all-groups
@@ -129,13 +126,15 @@ uv run python scripts/gen_command_contract.py --check
 uv build
 ```
 
-When a command changes, edit its definition in `museoncli/domains/`, then
-regenerate the human-readable tables and portable JSON contract:
+Command definitions live in `museoncli/domains/`. When a command changes,
+regenerate the documentation and portable command contract:
 
 ```bash
 uv run python scripts/gen_command_docs.py
 uv run python scripts/gen_command_contract.py
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete change checklist and
-[SECURITY.md](SECURITY.md) for private vulnerability reporting.
+</details>
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute. Please report security
+issues privately by following [SECURITY.md](SECURITY.md).
