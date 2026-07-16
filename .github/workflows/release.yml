@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --all-groups
+      - name: Verify release tag
+        run: |
+          package_version=$(uv run python -c 'from museoncli import __version__; print(__version__)')
+          test "v${package_version}" = "${GITHUB_REF_NAME}"
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+      - run: uv run python scripts/gen_command_docs.py --check
+      - run: uv run python scripts/gen_command_contract.py --check
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-dist
+          path: |
+            dist/*
+            contracts/command-catalog.json
+
+  publish-pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: release
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: release/dist/
+
+  attach-release-assets:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: release
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release upload "${GITHUB_REF_NAME}"
+          release/dist/*
+          release/contracts/command-catalog.json
+          --clobber

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Museon CLI"
+  short_description: "Operate social media with Museon CLI"
+  default_prompt: "Use $museon-cli to research my market and turn the findings into an approved social media operating plan."

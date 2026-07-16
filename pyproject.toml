@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "museoncli"
+version = "0.3.47"
+description = "Agent-ready CLI for Museon's social media operating platform"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Museon" }]
+keywords = ["ai-agent", "cli", "social-media", "automation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+dependencies = [
+  "httpx>=0.28.1",
+  "pyyaml>=6.0.2",
+  "socksio>=1.0.0",
+]
+
+[project.scripts]
+museoncli = "museoncli.main:main"
+museon = "museoncli.main:main"
+
+[project.urls]
+Homepage = "https://www.museon.ai/cli"
+Repository = "https://github.com/Museon-AI/museon-cli"
+Issues = "https://github.com/Museon-AI/museon-cli/issues"
+Documentation = "https://github.com/Museon-AI/museon-cli#readme"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.2.0",
+  "ruff>=0.4.4",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["museoncli"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

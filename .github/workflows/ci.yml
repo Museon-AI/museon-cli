@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --frozen --all-groups
+      - run: uv run ruff check .
+      - run: uv run pytest -q
+      - run: uv run python scripts/gen_command_docs.py --check
+      - run: uv run python scripts/gen_command_contract.py --check
+
+  package:
+    name: Build and inspect package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --frozen --all-groups
+      - run: uv build
+      - name: Reject private runtime files
+        run: |
+          uv run python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          wheel = next(Path("dist").glob("*.whl"))
+          with ZipFile(wheel) as archive:
+              names = set(archive.namelist())
+          forbidden = {"museoncli/prompt.py", "museoncli/system.md"}
+          leaked = sorted(forbidden & names)
+          if leaked:
+              raise SystemExit(f"private runtime files leaked into wheel: {leaked}")
+          PY
+      - name: Smoke install wheel
+        run: |
+          uv venv --seed .smoke-venv
+          uv pip install --python .smoke-venv/bin/python dist/*.whl
+          .smoke-venv/bin/museoncli version
+          .smoke-venv/bin/museoncli schema
+          .smoke-venv/bin/museoncli --help
+      - uses: actions/upload-artifact@v4
+        with:
+          name: museoncli-dist
+          path: |
+            dist/*
+            contracts/command-catalog.json
