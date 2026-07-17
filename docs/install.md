@@ -37,39 +37,30 @@ If it succeeds, do not reinstall the CLI. Continue to the Skill setup.
 
 If the command is unavailable:
 
-1. Confirm that Python 3.11 or newer is available.
-2. Prefer an existing isolated-tool installer. Use `uv` when available:
+1. Confirm that Node.js and npm are available, then install the exact release:
 
    ```bash
-   uv tool install museoncli
+   npm install --global @museon/cli@0.3.59
    ```
 
-3. If the package registry reports that `museoncli` does not exist, continue
-   with the immutable official GitHub release tag instead of stopping:
+   The package contains no lifecycle scripts and performs no install-time or
+   runtime download. It supports macOS arm64/x64, glibc Linux arm64/x64, and
+   Windows arm64/x64. If npm was configured with `--omit=optional`, reinstall with
+   `--include=optional`.
+
+2. On a host without npm, confirm that Python 3.11+ and `uv` already exist and
+   install the immutable wheel from the `v0.3.59` GitHub release:
 
    ```bash
-   uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.59/museoncli-0.3.59-py3-none-any.whl"
    ```
 
-4. If `uv` is unavailable but `pipx` is already installed, use:
+   This fallback is also unsupported on musl Linux unless its Python runtime
+   can satisfy Museon CLI's dependencies. Do not replace Node.js, npm, Python,
+   or `uv` without the user's approval.
 
-   ```bash
-   pipx install museoncli
-   ```
-
-   If that registry also reports a missing package, use the same immutable
-   official release:
-
-   ```bash
-   pipx install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
-   ```
-
-5. The GitHub command is an installer-managed source install. Do not manually
-   clone the repository or run Museon CLI from a mutable checkout.
-6. Do not install or replace Python, `uv`, or `pipx` without the user's
-   approval. Explain the missing prerequisite and ask before changing the
-   environment.
-7. Verify the installation with `museoncli version`. Do not claim success
+3. Do not clone the repository or install from a mutable branch.
+4. Verify the installation with `museoncli version`. Do not claim success
    until it works.
 
 ## 2. Install the Museon CLI Skill

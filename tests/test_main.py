@@ -60,7 +60,7 @@ class _FakeManifestResponse:
 
 class _FakeManifestClient:
     calls: list[dict[str, object]] = []
-    response = _FakeManifestResponse(200, {"version": "0.1.17"})
+    response = _FakeManifestResponse(200, {"tag_name": "v0.1.17"})
 
     def __init__(self, **kwargs: object) -> None:
         self.calls.append({"init": kwargs})
@@ -239,14 +239,21 @@ def test_cli_version_comparison_uses_numeric_order() -> None:
     assert main_module.is_newer_cli_version("latest", "0.1.16") is False
 
 
-def test_cli_update_notice_reads_pypi_manifest_without_credentials(
+def test_cli_update_notice_reads_github_release_when_explicitly_enabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _FakeManifestClient.calls = []
-    _FakeManifestClient.response = _FakeManifestResponse(200, {"info": {"version": "0.1.17"}})
+    _FakeManifestClient.response = _FakeManifestResponse(
+        200,
+        {
+            "tag_name": "v0.1.17",
+            "html_url": "https://github.com/Museon-AI/museon-cli/releases/tag/v0.1.17",
+        },
+    )
     cfg = Config(site_url="https://museon.ai")
 
-    monkeypatch.delenv("MUSEONCLI_UPDATE_CHECK", raising=False)
+    monkeypatch.setenv("MUSEONCLI_UPDATE_CHECK", "true")
+    monkeypatch.setenv("MUSEONCLI_DISTRIBUTION_CHANNEL", "npm")
     monkeypatch.delenv("MUSEONCLI_UPDATE_MANIFEST_URL", raising=False)
     monkeypatch.setattr(main_module, "__version__", "0.1.16")
     monkeypatch.setattr(main_module.httpx, "AsyncClient", _FakeManifestClient)
@@ -256,10 +263,14 @@ def test_cli_update_notice_reads_pypi_manifest_without_credentials(
     assert notice is not None
     assert notice["current_version"] == "0.1.16"
     assert notice["latest_version"] == "0.1.17"
-    assert notice["source"] == "pypi"
+    assert notice["source"] == "github_release"
     assert notice["manifest_url"] == main_module.DEFAULT_CLI_RELEASE_MANIFEST_URL
-    assert notice["project_url"] == "https://pypi.org/project/museoncli/"
-    assert "uv tool upgrade museoncli" in notice["message"]
+    assert notice["project_url"].endswith("/releases/tag/v0.1.17")
+    assert "npm install --global @museon/cli@0.1.17" in notice["message"]
+    assert notice["upgrade_commands"] == {
+        "npm": "npm install --global @museon/cli@0.1.17"
+    }
+    assert notice["distribution_channel"] == "npm"
     assert "token=" not in json.dumps(notice).lower()
     assert _FakeManifestClient.calls[-1]["url"] == main_module.DEFAULT_CLI_RELEASE_MANIFEST_URL
 
@@ -268,8 +279,9 @@ def test_cli_update_notice_is_silent_when_manifest_is_current(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _FakeManifestClient.calls = []
-    _FakeManifestClient.response = _FakeManifestResponse(200, {"info": {"version": "0.1.16"}})
+    _FakeManifestClient.response = _FakeManifestResponse(200, {"tag_name": "v0.1.16"})
 
+    monkeypatch.setenv("MUSEONCLI_UPDATE_CHECK", "true")
     monkeypatch.setattr(main_module, "__version__", "0.1.16")
     monkeypatch.setattr(main_module.httpx, "AsyncClient", _FakeManifestClient)
 
@@ -282,10 +294,40 @@ def test_cli_update_notice_is_silent_when_manifest_fetch_fails(
     _FakeManifestClient.calls = []
     _FakeManifestClient.response = _FakeManifestResponse(404, {"error": "not_found"})
 
+    monkeypatch.setenv("MUSEONCLI_UPDATE_CHECK", "true")
     monkeypatch.setattr(main_module, "__version__", "0.1.16")
     monkeypatch.setattr(main_module.httpx, "AsyncClient", _FakeManifestClient)
 
     assert asyncio.run(main_module.check_cli_update_notice(Config())) is None
+
+
+def test_cli_update_notice_is_disabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("MUSEONCLI_UPDATE_CHECK", raising=False)
+
+    assert asyncio.run(main_module.check_cli_update_notice(Config())) is None
+
+
+def test_cli_update_notice_gives_wheel_users_two_executable_commands(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _FakeManifestClient.calls = []
+    _FakeManifestClient.response = _FakeManifestResponse(200, {"tag_name": "v0.1.17"})
+    monkeypatch.setenv("MUSEONCLI_UPDATE_CHECK", "true")
+    monkeypatch.delenv("MUSEONCLI_DISTRIBUTION_CHANNEL", raising=False)
+    monkeypatch.setattr(main_module, "__version__", "0.1.16")
+    monkeypatch.setattr(main_module.httpx, "AsyncClient", _FakeManifestClient)
+
+    notice = asyncio.run(main_module.check_cli_update_notice(Config()))
+
+    assert notice is not None
+    assert notice["upgrade_commands"] == {
+        "npm": "npm install --global @museon/cli@0.1.17",
+        "uv_wheel": (
+            'uv tool install "https://github.com/Museon-AI/museon-cli/releases/'
+            'download/v0.1.17/museoncli-0.1.17-py3-none-any.whl" --force'
+        ),
+    }
+    assert "(recommended), or install" not in notice["message"]
 
 
 def test_dispatch_with_notices_attaches_update_notice(

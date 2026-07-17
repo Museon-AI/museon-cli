@@ -11,6 +11,8 @@ __pycache__/
 *.py[cod]
 build/
 dist/
+native-dist/
+npm-dist/
 htmlcov/
 .coverage
 coverage.xml

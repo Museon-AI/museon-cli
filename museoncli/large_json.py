@@ -7,6 +7,7 @@ import os
 import re
 import shlex
 import stat
+import tempfile
 import time
 import uuid
 from dataclasses import dataclass
@@ -17,7 +18,7 @@ from typing import Any
 DEFAULT_THRESHOLD_BYTES = 20_000
 MIN_THRESHOLD_BYTES = 4_096
 MAX_THRESHOLD_BYTES = 1_000_000
-OFFLOAD_BASE = Path("/tmp/museon-agent")
+OFFLOAD_BASE = Path(tempfile.gettempdir()) / "museon-agent"
 OFFLOAD_ROOT = OFFLOAD_BASE / "tool-results"
 OFFLOAD_TTL_SECONDS = 6 * 60 * 60
 PROFILE_MAX_DEPTH = 9
@@ -481,7 +482,16 @@ def _pagination(payload: dict[str, Any]) -> dict[str, Any] | None:
     return result
 
 
-def _query_manifest(path: str, *, command_family: str, profile: dict[str, Any]) -> dict[str, Any]:
+def _query_manifest(
+    path: str,
+    *,
+    command_family: str,
+    profile: dict[str, Any],
+    platform_name: str | None = None,
+) -> dict[str, Any]:
+    if (platform_name or os.name) == "nt":
+        return _powershell_query_manifest(path)
+
     quoted = shlex.quote(path)
     if command_family == "asset.list":
         projection = (
@@ -517,6 +527,43 @@ def _query_manifest(path: str, *, command_family: str, profile: dict[str, Any]) 
                 "{id,title,status,type,ref}' " + quoted
             ),
             "heavy_leaf_only_if_required": heavy_query,
+        },
+    }
+
+
+def _powershell_query_manifest(path: str) -> dict[str, Any]:
+    quoted = "'" + path.replace("'", "''") + "'"
+    load = f"$result = Get-Content -Raw -LiteralPath {quoted} | ConvertFrom-Json; "
+    return {
+        "preferred_tool": "powershell",
+        "guidance": [
+            "Use PowerShell to read the complete offloaded result from the literal file path.",
+            "Project only the fields needed for the current decision; do not print the whole document.",
+            "Use Select-Object -First to keep samples bounded.",
+        ],
+        "templates": {
+            "keys_and_types": (
+                load
+                + "$result.PSObject.Properties.Name | ConvertTo-Json -Compress"
+            ),
+            "count_and_fields": (
+                load
+                + "@{item_count=@($result.data.items).Count; "
+                + "item_fields=@($result.data.items)[0].PSObject.Properties.Name} "
+                + "| ConvertTo-Json -Compress"
+            ),
+            "project_sample": (
+                load
+                + "@($result.data.items) | Select-Object -First 10 "
+                + "-Property id,title,status,type,ref | ConvertTo-Json -Depth 6 -Compress"
+            ),
+            "select_sample": (
+                load
+                + "@($result.data.items) | Where-Object status -eq 'ready' "
+                + "| Select-Object -First 10 -Property id,title,status,type,ref "
+                + "| ConvertTo-Json -Depth 6 -Compress"
+            ),
+            "heavy_leaf_only_if_required": None,
         },
     }
 

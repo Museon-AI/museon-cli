@@ -28,8 +28,19 @@ jobs:
       - run: uv run python scripts/gen_command_docs.py --check
       - run: uv run python scripts/gen_command_contract.py --check
 
+  node-test:
+    name: npm launcher and templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.14.0"
+      - run: npm install --global npm@11.5.1
+      - run: node --test npm/tests/*.test.cjs
+
   package:
-    name: Build and inspect package
+    name: Build and inspect Python artifacts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -45,29 +56,77 @@ jobs:
         run: uv run python scripts/smoke_install.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: museoncli-dist
+          name: museoncli-python-dist
           path: |
             dist/*
             contracts/command-catalog.json
 
-  platform-smoke:
-    name: Install smoke (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+  native:
+    name: Native and npm smoke (${{ matrix.target }})
+    needs: [package, node-test]
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - target: darwin-arm64
+            runner: macos-15
+          - target: darwin-x64
+            runner: macos-15-intel
+          - target: linux-arm64-gnu
+            runner: ubuntu-22.04-arm
+          - target: linux-x64-gnu
+            runner: ubuntu-22.04
+          - target: win32-x64
+            runner: windows-2025
+          - target: win32-arm64
+            runner: windows-11-arm
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           python-version: "3.12"
           enable-cache: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.14.0"
+      - run: npm install --global npm@11.5.1
       - run: uv sync --frozen --all-groups
-      - run: uv run pytest -q tests/test_auth.py tests/test_config.py tests/test_setup_agent.py
-      - run: uv build
-      - run: uv run python scripts/verify_public_artifacts.py
-      - run: uv run python scripts/smoke_install.py
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: museoncli-python-dist
+          path: reviewed
+      - name: Build and smoke reviewed wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel=$(find reviewed -name '*.whl' -type f -print -quit)
+          uv run python scripts/build_native.py --target "${{ matrix.target }}" --wheel "${wheel}"
+          uv run python scripts/smoke_native.py --target "${{ matrix.target }}"
+      - name: Generate and verify npm packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv run python scripts/generate_npm_packages.py --target "${{ matrix.target }}"
+          uv run python scripts/verify_npm_packages.py --package-root build/npm --allow-partial
+          uv run python scripts/pack_npm_packages.py --package cli --package "${{ matrix.target }}"
+          uv run python scripts/verify_npm_packages.py --tarball-dir npm-dist --allow-partial
+          uv run python scripts/package_native.py --target "${{ matrix.target }}"
+      - name: npm install without scripts and wrapper smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          root_tar=$(find "${PWD}/npm-dist" -name 'museon-cli-[0-9]*.tgz' -type f -print -quit)
+          platform_tar=$(find "${PWD}/npm-dist" -name 'museon-cli-*.tgz' ! -name 'museon-cli-[0-9]*.tgz' -type f -print -quit)
+          npm install --global --ignore-scripts "${root_tar}" "${platform_tar}"
+          museoncli version
+          museon schema
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: museoncli-${{ matrix.target }}-dist
+          path: |
+            npm-dist/*.tgz
+            native-dist/*
 
   dependency-audit:
     name: Dependency vulnerability audit

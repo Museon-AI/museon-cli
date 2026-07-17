@@ -40,10 +40,11 @@ repository, choose CLI flags, or configure credentials by hand.
 
 ## What happens next
 
-1. **Your Agent installs the Skill.** The Skill teaches it how to use Museon,
-   when to ask for approval, and how to recover from authentication problems.
-2. **The Skill installs Museon CLI.** It checks the Agent's environment,
-   installs the CLI, and verifies that it is available.
+1. **Your Agent installs Museon CLI.** It checks the environment, installs the
+   exact npm release, and verifies that the command is available.
+2. **Museon CLI installs the Skill.** The bundled, same-version Skill teaches
+   the Agent how to use Museon, when to ask for approval, and how to recover
+   from authentication problems.
 3. **You approve access in the browser.** Sign in to Museon and choose the
    workspace the Agent may use.
 4. **You describe the work, not the commands.** The Agent discovers the right
@@ -94,7 +95,7 @@ workspace membership, role, and target resource for every operation.
 | Connect accounts, configure publish pools, schedule work, publish, and review results | `social-account`, `account-publish`, `account-operation` |
 | Run recurring or one-off operating loops | `routines`, `evaluator` |
 
-The current generated catalog contains 104 commands across 12 domains. Use the
+The current generated catalog contains 105 commands across 12 domains. Use the
 live schema rather than copying flags from an old transcript.
 
 ## You stay in control
@@ -109,18 +110,19 @@ live schema rather than copying flags from an old transcript.
 
 ## Install without an Agent
 
-If you prefer to install the CLI yourself, use Python 3.11+ and
-[uv](https://docs.astral.sh/uv/):
+If you prefer to install the CLI yourself, use the exact npm release:
 
 ```bash
-uv tool install museoncli
+npm install --global @museon/cli@0.3.59
 ```
 
-If your package registry does not contain `museoncli` yet, use the immutable
-official GitHub release tag:
+The npm launcher has no dependencies or lifecycle scripts. It installs the
+matching native package for macOS arm64/x64, glibc Linux arm64/x64, or Windows
+arm64/x64. On a host without npm, use Python 3.11+, `uv`, and the immutable wheel
+from GitHub release `v0.3.59`:
 
 ```bash
-uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.59/museoncli-0.3.59-py3-none-any.whl"
 ```
 
 Then continue with setup and browser authorization:
@@ -151,7 +153,9 @@ uv run ruff check .
 uv run pytest -q
 uv run python scripts/gen_command_docs.py --check
 uv run python scripts/gen_command_contract.py --check
+node --test npm/tests/*.test.cjs
 uv build
+uv run python scripts/verify_public_artifacts.py
 ```
 
 Command definitions live in `museoncli/domains/`. When a command changes,
@@ -168,3 +172,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [Code of Conduct](CODE_OF_CONDUCT.md) to contribute. Release notes live in
 [CHANGELOG.md](CHANGELOG.md). Please report security issues privately by
 following [SECURITY.md](SECURITY.md).
+
+## License
+
+Museon CLI is licensed under the [Apache License 2.0](LICENSE).

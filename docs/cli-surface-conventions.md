@@ -60,9 +60,10 @@ museoncli <domain> +<shortcut> [flags]
 - JSON on stdout, always: `{"ok": true, ...}` / `{"ok": false, "reason", "detail"}`.
 - In the agent sandbox only, a successful JSON result above the configured size
   threshold becomes an `ok:true`, `status:large_json_offloaded` manifest. The
-  complete unchanged JSON is written under the shared six-hour-TTL `/tmp`
-  result root and queried through the manifest's narrow jq templates. Non-agent
-  CLI output is unchanged.
+  complete unchanged JSON is written under a private six-hour-TTL result root
+  inside the host operating system's temporary directory. The manifest provides
+  narrow jq templates on POSIX hosts and PowerShell templates on Windows.
+  Non-agent CLI output is unchanged.
 - Exit codes: `0` success, `1` failure (reason in envelope), `2` usage error,
   `130` interrupted. The envelope, not the exit code, is the source of truth.
 

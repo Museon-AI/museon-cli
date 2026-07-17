@@ -13,38 +13,25 @@ work. The executable is `museoncli`; `museon` is an equivalent alias.
 Check whether `museoncli` or `museon` is already available. If neither command
 exists and the user asked to install Museon or complete a Museon task:
 
-1. Confirm that Python 3.11 or newer is available.
-2. Prefer an existing isolated-tool installer:
+1. Confirm that Node.js and npm are already available, then install the exact
+   public release:
 
    ```bash
-   uv tool install museoncli
+   npm install --global @museon/cli@0.3.59
    ```
 
-   If the package registry reports that `museoncli` does not exist, continue
-   with the immutable official GitHub release tag instead of stopping:
+2. If npm is unavailable, but Python 3.11+ and `uv` already exist, use the
+   immutable wheel from GitHub release `v0.3.59`:
 
    ```bash
-   uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.59/museoncli-0.3.59-py3-none-any.whl"
    ```
 
-   If `uv` is unavailable but `pipx` is already installed, use:
-
-   ```bash
-   pipx install museoncli
-   ```
-
-   Use the same official release fallback when `pipx` reports that the package
-   is missing from its registry:
-
-   ```bash
-   pipx install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
-   ```
-
-3. Do not install or replace Python, `uv`, or `pipx` without the user's
-   approval. If no isolated-tool installer is available, explain what is
-   missing and ask before changing the environment.
-4. The GitHub command is an installer-managed source install. Do not manually
-   clone the repository or run Museon CLI from a mutable checkout.
+3. The npm package has no lifecycle scripts or runtime download. It supports
+   macOS arm64/x64, glibc Linux arm64/x64, and Windows arm64/x64. If optional
+   dependencies were omitted, reinstall with `--include=optional`.
+4. Do not install or replace Node.js, npm, Python, or `uv` without the user's
+   approval. Do not clone the repository or install from a mutable branch.
 5. Verify the result with `museoncli version`. Do not claim installation
    succeeded until that command works.
 6. Continue the original task. If the user asked to sign in, start the browser
