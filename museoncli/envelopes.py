@@ -76,6 +76,10 @@ def direct_api_envelope(
         run = _content_analysis_run_from_data(data)
     elif command_name == "social-account.profile-edit-submit":
         run = _profile_edit_run_from_data(data)
+    elif command_name == "account-publish.asset-pools-batch-set":
+        run = _asset_pools_batch_run_from_data(data)
+    elif command_name == "account-publish.schedule-plan-batch":
+        run = _schedule_plan_run_from_data(data)
     else:
         run = None
     warnings = _direct_api_warnings(command_name)
@@ -448,6 +452,50 @@ def _profile_edit_run_from_data(data: Any) -> dict[str, Any] | None:
     }
 
 
+def _schedule_plan_run_from_data(data: Any) -> dict[str, Any] | None:
+    if not isinstance(data, dict):
+        return None
+    nested_job = data.get("job")
+    job = nested_job if isinstance(nested_job, dict) else data
+    job_id = job.get("job_id") or job.get("id") or data.get("job_id")
+    if not job_id:
+        return None
+    run: dict[str, Any] = {
+        "id": job_id,
+        "type": "account_publish_schedule_plan",
+        "status": job.get("status") or data.get("status"),
+        "watch_command": f"museoncli account-publish +schedule-plan-status --id {job_id}",
+    }
+    delay = job.get("recommended_wakeup_delay_seconds") or data.get(
+        "recommended_wakeup_delay_seconds"
+    )
+    if isinstance(delay, int) and delay > 0:
+        run["recommended_wakeup_delay_seconds"] = delay
+    return run
+
+
+def _asset_pools_batch_run_from_data(data: Any) -> dict[str, Any] | None:
+    if not isinstance(data, dict):
+        return None
+    nested_job = data.get("job")
+    job = nested_job if isinstance(nested_job, dict) else data
+    job_id = job.get("job_id") or job.get("id") or data.get("job_id")
+    if not job_id:
+        return None
+    run: dict[str, Any] = {
+        "id": job_id,
+        "type": "account_publish_asset_pools_batch",
+        "status": job.get("status") or data.get("status"),
+        "watch_command": f"museoncli account-publish +asset-pools-batch-status --id {job_id}",
+    }
+    delay = job.get("recommended_wakeup_delay_seconds") or data.get(
+        "recommended_wakeup_delay_seconds"
+    )
+    if isinstance(delay, int) and delay > 0:
+        run["recommended_wakeup_delay_seconds"] = delay
+    return run
+
+
 def _profile_edit_run_status(
     *,
     data: dict[str, Any],
@@ -491,6 +539,28 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
         if isinstance(watch_command, str) and watch_command:
             return [f"Poll with: {watch_command}"]
         return ["Poll the returned run id with content-analysis +get."]
+    if run.get("type") == "account_publish_schedule_plan":
+        watch_command = run.get("watch_command")
+        wakeup_delay = run.get("recommended_wakeup_delay_seconds")
+        if isinstance(watch_command, str) and watch_command:
+            if isinstance(wakeup_delay, int) and wakeup_delay > 0:
+                return [
+                    f"Schedule one batch wakeup in {wakeup_delay} seconds, then poll only with: "
+                    f"{watch_command}"
+                ]
+            return [f"Poll only with: {watch_command}"]
+        return ["Poll the returned job id with account-publish +schedule-plan-status."]
+    if run.get("type") == "account_publish_asset_pools_batch":
+        watch_command = run.get("watch_command")
+        wakeup_delay = run.get("recommended_wakeup_delay_seconds")
+        if isinstance(watch_command, str) and watch_command:
+            if isinstance(wakeup_delay, int) and wakeup_delay > 0:
+                return [
+                    f"Schedule one batch wakeup in {wakeup_delay} seconds, then poll only with: "
+                    f"{watch_command}"
+                ]
+            return [f"Poll only with: {watch_command}"]
+        return ["Poll the returned job id with account-publish +asset-pools-batch-status."]
     return _generation_next_steps(run)
 
 

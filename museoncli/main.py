@@ -6,6 +6,7 @@ import json
 import mimetypes
 import os
 import sys
+from contextvars import ContextVar
 import time
 from pathlib import Path
 from typing import Any
@@ -16,9 +17,7 @@ import httpx
 from museoncli import __version__
 from museoncli.auth import (
     auth_headers,
-    refresh_access_token,
     finish_pending_web_approval_login,
-    run_pkce_login,
     run_web_approval_login,
     start_web_approval_login,
 )
@@ -27,6 +26,7 @@ from museoncli.config import (
     Config,
     PendingAuthState,
     WorkspaceState,
+    delete_auth_credentials,
     load_config,
     save_config,
     update_config,
@@ -46,8 +46,15 @@ from museoncli.execution import (
     CommandContext,
     agent_domain_result,
 )
+from museoncli.large_json import render_json
+from museoncli.setup_agent import SUPPORTED_AGENTS, install_agent_skill
+
+
 _API_CONNECT_MAX_ATTEMPTS = 3
 _API_CONNECT_RETRY_BASE_DELAY_SECONDS = 0.25
+_ACTIVE_COMMAND_NAME: ContextVar[str | None] = ContextVar(
+    "museoncli_active_command_name", default=None
+)
 DEFAULT_CLI_RELEASE_MANIFEST_URL = "https://pypi.org/pypi/museoncli/json"
 PYPI_PROJECT_URL = "https://pypi.org/project/museoncli/"
 
@@ -66,7 +73,11 @@ def main() -> None:
         emit({"ok": False, "reason": reason_from_exception(exc), "detail": str(exc)})
         raise SystemExit(1) from None
     if result is not None:
-        emit({"ok": True, **result})
+        if not emit(
+            {"ok": True, **result},
+            command_hint=getattr(args, "domain_command", None),
+        ):
+            raise SystemExit(1)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -84,30 +95,34 @@ def build_parser() -> argparse.ArgumentParser:
     schema = sub.add_parser("schema")
     schema.add_argument("name", nargs="?")
 
+    setup = sub.add_parser("setup")
+    setup.add_argument(
+        "--agent",
+        nargs="?",
+        const="auto",
+        default="auto",
+        choices=["auto", "all", *SUPPORTED_AGENTS],
+        help="Install the bundled Skill for a detected or named host Agent.",
+    )
+    setup.add_argument("--force", action="store_true")
+
     config = sub.add_parser("config")
     config_sub = config.add_subparsers(dest="config_command", required=True)
     config_sub.add_parser("get")
     config_set = config_sub.add_parser("set")
     config_set.add_argument("--api-base-url")
     config_set.add_argument("--site-url")
-    config_set.add_argument("--supabase-url")
-    config_set.add_argument("--supabase-anon-key")
 
     auth = sub.add_parser("auth")
     auth_sub = auth.add_subparsers(dest="auth_command", required=True)
     login = auth_sub.add_parser("login")
-    login.add_argument("--method", choices=["web", "pkce"], default="web")
-    login.add_argument("--provider", default="google")
-    login.add_argument("--host", default="127.0.0.1")
-    login.add_argument("--port", type=int, default=0)
     login.add_argument("--timeout", type=int, default=300)
     login.add_argument("--poll-interval", type=float, default=2.0)
     login.add_argument("--no-browser", action="store_true")
-    login.add_argument("--no-workspace-prompt", action="store_true")
     auth_sub.add_parser("start")
     finish = auth_sub.add_parser("finish")
     finish.add_argument("--wait", action="store_true")
-    finish.add_argument("--timeout", type=int, default=0)
+    finish.add_argument("--timeout", type=int, default=300)
     finish.add_argument("--poll-interval", type=float, default=2.0)
     auth_sub.add_parser("status")
     auth_sub.add_parser("logout")
@@ -131,6 +146,8 @@ async def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
         return {"data": {"cli_version": __version__, "api_base_url": cfg.api_base_url}}
     if args.command == "config":
         return await dispatch_config(args)
+    if args.command == "setup":
+        return {"data": install_agent_skill(args.agent, force=args.force)}
     if args.command == "auth":
         return await dispatch_auth(args, cfg)
     if args.command == "health":
@@ -155,9 +172,30 @@ async def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
 
 async def dispatch_with_notices(args: argparse.Namespace) -> dict[str, Any] | None:
     result = await dispatch(args)
-    if result is None:
-        return None
+    if result is None or not command_uses_network(args):
+        return result
     return await attach_update_notice(result)
+
+
+def command_uses_network(args: argparse.Namespace) -> bool:
+    """Return whether the requested command already performs remote IO.
+
+    Update checks must never turn local-only commands into network operations.
+    Network-backed commands still receive update notices without adding a new
+    privacy or reliability characteristic to the invocation.
+    """
+
+    if args.command in {"health", "whoami"}:
+        return True
+    if args.command == "workspace":
+        return args.workspace_command in {"list", "select"}
+    if args.command == "auth":
+        return args.auth_command in {"login", "start", "finish"}
+    domain_command = getattr(args, "domain_command", None)
+    if domain_command:
+        spec = get_command_spec(domain_command)
+        return spec.transport != "local_process" and not getattr(args, "dry_run", False)
+    return False
 
 
 async def attach_update_notice(result: dict[str, Any]) -> dict[str, Any]:
@@ -202,9 +240,7 @@ def cli_update_check_enabled() -> bool:
 
 
 def cli_update_manifest_url() -> str:
-    return os.environ.get(
-        "MUSEONCLI_UPDATE_MANIFEST_URL", DEFAULT_CLI_RELEASE_MANIFEST_URL
-    ).strip()
+    return os.environ.get("MUSEONCLI_UPDATE_MANIFEST_URL", DEFAULT_CLI_RELEASE_MANIFEST_URL).strip()
 
 
 async def fetch_cli_release_manifest(manifest_url: str) -> dict[str, Any] | None:
@@ -246,14 +282,13 @@ async def dispatch_config(args: argparse.Namespace) -> dict[str, Any]:
     cfg = update_config(
         api_base_url=args.api_base_url,
         site_url=args.site_url,
-        supabase_url=args.supabase_url,
-        supabase_anon_key=args.supabase_anon_key,
     )
     return {"data": cfg.safe_dict()}
 
 
 async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]:
     if args.auth_command == "logout":
+        delete_auth_credentials()
         cfg.auth = AuthState()
         cfg.workspace = WorkspaceState()
         cfg.pending_auth = PendingAuthState()
@@ -261,9 +296,19 @@ async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]
         return {"data": {"authenticated": False}}
     if args.auth_command == "status":
         clear_expired_pending_web_approval(cfg)
+        auth_expired = cfg.auth.is_expired()
+        authenticated = bool(auth_headers(cfg))
         return {
             "data": {
-                "authenticated": bool(auth_headers(cfg)),
+                "authenticated": authenticated,
+                "status": (
+                    "expired"
+                    if auth_expired
+                    else "authenticated"
+                    if authenticated
+                    else "unauthenticated"
+                ),
+                "reason": "credential_expired" if auth_expired else None,
                 "auth_method": auth_method(cfg),
                 "expires_at": cfg.auth.expires_at,
                 "user": safe_user(cfg.auth.user),
@@ -282,22 +327,11 @@ async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]
             poll_interval_seconds=args.poll_interval,
         )
         return {"data": data, "workspace": data.get("workspace")}
-    if args.method == "web":
-        data = await run_web_approval_login(
-            config=cfg,
-            timeout_seconds=args.timeout,
-            open_browser=not args.no_browser,
-            poll_interval_seconds=args.poll_interval,
-        )
-        return {"data": data, "workspace": data.get("workspace")}
-    data = await run_pkce_login(
+    data = await run_web_approval_login(
         config=cfg,
-        provider=args.provider,
-        host=args.host,
-        port=args.port,
         timeout_seconds=args.timeout,
         open_browser=not args.no_browser,
-        prompt_workspace=not args.no_workspace_prompt,
+        poll_interval_seconds=args.poll_interval,
     )
     return {"data": data, "workspace": data.get("workspace")}
 
@@ -385,8 +419,6 @@ async def _api_request(
     if not auth_headers(cfg):
         raise RuntimeError("missing_auth")
     response = await _api_send(cfg, method, url, json_body=json_body, params=params)
-    if response.status_code == 401 and await refresh_access_token(cfg):
-        response = await _api_send(cfg, method, url, json_body=json_body, params=params)
     if response.status_code == 401:
         raise RuntimeError("unauthorized")
     if response.status_code == 403:
@@ -418,7 +450,7 @@ async def _api_send(
                 return await client.request(
                     method,
                     url,
-                    headers=auth_headers(cfg),
+                    headers=_request_headers(cfg),
                     json=json_body,
                     params=params,
                 )
@@ -430,6 +462,14 @@ async def _api_send(
     if last_error is not None:
         raise last_error
     raise RuntimeError("api_request_not_sent")
+
+
+def _request_headers(cfg: Config) -> dict[str, str]:
+    headers = auth_headers(cfg)
+    command_name = _ACTIVE_COMMAND_NAME.get()
+    if headers and command_name:
+        headers["X-Museon-CLI-Command"] = command_name
+    return headers
 
 
 async def api_data_v2(
@@ -500,6 +540,7 @@ _UUID_LIST_ARGUMENT_KEYS = frozenset(
         "app_screenshot_media_ids",
         "uploaded_media_ids",
         "topic_ids",
+        "account_ids",
         "add_format_ids",
         "add_topic_ids",
         "pause_format_ids",
@@ -578,7 +619,7 @@ async def upload_media_file(
         async with httpx.AsyncClient(timeout=None) as client:
             response = await client.post(
                 f"{cfg.api_base_url.rstrip()}/agent-cli/assets/media/upload",
-                headers=auth_headers(cfg),
+                headers=_request_headers(cfg),
                 data={**form_data, "media_type": media_type},
                 files=files,
             )
@@ -631,7 +672,7 @@ async def upload_artifact_file(
         async with httpx.AsyncClient(timeout=None) as client:
             response = await client.post(
                 f"{cfg.api_base_url.rstrip()}/agent-cli/artifacts/upload",
-                headers=auth_headers(cfg),
+                headers=_request_headers(cfg),
                 data=form_data,
                 files=files,
             )
@@ -664,8 +705,6 @@ def safe_user(user: dict[str, Any] | None) -> dict[str, Any] | None:
 def auth_method(cfg: Config) -> str:
     if cfg.auth.api_key:
         return "api_key"
-    if cfg.auth.access_token:
-        return "bearer"
     return "none"
 
 
@@ -744,8 +783,10 @@ def response_error_detail(response: httpx.Response) -> str | None:
     return json.dumps(payload, ensure_ascii=False, sort_keys=True)[:500]
 
 
-def emit(payload: dict[str, Any]) -> None:
-    print(json.dumps(payload, ensure_ascii=False, default=str), flush=True)
+def emit(payload: dict[str, Any], *, command_hint: str | None = None) -> bool:
+    rendered = render_json(payload, command_hint=command_hint)
+    print(rendered.text, flush=True)
+    return not rendered.offload_failed
 
 
 async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict[str, Any]:
@@ -779,7 +820,11 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
         upload_media_file=upload_media_file,
         upload_artifact_file=upload_artifact_file,
     )
-    return await command_executor(spec.schema_name)(ctx)
+    command_token = _ACTIVE_COMMAND_NAME.set(spec.schema_name)
+    try:
+        return await command_executor(spec.schema_name)(ctx)
+    finally:
+        _ACTIVE_COMMAND_NAME.reset(command_token)
 
 
 if __name__ == "__main__":

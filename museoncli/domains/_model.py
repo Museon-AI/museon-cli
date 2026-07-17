@@ -21,6 +21,12 @@ AdapterType = Literal[
 ]
 
 
+Stability = Literal["stable", "preview"]
+
+
+Transport = Literal["agent_cli_api", "local_process"]
+
+
 ROUTINES_DOMAIN = "routines"
 
 
@@ -31,6 +37,7 @@ class Domain(str, Enum):
     ARTIFACTS = "artifacts"
     GENERATION = "generation"
     SOCIAL_ACCOUNT = "social-account"
+    ACCOUNT_PUBLISH = "account-publish"
     CAMPAIGN_MONITOR = "campaign-monitor"
     SKILLS = "skills"
     EVALUATOR = "evaluator"
@@ -54,7 +61,20 @@ class CommandSpec:
     adapter_type: AdapterType = "internal_tool"
     supports_dry_run: bool = False
     requires_confirmation: bool = False
+    authentication_required: bool = True
+    required_scopes: tuple[str, ...] = ("agent_cli.access",)
+    required_roles: tuple[str, ...] = ("workspace_member",)
+    workspace_bound: bool = True
+    resource_policy: str = "server_evaluated_workspace_and_resource_access"
+    stability: Stability = "stable"
+    transport: Transport = "agent_cli_api"
 
     @property
     def schema_name(self) -> str:
         return f"{self.domain.value}.{self.shortcut.removeprefix('+')}"
+
+    @property
+    def capability_key(self) -> str:
+        """Stable capability identifier shared by discovery and API contracts."""
+
+        return self.schema_name

@@ -7,6 +7,7 @@ never rely on memory or older transcripts for the command list.
 ## Infrastructure commands
 
 - `version` / `health` / `whoami`
+- `setup --agent [auto|codex|claude-code|cursor|all]`
 - `config get` / `config set`
 - `auth start` / `auth finish` / `auth login` / `auth status` / `auth logout`
 - `workspace list` / `workspace current` / `workspace select`
@@ -19,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-95 commands across 11 domains (source of truth: `museoncli schema`).
+105 commands across 12 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -42,8 +43,9 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `asset +list` | read | — | — | direct | List reusable product, persona, topic, format, or media assets. Each resource includes a ref — paste it into report/pitchdeck markdown to embed a live card. Inline in a sentence renders a chip; alone on its own line renders a full card. |
+| `asset +list` | read | — | — | direct | List reusable product, persona, topic, format, or media assets. For multiple search concepts, repeat --search-term (max 20); do not join terms with commas in --search. Each resource includes a ref — paste it into report/pitchdeck markdown to embed a live card. Inline in a sentence renders a chip; alone on its own line renders a full card. |
 | `asset +get` | read | — | — | direct | Read one reusable product, persona, topic, format, or media asset. Each resource includes a ref — paste it into report/pitchdeck markdown to embed a live card. Inline in a sentence renders a chip; alone on its own line renders a full card. |
+| `asset +get-batch` | read | — | — | direct | Read 1-100 Formats by exact IDs in one request. When two or more known Format IDs must be queried, MUST use this command instead of looping asset +get. Items preserve request order; missing or inaccessible IDs are returned in missing_ids. |
 | `asset +create` | write | yes | — | direct | Create one reusable product, persona, topic, format, or media asset. |
 | `asset +update` | write | yes | — | direct | Update one reusable product, persona, topic, format, or media asset. |
 | `asset +delete` | destructive | yes | `--yes` | direct | Delete one reusable product, persona, topic, format, or media asset. |
@@ -74,8 +76,8 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `social-account +connect-link-create` | write | yes | — | direct | Create a workspace self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, LinkedIn, and X. |
 | `social-account +connect-link-status` | read | — | — | direct | Read or wait for the authorization result of a social account connect link. |
 | `social-account +performance-get` | read | — | — | direct | Live-read performance for one social account: authorized channels first, with automatic public-data fallback when authorization is missing/expired or the platform exposes no history. Payload `source` marks provenance (official/managed analytics vs public_data) — relay that difference to customers and never show internal retrieval details. First page includes the profile block; posts paginate via --cursor. |
-| `social-account +assets-get` | read | — | — | direct | Read persona, product, format, and topic refs attached to a social account. |
-| `social-account +assets-set` | write | yes | — | direct | Update account publish asset refs (persona, product, formats, topics) and/or workspace tags. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation. |
+| `social-account +assets-get` | read | — | — | direct | Read publish asset refs for exactly ONE social account. For two or more accounts, MUST use account-publish +asset-pools-batch-get instead of looping. |
+| `social-account +assets-set` | write | yes | — | direct | Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation. |
 | `social-account +bgm-asset-list` | read | — | — | direct | List workspace BGM assets (same-style reference videos). |
 | `social-account +bgm-asset-create` | write | yes | — | direct | Create a workspace BGM asset from a TikTok post URL. |
 | `social-account +config-get` | read | — | — | direct | Read account publish configuration, including the account-wide output language used for overlays, captions, and hashtags. |
@@ -93,6 +95,20 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `social-account +profile-edit-draft` | read | — | — | direct | Generate proposed TikTok display name, bio, or avatar drafts for one account. |
 | `social-account +profile-edit-submit` | write | yes | — | async_run | Submit a TikTok profile edit task for one account. Use +profile-edit-status to confirm completion. |
 | `social-account +profile-edit-status` | read | — | — | direct | Read execution status for a profile edit task. |
+
+### account-publish
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `account-publish +asset-pools-batch-get` | read | — | — | direct | Read effective persona, product, format, topic, and BGM pools for MULTIPLE accounts in one request, with per-account issues and hydrated resource details by default. MUST use this for multi-account audits instead of looping social-account +assets-get; keep that single command for small, precise one-account reads. This batch command is also valid for a complete five-pool inspection of one account. |
+| `account-publish +asset-pools-batch-preview` | read | — | — | direct | Live-preview one multi-account asset-pool change without writing. Supports a uniform patch plus per-account precise overrides for persona, product, formats, topics, and BGM. Always run this before +asset-pools-batch-set, present every changed/skipped/failed account and existing-schedule impact, then obtain explicit approval. Fully-managed accounts fail per-account in v1 and cannot be bypassed. |
+| `account-publish +asset-pools-batch-set` | destructive | yes | `--yes` | async_run | Submit one durable Cloud Task job to change publish asset pools for MULTIPLE accounts. MUST use this instead of looping social-account +assets-set or writing Python/shell scripts; keep the single command for small, precise one-account edits. This batch command is preferred when atomically configuring all five pools for one account. Requires the opaque token and identical normalized patches from a fresh live preview, plus a stable idempotency key and --yes. After submission, poll only +asset-pools-batch-status and inspect every failed/skipped account. Fully-managed accounts fail per-account in v1 and cannot be bypassed. |
+| `account-publish +asset-pools-batch-status` | read | — | — | direct | Read durable asset-pool batch progress and per-account results. This is the only state source after +asset-pools-batch-set; do not rescan accounts or loop social-account +assets-get for verification. |
+| `account-publish +asset-pools-batch-cancel` | write | yes | — | direct | Request cancellation of a durable asset-pool batch job. Stops account work not yet started but does not roll back accounts already completed. |
+| `account-publish +schedule-plan-preview` | read | — | — | direct | Live-preview a durable batch schedule plan without writing. Use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission. |
+| `account-publish +schedule-plan-batch` | destructive | yes | `--yes` | async_run | Submit one durable asynchronous schedule-plan job for MULTIPLE accounts or MULTIPLE occurrences. MUST use this instead of looping social-account +schedule-list/+schedule-create/+schedule-delete or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +schedule-plan-status. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them. |
+| `account-publish +schedule-plan-status` | read | — | — | direct | Read durable batch schedule-plan progress and per-account results. This is the only state source after submission. For --bgm-policy required with status succeeded, bgm_bound_count/summary.bgm_bound is the server-owned proof that every created occurrence has concrete BGM; never call schedule-list, bgm-asset-list, or routines for post-write verification, rescan accounts, or rely on /tmp state. |
+| `account-publish +schedule-plan-cancel` | write | yes | — | direct | Request cancellation of a durable schedule-plan job. Stops work not yet started but does not roll back accounts already completed. |
 
 ### campaign-monitor
 
@@ -176,7 +192,13 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 ## Contract notes
 
 - Output is always JSON: `{"ok": true, ...}` / `{"ok": false, "reason", "detail"}`.
+- Agent-sandbox results above the size threshold use the generic
+  `status:large_json_offloaded` success manifest; this is an output transport
+  policy, not a per-domain command contract or API response change.
 - Every request carries `X-CLI-Version`; servers below the minimum reply
   `cli_outdated` with upgrade instructions.
+- Remote commands require browser authorization and the `agent_cli.access`
+  scope. Workspace membership, roles, and target-resource access are evaluated
+  by Museon on every request; there is no public/internal command split.
 - Surface rules (ids, pagination, enum casing, `--dry-run` / `--yes`) live in
   [cli-surface-conventions.md](cli-surface-conventions.md).

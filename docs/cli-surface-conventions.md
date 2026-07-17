@@ -50,10 +50,19 @@ museoncli <domain> +<shortcut> [flags]
 - `destructive` commands set `requires_confirmation` and demand `--yes`;
   without it the CLI returns `{"ok": false, "reason": "confirmation_required"}`.
   Agents must confirm with the user, then retry with `--yes`.
+- Provider identity, model selection, credentials, storage buckets, queue names,
+  and other service implementation controls are server-owned. They must not
+  appear as public flags or schema fields, and structured arguments that try to
+  inject them are rejected.
 
 ## Output contract
 
 - JSON on stdout, always: `{"ok": true, ...}` / `{"ok": false, "reason", "detail"}`.
+- In the agent sandbox only, a successful JSON result above the configured size
+  threshold becomes an `ok:true`, `status:large_json_offloaded` manifest. The
+  complete unchanged JSON is written under the shared six-hour-TTL `/tmp`
+  result root and queried through the manifest's narrow jq templates. Non-agent
+  CLI output is unchanged.
 - Exit codes: `0` success, `1` failure (reason in envelope), `2` usage error,
   `130` interrupted. The envelope, not the exit code, is the source of truth.
 

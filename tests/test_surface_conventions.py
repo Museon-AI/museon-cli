@@ -28,6 +28,7 @@ LIMIT_CAP_COMMANDS = {
 ALLOWED_POSITIONALS = {"routines.record": ["kind"]}
 # skills.get windows file content by offset/limit chars — not list pagination
 CONTENT_WINDOW_COMMANDS = {"skills.get"}
+ADMIN_OR_STAFF_COMMANDS = {"evaluator.create", "evaluator.update"}
 
 
 def _parser_for(spec):
@@ -94,6 +95,27 @@ def test_dry_run_spec_and_parser_agree() -> None:
         assert spec.supports_dry_run == ("--dry-run" in flags), spec.schema_name
 
 
+def test_command_specs_publish_auth_and_capability_metadata() -> None:
+    for spec in command_specs():
+        assert spec.capability_key == spec.schema_name
+        assert spec.stability in {"stable", "preview"}
+        if spec.schema_name == "artifacts.validate":
+            assert spec.authentication_required is False
+            assert spec.required_scopes == ()
+            assert spec.required_roles == ()
+            assert spec.workspace_bound is False
+            assert spec.transport == "local_process"
+        else:
+            assert spec.authentication_required is True
+            assert spec.required_scopes == ("agent_cli.access",)
+            if spec.schema_name in ADMIN_OR_STAFF_COMMANDS:
+                assert spec.required_roles == ("workspace_admin_or_staff",)
+            else:
+                assert spec.required_roles == ("workspace_member",)
+            assert spec.workspace_bound is True
+            assert spec.transport == "agent_cli_api"
+
+
 def test_public_schema_does_not_expose_provider_identity() -> None:
     schema_text = json.dumps(
         [
@@ -109,3 +131,31 @@ def test_public_schema_does_not_expose_provider_identity() -> None:
 
     for internal_name in ("provider", "tikhub", "rapidapi", "gemini", "geelark", "phyllo"):
         assert internal_name not in schema_text
+
+
+def test_public_schema_does_not_expose_server_model_controls() -> None:
+    forbidden = {"model", "text_model", "image_model", "slice_model", "analysis_model"}
+    for spec in command_specs():
+        properties = spec.input_schema.get("properties", {})
+        assert forbidden.isdisjoint(properties), spec.schema_name
+        for value in properties.values():
+            if isinstance(value, dict):
+                nested = value.get("properties", {})
+                assert forbidden.isdisjoint(nested), spec.schema_name
+
+
+def test_public_parser_does_not_expose_server_model_controls() -> None:
+    forbidden = {
+        "--model",
+        "--text-model",
+        "--image-model",
+        "--slice-model",
+        "--analysis-model",
+        "--temperature",
+        "--max-output-tokens",
+    }
+    for spec in command_specs():
+        flags = {
+            option for action in _parser_for(spec)._actions for option in action.option_strings
+        }
+        assert forbidden.isdisjoint(flags), spec.schema_name

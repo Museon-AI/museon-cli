@@ -235,6 +235,19 @@ def _load_structured_args(args: argparse.Namespace) -> dict[str, Any]:
     return {}
 
 
+def _reject_server_controlled_fields(
+    payload: dict[str, Any],
+    *,
+    fields: set[str],
+    context: str,
+) -> None:
+    rejected = sorted(fields.intersection(payload))
+    if rejected:
+        raise ValueError(
+            f"{context} does not accept server-controlled fields: {', '.join(rejected)}."
+        )
+
+
 def _json_object(value: str, *, flag: str) -> dict[str, Any]:
     try:
         parsed = json.loads(value)
@@ -275,6 +288,7 @@ def _without_none(payload: dict[str, Any]) -> dict[str, Any]:
 def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
     payload = {
         "name": spec.schema_name,
+        "capability_key": spec.capability_key,
         "domain": spec.domain.value,
         "shortcut": spec.shortcut,
         "summary": spec.summary,
@@ -282,6 +296,16 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
         "execution": spec.execution,
         "supports_dry_run": spec.supports_dry_run,
         "requires_confirmation": spec.requires_confirmation,
+        "stability": spec.stability,
+        "transport": spec.transport,
+        "authorization": {
+            "authentication_required": spec.authentication_required,
+            "required_scopes": list(spec.required_scopes),
+            "required_roles": list(spec.required_roles),
+            "workspace_bound": spec.workspace_bound,
+            "resource_policy": spec.resource_policy,
+            "enforcement": "museon_server" if spec.authentication_required else "local_process",
+        },
     }
     frontend_url_templates = _frontend_url_templates_for_spec(spec)
     if frontend_url_templates:

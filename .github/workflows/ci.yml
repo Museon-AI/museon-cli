@@ -17,8 +17,8 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
@@ -32,44 +32,57 @@ jobs:
     name: Build and inspect package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --frozen --all-groups
       - run: uv build
-      - name: Reject private runtime files
-        run: |
-          uv run python - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile
-
-          wheel = next(Path("dist").glob("*.whl"))
-          with ZipFile(wheel) as archive:
-              names = set(archive.namelist())
-          forbidden = {"museoncli/prompt.py", "museoncli/system.md"}
-          leaked = sorted(forbidden & names)
-          if leaked:
-              raise SystemExit(f"private runtime files leaked into wheel: {leaked}")
-          required = {
-              "museoncli/bundled_skills/museon-cli/SKILL.md",
-              "museoncli/bundled_skills/museon-cli/agents/openai.yaml",
-          }
-          missing = sorted(required - names)
-          if missing:
-              raise SystemExit(f"Agent Skill files missing from wheel: {missing}")
-          PY
+      - name: Verify public package boundary
+        run: uv run python scripts/verify_public_artifacts.py
       - name: Smoke install wheel
-        run: |
-          uv venv --seed .smoke-venv
-          uv pip install --python .smoke-venv/bin/python dist/*.whl
-          .smoke-venv/bin/museoncli version
-          .smoke-venv/bin/museoncli schema
-          .smoke-venv/bin/museoncli --help
-      - uses: actions/upload-artifact@v4
+        run: uv run python scripts/smoke_install.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: museoncli-dist
           path: |
             dist/*
             contracts/command-catalog.json
+
+  platform-smoke:
+    name: Install smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --frozen --all-groups
+      - run: uv run pytest -q tests/test_auth.py tests/test_config.py tests/test_setup_agent.py
+      - run: uv build
+      - run: uv run python scripts/verify_public_artifacts.py
+      - run: uv run python scripts/smoke_install.py
+
+  dependency-audit:
+    name: Dependency vulnerability audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: Export locked runtime dependencies
+        run: >-
+          uv export --frozen --no-dev --no-emit-project --format requirements.txt
+          --output-file /tmp/museoncli-requirements.txt
+      - name: Audit dependencies
+        run: >-
+          uvx pip-audit --disable-pip --no-deps
+          --requirement /tmp/museoncli-requirements.txt

@@ -4,10 +4,10 @@
 The CLI registry remains the source of truth. Other repositories consume the
 generated JSON instead of importing ``museoncli`` at runtime.
 
-Usage (from apps/museoncli):
+Usage (from the standalone museon-cli repository root):
     uv run python scripts/gen_command_contract.py
     uv run python scripts/gen_command_contract.py --check
-    uv run python scripts/gen_command_contract.py --output ../api/app/contracts/agent_cli_command_catalog.json
+    uv run python scripts/gen_command_contract.py --output /path/to/reviewed/command-catalog.json
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from museoncli.domains import command_specs, schema_payload  # noqa: E402
 
 def build_contract() -> dict[str, Any]:
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "package": "museoncli",
         "contract_revision": __version__,
         "catalog": schema_payload(),

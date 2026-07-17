@@ -1,59 +1,18 @@
 from __future__ import annotations
 
 import asyncio
-from urllib.parse import parse_qs, urlparse
+
+import pytest
 
 from museoncli import __version__
 from museoncli.config import AuthState, Config, PendingAuthState, WorkspaceState
 import museoncli.auth as auth_module
-from museoncli.auth import auth_headers, build_authorize_url, choose_workspace, make_pkce
+from museoncli.auth import auth_headers
 
 
-def test_authorize_url_uses_pkce_without_oauth_state() -> None:
-    pkce = make_pkce()
-    url = build_authorize_url(
-        supabase_url="https://example.supabase.co",
-        provider="google",
-        redirect_to="http://127.0.0.1:5000/callback?cli_state=nonce",
-        challenge=pkce.challenge,
-    )
-
-    query = parse_qs(urlparse(url).query)
-
-    assert query["provider"] == ["google"]
-    assert query["code_challenge"] == [pkce.challenge]
-    assert query["code_challenge_method"] == ["s256"]
-    assert "state" not in query
-    assert "cli_state=nonce" in query["redirect_to"][0]
-
-
-def test_choose_workspace_prefers_museon_official() -> None:
-    workspace = choose_workspace(
-        [
-            {"id": "ws-other", "name": "Other"},
-            {"id": "ws-official", "name": "MuseOn Official"},
-        ],
-        prompt=False,
-    )
-
-    assert workspace == {"id": "ws-official", "name": "MuseOn Official"}
-
-
-def test_choose_workspace_accepts_legacy_museon_official_casing() -> None:
-    workspace = choose_workspace(
-        [
-            {"id": "ws-other", "name": "Other"},
-            {"id": "ws-official", "name": "Museon Official"},
-        ],
-        prompt=False,
-    )
-
-    assert workspace == {"id": "ws-official", "name": "Museon Official"}
-
-
-def test_auth_headers_prefers_api_key() -> None:
+def test_auth_headers_uses_scoped_api_key() -> None:
     cfg = Config()
-    cfg.auth = AuthState(access_token="bearer-token", api_key="api-key")
+    cfg.auth = AuthState(api_key="api-key")
 
     assert auth_headers(cfg) == {"X-API-KEY": "api-key", "X-CLI-Version": __version__}
 
@@ -98,6 +57,28 @@ def test_auth_headers_do_not_authenticate_with_usage_context_only() -> None:
     assert auth_headers(cfg) == {}
 
 
+@pytest.mark.parametrize("expires_at", [999, 1000])
+def test_auth_headers_rejects_expired_credentials(
+    expires_at: int, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg = Config(auth=AuthState(api_key="expired-key", expires_at=expires_at))
+    monkeypatch.setattr(auth_module.time, "time", lambda: 1000)
+
+    assert auth_headers(cfg) == {}
+
+
+def test_auth_headers_accepts_credentials_before_expiration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config(auth=AuthState(api_key="current-key", expires_at=1001))
+    monkeypatch.setattr(auth_module.time, "time", lambda: 1000)
+
+    assert auth_headers(cfg) == {
+        "X-API-KEY": "current-key",
+        "X-CLI-Version": __version__,
+    }
+
+
 def test_web_approval_login_stores_api_key(monkeypatch) -> None:
     cfg = Config()
     cfg.api_base_url = "https://api.museon.ai/api/v1"
@@ -114,7 +95,6 @@ def test_web_approval_login_stores_api_key(monkeypatch) -> None:
         assert path == "/agent-cli/auth/device/start"
         assert json_body == {
             "requested_workspace_id": None,
-            "site_url": "https://museon.ai",
             "requested_scopes": [auth_module.AGENT_CLI_API_SCOPE],
         }
         return {
@@ -137,6 +117,7 @@ def test_web_approval_login_stores_api_key(monkeypatch) -> None:
             "status": "approved",
             "api_key": "raw-api-key",
             "key_prefix": "museon_test",
+            "credential_expires_at": "2026-10-01T00:00:00+00:00",
             "user": {"id": "user-1", "email": "staff@museon.ai"},
             "workspace": {
                 "id": "workspace-1",
@@ -155,6 +136,7 @@ def test_web_approval_login_stores_api_key(monkeypatch) -> None:
 
     assert result["auth_method"] == "api_key"
     assert cfg.auth.api_key == "raw-api-key"
+    assert cfg.auth.expires_at == 1790812800
     assert cfg.workspace.id == "workspace-1"
     assert cfg.workspace.organization_name == "MuseOn"
     assert saved[-1].api_key == "raw-api-key"
@@ -183,7 +165,6 @@ def test_web_approval_start_stores_pending_state_without_returning_device_code(
         assert path == "/agent-cli/auth/device/start"
         assert json_body == {
             "requested_workspace_id": "workspace-member",
-            "site_url": "https://museon.ai",
             "requested_scopes": [auth_module.AGENT_CLI_API_SCOPE],
         }
         return {
@@ -305,80 +286,35 @@ def test_web_approval_finish_returns_pending_without_blocking(monkeypatch) -> No
     assert cfg.pending_auth.device_code == "device-1"
 
 
-def test_refresh_access_token_persists_new_tokens(monkeypatch) -> None:
-    import asyncio
-
-    from museoncli import auth as auth_module
-
+def test_web_approval_finish_wait_defaults_to_five_minutes(monkeypatch) -> None:
     cfg = Config()
-    cfg.supabase_url = "https://sb.example"
-    cfg.supabase_anon_key = "anon"
-    cfg.auth.access_token = "old-access"
-    cfg.auth.refresh_token = "old-refresh"
+    cfg.pending_auth = PendingAuthState(device_code="device-1", expires_at=2000)
+    captured: dict[str, int | float | bool | str] = {}
 
-    class _Resp:
-        status_code = 200
+    async def fake_poll_until_terminal(**kwargs):
+        captured.update(kwargs)
+        return {"authenticated": True, "status": "approved"}
 
-        @staticmethod
-        def json() -> dict:
-            return {
-                "access_token": "new-access",
-                "refresh_token": "new-refresh",
-                "expires_at": 1234,
-            }
+    monkeypatch.setattr(auth_module.time, "time", lambda: 1000)
+    monkeypatch.setattr(
+        auth_module,
+        "poll_web_approval_until_terminal",
+        fake_poll_until_terminal,
+    )
 
-    class _Client:
-        def __init__(self, *a, **k):
-            pass
+    result = asyncio.run(auth_module.finish_pending_web_approval_login(config=cfg, wait=True))
 
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *a):
-            return False
-
-        async def post(self, url, headers=None, json=None):
-            assert url.endswith("/auth/v1/token?grant_type=refresh_token")
-            assert json == {"refresh_token": "old-refresh"}
-            return _Resp()
-
-    saved: list[Config] = []
-    monkeypatch.setattr(auth_module.httpx, "AsyncClient", _Client)
-    monkeypatch.setattr(auth_module, "save_config", lambda c: saved.append(c))
-
-    assert asyncio.run(auth_module.refresh_access_token(cfg)) is True
-    assert cfg.auth.access_token == "new-access"
-    assert cfg.auth.refresh_token == "new-refresh"
-    assert cfg.auth.expires_at == 1234
-    assert saved == [cfg]
+    assert result["status"] == "approved"
+    assert captured["timeout_seconds"] == 300
 
 
-def test_refresh_access_token_refuses_without_material() -> None:
-    import asyncio
-
-    from museoncli import auth as auth_module
-
-    cfg = Config()
-    cfg.auth.api_key = "api-key"
-    cfg.auth.refresh_token = "r"
-    cfg.supabase_url = "https://sb.example"
-    cfg.supabase_anon_key = "anon"
-    assert asyncio.run(auth_module.refresh_access_token(cfg)) is False
-
-    cfg2 = Config()
-    cfg2.supabase_url = "https://sb.example"
-    cfg2.supabase_anon_key = "anon"
-    assert asyncio.run(auth_module.refresh_access_token(cfg2)) is False
-
-
-def test_api_data_retries_once_after_successful_refresh(monkeypatch) -> None:
+def test_api_data_maps_401_to_unauthorized_without_retry(monkeypatch) -> None:
     import asyncio
 
     import museoncli.main as main_module
 
     cfg = Config()
-    cfg.auth.access_token = "expired"
-    cfg.auth.refresh_token = "refresh"
+    cfg.auth.api_key = "expired"
 
     class _Resp:
         def __init__(self, status_code, payload):
@@ -389,26 +325,37 @@ def test_api_data_retries_once_after_successful_refresh(monkeypatch) -> None:
         def json(self):
             return self._payload
 
-    responses = [_Resp(401, {}), _Resp(200, {"success": True, "data": {"ok": 1}})]
     calls: list[str] = []
 
     async def fake_send(cfg_arg, method, url, *, json_body, params):
         calls.append(url)
-        return responses.pop(0)
-
-    refreshed: list[bool] = []
-
-    async def fake_refresh(cfg_arg):
-        refreshed.append(True)
-        return True
+        return _Resp(401, {})
 
     monkeypatch.setattr(main_module, "_api_send", fake_send)
-    monkeypatch.setattr(main_module, "refresh_access_token", fake_refresh)
 
-    result = asyncio.run(main_module.api_data(cfg, "GET", "/agent-cli/whoami"))
-    assert result == {"ok": 1}
-    assert refreshed == [True]
-    assert len(calls) == 2
+    with pytest.raises(RuntimeError, match="unauthorized"):
+        asyncio.run(main_module.api_data(cfg, "GET", "/agent-cli/whoami"))
+    assert len(calls) == 1
+
+
+def test_api_data_does_not_send_expired_credentials(monkeypatch) -> None:
+    import museoncli.main as main_module
+
+    cfg = Config(auth=AuthState(api_key="expired", expires_at=1000))
+    sent = False
+
+    async def fake_send(cfg_arg, method, url, *, json_body, params):
+        nonlocal sent
+        del cfg_arg, method, url, json_body, params
+        sent = True
+        raise AssertionError("expired credentials must fail before network IO")
+
+    monkeypatch.setattr(auth_module.time, "time", lambda: 1000)
+    monkeypatch.setattr(main_module, "_api_send", fake_send)
+
+    with pytest.raises(RuntimeError, match="missing_auth"):
+        asyncio.run(main_module.api_data(cfg, "GET", "/agent-cli/whoami"))
+    assert sent is False
 
 
 def test_api_data_maps_426_to_cli_outdated(monkeypatch) -> None:
@@ -418,7 +365,7 @@ def test_api_data_maps_426_to_cli_outdated(monkeypatch) -> None:
     import pytest as _pytest
 
     cfg = Config()
-    cfg.auth.access_token = "token"
+    cfg.auth.api_key = "token"
 
     class _Resp:
         status_code = 426
@@ -430,11 +377,7 @@ def test_api_data_maps_426_to_cli_outdated(monkeypatch) -> None:
     async def fake_send(cfg_arg, method, url, *, json_body, params):
         return _Resp()
 
-    async def fake_refresh(cfg_arg):
-        raise AssertionError("426 must not trigger a token refresh")
-
     monkeypatch.setattr(main_module, "_api_send", fake_send)
-    monkeypatch.setattr(main_module, "refresh_access_token", fake_refresh)
 
     with _pytest.raises(RuntimeError) as excinfo:
         asyncio.run(main_module.api_data(cfg, "GET", "/agent-cli/whoami"))
@@ -448,7 +391,7 @@ def test_api_send_retries_connect_errors(monkeypatch) -> None:
     import museoncli.main as main_module
 
     cfg = Config()
-    cfg.auth.access_token = "token"
+    cfg.auth.api_key = "token"
     calls: list[str] = []
     sleeps: list[float] = []
 

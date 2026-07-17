@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the command tables in docs/ from the live registry.
 
-Usage (from apps/museoncli):
+Usage (from the standalone museon-cli repository root):
     uv run python scripts/gen_command_docs.py          # rewrite docs in place
     uv run python scripts/gen_command_docs.py --check  # exit 2 when docs drift
 
