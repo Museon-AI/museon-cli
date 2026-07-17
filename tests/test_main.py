@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from museoncli.config import Config, PendingAuthState, WorkspaceState
+from museoncli.config import AuthState, Config, PendingAuthState, WorkspaceState
 from museoncli.domains import ROUTINE_INSTRUCTION_MAX_LENGTH
 import museoncli.main as main_module
 from museoncli.main import build_parser, reason_from_exception
@@ -221,9 +221,7 @@ def test_cli_update_notice_reads_pypi_manifest_without_credentials(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _FakeManifestClient.calls = []
-    _FakeManifestClient.response = _FakeManifestResponse(
-        200, {"info": {"version": "0.1.17"}}
-    )
+    _FakeManifestClient.response = _FakeManifestResponse(200, {"info": {"version": "0.1.17"}})
     cfg = Config(site_url="https://museon.ai")
 
     monkeypatch.delenv("MUSEONCLI_UPDATE_CHECK", raising=False)
@@ -248,9 +246,7 @@ def test_cli_update_notice_is_silent_when_manifest_is_current(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _FakeManifestClient.calls = []
-    _FakeManifestClient.response = _FakeManifestResponse(
-        200, {"info": {"version": "0.1.16"}}
-    )
+    _FakeManifestClient.response = _FakeManifestResponse(200, {"info": {"version": "0.1.16"}})
 
     monkeypatch.setattr(main_module, "__version__", "0.1.16")
     monkeypatch.setattr(main_module.httpx, "AsyncClient", _FakeManifestClient)
@@ -285,12 +281,46 @@ def test_dispatch_with_notices_attaches_update_notice(
     monkeypatch.setattr(main_module, "load_config", Config)
     monkeypatch.setattr(main_module, "check_cli_update_notice", fake_notice)
 
-    result = asyncio.run(main_module.dispatch_with_notices(parse(["version"])))
+    result = asyncio.run(main_module.dispatch_with_notices(parse(["health"])))
 
     assert result == {
         "data": {"cli_version": "0.1.16"},
         "_notice": {"update": {"latest_version": "0.1.17"}},
     }
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["version"],
+        ["config", "get"],
+        ["setup", "--agent", "codex"],
+        ["schema"],
+        ["auth", "status"],
+        ["auth", "logout"],
+        ["workspace", "current"],
+        ["artifacts", "+validate", "--file", "./report.md"],
+        ["artifacts", "+share", "--artifact-id", "artifact-1", "--dry-run"],
+    ],
+)
+def test_dispatch_with_notices_keeps_local_commands_offline(
+    argv: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def fake_dispatch(args: argparse.Namespace) -> dict[str, object]:
+        del args
+        return {"data": {"local": True}}
+
+    async def unexpected_notice(cfg: Config) -> dict[str, object]:
+        del cfg
+        raise AssertionError("local command attempted an update check")
+
+    monkeypatch.setattr(main_module, "dispatch", fake_dispatch)
+    monkeypatch.setattr(main_module, "check_cli_update_notice", unexpected_notice)
+
+    result = asyncio.run(main_module.dispatch_with_notices(parse(argv)))
+
+    assert result == {"data": {"local": True}}
 
 
 def test_schema_parser_supports_optional_command_name() -> None:
@@ -301,6 +331,14 @@ def test_schema_parser_supports_optional_command_name() -> None:
     assert list_args.name is None
     assert command_args.command == "schema"
     assert command_args.name == "research.web-research"
+
+
+def test_setup_parser_supports_named_agent_and_force() -> None:
+    args = parse(["setup", "--agent", "codex", "--force"])
+
+    assert args.command == "setup"
+    assert args.agent == "codex"
+    assert args.force is True
 
 
 def test_config_get_parser() -> None:
@@ -333,8 +371,7 @@ def test_auth_login_defaults_to_web_approval() -> None:
 
     assert args.command == "auth"
     assert args.auth_command == "login"
-    assert args.method == "web"
-    assert args.provider == "google"
+    assert args.timeout == 300
 
 
 def test_auth_start_parser() -> None:
@@ -379,6 +416,46 @@ def test_auth_status_clears_expired_pending_authorization(
     assert saved[-1].device_code is None
 
 
+def test_auth_status_reports_expired_credential_without_authenticating(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config(
+        auth=AuthState(
+            api_key="expired-key",
+            expires_at=1000,
+            user={"id": "user-1", "email": "user@example.com"},
+        )
+    )
+    monkeypatch.setattr(main_module.time, "time", lambda: 1000)
+
+    result = asyncio.run(
+        main_module.dispatch_auth(
+            argparse.Namespace(auth_command="status"),
+            cfg,
+        )
+    )
+
+    assert result["data"] == {
+        "authenticated": False,
+        "status": "expired",
+        "reason": "credential_expired",
+        "auth_method": "api_key",
+        "expires_at": 1000,
+        "user": {"id": "user-1", "email": "user@example.com"},
+        "workspace": {
+            "id": None,
+            "name": None,
+            "organization_id": None,
+            "organization_name": None,
+        },
+        "pending_web_approval": {
+            "active": False,
+            "expires_at": None,
+            "user_code": None,
+        },
+    }
+
+
 def test_auth_finish_parser_supports_optional_wait() -> None:
     args = parse(["auth", "finish", "--wait", "--timeout", "30", "--poll-interval", "0.5"])
 
@@ -387,6 +464,13 @@ def test_auth_finish_parser_supports_optional_wait() -> None:
     assert args.wait is True
     assert args.timeout == 30
     assert args.poll_interval == 0.5
+
+
+def test_auth_finish_wait_defaults_to_five_minutes() -> None:
+    args = parse(["auth", "finish", "--wait"])
+
+    assert args.wait is True
+    assert args.timeout == 300
 
 
 def test_workspace_commands_remain_available() -> None:
@@ -1126,6 +1210,74 @@ def test_asset_list_parser() -> None:
     assert args.search == "Museon"
 
 
+def test_asset_list_parser_accepts_repeated_search_terms() -> None:
+    args = parse(
+        [
+            "asset",
+            "+list",
+            "--type",
+            "topic",
+            "--search-term",
+            "scenic",
+            "--search-term",
+            "nature",
+            "--search-term",
+            "scenic",
+        ]
+    )
+
+    assert main_module.command_payload(args)["filters"]["search_terms"] == [
+        "scenic",
+        "nature",
+    ]
+
+
+def test_asset_list_parser_rejects_mixed_search_modes() -> None:
+    with pytest.raises(SystemExit):
+        parse(
+            [
+                "asset",
+                "+list",
+                "--type",
+                "topic",
+                "--search",
+                "scenic",
+                "--search-term",
+                "nature",
+            ]
+        )
+
+
+def test_asset_list_schema_explains_repeated_search_terms() -> None:
+    schema = main_module.schema_payload("asset.list")
+    properties = schema["input_schema"]["properties"]
+
+    assert "One free-text search term" in properties["search"]["description"]
+    assert properties["search_terms"]["maxItems"] == 20
+    assert "Repeat --search-term" in properties["search_terms"]["description"]
+
+
+def test_asset_list_rejects_too_many_search_terms() -> None:
+    argv = ["asset", "+list", "--type", "topic"]
+    for index in range(21):
+        argv.extend(["--search-term", f"term-{index}"])
+
+    with pytest.raises(ValueError, match="at most 20"):
+        main_module.command_payload(parse(argv))
+
+
+def test_request_headers_include_active_cli_command() -> None:
+    cfg = Config()
+    cfg.auth = AuthState(api_key="api-key")
+    token = main_module._ACTIVE_COMMAND_NAME.set("asset.list")
+    try:
+        headers = main_module._request_headers(cfg)
+    finally:
+        main_module._ACTIVE_COMMAND_NAME.reset(token)
+
+    assert headers["X-Museon-CLI-Command"] == "asset.list"
+
+
 def test_asset_list_format_parser() -> None:
     args = parse(["asset", "+list", "--type", "format", "--scope", "workspace"])
 
@@ -1663,8 +1815,6 @@ def test_social_account_schedule_generate_parser_creates_new_generation() -> Non
             "schedule-1",
             "--notes",
             "focus on UGC angle",
-            "--text-model",
-            "gpt-5",
             "--metadata-json",
             '{"operator":"cli"}',
         ]
@@ -1678,7 +1828,6 @@ def test_social_account_schedule_generate_parser_creates_new_generation() -> Non
         "schedule_item_id": "schedule-1",
         "generation": {
             "custom_prompt": "focus on UGC angle",
-            "text_model": "gpt-5",
             "metadata": {"operator": "cli"},
         },
     }
@@ -2280,6 +2429,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "artifacts",
         "generation",
         "social-account",
+        "account-publish",
         "campaign-monitor",
         "skills",
         "evaluator",
@@ -2300,6 +2450,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
     assert [item["name"] for item in result["data"]["commands"]["asset"]] == [
         "asset.list",
         "asset.get",
+        "asset.get-batch",
         "asset.create",
         "asset.update",
         "asset.delete",
@@ -2421,7 +2572,8 @@ def test_schema_returns_one_command_contract() -> None:
     assert "credit_cost" not in result["data"]  # costs are a server-side concern
     assert "usd_cost" not in result["data"]
     assert "Museon media" in result["data"]["summary"]
-    assert result["data"]["input_schema"]["properties"]["model"]["type"] == ["string", "null"]
+    properties = result["data"]["input_schema"]["properties"]
+    assert {"model", "temperature", "max_output_tokens"}.isdisjoint(properties)
     assert any("asset +create --type media --url" in item for item in result["data"]["examples"])
     assert "adapter" not in result["data"]
 
@@ -2512,6 +2664,56 @@ def test_schema_hides_evaluator_model_config_inputs() -> None:
     assert "model_config" not in create["data"]["input_schema"]["properties"]
     assert "model_config" not in update["data"]["input_schema"]["properties"]
     assert "model config" not in update["data"]["summary"]
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        [
+            "research",
+            "+visual-analyze",
+            "--media",
+            "https://example.com/image.png",
+            "--prompt",
+            "Analyze this",
+            "--args-json",
+            '{"model":"server-model"}',
+        ],
+        [
+            "generation",
+            "+create",
+            "--schedule-item-id",
+            "schedule-1",
+            "--args-json",
+            '{"image_model":"server-model"}',
+        ],
+        [
+            "asset",
+            "+create",
+            "--type",
+            "format",
+            "--url",
+            "https://www.tiktok.com/@example/photo/123",
+            "--args-json",
+            '{"payload":{"analysis_model":"server-model"}}',
+        ],
+        [
+            "social-account",
+            "+schedule-generate",
+            "--id",
+            "account-1",
+            "--schedule-item-id",
+            "schedule-1",
+            "--args-json",
+            '{"generation":{"text_model":"server-model"}}',
+        ],
+    ],
+)
+def test_public_commands_reject_server_model_controls_in_structured_args(
+    argv: list[str],
+) -> None:
+    with pytest.raises(ValueError, match="server-controlled"):
+        main_module.command_payload(parse(argv))
 
 
 def test_schema_returns_routines_command_catalog() -> None:
@@ -4933,8 +5135,6 @@ def test_dispatch_social_account_schedule_generate_uses_agent_api(
             "5c000000-0000-4000-8000-000000000001",
             "--notes",
             "focus on UGC angle",
-            "--image-model",
-            "gpt-image-2",
         ]
     )
     result = asyncio.run(main_module.dispatch(args))
@@ -4966,7 +5166,6 @@ def test_dispatch_social_account_schedule_generate_uses_agent_api(
                 "workspace_id": "workspace-1",
                 "payload": {
                     "custom_prompt": "focus on UGC angle",
-                    "image_model": "gpt-image-2",
                 },
             },
         }
@@ -5136,6 +5335,56 @@ def test_dispatch_asset_list_product_uses_agent_assets_api(
             "unwrap_success": True,
         }
     ]
+
+
+def test_dispatch_asset_list_repeated_search_terms_use_one_request(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, json_body, unwrap_success
+        calls.append({"method": method, "path": path, "params": params})
+        return {
+            "type": "topic",
+            "items": [],
+            "pagination": {"total": 0, "page": 1, "page_size": 20, "total_pages": 1},
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    args = parse(
+        [
+            "asset",
+            "+list",
+            "--type",
+            "topic",
+            "--search-term",
+            "scenic",
+            "--search-term",
+            "nature",
+        ]
+    )
+    asyncio.run(main_module.dispatch(args))
+
+    assert calls[0]["params"] == {
+        "type": "topic",
+        "workspace_id": "workspace-1",
+        "search_terms": ["scenic", "nature"],
+        "page": 1,
+        "page_size": 20,
+    }
 
 
 def test_dispatch_asset_list_format_uses_agent_assets_api(
@@ -5906,6 +6155,124 @@ def test_dispatch_asset_get_topic_uses_agent_assets_api(
     ]
 
 
+@pytest.mark.parametrize(
+    ("workspace_args", "expected_workspace_id"),
+    [
+        ([], "workspace-selected"),
+        (
+            ["--workspace-id", "20000000-0000-4000-8000-000000000001"],
+            "20000000-0000-4000-8000-000000000001",
+        ),
+    ],
+)
+def test_dispatch_asset_get_batch_format_uses_one_request_and_preserves_ids(
+    monkeypatch: pytest.MonkeyPatch,
+    workspace_args: list[str],
+    expected_workspace_id: str,
+) -> None:
+    first_id = "10000000-0000-4000-8000-000000000001"
+    second_id = "10000000-0000-4000-8000-000000000002"
+    cfg = Config()
+    cfg.workspace = WorkspaceState(
+        id="workspace-selected", name="Workspace", organization_id="org-1"
+    )
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg
+        calls.append(
+            {
+                "method": method,
+                "path": path,
+                "json_body": json_body,
+                "params": params,
+                "unwrap_success": unwrap_success,
+            }
+        )
+        return {
+            "type": "format",
+            "requested_ids": [first_id, second_id],
+            "items": [{"id": second_id, "title": "Second"}],
+            "missing_ids": [first_id],
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    args = parse(
+        [
+            "asset",
+            "+get-batch",
+            "--type",
+            "format",
+            "--id",
+            first_id,
+            "--id",
+            second_id,
+            *workspace_args,
+        ]
+    )
+    result = asyncio.run(main_module.dispatch(args))
+
+    assert result["command"] == "asset.get-batch"
+    assert result["data"]["missing_ids"] == [first_id]
+    assert result["data"]["items"][0]["ref"].endswith(f"/assets/formats/{second_id})")
+    assert calls == [
+        {
+            "method": "POST",
+            "path": "/agent-cli/assets/format:batch-get",
+            "json_body": {
+                "type": "format",
+                "workspace_id": expected_workspace_id,
+                "ids": [first_id, second_id],
+            },
+            "params": None,
+            "unwrap_success": True,
+        }
+    ]
+
+
+def test_asset_get_batch_format_rejects_duplicate_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    format_id = "10000000-0000-4000-8000-000000000001"
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+
+    args = parse(
+        [
+            "asset",
+            "+get-batch",
+            "--type",
+            "format",
+            "--id",
+            format_id,
+            "--id",
+            format_id,
+        ]
+    )
+
+    with pytest.raises(ValueError, match="must be unique"):
+        asyncio.run(main_module.dispatch(args))
+
+
+def test_asset_get_batch_schema_requires_native_batch_for_multiple_format_ids() -> None:
+    schema = main_module.schema_payload("asset.get-batch")
+
+    assert schema["input_schema"]["properties"]["format_ids"]["maxItems"] == 100
+    assert schema["input_schema"]["properties"]["format_ids"]["uniqueItems"] is True
+    assert "MUST use this command" in schema["summary"]
+
+
 def test_dispatch_asset_create_topic_uses_agent_assets_api(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -6169,8 +6536,6 @@ def test_dispatch_asset_create_format_url_calls_format_api(
             "format",
             "--url",
             "https://www.tiktok.com/@example/photo/123",
-            "--analysis-model",
-            "gpt-5",
         ]
     )
     result = asyncio.run(main_module.dispatch(args))
@@ -6193,7 +6558,6 @@ def test_dispatch_asset_create_format_url_calls_format_api(
                 "payload": {
                     "source_url": "https://www.tiktok.com/@example/photo/123",
                     "source_kind": "tiktok",
-                    "analysis_model": "gpt-5",
                 },
             },
         }

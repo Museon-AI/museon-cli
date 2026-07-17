@@ -13,6 +13,7 @@ from museoncli.domains._shared import (
     _direct_output_schema,
     _json_object,
     _load_structured_args,
+    _reject_server_controlled_fields,
     _without_none,
 )
 
@@ -33,15 +34,17 @@ def _add_generation_create_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--product-id")
     parser.add_argument("--notes", default="")
     parser.add_argument("--custom-prompt")
-    parser.add_argument("--text-model")
-    parser.add_argument("--image-model")
-    parser.add_argument("--slice-model")
     parser.add_argument("--metadata-json")
     parser.add_argument("--dry-run", action="store_true")
 
 
 def _build_generation_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
     payload = _load_structured_args(args)
+    _reject_server_controlled_fields(
+        payload,
+        fields={"text_model", "image_model", "slice_model"},
+        context="generation +create",
+    )
     if args.metadata_json:
         payload["metadata"] = _json_object(args.metadata_json, flag="--metadata-json")
     custom_prompt = args.custom_prompt if args.custom_prompt is not None else args.notes
@@ -56,9 +59,6 @@ def _build_generation_create_arguments(args: argparse.Namespace) -> dict[str, An
                 "persona_id": args.persona_id,
                 "product_id": args.product_id,
                 "custom_prompt": custom_prompt.strip() if custom_prompt else None,
-                "text_model": args.text_model,
-                "image_model": args.image_model,
-                "slice_model": args.slice_model,
             }
         )
     )
@@ -172,9 +172,6 @@ def _generation_create_input_schema() -> dict[str, Any]:
             "persona_id": {"type": ["string", "null"], "minLength": 1},
             "product_id": {"type": ["string", "null"], "minLength": 1},
             "custom_prompt": {"type": "string", "maxLength": 4000},
-            "text_model": {"type": ["string", "null"]},
-            "image_model": {"type": ["string", "null"], "default": "gpt-image-2"},
-            "slice_model": {"type": ["string", "null"]},
             "metadata": {"type": "object"},
             "dry_run": {"type": "boolean", "default": False},
         },

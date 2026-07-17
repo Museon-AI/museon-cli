@@ -34,6 +34,7 @@ from museoncli.domains._shared import (
     _json_object,
     _load_structured_args,
     _ordered_strings,
+    _reject_server_controlled_fields,
     _uuid_id_schema,
     _without_none,
 )
@@ -445,9 +446,6 @@ def _build_social_account_schedule_item_arguments(args: argparse.Namespace) -> d
 def _add_social_account_schedule_generate_arguments(parser: argparse.ArgumentParser) -> None:
     _add_social_account_schedule_item_arguments(parser)
     parser.add_argument("--notes", default="")
-    parser.add_argument("--text-model")
-    parser.add_argument("--image-model")
-    parser.add_argument("--slice-model")
     parser.add_argument("--metadata-json")
     parser.add_argument("--dry-run", action="store_true")
 
@@ -456,12 +454,21 @@ def _build_social_account_schedule_generate_arguments(
     args: argparse.Namespace,
 ) -> dict[str, Any]:
     payload = _build_social_account_schedule_item_arguments(args)
+    _reject_server_controlled_fields(
+        payload,
+        fields={"text_model", "image_model", "slice_model"},
+        context="social-account +schedule-generate",
+    )
+    structured_generation = payload.get("generation")
+    if isinstance(structured_generation, dict):
+        _reject_server_controlled_fields(
+            structured_generation,
+            fields={"text_model", "image_model", "slice_model"},
+            context="social-account +schedule-generate generation",
+        )
     generation = _without_none(
         {
             "custom_prompt": args.notes.strip() if args.notes else None,
-            "text_model": args.text_model,
-            "image_model": args.image_model,
-            "slice_model": args.slice_model,
         }
     )
     if args.metadata_json:
@@ -1006,9 +1013,6 @@ def _social_account_schedule_generate_input_schema() -> dict[str, Any]:
                 "type": "object",
                 "properties": {
                     "custom_prompt": {"type": "string", "maxLength": 4000},
-                    "text_model": {"type": ["string", "null"]},
-                    "image_model": {"type": ["string", "null"]},
-                    "slice_model": {"type": ["string", "null"]},
                     "metadata": {"type": ["object", "null"]},
                 },
             },
@@ -1460,7 +1464,10 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+assets-get",
-            summary="Read persona, product, format, and topic refs attached to a social account.",
+            summary=(
+                "Read publish asset refs for exactly ONE social account. For two or more "
+                "accounts, MUST use account-publish +asset-pools-batch-get instead of looping."
+            ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="social_account_assets_get",
@@ -1474,8 +1481,10 @@ def specs() -> list[CommandSpec]:
             domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+assets-set",
             summary=(
-                "Update account publish asset refs (persona, product, formats, topics) "
-                "and/or workspace tags. For a fully-managed account, first relay the "
+                "Update publish asset refs for exactly ONE account and/or its workspace tags. "
+                "For multi-account publish assets, MUST use account-publish "
+                "+asset-pools-batch-preview then +asset-pools-batch-set instead of looping. "
+                "For a fully-managed account, first relay the "
                 "returned impact to the user; retry with --managed-operation-approved "
                 "only after explicit confirmation."
             ),

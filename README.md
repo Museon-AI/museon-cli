@@ -85,14 +85,26 @@ These three parts work together:
 The CLI never grants access by itself. Museon checks the signed-in user,
 workspace membership, role, and target resource for every operation.
 
+| Outcome | Domains |
+| --- | --- |
+| Find market, creator, post, community, and visual evidence | `research`, `campaign-monitor` |
+| Analyze content and preserve reusable knowledge | `content-analysis`, `asset`, `artifacts`, `skills` |
+| Create images and slideshows | `generation` |
+| Connect accounts, configure publish pools, schedule work, publish, and review results | `social-account`, `account-publish`, `account-operation` |
+| Run recurring or one-off operating loops | `routines`, `evaluator` |
+
+The current generated catalog contains 104 commands across 12 domains. Use the
+live schema rather than copying flags from an old transcript.
+
 ## You stay in control
 
 - Research and other read-only work can run as part of the task.
 - Creating, changing, scheduling, publishing, or deleting something requires
   the approval rules described by the command.
 - The Agent must explain the intended change before a sensitive operation.
-- Credentials stay in the Agent's local environment; authorization decisions
-  remain on Museon's servers.
+- Credentials stay in the Agent's local environment. Museon CLI uses the
+  operating-system credential store when available and a mode-0600 file only
+  in headless environments; authorization decisions remain on Museon's servers.
 
 ## Install without an Agent
 
@@ -100,16 +112,19 @@ If you prefer to install the CLI yourself, use Python 3.11+ and
 [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv tool install "git+https://github.com/Museon-AI/museon-cli.git"
+uv tool install museoncli
+museoncli setup --agent codex
 museoncli auth start
 museoncli auth finish --wait
 museoncli whoami
 ```
 
-The shorter `museon` command is an alias for `museoncli`.
-
-> The repository is private while the first public release is being prepared,
-> so installation currently requires collaborator access.
+Use `--agent claude-code` or `--agent cursor` for those hosts; `--agent auto`
+uses the active host marker, or a single existing supported Agent home. If
+several Agent homes exist, choose one explicitly or use `--agent all`. Restart
+the Agent after installing the Skill. `auth finish --wait` waits for approval
+for up to five minutes by default; use `--timeout` to change that limit. The
+shorter `museon` command is an alias for `museoncli`.
 
 <details>
 <summary><strong>Develop Museon CLI</strong></summary>
@@ -136,5 +151,7 @@ uv run python scripts/gen_command_contract.py
 
 </details>
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) to contribute. Please report security
-issues privately by following [SECURITY.md](SECURITY.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE_OF_CONDUCT.md) to contribute. Release notes live in
+[CHANGELOG.md](CHANGELOG.md). Please report security issues privately by
+following [SECURITY.md](SECURITY.md).

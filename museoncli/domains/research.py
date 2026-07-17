@@ -16,6 +16,7 @@ from museoncli.domains._shared import (
     _direct_output_schema,
     _json_list,
     _load_structured_args,
+    _reject_server_controlled_fields,
 )
 
 
@@ -328,16 +329,15 @@ def _add_visual_analyze_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--media-file")
     parser.add_argument("--prompt", required=True)
     parser.add_argument("--context")
-    parser.add_argument(
-        "--model",
-        help="Optional internal model override. Omit to use the default analysis model.",
-    )
-    parser.add_argument("--temperature", type=float)
-    parser.add_argument("--max-output-tokens", type=int)
 
 
 def _build_visual_analyze_arguments(args: argparse.Namespace) -> dict[str, Any]:
     payload = _load_structured_args(args)
+    _reject_server_controlled_fields(
+        payload,
+        fields={"model", "temperature", "max_output_tokens"},
+        context="research +visual-analyze",
+    )
     if args.media_json:
         payload["media"] = _json_list(args.media_json, flag="--media-json")
     if args.media_file:
@@ -352,12 +352,6 @@ def _build_visual_analyze_arguments(args: argparse.Namespace) -> dict[str, Any]:
     payload["prompt"] = args.prompt
     if args.context is not None:
         payload["context"] = args.context
-    if args.model is not None:
-        payload["model"] = args.model
-    if args.temperature is not None:
-        payload["temperature"] = args.temperature
-    if args.max_output_tokens is not None:
-        payload["max_output_tokens"] = args.max_output_tokens
     return payload
 
 
@@ -591,12 +585,6 @@ def _visual_analyze_input_schema() -> dict[str, Any]:
             },
             "prompt": {"type": "string", "minLength": 1, "maxLength": 12000},
             "context": {"type": ["string", "null"], "maxLength": 4000},
-            "model": {
-                "type": ["string", "null"],
-                "description": "Optional internal model override; omitted uses the default.",
-            },
-            "temperature": {"type": ["number", "null"], "minimum": 0.0, "maximum": 2.0},
-            "max_output_tokens": {"type": "integer", "minimum": 256, "maximum": 32768},
         },
         "required": ["media", "prompt"],
     }

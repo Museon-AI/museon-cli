@@ -213,6 +213,12 @@ def specs() -> list[CommandSpec]:
             examples=["museoncli artifacts +validate --file ./report.md"],
             add_arguments=_add_artifact_validate_arguments,
             build_arguments=_build_artifact_validate_arguments,
+            authentication_required=False,
+            required_scopes=(),
+            required_roles=(),
+            workspace_bound=False,
+            resource_policy="local_file_only",
+            transport="local_process",
         ),
         CommandSpec(
             domain=Domain.ARTIFACTS,

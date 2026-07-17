@@ -23,6 +23,7 @@ from museoncli.domains._shared import (
     _json_list,
     _json_object,
     _load_structured_args,
+    _reject_server_controlled_fields,
     _ordered_strings,
     _without_none,
 )
@@ -84,6 +85,10 @@ PRODUCT_ASSET_TYPE_CHOICES = [
 ]
 
 
+ASSET_SEARCH_TERMS_MAX = 20
+FORMAT_BATCH_GET_MAX_IDS = 100
+
+
 def _add_asset_common_arguments(
     parser: argparse.ArgumentParser,
     *,
@@ -100,7 +105,23 @@ def _add_asset_list_arguments(parser: argparse.ArgumentParser) -> None:
     _add_asset_common_arguments(parser, choices=ASSET_READ_TYPE_CHOICES)
     parser.add_argument("--page", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=20)
-    parser.add_argument("--search")
+    search_group = parser.add_mutually_exclusive_group()
+    search_group.add_argument(
+        "--search",
+        help=(
+            "One free-text search term. For multiple terms, repeat --search-term "
+            "instead of joining terms with commas."
+        ),
+    )
+    search_group.add_argument(
+        "--search-term",
+        action="append",
+        dest="search_terms",
+        help=(
+            "Search term to OR across asset text/tag fields; repeat for multiple "
+            f"terms (max {ASSET_SEARCH_TERMS_MAX})."
+        ),
+    )
     parser.add_argument("--status")
     parser.add_argument("--tag")
     parser.add_argument("--topic-direction-id")
@@ -118,6 +139,14 @@ def _build_asset_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
         filters.update(_json_object(args.filters_json, flag="--filters-json"))
     if args.search is not None:
         filters["search"] = args.search
+    if args.search_terms:
+        search_terms = _ordered_strings(args.search_terms)
+        if len(search_terms) > ASSET_SEARCH_TERMS_MAX:
+            raise ValueError(
+                f"asset +list supports at most {ASSET_SEARCH_TERMS_MAX} "
+                "--search-term values per request."
+            )
+        filters["search_terms"] = search_terms
     if args.status is not None:
         filters["status"] = args.status
     if args.tag is not None:
@@ -174,6 +203,35 @@ def _build_asset_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
     if args.include_json:
         payload["include"] = _json_list(args.include_json, flag="--include-json")
     return _without_none(payload)
+
+
+def _add_asset_get_batch_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_asset_common_arguments(parser, choices=["format"], include_product_id=False)
+    parser.add_argument(
+        "--id",
+        action="append",
+        dest="format_ids",
+        required=True,
+        help="Exact Format UUID; repeat for multiple Formats (max 100).",
+    )
+
+
+def _build_asset_get_batch_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    format_ids = [str(item).strip() for item in args.format_ids if str(item).strip()]
+    if len(format_ids) > FORMAT_BATCH_GET_MAX_IDS:
+        raise ValueError(
+            f"asset +get-batch supports at most {FORMAT_BATCH_GET_MAX_IDS} --id values."
+        )
+    if len(format_ids) != len(set(format_ids)):
+        raise ValueError("asset +get-batch --id values must be unique.")
+    payload.update(
+        {
+            "type": _asset_resource_type(dekebab(args.asset_type)),
+            "format_ids": format_ids,
+        }
+    )
+    return payload
 
 
 def _add_asset_create_arguments(parser: argparse.ArgumentParser) -> None:
@@ -277,7 +335,6 @@ def _add_asset_write_arguments(
     parser.add_argument("--status")
     parser.add_argument("--metadata-json")
     parser.add_argument("--post-range", action="append", dest="post_ranges")
-    parser.add_argument("--analysis-model")
     parser.add_argument("--instructions")
     parser.add_argument("--format-json")
     parser.add_argument("--format-file")
@@ -313,8 +370,18 @@ def _build_asset_delete_arguments(args: argparse.Namespace) -> dict[str, Any]:
 def _build_asset_write_arguments(args: argparse.Namespace, *, operation: str) -> dict[str, Any]:
     asset_type = dekebab(args.asset_type)
     result = _load_structured_args(args)
+    _reject_server_controlled_fields(
+        result,
+        fields={"analysis_model"},
+        context=f"asset +{operation}",
+    )
     payload = _dict_value(result.get("payload"), field="payload") or {}
     payload.update(_asset_payload_from_structured_args(args))
+    _reject_server_controlled_fields(
+        payload,
+        fields={"analysis_model"},
+        context=f"asset +{operation}",
+    )
     payload.update(_asset_payload_from_flags(args, asset_type=asset_type, operation=operation))
     if not payload:
         raise ValueError(f"asset +{operation} requires payload fields or --payload-json.")
@@ -504,7 +571,6 @@ def _format_asset_payload_from_flags(args: argparse.Namespace) -> dict[str, Any]
             _format_media_payload(
                 media_ids=media_ids,
                 post_ranges=args.post_ranges,
-                analysis_model=args.analysis_model,
                 instructions=args.instructions,
                 publish_on_create=args.publish_on_create,
             ),
@@ -515,7 +581,6 @@ def _format_asset_payload_from_flags(args: argparse.Namespace) -> dict[str, Any]
             _format_url_payload(
                 urls=urls,
                 requested_source_kind=args.source_kind,
-                analysis_model=args.analysis_model,
                 instructions=args.instructions,
                 publish_on_create=args.publish_on_create,
             ),
@@ -528,8 +593,6 @@ def _format_asset_payload_from_flags(args: argparse.Namespace) -> dict[str, Any]
             "source_kind": "manual",
             "format_input": format_input,
         }
-        if args.analysis_model is not None:
-            payload["analysis_model"] = args.analysis_model
         if args.instructions is not None:
             payload["instructions"] = args.instructions
         if args.publish_on_create:
@@ -593,7 +656,6 @@ def _format_url_payload(
     *,
     urls: list[str],
     requested_source_kind: str,
-    analysis_model: str | None,
     instructions: str | None,
     publish_on_create: bool,
 ) -> dict[str, Any]:
@@ -616,8 +678,6 @@ def _format_url_payload(
                 "asset +create --type format requires --source-kind cross-post for multiple URLs."
             )
         payload["source_url"] = urls[0]
-    if analysis_model is not None:
-        payload["analysis_model"] = analysis_model
     if instructions is not None:
         payload["instructions"] = instructions
     if publish_on_create:
@@ -629,7 +689,6 @@ def _format_media_payload(
     *,
     media_ids: list[str],
     post_ranges: list[str] | None,
-    analysis_model: str | None,
     instructions: str | None,
     publish_on_create: bool,
 ) -> dict[str, Any]:
@@ -645,8 +704,6 @@ def _format_media_payload(
         payload["uploaded_post_ranges"] = parsed_ranges
     else:
         payload["source_kind"] = "upload"
-    if analysis_model is not None:
-        payload["analysis_model"] = analysis_model
     if instructions is not None:
         payload["instructions"] = instructions
     if publish_on_create:
@@ -821,7 +878,23 @@ def _asset_list_input_schema() -> dict[str, Any]:
             "filters": {"type": ["object", "null"]},
             "product_id": {"type": ["string", "null"]},
             "scope": {"type": "string", "enum": ["all", "workspace", "public"]},
-            "search": {"type": ["string", "null"]},
+            "search": {
+                "type": ["string", "null"],
+                "description": (
+                    "One free-text search term. For multiple concepts, use "
+                    "search_terms / repeated --search-term instead of joining terms "
+                    "with commas."
+                ),
+            },
+            "search_terms": {
+                "type": ["array", "null"],
+                "items": {"type": "string", "minLength": 1},
+                "maxItems": ASSET_SEARCH_TERMS_MAX,
+                "description": (
+                    "Terms matched with OR across asset text and tag fields. Repeat "
+                    "--search-term in CLI; do not concatenate terms with commas."
+                ),
+            },
             "status": {"type": ["string", "null"]},
             "tag": {"type": ["string", "null"]},
             "topic_direction_id": {"type": ["string", "null"]},
@@ -850,6 +923,28 @@ def _asset_get_input_schema() -> dict[str, Any]:
             "include": {"type": "array", "items": {"type": "string"}},
         },
         "required": ["type", "id"],
+    }
+
+
+def _asset_get_batch_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "type": {
+                "type": "string",
+                "enum": ["format"],
+                "description": "This exact-ID batch read currently supports Format assets.",
+            },
+            "format_ids": {
+                "type": "array",
+                "items": {"type": "string", "format": "uuid"},
+                "minItems": 1,
+                "maxItems": FORMAT_BATCH_GET_MAX_IDS,
+                "uniqueItems": True,
+                "description": "Exact Format UUIDs. CLI callers repeat --id.",
+            },
+        },
+        "required": ["type", "format_ids"],
     }
 
 
@@ -912,6 +1007,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+list",
             summary=(
                 "List reusable product, persona, topic, format, or media assets. "
+                "For multiple search concepts, repeat --search-term (max 20); do not "
+                "join terms with commas in --search. "
                 "Each resource includes a ref — paste it into report/pitchdeck markdown "
                 "to embed a live card. Inline in a sentence renders a chip; alone on its "
                 "own line renders a full card."
@@ -923,6 +1020,10 @@ def specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema("Asset list payload returned by Museon API."),
             examples=[
                 "museoncli asset +list --type product --search Museon --page-size 10",
+                (
+                    "museoncli asset +list --type topic --search-term scenic "
+                    "--search-term nature --search-term landscape"
+                ),
                 "museoncli asset +list --type topic --status active --page-size 20",
                 "museoncli asset +list --type format --scope workspace --page-size 20",
                 "museoncli asset +list --type media --media-type image --search logo",
@@ -950,6 +1051,28 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_asset_get_arguments,
             build_arguments=_build_asset_get_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.ASSET,
+            shortcut="+get-batch",
+            summary=(
+                "Read 1-100 Formats by exact IDs in one request. When two or more known "
+                "Format IDs must be queried, MUST use this command instead of looping "
+                "asset +get. Items preserve request order; missing or inaccessible IDs "
+                "are returned in missing_ids."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="asset_get_batch",
+            input_schema=_asset_get_batch_input_schema(),
+            output_schema=_direct_output_schema(
+                "Ordered Format items and missing_ids returned by Museon API."
+            ),
+            examples=[
+                ("museoncli asset +get-batch --type format --id <format_id_1> --id <format_id_2>"),
+            ],
+            add_arguments=_add_asset_get_batch_arguments,
+            build_arguments=_build_asset_get_batch_arguments,
         ),
         CommandSpec(
             domain=Domain.ASSET,
@@ -1045,6 +1168,7 @@ async def _execute_list(ctx: CommandContext) -> Any:
                 "type": public_asset_type(resource_type),
                 "workspace_id": workspace_id,
                 "search": filters.get("search"),
+                "search_terms": filters.get("search_terms"),
                 "keyword": filters.get("keyword"),
                 "tag": filters.get("tag"),
                 "topic_direction_id": filters.get("topic_direction_id"),
@@ -1073,6 +1197,25 @@ async def _execute_get(ctx: CommandContext) -> Any:
         "GET",
         f"/agent-cli/assets/{public_asset_type(resource_type)}/{resource_id}",
         params={"workspace_id": workspace_id},
+    )
+
+
+async def _execute_get_batch(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    return await api_data(
+        cfg,
+        "POST",
+        "/agent-cli/assets/format:batch-get",
+        json_body={
+            "type": "format",
+            "workspace_id": workspace_id,
+            "ids": arguments.get("format_ids") or [],
+        },
     )
 
 
@@ -1142,7 +1285,12 @@ async def _execute_delete(ctx: CommandContext) -> Any:
 
 
 async def _run_read(ctx: CommandContext) -> dict[str, Any]:
-    raw = await (_execute_list(ctx) if ctx.spec.schema_name == "asset.list" else _execute_get(ctx))
+    if ctx.spec.schema_name == "asset.list":
+        raw = await _execute_list(ctx)
+    elif ctx.spec.schema_name == "asset.get-batch":
+        raw = await _execute_get_batch(ctx)
+    else:
+        raw = await _execute_get(ctx)
     if raw is None:
         data = await adapter_call(ctx)
         return domain_command_envelope(ctx.spec.schema_name, data)
@@ -1178,6 +1326,7 @@ async def _run_write(ctx: CommandContext) -> dict[str, Any]:
 EXECUTORS = {
     "asset.list": _run_read,
     "asset.get": _run_read,
+    "asset.get-batch": _run_read,
     "asset.create": _run_write,
     "asset.update": _run_write,
     "asset.delete": direct_enveloped(_execute_delete),
@@ -1312,7 +1461,6 @@ def validate_asset_write_arguments(
                     "tiktok_urls",
                     "uploaded_media_ids",
                     "uploaded_post_ranges",
-                    "analysis_model",
                     "instructions",
                     "publish_on_create",
                     "tags",

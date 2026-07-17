@@ -24,9 +24,11 @@ Enter this flow only after a task command returns `missing_auth`,
 3. In the same turn, run:
 
    ```bash
-   museoncli auth finish --wait --timeout 60 --poll-interval 2
+   museoncli auth finish --wait
    ```
 
+   This waits for up to five minutes by default. Use `--timeout <seconds>` only
+   when the task needs a different limit.
 4. If it times out, keep the same verification URL visible and retry
    `museoncli auth finish` after the user approves.
 5. If no workspace is selected, run `museoncli workspace list`, ask the user
@@ -57,7 +59,7 @@ Use the JSON `reason` to choose the next step:
 | Reason | Response |
 | --- | --- |
 | `missing_auth` | Start the authentication recovery flow. |
-| `unauthorized` | Refresh authentication, then retry the original task. |
+| `unauthorized` | Start a fresh browser authorization, then retry the original task. |
 | `forbidden` | Explain that the current identity lacks permission. |
 | `invalid_input` | Inspect the command schema and correct the arguments. |
 | `not_found` | Recheck the selected workspace and IDs. |

@@ -10,9 +10,15 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           python-version: "3.12"
       - run: uv sync --frozen --all-groups
@@ -20,17 +26,52 @@ jobs:
         run: |
           package_version=$(uv run python -c 'from museoncli import __version__; print(__version__)')
           test "v${package_version}" = "${GITHUB_REF_NAME}"
+      - name: Verify release commit is on main
+        run: |
+          git fetch --no-tags --prune origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+            echo "Release commit ${GITHUB_SHA} is not reachable from origin/main." >&2
+            exit 1
+          fi
       - run: uv run ruff check .
       - run: uv run pytest -q
       - run: uv run python scripts/gen_command_docs.py --check
       - run: uv run python scripts/gen_command_contract.py --check
       - run: uv build
-      - uses: actions/upload-artifact@v4
+      - name: Verify public package boundary
+        run: uv run python scripts/verify_public_artifacts.py
+      - name: Smoke install wheel
+        run: uv run python scripts/smoke_install.py
+      - name: Create checksums
+        run: |
+          mkdir -p release-assets
+          sha256sum dist/* > release-assets/checksums.txt
+      - name: Generate SPDX SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          path: dist
+          format: spdx-json
+          output-file: release-assets/museoncli.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Attest release provenance
+        if: ${{ github.event.repository.visibility == 'public' }}
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
+        with:
+          subject-path: "dist/*"
+      - name: Attest release SBOM
+        if: ${{ github.event.repository.visibility == 'public' }}
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
+        with:
+          subject-path: "dist/*"
+          sbom-path: release-assets/museoncli.spdx.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-dist
           path: |
             dist/*
             contracts/command-catalog.json
+            release-assets/*
 
   publish-pypi:
     needs: build
@@ -39,11 +80,11 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-dist
           path: release
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
         with:
           packages-dir: release/dist/
 
@@ -53,7 +94,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-dist
           path: release
@@ -61,6 +102,47 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release upload "${GITHUB_REF_NAME}"
+          --repo Museon-AI/museon-cli
           release/dist/*
           release/contracts/command-catalog.json
+          release/release-assets/*
           --clobber
+
+  notify-private-runtime:
+    needs: [publish-pypi, attach-release-assets]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-dist
+          path: release
+      - name: Dispatch verified wheel to private Agent runtime
+        env:
+          GH_TOKEN: ${{ secrets.MUSEON_RUNTIME_DISPATCH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "MUSEON_RUNTIME_DISPATCH_TOKEN is not configured; runtime dispatch skipped."
+            exit 0
+          fi
+          wheel=$(find release/dist -maxdepth 1 -name '*.whl' -type f -print -quit)
+          if [[ -z "${wheel}" ]]; then
+            echo "No wheel found in release artifact" >&2
+            exit 1
+          fi
+          wheel_name=$(basename "${wheel}")
+          wheel_sha256=$(sha256sum "${wheel}" | awk '{print $1}')
+          wheel_url="https://github.com/Museon-AI/museon-cli/releases/download/${GITHUB_REF_NAME}/${wheel_name}"
+          contract=release/contracts/command-catalog.json
+          contract_sha256=$(sha256sum "${contract}" | awk '{print $1}')
+          contract_url="https://github.com/Museon-AI/museon-cli/releases/download/${GITHUB_REF_NAME}/command-catalog.json"
+          jq -n \
+            --arg wheel_url "${wheel_url}" \
+            --arg wheel_sha256 "${wheel_sha256}" \
+            --arg contract_url "${contract_url}" \
+            --arg contract_sha256 "${contract_sha256}" \
+            --arg version "${GITHUB_REF_NAME#v}" \
+            '{event_type: "museoncli-release", client_payload: {wheel_url: $wheel_url, wheel_sha256: $wheel_sha256, contract_url: $contract_url, contract_sha256: $contract_sha256, version: $version}}' \
+            | gh api --method POST repos/Museon-AI/museon/dispatches --input -

@@ -79,7 +79,9 @@ CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用
 - 调研和其他只读工作可以直接服务于当前任务。
 - 创建、修改、排期、发布或删除内容时，Agent 必须遵守对应操作的确认要求。
 - 重要操作执行前，Agent 会先说明具体要改变什么。
-- 凭证保存在 Agent 所在的本地环境，最终的权限判断始终由 Museon 服务端完成。
+- 凭证保存在 Agent 所在的本地环境。Museon CLI 会优先使用系统凭据存储；只有
+  无头环境无法使用系统凭据存储时，才会回退到权限为 `0600` 的本地文件。最终的
+  权限判断始终由 Museon 服务端完成。
 
 ## 不通过 Agent 手动安装
 
@@ -87,15 +89,19 @@ CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用
 [uv](https://docs.astral.sh/uv/)：
 
 ```bash
-uv tool install "git+https://github.com/Museon-AI/museon-cli.git"
+uv tool install museoncli
+museoncli setup --agent codex
 museoncli auth start
 museoncli auth finish --wait
 museoncli whoami
 ```
 
-安装后可以使用 `museoncli`，也可以使用更短的别名 `museon`。
-
-> 首个公开版本仍在准备中，目前仓库是私有的，安装时需要拥有仓库访问权限。
+Claude Code 和 Cursor 分别使用 `--agent claude-code`、`--agent cursor`；
+`--agent auto` 会优先识别当前运行的 Agent；没有运行环境标记时，只会在唯一一个
+已有的 Agent 目录中安装。如果检测到多个目录，请明确选择一个 Agent，或使用
+`--agent all`。安装 Skill 后需要重启 Agent。`auth finish --wait` 默认等待授权最多
+五分钟，可以通过 `--timeout` 调整。CLI 可以使用 `museoncli`，也可以使用更短的
+别名 `museon`。
 
 <details>
 <summary><strong>参与 Museon CLI 开发</strong></summary>
@@ -122,5 +128,6 @@ uv run python scripts/gen_command_contract.py
 
 </details>
 
-参与贡献请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。安全问题请按照
-[SECURITY.md](SECURITY.md) 私下报告。
+参与贡献请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)，版本变化记录在
+[CHANGELOG.md](CHANGELOG.md)。安全问题请按照 [SECURITY.md](SECURITY.md) 私下报告。

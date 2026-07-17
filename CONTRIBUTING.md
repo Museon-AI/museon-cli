@@ -2,6 +2,8 @@
 
 Thanks for helping improve Museon CLI.
 
+Participation is subject to the repository's [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Set up
 
 Museon CLI uses Python 3.11 or newer and [uv](https://docs.astral.sh/uv/).

@@ -2,25 +2,37 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from museoncli.credentials import (
+    clear_credentials,
+    credential_backend,
+    load_credentials,
+    save_credentials,
+    write_private_json,
+)
+
 
 DEFAULT_SITE_URL = "https://www.museon.ai"
 DEFAULT_API_BASE_URL = "https://api.museon.ai/api/v1"
-DEFAULT_WORKSPACE_NAME = "MuseOn Official"
 API_V1_SUFFIX = "/api/v1"
 
 
 @dataclass
 class AuthState:
-    access_token: str | None = None
-    refresh_token: str | None = None
     expires_at: int | None = None
     user: dict[str, Any] | None = None
     api_key: str | None = None
+
+    def is_expired(self, *, now: int | None = None) -> bool:
+        if not self.api_key or self.expires_at is None:
+            return False
+        current_time = int(time.time()) if now is None else now
+        return self.expires_at <= current_time
 
 
 @dataclass
@@ -45,9 +57,6 @@ class PendingAuthState:
 class Config:
     api_base_url: str = DEFAULT_API_BASE_URL
     site_url: str = DEFAULT_SITE_URL
-    supabase_url: str | None = None
-    supabase_anon_key: str | None = None
-    default_workspace_name: str = DEFAULT_WORKSPACE_NAME
     runtime_context: dict[str, Any] = field(default_factory=dict)
     auth: AuthState = field(default_factory=AuthState)
     workspace: WorkspaceState = field(default_factory=WorkspaceState)
@@ -59,9 +68,6 @@ class Config:
         for key in (
             "api_base_url",
             "site_url",
-            "supabase_url",
-            "supabase_anon_key",
-            "default_workspace_name",
         ):
             if value.get(key):
                 parsed_value = (
@@ -82,25 +88,28 @@ class Config:
             )
         if isinstance(value.get("runtime_context"), dict):
             cfg.runtime_context = dict(value["runtime_context"])
-        apply_env_overrides(cfg)
         return cfg
 
     def safe_dict(self) -> dict[str, Any]:
         data = asdict(self)
         auth = data.get("auth") or {}
-        auth_method = "none"
-        if auth.get("api_key"):
-            auth_method = "api_key"
-        elif auth.get("access_token"):
-            auth_method = "bearer"
+        auth_expired = self.auth.is_expired()
+        authenticated = bool(auth.get("api_key")) and not auth_expired
         data["auth"] = {
-            "authenticated": bool(auth.get("access_token") or auth.get("api_key")),
-            "auth_method": auth_method,
+            "authenticated": authenticated,
+            "status": (
+                "expired"
+                if auth_expired
+                else "authenticated"
+                if authenticated
+                else "unauthenticated"
+            ),
+            "reason": "credential_expired" if auth_expired else None,
+            "auth_method": "api_key" if auth.get("api_key") else "none",
+            "credential_storage": credential_backend(config_path()),
             "expires_at": auth.get("expires_at"),
             "user": auth.get("user"),
         }
-        if data.get("supabase_anon_key"):
-            data["supabase_anon_key"] = "***"
         pending_auth = data.get("pending_auth") or {}
         data["pending_auth"] = {
             "active": bool(pending_auth.get("device_code")),
@@ -127,17 +136,56 @@ def load_config() -> Config:
         cfg = Config()
         apply_env_overrides(cfg)
         return cfg
-    return Config.from_dict(json.loads(path.read_text(encoding="utf-8")))
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    cfg = Config.from_dict(raw)
+    stored_auth = load_credentials(path)
+    legacy_auth = raw.get("auth") if isinstance(raw.get("auth"), dict) else {}
+    api_key = stored_auth.get("api_key") or legacy_auth.get("api_key")
+    if isinstance(api_key, str) and api_key:
+        cfg.auth.api_key = api_key
+    if any(
+        legacy_auth.get(field_name) for field_name in ("api_key", "access_token", "refresh_token")
+    ):
+        save_credentials(path, {"api_key": cfg.auth.api_key})
+        _write_non_secret_config(path, cfg)
+    apply_env_overrides(cfg)
+    return cfg
 
 
 def save_config(config: Config) -> None:
     path = config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(asdict(config), indent=2, ensure_ascii=False), encoding="utf-8")
-    try:
-        path.chmod(0o600)
-    except OSError:
-        pass
+    previous = load_credentials(path)
+    values: dict[str, str | None] = {}
+    for field_name in stored_auth_fields():
+        if _auth_field_is_from_environment(config, field_name):
+            values[field_name] = previous.get(field_name)
+        else:
+            values[field_name] = getattr(config.auth, field_name)
+    save_credentials(path, values)
+    _write_non_secret_config(path, config)
+
+
+def delete_auth_credentials() -> None:
+    clear_credentials(config_path())
+
+
+def stored_auth_fields() -> tuple[str, ...]:
+    return ("api_key",)
+
+
+def _write_non_secret_config(path: Path, config: Config) -> None:
+    data = asdict(config)
+    for field_name in stored_auth_fields():
+        data["auth"].pop(field_name, None)
+    write_private_json(path, data)
+
+
+def _auth_field_is_from_environment(config: Config, field_name: str) -> bool:
+    return (
+        field_name == "api_key"
+        and bool(os.environ.get("MUSEON_API_KEY"))
+        and (config.auth.api_key == os.environ.get("MUSEON_API_KEY"))
+    )
 
 
 def apply_env_overrides(config: Config) -> None:
@@ -148,20 +196,11 @@ def apply_env_overrides(config: Config) -> None:
             raise ValueError(f"MUSEON_API_BASE_URL is invalid: {exc}") from exc
     if os.environ.get("MUSEON_SITE_URL"):
         config.site_url = os.environ["MUSEON_SITE_URL"].rstrip("/")
-    if os.environ.get("MUSEON_SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL"):
-        config.supabase_url = os.environ.get("MUSEON_SUPABASE_URL") or os.environ.get(
-            "NEXT_PUBLIC_SUPABASE_URL"
-        )
-    if os.environ.get("MUSEON_SUPABASE_ANON_KEY") or os.environ.get(
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY"
-    ):
-        config.supabase_anon_key = os.environ.get("MUSEON_SUPABASE_ANON_KEY") or os.environ.get(
-            "NEXT_PUBLIC_SUPABASE_ANON_KEY"
-        )
-    if os.environ.get("MUSEON_AUTH_TOKEN"):
-        config.auth.access_token = os.environ["MUSEON_AUTH_TOKEN"]
     if os.environ.get("MUSEON_API_KEY"):
         config.auth.api_key = os.environ["MUSEON_API_KEY"]
+        # Environment credentials are independent from any previously stored
+        # device-flow credential and therefore do not inherit its expiry.
+        config.auth.expires_at = None
 
 
 def update_config(**values: str | None) -> Config:

@@ -12,6 +12,8 @@ from museoncli.domains._model import (
     Domain,
     ExecutionMode,
     RiskLevel,
+    Stability,
+    Transport,
 )
 from museoncli.domains._shared import (
     _spec_schema_payload,
@@ -25,6 +27,7 @@ from museoncli.domains import (
     artifacts,
     generation,
     social_account,
+    account_publish,
     campaign_monitor,
     social_media,
     skills,
@@ -41,6 +44,7 @@ _DOMAIN_MODULES = (
     artifacts,
     generation,
     social_account,
+    account_publish,
     campaign_monitor,
     social_media,
     skills,
@@ -141,6 +145,8 @@ __all__ = [
     "Domain",
     "ExecutionMode",
     "RiskLevel",
+    "Stability",
+    "Transport",
     "ROUTINE_INSTRUCTION_MAX_LENGTH",
     "add_domain_command_parsers",
     "command_payload",

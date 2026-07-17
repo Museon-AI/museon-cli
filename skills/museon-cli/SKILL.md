@@ -17,13 +17,13 @@ exists and the user asked to install Museon or complete a Museon task:
 2. Prefer an existing isolated-tool installer:
 
    ```bash
-   uv tool install "git+https://github.com/Museon-AI/museon-cli.git"
+   uv tool install museoncli
    ```
 
    If `uv` is unavailable but `pipx` is already installed, use:
 
    ```bash
-   pipx install "git+https://github.com/Museon-AI/museon-cli.git"
+   pipx install museoncli
    ```
 
 3. Do not install or replace Python, `uv`, or `pipx` without the user's
@@ -34,9 +34,6 @@ exists and the user asked to install Museon or complete a Museon task:
 5. Continue the original task. If the user asked to sign in, start the browser
    authorization flow described in
    [safety-and-auth.md](references/safety-and-auth.md).
-
-The repository is private while the first public release is being prepared.
-Until it opens, installation requires GitHub access to `Museon-AI/museon-cli`.
 
 ## Operating contract
 
@@ -115,6 +112,11 @@ research -> decide -> create -> approve -> publish -> review -> reuse.
 - For completed visual generations, include the result `ref` and available grid
   or slide previews. For an in-progress generation, share its live `ref` now
   and explain that progress is visible there.
+- Large successful JSON results may be replaced by a
+  `status:large_json_offloaded` manifest containing a local file path, byte
+  count, and a small preview. Read the referenced file in bounded chunks or use
+  targeted search; do not treat the manifest as missing business data and do
+  not paste the full file back into the conversation.
 
 ## Skill boundaries
 

@@ -428,6 +428,7 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_evaluator_create_arguments,
             build_arguments=_build_evaluator_create_arguments,
             supports_dry_run=True,
+            required_roles=("workspace_admin_or_staff",),
         ),
         CommandSpec(
             domain=Domain.EVALUATOR,
@@ -447,6 +448,7 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_evaluator_update_arguments,
             build_arguments=_build_evaluator_update_arguments,
             supports_dry_run=True,
+            required_roles=("workspace_admin_or_staff",),
         ),
         CommandSpec(
             domain=Domain.EVALUATOR,
