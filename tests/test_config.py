@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import stat
 from pathlib import Path
 
@@ -124,12 +125,28 @@ def test_config_keeps_credentials_out_of_non_secret_json(
     credential_payload = json.loads(credential_file.read_text(encoding="utf-8"))
     assert "api_key" not in public_payload["auth"]
     assert credential_payload == {"api_key": "museon-secret"}
-    assert stat.S_IMODE(credential_file.stat().st_mode) == 0o600
-    assert stat.S_IMODE(config_file.stat().st_mode) == 0o600
 
     loaded = load_config()
     assert loaded.auth.api_key == "museon-secret"
     assert loaded.safe_dict()["auth"]["credential_storage"] == "protected_file"
+
+
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="Windows file access is enforced by ACLs rather than POSIX mode bits",
+)
+def test_file_backend_uses_owner_only_permissions_on_posix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    credential_file = tmp_path / "credentials.json"
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+
+    save_config(Config(auth=AuthState(api_key="museon-secret")))
+
+    assert stat.S_IMODE(credential_file.stat().st_mode) == 0o600
+    assert stat.S_IMODE(config_file.stat().st_mode) == 0o600
 
 
 def test_config_file_backend_supports_platforms_without_fchmod(
