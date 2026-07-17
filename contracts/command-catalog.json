@@ -1058,6 +1058,107 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "asset.options",
+          "domain": "asset",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {
+                "type": "product"
+              },
+              "description": "Open a product resource returned by asset commands.",
+              "label": "Product detail",
+              "path_template": "/assets/products/{id}",
+              "required_fields": [
+                "id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/assets/products/{id}"
+            },
+            {
+              "applies_when": {
+                "type": "persona"
+              },
+              "description": "Open a persona resource returned by asset commands.",
+              "label": "Persona detail",
+              "path_template": "/assets/personas/{id}",
+              "required_fields": [
+                "id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/assets/personas/{id}"
+            },
+            {
+              "applies_when": {
+                "type": "topic"
+              },
+              "description": "Open a content topic resource returned by asset commands.",
+              "label": "Topic detail",
+              "path_template": "/assets/topics/{id}",
+              "required_fields": [
+                "id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/assets/topics/{id}"
+            },
+            {
+              "applies_when": {
+                "type": "topic_direction"
+              },
+              "description": "Open the topics page that manages topic directions and topics.",
+              "label": "Topic directions",
+              "path_template": "/assets/topics",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/assets/topics"
+            },
+            {
+              "applies_when": {
+                "type": "format"
+              },
+              "description": "Open a slideshow format resource returned by asset commands.",
+              "label": "Format detail",
+              "path_template": "/assets/formats/{id}",
+              "required_fields": [
+                "id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/assets/formats/{id}"
+            },
+            {
+              "applies_when": {
+                "type": "media"
+              },
+              "description": "Open the media gallery for uploaded and generated media assets.",
+              "label": "Media gallery",
+              "path_template": "/gallery",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/gallery"
+            }
+          ],
+          "name": "asset.options",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+options",
+          "stability": "stable",
+          "summary": "List canonical values and labels for an asset field. Product category supports optional intent search, so a term such as education, edtech, or 教育 returns the relevant learning categories without trial writes.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "asset.create",
           "domain": "asset",
           "execution": "direct",
@@ -1142,7 +1243,7 @@
           "risk_level": "write",
           "shortcut": "+create",
           "stability": "stable",
-          "summary": "Create one reusable product, persona, topic, format, or media asset.",
+          "summary": "Create one reusable product, persona, topic, format, or media asset. Product requires name, category, and description; discover canonical categories with asset +options and use --dry-run for authoritative server validation without writing.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -4900,7 +5001,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.58",
+  "contract_revision": "0.3.59",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -9064,6 +9165,131 @@
         }
       ],
       "input_schema": {
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "product"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "assets": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "asset_type": {
+                            "enum": [
+                              "brand_logo",
+                              "product_image",
+                              "website_screenshot",
+                              "app_screenshot"
+                            ],
+                            "type": "string"
+                          },
+                          "media_id": {
+                            "format": "uuid",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "media_id",
+                          "asset_type"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "category": {
+                      "description": "Canonical product category. For intent search and labels, run `museoncli asset +options --type product --field category`.",
+                      "enum": [
+                        "MARKETING_TOOLS",
+                        "SALES_TOOLS",
+                        "SOCIAL_MEDIA_MANAGEMENT",
+                        "ECOMMERCE_TOOLS",
+                        "JOB_SEARCH_TOOLS",
+                        "ADS_CAMPAIGNS",
+                        "LEARNING_PLATFORMS",
+                        "LANGUAGE_LEARNING",
+                        "KIDS_EDUCATION",
+                        "SKILL_TRAINING",
+                        "HEALTH_WELLNESS",
+                        "SKINCARE",
+                        "RECIPES_NUTRITION",
+                        "HEALTH_GUIDANCE",
+                        "MINDFULNESS",
+                        "MENTAL_HEALTH",
+                        "EMOTIONAL_SUPPORT",
+                        "LIFESTYLE",
+                        "DATING",
+                        "PET_CARE",
+                        "TRAVEL_PLANNING",
+                        "FAMILY_PARENTING",
+                        "GAMING_ENTERTAINMENT",
+                        "AI_WRITING",
+                        "IMAGE_DESIGN_EDITING",
+                        "VOICE_GENERATION",
+                        "MUSIC_GENERATION",
+                        "VIDEO_GENERATION_EDITING",
+                        "TRANSLATION_LOCALIZATION",
+                        "AI_CHATBOT",
+                        "VIRTUAL_COMPANION",
+                        "VOICE_ASSISTANT",
+                        "PRODUCTIVITY_TOOLS",
+                        "AI_AUTOMATION_PLATFORM",
+                        "AI_SEARCH",
+                        "CODING_ASSISTANT",
+                        "NO_CODE_TOOLS",
+                        "DATA_INSIGHTS",
+                        "INVESTING_TOOLS",
+                        "GENERAL"
+                      ],
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Required product summary.",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Product display name.",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "tags": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "website_url": {
+                      "format": "uri",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "category",
+                    "description"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        ],
         "properties": {
           "dry_run": {
             "default": false,
@@ -9153,7 +9379,7 @@
       "risk_level": "write",
       "shortcut": "+create",
       "stability": "stable",
-      "summary": "Create one reusable product, persona, topic, format, or media asset.",
+      "summary": "Create one reusable product, persona, topic, format, or media asset. Product requires name, category, and description; discover canonical categories with asset +options and use --dry-run for authoritative server validation without writing.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -10009,6 +10235,196 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "asset.options": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "asset.options",
+      "domain": "asset",
+      "examples": [
+        "museoncli asset +options --type product --field category",
+        "museoncli asset +options --type product --field category --query education",
+        "museoncli asset +options --type product --field category --query 教育"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {
+            "type": "product"
+          },
+          "description": "Open a product resource returned by asset commands.",
+          "label": "Product detail",
+          "path_template": "/assets/products/{id}",
+          "required_fields": [
+            "id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/assets/products/{id}"
+        },
+        {
+          "applies_when": {
+            "type": "persona"
+          },
+          "description": "Open a persona resource returned by asset commands.",
+          "label": "Persona detail",
+          "path_template": "/assets/personas/{id}",
+          "required_fields": [
+            "id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/assets/personas/{id}"
+        },
+        {
+          "applies_when": {
+            "type": "topic"
+          },
+          "description": "Open a content topic resource returned by asset commands.",
+          "label": "Topic detail",
+          "path_template": "/assets/topics/{id}",
+          "required_fields": [
+            "id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/assets/topics/{id}"
+        },
+        {
+          "applies_when": {
+            "type": "topic_direction"
+          },
+          "description": "Open the topics page that manages topic directions and topics.",
+          "label": "Topic directions",
+          "path_template": "/assets/topics",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/assets/topics"
+        },
+        {
+          "applies_when": {
+            "type": "format"
+          },
+          "description": "Open a slideshow format resource returned by asset commands.",
+          "label": "Format detail",
+          "path_template": "/assets/formats/{id}",
+          "required_fields": [
+            "id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/assets/formats/{id}"
+        },
+        {
+          "applies_when": {
+            "type": "media"
+          },
+          "description": "Open the media gallery for uploaded and generated media assets.",
+          "label": "Media gallery",
+          "path_template": "/gallery",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/gallery"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "field": {
+            "description": "Product field whose canonical values should be returned.",
+            "enum": [
+              "category"
+            ],
+            "type": "string"
+          },
+          "query": {
+            "description": "Optional intent search such as education, edtech, or 教育. Omit it to return all canonical values.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "description": "Asset type whose field options should be discovered.",
+            "enum": [
+              "product"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "field"
+        ],
+        "type": "object"
+      },
+      "name": "asset.options",
+      "output_schema": {
+        "description": "Canonical asset-field options returned by Museon API.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+options",
+      "stability": "stable",
+      "summary": "List canonical values and labels for an asset field. Product category supports optional intent search, so a term such as education, edtech, or 教育 returns the relevant learning categories without trial writes.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "asset.update": {
       "authorization": {
         "authentication_required": true,
@@ -10107,6 +10523,126 @@
         }
       ],
       "input_schema": {
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "product"
+                }
+              },
+              "required": [
+                "type"
+              ]
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "assets": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "asset_type": {
+                            "enum": [
+                              "brand_logo",
+                              "product_image",
+                              "website_screenshot",
+                              "app_screenshot"
+                            ],
+                            "type": "string"
+                          },
+                          "media_id": {
+                            "format": "uuid",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "media_id",
+                          "asset_type"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "category": {
+                      "description": "Canonical product category. For intent search and labels, run `museoncli asset +options --type product --field category`.",
+                      "enum": [
+                        "MARKETING_TOOLS",
+                        "SALES_TOOLS",
+                        "SOCIAL_MEDIA_MANAGEMENT",
+                        "ECOMMERCE_TOOLS",
+                        "JOB_SEARCH_TOOLS",
+                        "ADS_CAMPAIGNS",
+                        "LEARNING_PLATFORMS",
+                        "LANGUAGE_LEARNING",
+                        "KIDS_EDUCATION",
+                        "SKILL_TRAINING",
+                        "HEALTH_WELLNESS",
+                        "SKINCARE",
+                        "RECIPES_NUTRITION",
+                        "HEALTH_GUIDANCE",
+                        "MINDFULNESS",
+                        "MENTAL_HEALTH",
+                        "EMOTIONAL_SUPPORT",
+                        "LIFESTYLE",
+                        "DATING",
+                        "PET_CARE",
+                        "TRAVEL_PLANNING",
+                        "FAMILY_PARENTING",
+                        "GAMING_ENTERTAINMENT",
+                        "AI_WRITING",
+                        "IMAGE_DESIGN_EDITING",
+                        "VOICE_GENERATION",
+                        "MUSIC_GENERATION",
+                        "VIDEO_GENERATION_EDITING",
+                        "TRANSLATION_LOCALIZATION",
+                        "AI_CHATBOT",
+                        "VIRTUAL_COMPANION",
+                        "VOICE_ASSISTANT",
+                        "PRODUCTIVITY_TOOLS",
+                        "AI_AUTOMATION_PLATFORM",
+                        "AI_SEARCH",
+                        "CODING_ASSISTANT",
+                        "NO_CODE_TOOLS",
+                        "DATA_INSIGHTS",
+                        "INVESTING_TOOLS",
+                        "GENERAL"
+                      ],
+                      "type": "string"
+                    },
+                    "description": {
+                      "description": "Required product summary.",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "name": {
+                      "description": "Product display name.",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "tags": {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "website_url": {
+                      "format": "uri",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        ],
         "properties": {
           "dry_run": {
             "default": false,

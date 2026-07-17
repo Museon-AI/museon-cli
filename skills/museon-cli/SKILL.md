@@ -24,7 +24,7 @@ exists and the user asked to install Museon or complete a Museon task:
    with the immutable official GitHub release tag instead of stopping:
 
    ```bash
-   uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+   uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
    ```
 
    If `uv` is unavailable but `pipx` is already installed, use:
@@ -37,7 +37,7 @@ exists and the user asked to install Museon or complete a Museon task:
    is missing from its registry:
 
    ```bash
-   pipx install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+   pipx install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
    ```
 
 3. Do not install or replace Python, `uv`, or `pipx` without the user's

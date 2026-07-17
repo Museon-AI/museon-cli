@@ -4,6 +4,9 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+- Added canonical product-category discovery, type-specific product schemas,
+  server-validated product dry-runs, generated command help, and structured API
+  validation details.
 - Added an immutable official GitHub release fallback so Agent onboarding can
   recover when `museoncli` is not yet available from the configured registry.
 - Prepared the standalone public CLI and Agent Skill.

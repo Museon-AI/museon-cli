@@ -95,7 +95,7 @@ uv tool install museoncli
 如果当前软件源里还没有 `museoncli`，请改用不可变的官方 GitHub Release tag：
 
 ```bash
-uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
 ```
 
 安装成功后继续配置 Skill 和浏览器授权：

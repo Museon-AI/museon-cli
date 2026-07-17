@@ -48,7 +48,7 @@ If the command is unavailable:
    with the immutable official GitHub release tag instead of stopping:
 
    ```bash
-   uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+   uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
    ```
 
 4. If `uv` is unavailable but `pipx` is already installed, use:
@@ -61,7 +61,7 @@ If the command is unavailable:
    official release:
 
    ```bash
-   pipx install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+   pipx install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
    ```
 
 5. The GitHub command is an installer-managed source install. Do not manually

@@ -103,7 +103,13 @@ def add_domain_command_parsers(
         domain_parser = subparsers.add_parser(domain)
         shortcut_subparsers = domain_parser.add_subparsers(dest="shortcut", required=True)
         for spec in specs:
-            shortcut_parser = shortcut_subparsers.add_parser(spec.shortcut)
+            examples = "\n".join(f"  {example}" for example in spec.examples)
+            shortcut_parser = shortcut_subparsers.add_parser(
+                spec.shortcut,
+                description=spec.summary,
+                epilog=f"Examples:\n{examples}" if examples else None,
+                formatter_class=argparse.RawDescriptionHelpFormatter,
+            )
             spec.add_arguments(shortcut_parser)
             shortcut_parser.set_defaults(domain_command=spec.schema_name)
 

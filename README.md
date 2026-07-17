@@ -120,7 +120,7 @@ If your package registry does not contain `museoncli` yet, use the immutable
 official GitHub release tag:
 
 ```bash
-uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.59"
 ```
 
 Then continue with setup and browser authorization:

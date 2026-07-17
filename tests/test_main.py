@@ -1279,6 +1279,52 @@ def test_asset_list_schema_explains_repeated_search_terms() -> None:
     assert "Repeat --search-term" in properties["search_terms"]["description"]
 
 
+def test_asset_product_create_schema_exposes_canonical_categories() -> None:
+    schema = main_module.schema_payload("asset.create")
+    product_condition = schema["input_schema"]["allOf"][0]
+    product_payload = product_condition["then"]["properties"]["payload"]
+
+    assert product_payload["required"] == ["name", "category", "description"]
+    assert "LEARNING_PLATFORMS" in product_payload["properties"]["category"]["enum"]
+    assert "SKILL_TRAINING" in product_payload["properties"]["category"]["enum"]
+    assert "EDUCATION" not in product_payload["properties"]["category"]["enum"]
+
+
+def test_asset_create_help_explains_product_category_discovery(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit):
+        parse(["asset", "+create", "--help"])
+
+    output = capsys.readouterr().out
+    assert "Product requires name, category, and description" in output
+    assert "asset +options" in output
+    assert "--field category" in output
+    assert "authoritative server validation" in output
+
+
+def test_asset_options_parser() -> None:
+    args = parse(
+        [
+            "asset",
+            "+options",
+            "--type",
+            "product",
+            "--field",
+            "category",
+            "--query",
+            "edtech",
+        ]
+    )
+
+    assert args.domain_command == "asset.options"
+    assert main_module.command_payload(args) == {
+        "type": "product",
+        "field": "category",
+        "query": "edtech",
+    }
+
+
 def test_asset_list_rejects_too_many_search_terms() -> None:
     argv = ["asset", "+list", "--type", "topic"]
     for index in range(21):
@@ -2473,6 +2519,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "asset.list",
         "asset.get",
         "asset.get-batch",
+        "asset.options",
         "asset.create",
         "asset.update",
         "asset.delete",
@@ -5620,6 +5667,81 @@ def test_dispatch_asset_create_product_uses_agent_assets_api(
     ]
 
 
+def test_dispatch_asset_options_uses_agent_assets_options_api(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, json_body
+        calls.append(
+            {
+                "method": method,
+                "path": path,
+                "params": params,
+                "unwrap_success": unwrap_success,
+            }
+        )
+        return {
+            "type": "product",
+            "field": "category",
+            "query": "edtech",
+            "items": [
+                {
+                    "value": "LEARNING_PLATFORMS",
+                    "label": "Learning Platforms",
+                    "group": "Education & Learning",
+                    "description": "Learning platform products.",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    result = asyncio.run(
+        main_module.dispatch(
+            parse(
+                [
+                    "asset",
+                    "+options",
+                    "--type",
+                    "product",
+                    "--field",
+                    "category",
+                    "--query",
+                    "edtech",
+                ]
+            )
+        )
+    )
+
+    assert result["command"] == "asset.options"
+    assert result["data"]["items"][0]["value"] == "LEARNING_PLATFORMS"
+    assert calls == [
+        {
+            "method": "GET",
+            "path": "/agent-cli/assets/options",
+            "params": {
+                "type": "product",
+                "field": "category",
+                "query": "edtech",
+            },
+            "unwrap_success": True,
+        }
+    ]
+
+
 def test_dispatch_asset_create_bgm_uses_agent_assets_api(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -5970,8 +6092,42 @@ def test_dispatch_asset_product_dry_run_allows_missing_assets(
 ) -> None:
     cfg = Config()
     cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, params
+        calls.append(
+            {
+                "method": method,
+                "path": path,
+                "json_body": json_body,
+                "unwrap_success": unwrap_success,
+            }
+        )
+        return {
+            "operation": "validate",
+            "type": "product",
+            "dry_run": True,
+            "valid": True,
+            "normalized_payload": {
+                "name": "MuseOn",
+                "category": "PRODUCTIVITY_TOOLS",
+                "description": "AI content ops.",
+                "assets": [],
+                "tags": [],
+            },
+        }
 
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
 
     args = parse(
         [
@@ -5993,14 +6149,23 @@ def test_dispatch_asset_product_dry_run_allows_missing_assets(
 
     assert result["command"] == "asset.create"
     assert result["data"]["dry_run"] is True
-    assert result["data"]["arguments"] == {
-        "type": "brand_product",
-        "payload": {
-            "name": "MuseOn",
-            "category": "PRODUCTIVITY_TOOLS",
-            "description": "AI content ops.",
+    assert result["data"]["valid"] is True
+    assert calls == [
+        {
+            "method": "POST",
+            "path": "/agent-cli/assets:validate",
+            "json_body": {
+                "type": "product",
+                "workspace_id": "workspace-1",
+                "payload": {
+                    "name": "MuseOn",
+                    "category": "PRODUCTIVITY_TOOLS",
+                    "description": "AI content ops.",
+                },
+            },
+            "unwrap_success": True,
         },
-    }
+    ]
 
 
 def test_dispatch_asset_create_dry_run_does_not_call_api(
@@ -7442,6 +7607,19 @@ def test_dispatch_domain_command_rejects_placeholder_before_api_call(monkeypatch
 
 def test_reason_from_exception_maps_value_error_to_invalid_input() -> None:
     assert reason_from_exception(ValueError("product_id must be a UUID")) == "invalid_input"
+
+
+def test_api_request_error_preserves_structured_validation_detail() -> None:
+    detail = {
+        "code": "invalid_enum",
+        "field": "payload.category",
+        "received": "EDUCATION",
+        "suggested_values": ["LEARNING_PLATFORMS", "SKILL_TRAINING"],
+    }
+    error = main_module.ApiRequestError(422, detail)
+
+    assert reason_from_exception(error) == "invalid_input"
+    assert main_module.exception_detail(error) == detail
 
 
 def test_asset_delete_without_yes_returns_confirmation_required(
