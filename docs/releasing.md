@@ -27,22 +27,27 @@ Trusted Publishing. No long-lived PyPI token belongs in GitHub secrets.
 
 ## Release checklist
 
-1. Update the version in `pyproject.toml`, refresh `uv.lock`, and regenerate the
-   command contract. Package metadata is the single version source; runtime
-   code reads it through `importlib.metadata`.
+1. Update the version in `pyproject.toml`, refresh `uv.lock`, update the
+   immutable GitHub fallback tag in `docs/install.md`, both READMEs, and the
+   bundled Skill, then regenerate the command contract. Tests enforce that all
+   fallback tags match the package version. Package metadata is the single
+   runtime version source; runtime code reads it through `importlib.metadata`.
 2. Run the complete local validation from `CONTRIBUTING.md`.
    This includes the wheel/sdist public-boundary scanner and a clean-venv smoke
    install. CI repeats the install and Agent Skill checks on Linux, macOS, and
    Windows.
 3. Merge the release change to `main`.
-4. Create a GitHub Release whose tag is exactly `v<package-version>` and points
+4. Sync `contracts/command-catalog.json` and `docs/install.md` into the private
+   monorepo, deploy its API/Web/Agent changes, and verify the live onboarding
+   guide before publishing the release.
+5. Create a GitHub Release whose tag is exactly `v<package-version>` and points
    to a commit reachable from `main`. The workflow fetches `origin/main` and
    refuses releases from side branches even when the version and tag match.
-5. The release workflow verifies the tag and commit ancestry, rebuilds from source, audits and
+6. The release workflow verifies the tag and commit ancestry, rebuilds from source, audits and
    tests the package, publishes to PyPI, and attaches the wheel, sdist, command
    contract, checksums, and SPDX SBOM to the release. Public releases also get
    GitHub provenance and SBOM attestations.
-6. After PyPI publishing and asset upload succeed, the workflow dispatches the
+7. After PyPI publishing and asset upload succeed, the workflow dispatches the
    immutable wheel and command-contract URLs and hashes to the private Agent
    runtime. If the dispatch secret is intentionally absent, run the monorepo
    runtime release workflow manually with those four values.

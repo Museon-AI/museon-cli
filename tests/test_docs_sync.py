@@ -5,12 +5,14 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 from museoncli.domains import command_specs
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_ROOT = ROOT / "skills" / "museon-cli"
+INSTALL_GUIDE_URL = "https://www.museon.ai/cli/install.md"
 
 
 def _mentioned_commands(text: str) -> set[str]:
@@ -71,3 +73,24 @@ def test_agent_skill_mentions_only_registered_commands() -> None:
     for doc in SKILL_ROOT.rglob("*.md"):
         unknown = sorted(_mentioned_commands(doc.read_text(encoding="utf-8")) - registered)
         assert unknown == [], f"{doc.relative_to(ROOT)} references unknown commands: {unknown}"
+
+
+def test_install_docs_offer_versioned_official_source_fallback() -> None:
+    metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    version = metadata["project"]["version"]
+    source = f"git+https://github.com/Museon-AI/museon-cli.git@v{version}"
+    docs = (
+        ROOT / "docs" / "install.md",
+        ROOT / "README.md",
+        ROOT / "README.zh-CN.md",
+        SKILL_ROOT / "SKILL.md",
+    )
+
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "uv tool install museoncli" in text, path
+        assert source in text, path
+        assert "museon-cli.git@main" not in text, path
+
+    assert INSTALL_GUIDE_URL in (ROOT / "README.md").read_text(encoding="utf-8")
+    assert INSTALL_GUIDE_URL in (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")

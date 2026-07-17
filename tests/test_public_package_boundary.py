@@ -55,3 +55,4 @@ def test_release_workflow_rejects_commits_outside_main() -> None:
     assert "fetch-depth: 0" in workflow
     assert "refs/heads/main:refs/remotes/origin/main" in workflow
     assert 'git merge-base --is-ancestor "${GITHUB_SHA}" origin/main' in workflow
+    assert "docs/install.md" in workflow

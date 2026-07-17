@@ -20,18 +20,34 @@ exists and the user asked to install Museon or complete a Museon task:
    uv tool install museoncli
    ```
 
+   If the package registry reports that `museoncli` does not exist, continue
+   with the immutable official GitHub release tag instead of stopping:
+
+   ```bash
+   uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+   ```
+
    If `uv` is unavailable but `pipx` is already installed, use:
 
    ```bash
    pipx install museoncli
    ```
 
+   Use the same official release fallback when `pipx` reports that the package
+   is missing from its registry:
+
+   ```bash
+   pipx install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+   ```
+
 3. Do not install or replace Python, `uv`, or `pipx` without the user's
    approval. If no isolated-tool installer is available, explain what is
    missing and ask before changing the environment.
-4. Verify the result with `museoncli version`. Do not claim installation
+4. The GitHub command is an installer-managed source install. Do not manually
+   clone the repository or run Museon CLI from a mutable checkout.
+5. Verify the result with `museoncli version`. Do not claim installation
    succeeded until that command works.
-5. Continue the original task. If the user asked to sign in, start the browser
+6. Continue the original task. If the user asked to sign in, start the browser
    authorization flow described in
    [safety-and-auth.md](references/safety-and-auth.md).
 

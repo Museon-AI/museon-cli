@@ -28,10 +28,11 @@ Copy the instruction below into Codex, Claude Code, Cursor, or another Agent
 that can install Skills and run shell commands:
 
 ```text
-Install the Museon CLI Skill from
-https://github.com/Museon-AI/museon-cli/tree/main/skills/museon-cli.
-Then use the Skill to install Museon CLI, help me sign in, and tell me when
-you're ready to work on my social media.
+Set up Museon CLI for this agent by following this onboarding guide exactly:
+https://www.museon.ai/cli/install.md
+Complete the CLI and Skill installation, guide me through browser authorization,
+verify the active workspace, and tell me when Museon is ready. Do not perform
+any social-media changes during setup.
 ```
 
 That is the recommended installation path. You do not need to clone the
@@ -113,6 +114,18 @@ If you prefer to install the CLI yourself, use Python 3.11+ and
 
 ```bash
 uv tool install museoncli
+```
+
+If your package registry does not contain `museoncli` yet, use the immutable
+official GitHub release tag:
+
+```bash
+uv tool install "git+https://github.com/Museon-AI/museon-cli.git@v0.3.58"
+```
+
+Then continue with setup and browser authorization:
+
+```bash
 museoncli setup --agent codex
 museoncli auth start
 museoncli auth finish --wait
