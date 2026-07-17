@@ -132,6 +132,22 @@ def test_config_keeps_credentials_out_of_non_secret_json(
     assert loaded.safe_dict()["auth"]["credential_storage"] == "protected_file"
 
 
+def test_config_file_backend_supports_platforms_without_fchmod(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+    monkeypatch.delattr("museoncli.credentials.os.fchmod", raising=False)
+
+    cfg = Config(auth=AuthState(api_key="museon-secret"))
+    save_config(cfg)
+
+    assert json.loads(tmp_path.joinpath("credentials.json").read_text()) == {
+        "api_key": "museon-secret"
+    }
+
+
 def test_environment_credentials_are_not_persisted(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

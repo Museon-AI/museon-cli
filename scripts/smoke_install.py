@@ -13,6 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+EXPECTED_PUBLIC_COMMAND_COUNT = 105
 
 
 def _run(command: list[str], *, env: dict[str, str] | None = None) -> str:
@@ -71,8 +72,11 @@ def smoke_install(wheel: Path) -> None:
 
         commands = schema.get("data", {}).get("commands", {})  # type: ignore[union-attr]
         command_count = sum(len(items) for items in commands.values())
-        if command_count != 95:
-            raise RuntimeError(f"expected 95 public commands, got {command_count}")
+        if command_count != EXPECTED_PUBLIC_COMMAND_COUNT:
+            raise RuntimeError(
+                "expected "
+                f"{EXPECTED_PUBLIC_COMMAND_COUNT} public commands, got {command_count}"
+            )
         installed_agents = installed.get("data", {}).get("agents", [])  # type: ignore[union-attr]
         current_agents = current.get("data", {}).get("agents", [])  # type: ignore[union-attr]
         if not installed_agents or installed_agents[0].get("status") != "installed":
