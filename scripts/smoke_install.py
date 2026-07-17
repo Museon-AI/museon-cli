@@ -9,12 +9,35 @@ import os
 import shutil
 import subprocess
 import tempfile
+import tomllib
 from pathlib import Path
-
-from distribution import reviewed_command_names
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def reviewed_command_names() -> frozenset[str]:
+    metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    document = json.loads(
+        (ROOT / "contracts" / "command-catalog.json").read_text(encoding="utf-8")
+    )
+    version = metadata["project"]["version"]
+    if document.get("contract_revision") != version:
+        raise RuntimeError("reviewed command contract version does not match the package")
+    commands = document.get("catalog", {}).get("commands")
+    if not isinstance(commands, dict):
+        raise RuntimeError("reviewed command contract has no command catalog")
+    names = [
+        entry["name"]
+        for entries in commands.values()
+        for entry in entries
+        if isinstance(entry, dict) and isinstance(entry.get("name"), str)
+    ]
+    if len(names) != sum(len(entries) for entries in commands.values()):
+        raise RuntimeError("reviewed command contract contains an invalid command")
+    if len(names) != len(set(names)):
+        raise RuntimeError("reviewed command contract contains duplicate command names")
+    return frozenset(names)
 
 
 def _run(command: list[str], *, env: dict[str, str] | None = None) -> str:

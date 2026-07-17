@@ -5,15 +5,14 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
 
+from museoncli import __version__
 from museoncli.domains import command_specs
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_ROOT = ROOT / "skills" / "museon-cli"
 INSTALL_GUIDE_URL = "https://www.museon.ai/cli/install.md"
-SOURCE_FALLBACK_REVISION = "09870901783cf5b4894fba30032ccb0e4735b8fe"
 
 
 def _mentioned_commands(text: str) -> set[str]:
@@ -61,7 +60,7 @@ def test_agent_skill_is_complete_and_portable() -> None:
     assert "museon-social-media-workflow" not in skill
     assert "AskUserQuestion" not in skill
     assert (SKILL_ROOT / "agents" / "openai.yaml").is_file()
-    assert "npm install --global @museon/cli@" in skill
+    assert "uv tool install" in skill
     assert "museoncli version" in skill
 
     linked_references = set(re.findall(r"\(references/([a-z0-9-]+\.md)\)", skill))
@@ -76,13 +75,11 @@ def test_agent_skill_mentions_only_registered_commands() -> None:
         assert unknown == [], f"{doc.relative_to(ROOT)} references unknown commands: {unknown}"
 
 
-def test_install_docs_offer_versioned_official_source_fallback() -> None:
-    metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    version = metadata["project"]["version"]
-    assert re.fullmatch(r"[0-9a-f]{40}", SOURCE_FALLBACK_REVISION)
-    source = (
-        "https://github.com/Museon-AI/museon-cli/archive/"
-        f"{SOURCE_FALLBACK_REVISION}.tar.gz"
+def test_install_docs_use_one_versioned_official_wheel() -> None:
+    version = __version__
+    wheel = (
+        "https://github.com/Museon-AI/museon-cli/releases/download/"
+        f"v{version}/museoncli-{version}-py3-none-any.whl"
     )
     docs = (
         ROOT / "docs" / "install.md",
@@ -93,10 +90,10 @@ def test_install_docs_offer_versioned_official_source_fallback() -> None:
 
     for path in docs:
         text = path.read_text(encoding="utf-8")
-        assert f"npm install --global @museon/cli@{version}" in text, path
-        assert source in text, path
+        assert text.count(wheel) == 1, path
+        assert "npm install" not in text, path
+        assert "archive/" not in text, path
         assert "museon-cli.git@main" not in text, path
-        assert "/archive/refs/heads/main" not in text, path
         assert "/tree/main/" not in text, path
         assert "pypi" not in text.lower(), path
 

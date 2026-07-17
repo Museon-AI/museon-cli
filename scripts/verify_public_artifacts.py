@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import re
-import tarfile
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -34,20 +33,10 @@ SECRET_PATTERNS = (
     ("Slack token", re.compile(rb"\bxox[baprs]-[A-Za-z0-9-]{16,}\b")),
     ("AWS access key", re.compile(rb"\bAKIA[0-9A-Z]{16}\b")),
 )
-SELF_REFERENTIAL_SCAN_EXCLUSIONS = {"scripts/verify_public_artifacts.py"}
-
-
 @dataclass(frozen=True, slots=True)
 class ArchiveEntry:
     name: str
     payload: bytes
-
-
-def _normalized_archive_name(name: str, *, strip_root: bool) -> str:
-    parts = PurePosixPath(name).parts
-    if strip_root and parts:
-        parts = parts[1:]
-    return PurePosixPath(*parts).as_posix() if parts else ""
 
 
 def _wheel_entries(path: Path) -> list[ArchiveEntry]:
@@ -60,26 +49,6 @@ def _wheel_entries(path: Path) -> list[ArchiveEntry]:
             if unix_mode == 0o120000:
                 raise RuntimeError(f"wheel contains a symbolic link: {item.filename}")
             result.append(ArchiveEntry(item.filename, archive.read(item)))
-        return result
-
-
-def _sdist_entries(path: Path) -> list[ArchiveEntry]:
-    with tarfile.open(path, mode="r:gz") as archive:
-        result: list[ArchiveEntry] = []
-        for item in archive.getmembers():
-            if item.issym() or item.islnk():
-                raise RuntimeError(f"sdist contains a link: {item.name}")
-            if not item.isfile():
-                continue
-            handle = archive.extractfile(item)
-            if handle is None:
-                raise RuntimeError(f"could not read sdist member: {item.name}")
-            result.append(
-                ArchiveEntry(
-                    _normalized_archive_name(item.name, strip_root=True),
-                    handle.read(),
-                )
-            )
         return result
 
 
@@ -110,12 +79,8 @@ def _assert_no_private_content(
     entries: list[ArchiveEntry],
     *,
     artifact: Path,
-    excluded_names: set[str] | None = None,
 ) -> None:
-    excluded_names = excluded_names or set()
     for entry in entries:
-        if entry.name in excluded_names:
-            continue
         for private_reference in PRIVATE_REFERENCES:
             if private_reference in entry.payload:
                 label = private_reference.decode("utf-8", errors="replace")
@@ -150,17 +115,10 @@ def _assert_license_files_packaged(
     *,
     source_license_files: list[str],
     wheel_entries: list[ArchiveEntry],
-    sdist_entries: list[ArchiveEntry],
     wheel: Path,
-    sdist: Path,
 ) -> None:
     if not source_license_files:
-        return
-
-    sdist_names = {entry.name for entry in sdist_entries}
-    missing_sdist = sorted(set(source_license_files) - sdist_names)
-    if missing_sdist:
-        raise RuntimeError(f"{sdist.name} is missing license files: {missing_sdist}")
+        raise RuntimeError("repository is missing a license file")
 
     wheel_names = {entry.name for entry in wheel_entries}
     missing_wheel = [
@@ -179,12 +137,8 @@ def _assert_license_files_packaged(
 
 def verify_dist(dist_dir: Path) -> None:
     wheels = sorted(dist_dir.glob("*.whl"))
-    sdists = sorted(dist_dir.glob("*.tar.gz"))
-    if len(wheels) != 1 or len(sdists) != 1:
-        raise RuntimeError(
-            f"expected exactly one wheel and one sdist in {dist_dir}; "
-            f"found {len(wheels)} wheel(s) and {len(sdists)} sdist(s)"
-        )
+    if len(wheels) != 1:
+        raise RuntimeError(f"expected exactly one wheel in {dist_dir}; found {len(wheels)}")
 
     wheel = wheels[0]
     wheel_entries = _wheel_entries(wheel)
@@ -196,38 +150,13 @@ def verify_dist(dist_dir: Path) -> None:
     )
     _assert_public_wheel_content(wheel_entries, artifact=wheel)
 
-    sdist = sdists[0]
-    sdist_entries = _sdist_entries(sdist)
-    _assert_no_forbidden_paths(sdist_entries, artifact=sdist)
-    _assert_no_private_content(
-        sdist_entries,
-        artifact=sdist,
-        excluded_names=SELF_REFERENTIAL_SCAN_EXCLUSIONS,
-    )
-    _assert_complete_skill(sdist_entries, prefix="skills/museon-cli", artifact=sdist)
-    sdist_names = {entry.name for entry in sdist_entries}
-    required_sdist_files = {
-        "README.md",
-        "README.zh-CN.md",
-        "SECURITY.md",
-        "CONTRIBUTING.md",
-        "CODE_OF_CONDUCT.md",
-        "CHANGELOG.md",
-        "contracts/command-catalog.json",
-        "pyproject.toml",
-    }
-    missing_sdist = sorted(required_sdist_files - sdist_names)
-    if missing_sdist:
-        raise RuntimeError(f"{sdist.name} is missing public source files: {missing_sdist}")
     _assert_license_files_packaged(
         source_license_files=_repository_license_files(),
         wheel_entries=wheel_entries,
-        sdist_entries=sdist_entries,
         wheel=wheel,
-        sdist=sdist,
     )
 
-    print(f"verified public artifacts: {wheel.name}, {sdist.name}")
+    print(f"verified public artifact: {wheel.name}")
 
 
 def main() -> int:
