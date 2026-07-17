@@ -88,15 +88,15 @@ CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用
 如果你希望自己安装，请使用固定版本的 npm 包：
 
 ```bash
-npm install --global @museon/cli@0.3.59
+npm install --global @museon/cli@0.3.60
 ```
 
 npm 启动器没有依赖和生命周期脚本，会为 macOS arm64/x64、glibc Linux
 arm64/x64 或 Windows arm64/x64 安装版本完全一致的原生包。没有 npm 的主机可以使用
-Python 3.11+、`uv` 和 GitHub `v0.3.59` Release 中不可变的 wheel：
+Python 3.11+、`uv` 和 GitHub `v0.3.60` Release 中不可变的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.59/museoncli-0.3.59-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skill 和浏览器授权：

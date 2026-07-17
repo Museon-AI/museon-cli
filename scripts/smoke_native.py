@@ -11,10 +11,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from distribution import ROOT, TARGET_BY_NAME, project_version
-
-
-EXPECTED_PUBLIC_COMMAND_COUNT = 105
+from distribution import ROOT, TARGET_BY_NAME, project_version, reviewed_command_names
 
 
 def _sha256(path: Path) -> str:
@@ -85,9 +82,18 @@ def smoke(bundle: Path, executable_name: str) -> None:
         )
 
         commands = schema.get("data", {}).get("commands", {})  # type: ignore[union-attr]
-        count = sum(len(items) for items in commands.values())
-        if count != EXPECTED_PUBLIC_COMMAND_COUNT:
-            raise RuntimeError(f"expected {EXPECTED_PUBLIC_COMMAND_COUNT} commands, got {count}")
+        actual_name_list = [entry["name"] for items in commands.values() for entry in items]
+        actual_names = frozenset(actual_name_list)
+        if len(actual_names) != len(actual_name_list):
+            raise RuntimeError("native command schema contains duplicate command names")
+        expected_names = reviewed_command_names()
+        if actual_names != expected_names:
+            missing = sorted(expected_names - actual_names)
+            unexpected = sorted(actual_names - expected_names)
+            raise RuntimeError(
+                "native command schema differs from the reviewed contract: "
+                f"missing={missing!r} unexpected={unexpected!r}"
+            )
         installed_agents = installed.get("data", {}).get("agents", [])  # type: ignore[union-attr]
         current_agents = current.get("data", {}).get("agents", [])  # type: ignore[union-attr]
         if not installed_agents or installed_agents[0].get("status") != "installed":
@@ -97,7 +103,7 @@ def smoke(bundle: Path, executable_name: str) -> None:
         version_data = version.get("data", {})
         if version_data.get("cli_version") != project_version():  # type: ignore[union-attr]
             raise RuntimeError(f"native version mismatch: {version!r}")
-        print(f"native smoke passed: version={project_version()} commands={count}")
+        print(f"native smoke passed: version={project_version()} commands={len(actual_names)}")
 
 
 def main() -> int:

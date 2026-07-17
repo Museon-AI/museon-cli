@@ -11,9 +11,10 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from distribution import reviewed_command_names
+
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_PUBLIC_COMMAND_COUNT = 106
 
 
 def _run(command: list[str], *, env: dict[str, str] | None = None) -> str:
@@ -76,11 +77,17 @@ def smoke_install(wheel: Path) -> None:
         )
 
         commands = schema.get("data", {}).get("commands", {})  # type: ignore[union-attr]
-        command_count = sum(len(items) for items in commands.values())
-        if command_count != EXPECTED_PUBLIC_COMMAND_COUNT:
+        actual_name_list = [entry["name"] for items in commands.values() for entry in items]
+        actual_names = frozenset(actual_name_list)
+        if len(actual_names) != len(actual_name_list):
+            raise RuntimeError("installed command schema contains duplicate command names")
+        expected_names = reviewed_command_names()
+        if actual_names != expected_names:
+            missing = sorted(expected_names - actual_names)
+            unexpected = sorted(actual_names - expected_names)
             raise RuntimeError(
-                "expected "
-                f"{EXPECTED_PUBLIC_COMMAND_COUNT} public commands, got {command_count}"
+                "installed command schema differs from the reviewed contract: "
+                f"missing={missing!r} unexpected={unexpected!r}"
             )
         installed_agents = installed.get("data", {}).get("agents", [])  # type: ignore[union-attr]
         current_agents = current.get("data", {}).get("agents", [])  # type: ignore[union-attr]
@@ -95,7 +102,7 @@ def smoke_install(wheel: Path) -> None:
         version_data = version.get("data", {})
         print(
             "clean install smoke passed: "
-            f"version={version_data.get('cli_version')} commands={command_count}"
+            f"version={version_data.get('cli_version')} commands={len(actual_names)}"
         )
 
 

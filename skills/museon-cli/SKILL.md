@@ -17,14 +17,14 @@ exists and the user asked to install Museon or complete a Museon task:
    public release:
 
    ```bash
-   npm install --global @museon/cli@0.3.59
+   npm install --global @museon/cli@0.3.60
    ```
 
 2. If npm is unavailable, but Python 3.11+ and `uv` already exist, use the
-   immutable wheel from GitHub release `v0.3.59`:
+   immutable wheel from GitHub release `v0.3.60`:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.59/museoncli-0.3.59-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
    ```
 
 3. The npm package has no lifecycle scripts or runtime download. It supports
