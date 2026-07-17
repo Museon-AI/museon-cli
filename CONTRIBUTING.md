@@ -21,7 +21,18 @@ uv run ruff check .
 uv run pytest -q
 uv run python scripts/gen_command_docs.py --check
 uv run python scripts/gen_command_contract.py --check
+node --test npm/tests/*.test.cjs
 uv build
+uv run python scripts/verify_public_artifacts.py
+```
+
+To exercise the local native distribution on a supported host:
+
+```bash
+uv run python scripts/build_native.py --wheel dist/museoncli-0.3.59-py3-none-any.whl
+uv run python scripts/smoke_native.py
+uv run python scripts/generate_npm_packages.py --target darwin-arm64
+uv run python scripts/verify_npm_packages.py --package-root build/npm --allow-partial
 ```
 
 When adding or changing a command:

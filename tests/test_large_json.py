@@ -5,6 +5,7 @@ import json
 import os
 import stat
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,11 @@ import pytest
 
 from museoncli import large_json
 import museoncli.main as main_module
+
+
+def test_default_offload_root_uses_the_host_temporary_directory() -> None:
+    assert large_json.OFFLOAD_BASE == Path(tempfile.gettempdir()) / "museon-agent"
+    assert large_json.OFFLOAD_ROOT == large_json.OFFLOAD_BASE / "tool-results"
 
 
 def _configure_offload(
@@ -115,6 +121,21 @@ def test_large_agent_json_is_offloaded_with_hook_compatible_manifest(
     assert heavy["raw_share_ratio"] > 0.9
     assert "SENSITIVE-MARKER-MUST-NOT-LEAK" not in rendered.text
     assert len(rendered.text.encode()) < 10_000
+
+
+def test_windows_query_manifest_uses_literal_powershell_paths() -> None:
+    manifest = large_json._query_manifest(
+        "C:\\Users\\O'Brien\\result.json",
+        command_family="asset.list",
+        profile={},
+        platform_name="nt",
+    )
+
+    assert manifest["preferred_tool"] == "powershell"
+    templates = manifest["templates"]
+    assert "-LiteralPath 'C:\\Users\\O''Brien\\result.json'" in templates["project_sample"]
+    assert "Select-Object -First 10" in templates["project_sample"]
+    assert all("jq" not in value for value in manifest["guidance"])
 
 
 def test_large_json_offload_requires_agent_context_unless_explicitly_enabled(

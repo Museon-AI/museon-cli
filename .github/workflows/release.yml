@@ -1,19 +1,17 @@
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  preflight:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      id-token: write
-      attestations: write
+      contents: write
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
@@ -22,103 +20,370 @@ jobs:
         with:
           python-version: "3.12"
       - run: uv sync --frozen --all-groups
-      - name: Verify release tag
+      - name: Verify tag, main ancestry, and launch gates
         run: |
+          set -euo pipefail
           package_version=$(uv run python -c 'from museoncli import __version__; print(__version__)')
           test "v${package_version}" = "${GITHUB_REF_NAME}"
-      - name: Verify release commit is on main
-        run: |
           git fetch --no-tags --prune origin +refs/heads/main:refs/remotes/origin/main
-          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
-            echo "Release commit ${GITHUB_SHA} is not reachable from origin/main." >&2
-            exit 1
+          git merge-base --is-ancestor "${GITHUB_SHA}" origin/main
+          uv run python scripts/verify_release_prerequisites.py
+      - name: Create or verify draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            existing_tag=$(gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --json tagName --jq .tagName)
+            existing_draft=$(gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --json isDraft --jq .isDraft)
+            test "${existing_tag}" = "${GITHUB_REF_NAME}"
+            if [[ "${existing_draft}" != "true" ]]; then
+              echo "Release ${GITHUB_REF_NAME} is already public; refusing to rebuild it." >&2
+              exit 1
+            fi
+          else
+            gh release create "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --verify-tag --draft --generate-notes
           fi
+
+  build-python:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen --all-groups
       - run: uv run ruff check .
       - run: uv run pytest -q
       - run: uv run python scripts/gen_command_docs.py --check
       - run: uv run python scripts/gen_command_contract.py --check
       - run: uv build
-      - name: Verify public package boundary
-        run: uv run python scripts/verify_public_artifacts.py
-      - name: Smoke install wheel
-        run: uv run python scripts/smoke_install.py
-      - name: Create checksums
-        run: |
-          mkdir -p release-assets
-          sha256sum dist/* > release-assets/checksums.txt
-      - name: Generate SPDX SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
-        with:
-          path: dist
-          format: spdx-json
-          output-file: release-assets/museoncli.spdx.json
-          upload-artifact: false
-          upload-release-assets: false
-      - name: Attest release provenance
-        if: ${{ github.event.repository.visibility == 'public' }}
-        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
-        with:
-          subject-path: "dist/*"
-      - name: Attest release SBOM
-        if: ${{ github.event.repository.visibility == 'public' }}
-        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
-        with:
-          subject-path: "dist/*"
-          sbom-path: release-assets/museoncli.spdx.json
+      - run: uv run python scripts/verify_public_artifacts.py
+      - run: uv run python scripts/smoke_install.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: release-dist
+          name: release-python
           path: |
             dist/*
             contracts/command-catalog.json
             docs/install.md
-            release-assets/*
+            docs/npm-distribution.md
 
-  publish-pypi:
-    needs: build
+  package-root:
+    needs: preflight
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
     steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.14.0"
+      - run: npm install --global npm@11.5.1
+      - run: uv sync --frozen --all-groups
+      - run: node --test npm/tests/*.test.cjs
+      - run: uv run python scripts/generate_npm_packages.py --root-only
+      - run: uv run python scripts/verify_npm_packages.py --package-root build/npm --allow-partial
+      - run: uv run python scripts/pack_npm_packages.py --package cli
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-npm-root
+          path: npm-dist/*.tgz
+
+  build-native:
+    needs: [preflight, build-python]
+    runs-on: ${{ matrix.runner }}
+    environment: native-signing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: darwin-arm64
+            runner: macos-15
+          - target: darwin-x64
+            runner: macos-15-intel
+          - target: linux-arm64-gnu
+            runner: ubuntu-22.04-arm
+          - target: linux-x64-gnu
+            runner: ubuntu-22.04
+          - target: win32-x64
+            runner: windows-2025
+          - target: win32-arm64
+            runner: windows-11-arm
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.14.0"
+      - run: npm install --global npm@11.5.1
+      - run: uv sync --frozen --all-groups
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: release-dist
-          path: release
-      - uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
-        with:
-          packages-dir: release/dist/
+          name: release-python
+          path: reviewed
+      - name: Build and smoke target
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel=$(find reviewed -name '*.whl' -type f -print -quit)
+          uv run python scripts/build_native.py --target "${{ matrix.target }}" --wheel "${wheel}"
+          uv run python scripts/smoke_native.py --target "${{ matrix.target }}"
+      - name: Sign and notarize macOS bundle
+        if: ${{ startsWith(matrix.target, 'darwin-') }}
+        shell: bash
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.MUSEON_APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.MUSEON_APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.MUSEON_APPLE_SIGNING_IDENTITY }}
+          APPLE_NOTARY_KEY_P8_BASE64: ${{ secrets.MUSEON_APPLE_NOTARY_KEY_P8_BASE64 }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.MUSEON_APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.MUSEON_APPLE_NOTARY_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          : "${APPLE_CERTIFICATE_P12_BASE64:?missing Apple signing certificate}"
+          : "${APPLE_CERTIFICATE_PASSWORD:?missing Apple certificate password}"
+          : "${APPLE_SIGNING_IDENTITY:?missing Apple signing identity}"
+          : "${APPLE_NOTARY_KEY_P8_BASE64:?missing Apple notary key}"
+          : "${APPLE_NOTARY_KEY_ID:?missing Apple notary key ID}"
+          : "${APPLE_NOTARY_ISSUER_ID:?missing Apple notary issuer ID}"
 
-  attach-release-assets:
-    needs: build
+          bundle="build/native/${{ matrix.target }}/museoncli"
+          certificate="${RUNNER_TEMP}/museon-signing.p12"
+          notary_key="${RUNNER_TEMP}/AuthKey_${APPLE_NOTARY_KEY_ID}.p8"
+          keychain="${RUNNER_TEMP}/museon-signing.keychain-db"
+          keychain_password=$(openssl rand -hex 24)
+          printf '%s' "${APPLE_CERTIFICATE_P12_BASE64}" | base64 -D > "${certificate}"
+          printf '%s' "${APPLE_NOTARY_KEY_P8_BASE64}" | base64 -D > "${notary_key}"
+          security create-keychain -p "${keychain_password}" "${keychain}"
+          security set-keychain-settings -lut 21600 "${keychain}"
+          security unlock-keychain -p "${keychain_password}" "${keychain}"
+          security import "${certificate}" -k "${keychain}" \
+            -P "${APPLE_CERTIFICATE_PASSWORD}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s \
+            -k "${keychain_password}" "${keychain}"
+          security list-keychains -d user -s "${keychain}"
+
+          while IFS= read -r -d '' candidate; do
+            if file "${candidate}" | grep -q 'Mach-O'; then
+              codesign --force --options runtime --timestamp \
+                --keychain "${keychain}" --sign "${APPLE_SIGNING_IDENTITY}" "${candidate}"
+            fi
+          done < <(find "${bundle}" -type f -print0)
+          codesign --force --deep --options runtime --timestamp \
+            --keychain "${keychain}" --sign "${APPLE_SIGNING_IDENTITY}" \
+            "${bundle}/museoncli"
+
+          notarization_archive="${RUNNER_TEMP}/museoncli-${{ matrix.target }}-notarization.zip"
+          ditto -c -k --keepParent "${bundle}" "${notarization_archive}"
+          xcrun notarytool submit "${notarization_archive}" \
+            --key "${notary_key}" \
+            --key-id "${APPLE_NOTARY_KEY_ID}" \
+            --issuer "${APPLE_NOTARY_ISSUER_ID}" \
+            --wait --output-format json > "${RUNNER_TEMP}/notary-result.json"
+          jq -e '.status == "Accepted"' "${RUNNER_TEMP}/notary-result.json"
+      - name: Authenticode-sign and timestamp Windows bundle
+        if: ${{ startsWith(matrix.target, 'win32-') }}
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_PFX_BASE64: ${{ secrets.MUSEON_WINDOWS_CERTIFICATE_PFX_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.MUSEON_WINDOWS_CERTIFICATE_PASSWORD }}
+          WINDOWS_TIMESTAMP_URL: ${{ vars.MUSEON_WINDOWS_TIMESTAMP_URL }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          if (-not $env:WINDOWS_CERTIFICATE_PFX_BASE64) { throw "Missing Windows signing certificate" }
+          if (-not $env:WINDOWS_CERTIFICATE_PASSWORD) { throw "Missing Windows certificate password" }
+          $certificate = Join-Path $env:RUNNER_TEMP "museon-signing.pfx"
+          [IO.File]::WriteAllBytes(
+            $certificate,
+            [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_PFX_BASE64)
+          )
+          $signToolCommand = Get-Command signtool.exe -ErrorAction SilentlyContinue
+          if ($signToolCommand) {
+            $signTool = $signToolCommand.Source
+          } else {
+            $signToolArch = if ("${{ matrix.target }}" -eq "win32-arm64") { "arm64" } else { "x64" }
+            $signTool = (
+              Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\$signToolArch\signtool.exe" |
+                Sort-Object FullName |
+                Select-Object -Last 1 -ExpandProperty FullName
+            )
+          }
+          if (-not $signTool) { throw "signtool.exe is unavailable" }
+          $timestampUrl = $env:WINDOWS_TIMESTAMP_URL
+          if (-not $timestampUrl) { $timestampUrl = "http://timestamp.digicert.com" }
+          $bundle = "build/native/${{ matrix.target }}/museoncli"
+          $files = Get-ChildItem -LiteralPath $bundle -Recurse -File | Where-Object {
+            $_.Extension -in ".exe", ".dll", ".pyd"
+          }
+          if (-not $files) { throw "Windows bundle contains no signable files" }
+          foreach ($file in $files) {
+            & $signTool sign /fd SHA256 /tr $timestampUrl /td SHA256 /f $certificate /p $env:WINDOWS_CERTIFICATE_PASSWORD $file.FullName
+            if ($LASTEXITCODE -ne 0) { throw "signtool failed for $($file.FullName)" }
+          }
+      - name: Verify native release signature policy
+        shell: bash
+        run: >-
+          uv run python scripts/verify_native_signatures.py
+          --target "${{ matrix.target }}"
+          --bundle "build/native/${{ matrix.target }}/museoncli"
+      - name: Smoke exact signed target
+        shell: bash
+        run: uv run python scripts/smoke_native.py --target "${{ matrix.target }}"
+      - name: Prepack signed target
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv run python scripts/generate_npm_packages.py --target "${{ matrix.target }}"
+          uv run python scripts/verify_npm_packages.py --package-root build/npm --allow-partial
+          uv run python scripts/pack_npm_packages.py --package "${{ matrix.target }}"
+          uv run python scripts/package_native.py --target "${{ matrix.target }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-${{ matrix.target }}
+          path: |
+            npm-dist/*.tgz
+            native-dist/*
+
+  assemble:
+    needs: [build-python, package-root, build-native]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: release-*
+          path: staging
+      - name: Assemble exact prepacked assets
+        run: |
+          set -euo pipefail
+          mkdir -p release/npm release/native release/python release/metadata
+          find staging -type f -name '*.tgz' -exec cp {} release/npm/ \;
+          find staging -type f \( -name 'museoncli-v*.tar.gz' -o -name 'museoncli-v*.zip' \) -exec cp {} release/native/ \;
+          find staging -type f -name '*.whl' -exec cp {} release/python/ \;
+          find staging -type f -name 'museoncli-[0-9]*.tar.gz' -exec cp {} release/python/ \;
+          cp contracts/command-catalog.json docs/install.md docs/npm-distribution.md release/metadata/
+          python scripts/verify_npm_packages.py --tarball-dir release/npm
+      - name: Generate SPDX SBOM for the assembled release
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          path: release
+          format: spdx-json
+          output-file: release/metadata/museoncli.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Create release checksums
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' asset; do
+            digest=$(sha256sum "${asset}" | cut -d ' ' -f 1)
+            printf '%s  %s\n' "${digest}" "$(basename "${asset}")"
+          done < <(find release -type f ! -name checksums.txt -print0 | sort -z) \
+            > release/metadata/checksums.txt
+      - name: Attest assembled release provenance
+        if: ${{ github.event.repository.visibility == 'public' }}
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
+        with:
+          subject-path: |
+            release/npm/*
+            release/native/*
+            release/python/*
+            release/metadata/*
+      - name: Attest assembled release SBOM
+        if: ${{ github.event.repository.visibility == 'public' }}
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
+        with:
+          subject-path: |
+            release/npm/*
+            release/native/*
+            release/python/*
+          sbom-path: release/metadata/museoncli.spdx.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-bundle
+          path: release/
+
+  attach-assets:
+    needs: assemble
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: release-dist
+          name: release-bundle
           path: release
-      - env:
+      - name: Upload or verify exact assets
+        env:
           GH_TOKEN: ${{ github.token }}
-        run: >-
-          gh release upload "${GITHUB_REF_NAME}"
-          --repo Museon-AI/museon-cli
-          release/dist/*
-          release/contracts/command-catalog.json
-          release/docs/install.md
-          release/release-assets/*
-          --clobber
+        run: |
+          set -euo pipefail
+          mapfile -d '' assets < <(find release -type f -print0)
+          python scripts/sync_release_assets.py \
+            --tag "${GITHUB_REF_NAME}" \
+            --repository "${GITHUB_REPOSITORY}" \
+            "${assets[@]}"
+
+  publish-npm:
+    needs: attach-assets
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.14.0"
+          registry-url: https://registry.npmjs.org
+      - run: npm install --global npm@11.5.1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-bundle
+          path: release
+      - name: Publish platform packages first and root last
+        run: python scripts/publish_npm_packages.py --tarball-dir release/npm
+
+  publish-release:
+    needs: publish-npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish the verified draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          is_draft=$(gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --json isDraft --jq .isDraft)
+          if [[ "${is_draft}" != "true" ]]; then
+            echo "Release ${GITHUB_REF_NAME} is not a draft; refusing to publish it again." >&2
+            exit 1
+          fi
+          gh release edit "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" --draft=false
 
   notify-private-runtime:
-    needs: [publish-pypi, attach-release-assets]
+    needs: publish-release
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: release-dist
+          name: release-bundle
           path: release
       - name: Dispatch verified wheel to private Agent runtime
         env:
@@ -129,21 +394,15 @@ jobs:
             echo "MUSEON_RUNTIME_DISPATCH_TOKEN is not configured; runtime dispatch skipped."
             exit 0
           fi
-          wheel=$(find release/dist -maxdepth 1 -name '*.whl' -type f -print -quit)
-          if [[ -z "${wheel}" ]]; then
-            echo "No wheel found in release artifact" >&2
-            exit 1
-          fi
+          wheel=$(find release/python -name '*.whl' -type f -print -quit)
           wheel_name=$(basename "${wheel}")
           wheel_sha256=$(sha256sum "${wheel}" | awk '{print $1}')
-          wheel_url="https://github.com/Museon-AI/museon-cli/releases/download/${GITHUB_REF_NAME}/${wheel_name}"
-          contract=release/contracts/command-catalog.json
+          contract=release/metadata/command-catalog.json
           contract_sha256=$(sha256sum "${contract}" | awk '{print $1}')
-          contract_url="https://github.com/Museon-AI/museon-cli/releases/download/${GITHUB_REF_NAME}/command-catalog.json"
           jq -n \
-            --arg wheel_url "${wheel_url}" \
+            --arg wheel_url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${wheel_name}" \
             --arg wheel_sha256 "${wheel_sha256}" \
-            --arg contract_url "${contract_url}" \
+            --arg contract_url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/command-catalog.json" \
             --arg contract_sha256 "${contract_sha256}" \
             --arg version "${GITHUB_REF_NAME#v}" \
             '{event_type: "museoncli-release", client_payload: {wheel_url: $wheel_url, wheel_sha256: $wheel_sha256, contract_url: $contract_url, contract_sha256: $contract_sha256, version: $version}}' \

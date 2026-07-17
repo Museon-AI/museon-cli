@@ -7,6 +7,7 @@ name = "museoncli"
 version = "0.3.59"
 description = "Agent-ready CLI for Museon's social media operating platform"
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.11"
 authors = [{ name = "Museon" }]
 keywords = ["ai-agent", "cli", "social-media", "automation"]
@@ -26,6 +27,7 @@ dependencies = [
   "keyring>=25.6.0",
   "pyyaml>=6.0.2",
   "socksio>=1.0.0",
+  "tzdata>=2025.2; sys_platform == 'win32'",
 ]
 
 [project.scripts]
@@ -42,6 +44,9 @@ Documentation = "https://github.com/Museon-AI/museon-cli#readme"
 dev = [
   "pytest>=8.2.0",
   "ruff>=0.4.4",
+]
+distribution = [
+  "pyinstaller>=6.16.0,<7",
 ]
 
 [tool.hatch.build.targets.wheel]

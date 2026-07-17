@@ -55,8 +55,11 @@ _API_CONNECT_RETRY_BASE_DELAY_SECONDS = 0.25
 _ACTIVE_COMMAND_NAME: ContextVar[str | None] = ContextVar(
     "museoncli_active_command_name", default=None
 )
-DEFAULT_CLI_RELEASE_MANIFEST_URL = "https://pypi.org/pypi/museoncli/json"
-PYPI_PROJECT_URL = "https://pypi.org/project/museoncli/"
+DEFAULT_CLI_RELEASE_MANIFEST_URL = (
+    "https://api.github.com/repos/Museon-AI/museon-cli/releases/latest"
+)
+GITHUB_RELEASES_URL = "https://github.com/Museon-AI/museon-cli/releases"
+NPM_PACKAGE_NAME = "@museon/cli"
 
 
 class ApiRequestError(RuntimeError):
@@ -251,28 +254,44 @@ async def check_cli_update_notice(cfg: Config) -> dict[str, Any] | None:
     manifest = await fetch_cli_release_manifest(manifest_url)
     if not isinstance(manifest, dict):
         return None
-    info = manifest.get("info") if isinstance(manifest.get("info"), dict) else {}
-    latest_version = str(info.get("version") or manifest.get("version") or "").strip()
+    latest_version = str(manifest.get("tag_name") or manifest.get("name") or "").strip()
+    latest_version = latest_version.removeprefix("v")
     if not latest_version or not is_newer_cli_version(latest_version, __version__):
         return None
+    distribution_channel = os.environ.get("MUSEONCLI_DISTRIBUTION_CHANNEL", "").strip().lower()
+    npm_upgrade = f"npm install --global {NPM_PACKAGE_NAME}@{latest_version}"
+    wheel_url = (
+        "https://github.com/Museon-AI/museon-cli/releases/download/"
+        f"v{latest_version}/museoncli-{latest_version}-py3-none-any.whl"
+    )
+    wheel_upgrade = f'uv tool install "{wheel_url}" --force'
+    if distribution_channel == "npm":
+        message = f"Museon CLI {latest_version} is available. Run `{npm_upgrade}`."
+        upgrade_commands = {"npm": npm_upgrade}
+    else:
+        message = (
+            f"Museon CLI {latest_version} is available. Install with npm using "
+            f"`{npm_upgrade}`, or replace this wheel using `{wheel_upgrade}`."
+        )
+        upgrade_commands = {"npm": npm_upgrade, "uv_wheel": wheel_upgrade}
     return {
         "current_version": __version__,
         "latest_version": latest_version,
-        "message": (
-            f"Museon CLI {latest_version} is available. "
-            "Run `uv tool upgrade museoncli` or `pipx upgrade museoncli`, "
-            "then restart the host Agent."
-        ),
-        "source": "pypi",
+        "message": message + " Restart the host Agent after upgrading.",
+        "upgrade_commands": upgrade_commands,
+        "source": "github_release",
         "manifest_url": manifest_url,
-        "project_url": PYPI_PROJECT_URL,
+        "project_url": str(manifest.get("html_url") or GITHUB_RELEASES_URL),
+        "distribution_channel": distribution_channel or "python-wheel",
         "restart_required": True,
     }
 
 
 def cli_update_check_enabled() -> bool:
-    value = os.environ.get("MUSEONCLI_UPDATE_CHECK", "1").strip().lower()
-    return value not in {"0", "false", "no", "off"}
+    # Release discovery is explicitly opt-in. Normal CLI commands must not add
+    # GitHub (or any other third-party) traffic to Museon's API request path.
+    value = os.environ.get("MUSEONCLI_UPDATE_CHECK", "0").strip().lower()
+    return value in {"1", "true", "yes", "on"}
 
 
 def cli_update_manifest_url() -> str:

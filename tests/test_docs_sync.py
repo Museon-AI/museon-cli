@@ -60,7 +60,7 @@ def test_agent_skill_is_complete_and_portable() -> None:
     assert "museon-social-media-workflow" not in skill
     assert "AskUserQuestion" not in skill
     assert (SKILL_ROOT / "agents" / "openai.yaml").is_file()
-    assert "uv tool install" in skill
+    assert "npm install --global @museon/cli@" in skill
     assert "museoncli version" in skill
 
     linked_references = set(re.findall(r"\(references/([a-z0-9-]+\.md)\)", skill))
@@ -78,7 +78,10 @@ def test_agent_skill_mentions_only_registered_commands() -> None:
 def test_install_docs_offer_versioned_official_source_fallback() -> None:
     metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     version = metadata["project"]["version"]
-    source = f"git+https://github.com/Museon-AI/museon-cli.git@v{version}"
+    source = (
+        "https://github.com/Museon-AI/museon-cli/releases/download/"
+        f"v{version}/museoncli-{version}-py3-none-any.whl"
+    )
     docs = (
         ROOT / "docs" / "install.md",
         ROOT / "README.md",
@@ -88,9 +91,10 @@ def test_install_docs_offer_versioned_official_source_fallback() -> None:
 
     for path in docs:
         text = path.read_text(encoding="utf-8")
-        assert "uv tool install museoncli" in text, path
+        assert f"npm install --global @museon/cli@{version}" in text, path
         assert source in text, path
         assert "museon-cli.git@main" not in text, path
+        assert "pypi" not in text.lower(), path
 
     assert INSTALL_GUIDE_URL in (ROOT / "README.md").read_text(encoding="utf-8")
     assert INSTALL_GUIDE_URL in (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")

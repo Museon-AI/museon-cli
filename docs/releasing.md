@@ -1,59 +1,79 @@
 # Releasing Museon CLI
 
-Releases are built from a published GitHub Release and published to PyPI with
-Trusted Publishing. No long-lived PyPI token belongs in GitHub secrets.
+Public installation is npm-first. The Python wheel remains a verified GitHub
+release asset for Museon's private runtime and for the immutable `uv` fallback;
+it is not sent to a Python package registry.
 
-## One-time setup
+## Launch gates and one-time setup
 
-1. Choose and add the repository's open-source license.
-2. Create the `museoncli` project on PyPI.
-3. Configure a PyPI Trusted Publisher for:
-   - owner: `Museon-AI`
-   - repository: `museon-cli`
-   - workflow: `release.yml`
-   - environment: `pypi`
-4. Create a protected GitHub environment named `pypi`.
-5. Configure a `main` ruleset/branch protection policy that requires CI and
-   protects release tags.
-6. Enable private vulnerability reporting, Dependabot alerts, secret scanning,
-   and code scanning before announcing the public repository.
-7. Add a fine-grained `MUSEON_RUNTIME_DISPATCH_TOKEN` Actions secret with
-   permission to send repository-dispatch events to the private
-   `Museon-AI/museon` repository. This token does not publish packages and must
-   not be available to pull-request workflows.
-8. Restrict the repository Actions policy to the Actions used by this project
-   and require full-length commit SHA pins. The checked-in workflows are already
-   pinned; Dependabot keeps those references current.
+Publication is intentionally fail-closed until every external registry and
+signing prerequisite below is complete:
 
-## Release checklist
+1. Keep the repository `LICENSE`, `pyproject.toml`, wheel metadata, and npm
+   package metadata aligned on Apache-2.0.
+2. Confirm that Museon controls the `@museon` npm scope. An npm scope owner
+   must create the first version of all seven packages if trusted publishing
+   cannot create a new scoped public package:
+   - `@museon/cli`
+   - `@museon/cli-darwin-arm64`
+   - `@museon/cli-darwin-x64`
+   - `@museon/cli-linux-arm64-gnu`
+   - `@museon/cli-linux-x64-gnu`
+   - `@museon/cli-win32-x64`
+   - `@museon/cli-win32-arm64`
+3. Configure an npm trusted publisher for every package: owner `Museon-AI`,
+   repository `museon-cli`, workflow `release.yml`, environment `npm`. Create
+   and protect that GitHub environment. The workflow uses Node 22.14 or newer,
+   npm 11.5.1 or newer, and GitHub OIDC; no registry token belongs in secrets.
+4. Protect `main` and `v*` tags. Require CI before a release tag can be created.
+5. Create a protected GitHub environment named `native-signing`. Configure
+   Developer ID/notarization secrets `MUSEON_APPLE_CERTIFICATE_P12_BASE64`,
+   `MUSEON_APPLE_CERTIFICATE_PASSWORD`, `MUSEON_APPLE_SIGNING_IDENTITY`,
+   `MUSEON_APPLE_NOTARY_KEY_P8_BASE64`, `MUSEON_APPLE_NOTARY_KEY_ID`, and
+   `MUSEON_APPLE_NOTARY_ISSUER_ID`. Configure Authenticode secrets
+   `MUSEON_WINDOWS_CERTIFICATE_PFX_BASE64` and
+   `MUSEON_WINDOWS_CERTIFICATE_PASSWORD`; optionally set
+   `MUSEON_WINDOWS_TIMESTAMP_URL` as an environment variable.
+6. Review the generated third-party notices for every native target. The native
+   build records the notice hash and package count; npm verification requires
+   those notices and the approved project license in every artifact.
+7. Configure `MUSEON_RUNTIME_DISPATCH_TOKEN` only for the verified-wheel
+   repository dispatch to the private `Museon-AI/museon` runtime.
 
-1. Update the version in `pyproject.toml`, refresh `uv.lock`, update the
-   immutable GitHub fallback tag in `docs/install.md`, both READMEs, and the
-   bundled Skill, then regenerate the command contract. Tests enforce that all
-   fallback tags match the package version. Package metadata is the single
-   runtime version source; runtime code reads it through `importlib.metadata`.
-2. Run the complete local validation from `CONTRIBUTING.md`.
-   This includes the wheel/sdist public-boundary scanner and a clean-venv smoke
-   install. CI repeats the install and Agent Skill checks on Linux, macOS, and
-   Windows.
-3. Merge the release change to `main`.
-4. Sync `contracts/command-catalog.json` and `docs/install.md` into the private
-   monorepo, deploy its API/Web/Agent changes, and verify the live onboarding
-   guide before publishing the release.
-5. Create a GitHub Release whose tag is exactly `v<package-version>` and points
-   to a commit reachable from `main`. The workflow fetches `origin/main` and
-   refuses releases from side branches even when the version and tag match.
-6. The release workflow verifies the tag and commit ancestry, rebuilds from source, audits and
-   tests the package, publishes to PyPI, and attaches the wheel, sdist, command
-   contract, checksums, and SPDX SBOM to the release. Public releases also get
-   GitHub provenance and SBOM attestations.
-7. After PyPI publishing and asset upload succeed, the workflow dispatches the
-   immutable wheel and command-contract URLs and hashes to the private Agent
-   runtime. If the dispatch secret is intentionally absent, run the monorepo
-   runtime release workflow manually with those four values.
+`uv run python scripts/verify_release_prerequisites.py` enforces the repository
+license and package-metadata gates before any release job can publish. Later
+jobs fail closed unless notices are complete, macOS bundles have a Developer ID
+signature and accepted notarization, and every Windows PE file has a valid,
+timestamped Authenticode signature.
 
-The private Museon Agent runtime consumes only a hash-verified release wheel.
-It also rejects the release when its public command contract differs from the
-API's reviewed snapshot. Runtime dispatch accepts only the canonical wheel and
-contract URLs from the same `Museon-AI/museon-cli` GitHub Release; it never
-builds from either repository checkout.
+## Release sequence
+
+1. Change only `[project].version` in `pyproject.toml`, update `uv.lock`, docs,
+   the bundled Skill, and changelog, then regenerate the contract. The npm
+   manifests are generated from `pyproject.toml`; do not commit copied versions.
+2. Run the validation documented in `CONTRIBUTING.md`, including native smoke on
+   the available local platform.
+3. Merge to `main`, sync the command contract and install guide to the private
+   runtime, and verify the live guide.
+4. Create the protected tag `v<version>` on the reviewed `main` commit. The
+   workflow verifies the tag/version and main ancestry, creates or reuses a
+   draft GitHub release, and builds the exact wheel once.
+5. Each supported runner builds its PyInstaller onedir bundle from that same
+   reviewed wheel, records the wheel and notice hashes, and runs the native
+   smoke. macOS runners then apply Developer ID signing and submit the exact
+   bundle for notarization; Windows signs and timestamps every PE file. Only
+   after signature verification does the runner generate its exact-version npm
+   platform package and prepack native/npm assets. The root npm package is
+   packed separately and verified with the six platform tarballs.
+6. Upload the already-packed npm tarballs, native archives, wheel, sdist,
+   contract, checksums, and SBOM to the draft release. Existing release assets
+   are skipped only after byte-for-byte hash verification; a mismatch aborts.
+7. Publish the six platform packages first. Publish `@museon/cli` only after
+   all six succeed. If a version exists, compare its registry integrity with
+   the prepacked tarball: identical packages are skipped and mismatches abort.
+8. Publish the GitHub release only after assets and registries are complete,
+   then dispatch the exact wheel URL/hash and contract URL/hash to the private
+   runtime.
+
+Never rebuild between verification, attachment, and publication. A rerun must
+reuse the same prepacked artifacts or stop on an integrity mismatch.
