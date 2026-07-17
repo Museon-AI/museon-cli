@@ -38,6 +38,7 @@ def _direct(command_name: str, arguments: dict[str, Any], *, runtime: dict | Non
     cfg.runtime_context = runtime or {}
     executor = {
         "account-operation.submit": account_operation._execute_submit,
+        "account-operation.submit-batch": account_operation._execute_submit_batch,
         "account-operation.stop": account_operation._execute_stop,
         "account-operation.get": account_operation._execute_get,
         "account-operation.list": account_operation._execute_list,
@@ -69,11 +70,14 @@ def test_parser_registers_account_operation_commands() -> None:
             "11111111-1111-1111-1111-111111111111",
             "--organization-id",
             "22222222-2222-2222-2222-222222222222",
+            "--product-id",
+            "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
             "--niche",
             "leather_care",
         ]
     )
     assert args.domain_command == "account-operation.submit"
+    assert args.product_id == "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
     decide = parse(
         [
@@ -112,7 +116,12 @@ def test_submit_posts_with_conversation_from_runtime_context(monkeypatch) -> Non
     monkeypatch.setattr(main_module, "api_data_v2", capture)
     _direct(
         "account-operation.submit",
-        {"pool_account_id": "pool-1", "organization_id": "org-1", "niche": "leather"},
+        {
+            "pool_account_id": "pool-1",
+            "organization_id": "org-1",
+            "product_id": "product-1",
+            "niche": "leather",
+        },
         runtime={"conversation_id": "conv-9"},
     )
     call = capture.calls[0]
@@ -120,7 +129,71 @@ def test_submit_posts_with_conversation_from_runtime_context(monkeypatch) -> Non
     body = call["json_body"]
     assert body["workspace_id"] == "ws-1"
     assert body["pool_account_id"] == "pool-1"
+    assert body["product_id"] == "product-1"
     assert body["session_conversation_id"] == "conv-9"  # defaulted from per-turn runtime context
+
+
+def test_submit_allows_omitted_optional_product(monkeypatch) -> None:
+    args = parse(
+        [
+            "account-operation",
+            "+submit",
+            "--pool-account-id",
+            "pool-1",
+            "--organization-id",
+            "org-1",
+        ]
+    )
+    assert args.product_id is None
+
+    capture = _Capture()
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+    _direct(
+        "account-operation.submit",
+        {
+            "pool_account_id": "pool-1",
+            "organization_id": "org-1",
+            "product_id": None,
+        },
+    )
+    assert "product_id" not in capture.calls[0]["json_body"]
+
+
+def test_submit_batch_sends_one_shared_product_not_per_account(monkeypatch) -> None:
+    args = parse(
+        [
+            "account-operation",
+            "+submit-batch",
+            "--pool-account-ids",
+            "pool-1,pool-2",
+            "--organization-id",
+            "org-1",
+            "--product-id",
+            "product-1",
+        ]
+    )
+    built = account_operation._build_account_operation_submit_batch_arguments(args)
+    assert built["product_id"] == "product-1"
+
+    capture = _Capture(response={"data": [], "meta": {}})
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+    _direct(
+        "account-operation.submit-batch",
+        {
+            "pool_account_ids": "pool-1,pool-2",
+            "organization_id": "org-1",
+            "product_id": "product-1",
+        },
+        runtime={"conversation_id": "conv-9"},
+    )
+
+    body = capture.calls[0]["json_body"]
+    assert body["product_id"] == "product-1"
+    assert body["accounts"] == [
+        {"pool_account_id": "pool-1"},
+        {"pool_account_id": "pool-2"},
+    ]
+    assert all("product_id" not in account for account in body["accounts"])
 
 
 def test_get_and_list(monkeypatch) -> None:
