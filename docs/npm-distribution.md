@@ -1,10 +1,10 @@
 # npm distribution contract
 
 Museon CLI's public installer is the dependency-free CommonJS package
-`@museon/cli`. Version `0.3.59` installs with:
+`@museon/cli`. Version `0.3.60` installs with:
 
 ```bash
-npm install --global @museon/cli@0.3.59
+npm install --global @museon/cli@0.3.60
 ```
 
 The root package exposes both `museoncli` and `museon`. At runtime it chooses
@@ -41,7 +41,7 @@ and SHA-256 plus the lock hash in `museon-build.json`. The bundle preserves:
 - `tzdata` on Windows so IANA time zones work without a system zone database.
 
 The native smoke covers `version`, `schema`, `--help`, first and idempotent
-Skill setup, and the expected public command count.
+Skill setup, and exact agreement with the reviewed public command contract.
 
 ## Local generation and verification
 
@@ -52,7 +52,7 @@ ignored `npm-dist/` and `native-dist/`. On a supported host:
 uv sync --frozen --all-groups
 uv build
 uv run python scripts/verify_public_artifacts.py
-uv run python scripts/build_native.py --wheel dist/museoncli-0.3.59-py3-none-any.whl
+uv run python scripts/build_native.py --wheel dist/museoncli-0.3.60-py3-none-any.whl
 uv run python scripts/smoke_native.py
 uv run python scripts/generate_npm_packages.py --target darwin-arm64
 uv run python scripts/verify_npm_packages.py --package-root build/npm --allow-partial
@@ -67,10 +67,10 @@ root plus matching platform tarball using `npm install --global --ignore-scripts
 ## Python fallback and update discovery
 
 For a host without npm, the immutable fallback is the wheel attached to GitHub
-release `v0.3.59`:
+release `v0.3.60`:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.59/museoncli-0.3.59-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
 ```
 
 Update discovery is off by default. Setting `MUSEONCLI_UPDATE_CHECK=true`

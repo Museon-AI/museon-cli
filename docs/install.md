@@ -40,7 +40,7 @@ If the command is unavailable:
 1. Confirm that Node.js and npm are available, then install the exact release:
 
    ```bash
-   npm install --global @museon/cli@0.3.59
+   npm install --global @museon/cli@0.3.60
    ```
 
    The package contains no lifecycle scripts and performs no install-time or
@@ -49,10 +49,10 @@ If the command is unavailable:
    `--include=optional`.
 
 2. On a host without npm, confirm that Python 3.11+ and `uv` already exist and
-   install the immutable wheel from the `v0.3.59` GitHub release:
+   install the immutable wheel from the `v0.3.60` GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.59/museoncli-0.3.59-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
    ```
 
    This fallback is also unsupported on musl Linux unless its Python runtime

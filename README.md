@@ -95,8 +95,8 @@ workspace membership, role, and target resource for every operation.
 | Connect accounts, configure publish pools, schedule work, publish, and review results | `social-account`, `account-publish`, `account-operation` |
 | Run recurring or one-off operating loops | `routines`, `evaluator` |
 
-The current generated catalog contains 105 commands across 12 domains. Use the
-live schema rather than copying flags from an old transcript.
+The generated contract snapshot is the reviewed source of truth for the public
+command set. Use the live schema rather than copying flags from an old transcript.
 
 ## You stay in control
 
@@ -113,16 +113,16 @@ live schema rather than copying flags from an old transcript.
 If you prefer to install the CLI yourself, use the exact npm release:
 
 ```bash
-npm install --global @museon/cli@0.3.59
+npm install --global @museon/cli@0.3.60
 ```
 
 The npm launcher has no dependencies or lifecycle scripts. It installs the
 matching native package for macOS arm64/x64, glibc Linux arm64/x64, or Windows
 arm64/x64. On a host without npm, use Python 3.11+, `uv`, and the immutable wheel
-from GitHub release `v0.3.59`:
+from GitHub release `v0.3.60`:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.59/museoncli-0.3.59-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
 ```
 
 Then continue with setup and browser authorization:

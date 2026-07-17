@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -85,6 +86,35 @@ def project_metadata() -> dict[str, object]:
 
 def project_version() -> str:
     return str(project_metadata()["version"])
+
+
+def reviewed_command_names() -> frozenset[str]:
+    """Return the exact public command set from the reviewed contract snapshot."""
+
+    path = ROOT / "contracts" / "command-catalog.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    revision = document.get("contract_revision")
+    if revision != project_version():
+        raise RuntimeError(
+            f"reviewed command contract version mismatch: expected {project_version()}, got {revision}"
+        )
+    catalog = document.get("catalog")
+    commands = catalog.get("commands") if isinstance(catalog, dict) else None
+    if not isinstance(commands, dict):
+        raise RuntimeError("reviewed command contract has no command catalog")
+
+    names: list[str] = []
+    for domain, entries in commands.items():
+        if not isinstance(entries, list):
+            raise RuntimeError(f"reviewed command domain {domain!r} is not a list")
+        for entry in entries:
+            name = entry.get("name") if isinstance(entry, dict) else None
+            if not isinstance(name, str) or not name:
+                raise RuntimeError(f"reviewed command domain {domain!r} contains an invalid command")
+            names.append(name)
+    if len(names) != len(set(names)):
+        raise RuntimeError("reviewed command contract contains duplicate command names")
+    return frozenset(names)
 
 
 def npm_license() -> str:
