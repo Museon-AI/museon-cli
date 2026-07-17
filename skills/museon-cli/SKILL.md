@@ -13,25 +13,30 @@ work. The executable is `museoncli`; `museon` is an equivalent alias.
 Check whether `museoncli` or `museon` is already available. If neither command
 exists and the user asked to install Museon or complete a Museon task:
 
-1. Confirm that Node.js and npm are already available, then install the exact
-   public release:
+1. If Node.js and npm are already available, check for and install the exact
+   public package:
 
    ```bash
+   npm view @museon/cli@0.3.60 version
    npm install --global @museon/cli@0.3.60
    ```
 
-2. If npm is unavailable, but Python 3.11+ and `uv` already exist, use the
-   immutable wheel from GitHub release `v0.3.60`:
+   If the registry reports that the package is not found, continue to the
+   immutable source fallback instead of retrying npm.
+
+2. If Python 3.11+ and `uv` already exist, install the reviewed `0.3.60`
+   source snapshot by its full commit hash:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/archive/d8f5cfac156290e7d908ae60dc37e83e5e3e36f5.tar.gz"
    ```
 
 3. The npm package has no lifecycle scripts or runtime download. It supports
    macOS arm64/x64, glibc Linux arm64/x64, and Windows arm64/x64. If optional
    dependencies were omitted, reinstall with `--include=optional`.
 4. Do not install or replace Node.js, npm, Python, or `uv` without the user's
-   approval. Do not clone the repository or install from a mutable branch.
+   approval. Do not clone the repository or install from a mutable branch;
+   never replace the pinned commit hash with `main`.
 5. Verify the result with `museoncli version`. Do not claim installation
    succeeded until that command works.
 6. Continue the original task. If the user asked to sign in, start the browser

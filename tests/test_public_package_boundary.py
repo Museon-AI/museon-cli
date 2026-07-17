@@ -56,3 +56,23 @@ def test_release_workflow_rejects_commits_outside_main() -> None:
     assert "refs/heads/main:refs/remotes/origin/main" in workflow
     assert 'git merge-base --is-ancestor "${GITHUB_SHA}" origin/main' in workflow
     assert "docs/install.md" in workflow
+
+
+def test_release_workflow_uses_short_lived_credentials() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "actions/create-github-app-token@" in workflow
+    assert "MUSEON_RUNTIME_APP_ID" in workflow
+    assert "MUSEON_RUNTIME_APP_PRIVATE_KEY" in workflow
+    assert "permission-contents: write" in workflow
+    assert "MUSEON_RUNTIME_DISPATCH_TOKEN" not in workflow
+    assert "MUSEON_NPM_BOOTSTRAP_TOKEN" in workflow
+    assert "id-token: write" in workflow
+    publish_step = workflow.split("- name: Publish platform packages first and root last", 1)[1]
+    before_publish_step = workflow.split(
+        "- name: Publish platform packages first and root last", 1
+    )[0]
+    assert "NODE_AUTH_TOKEN" in publish_step
+    assert "NODE_AUTH_TOKEN" not in before_publish_step

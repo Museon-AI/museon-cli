@@ -113,6 +113,20 @@ def test_verifier_rejects_lifecycle_script(tmp_path: Path) -> None:
         verifier.verify([verifier._directory_archive(package)], require_all=False)
 
 
+def test_verifier_rejects_mutable_launcher_documentation_url(tmp_path: Path) -> None:
+    package = generate_root(tmp_path)
+    launcher = package / "lib" / "launcher.cjs"
+    launcher.write_text(
+        launcher.read_text(encoding="utf-8")
+        + "\n// https://github.com/Museon-AI/museon-cli/blob/main/docs/install.md\n",
+        encoding="utf-8",
+    )
+    verifier = _load_verifier()
+
+    with pytest.raises(RuntimeError, match="mutable GitHub branch"):
+        verifier.verify([verifier._directory_archive(package)], require_all=False)
+
+
 def test_release_prerequisites_accept_apache_license() -> None:
     from verify_release_prerequisites import verify
 

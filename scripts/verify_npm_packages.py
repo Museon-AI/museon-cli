@@ -143,6 +143,12 @@ def _verify_root(package: PackageArchive) -> None:
     launcher = package.files.get("lib/launcher.cjs", b"")
     if b"MUSEONCLI_DISTRIBUTION_CHANNEL" not in launcher or b"runtime download" in launcher.lower():
         raise RuntimeError("root launcher does not declare the npm distribution channel safely")
+    for mutable_reference in (
+        b"github.com/Museon-AI/museon-cli/blob/main",
+        b"github.com/Museon-AI/museon-cli/tree/main",
+    ):
+        if mutable_reference in launcher:
+            raise RuntimeError("root launcher links to a mutable GitHub branch")
 
 
 def _verify_platform(package: PackageArchive) -> None:

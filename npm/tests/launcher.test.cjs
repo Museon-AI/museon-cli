@@ -25,7 +25,7 @@ for (const [platform, arch, report, expected] of cases) {
 test('rejects musl with an actionable fallback', () => {
   assert.throws(
     () => launcher.selectPlatform({ platform: 'linux', arch: 'x64', report: { header: {} } }),
-    /glibc only.*GitHub\/uv/s
+    /glibc only.*GitHub\/uv.*https:\/\/www\.museon\.ai\/cli\/install\.md/s
   );
 });
 

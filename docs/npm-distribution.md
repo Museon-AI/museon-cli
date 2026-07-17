@@ -66,11 +66,11 @@ root plus matching platform tarball using `npm install --global --ignore-scripts
 
 ## Python fallback and update discovery
 
-For a host without npm, the immutable fallback is the wheel attached to GitHub
-release `v0.3.60`:
+For a host without npm, or until the npm package is available, the immutable
+fallback is the reviewed `0.3.60` source snapshot:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/archive/d8f5cfac156290e7d908ae60dc37e83e5e3e36f5.tar.gz"
 ```
 
 Update discovery is off by default. Setting `MUSEONCLI_UPDATE_CHECK=true`

@@ -13,6 +13,7 @@ from museoncli.domains import command_specs
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_ROOT = ROOT / "skills" / "museon-cli"
 INSTALL_GUIDE_URL = "https://www.museon.ai/cli/install.md"
+SOURCE_FALLBACK_REVISION = "d8f5cfac156290e7d908ae60dc37e83e5e3e36f5"
 
 
 def _mentioned_commands(text: str) -> set[str]:
@@ -78,9 +79,10 @@ def test_agent_skill_mentions_only_registered_commands() -> None:
 def test_install_docs_offer_versioned_official_source_fallback() -> None:
     metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     version = metadata["project"]["version"]
+    assert re.fullmatch(r"[0-9a-f]{40}", SOURCE_FALLBACK_REVISION)
     source = (
-        "https://github.com/Museon-AI/museon-cli/releases/download/"
-        f"v{version}/museoncli-{version}-py3-none-any.whl"
+        "https://github.com/Museon-AI/museon-cli/archive/"
+        f"{SOURCE_FALLBACK_REVISION}.tar.gz"
     )
     docs = (
         ROOT / "docs" / "install.md",
@@ -94,6 +96,8 @@ def test_install_docs_offer_versioned_official_source_fallback() -> None:
         assert f"npm install --global @museon/cli@{version}" in text, path
         assert source in text, path
         assert "museon-cli.git@main" not in text, path
+        assert "/archive/refs/heads/main" not in text, path
+        assert "/tree/main/" not in text, path
         assert "pypi" not in text.lower(), path
 
     assert INSTALL_GUIDE_URL in (ROOT / "README.md").read_text(encoding="utf-8")

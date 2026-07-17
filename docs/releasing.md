@@ -1,8 +1,9 @@
 # Releasing Museon CLI
 
 Public installation is npm-first. The Python wheel remains a verified GitHub
-release asset for Museon's private runtime and for the immutable `uv` fallback;
-it is not sent to a Python package registry.
+release asset for Museon's private runtime; it is not sent to a Python package
+registry. Before the npm release exists, the public guide uses an immutable,
+reviewed source snapshot as its `uv` fallback.
 
 ## Launch gates and one-time setup
 
@@ -24,7 +25,13 @@ signing prerequisite below is complete:
 3. Configure an npm trusted publisher for every package: owner `Museon-AI`,
    repository `museon-cli`, workflow `release.yml`, environment `npm`. Create
    and protect that GitHub environment. The workflow uses Node 22.14 or newer,
-   npm 11.5.1 or newer, and GitHub OIDC; no registry token belongs in secrets.
+   npm 11.5.1 or newer, and GitHub OIDC; no long-lived registry token remains
+   after the one-time bootstrap.
+   For the first publication only, create a granular npm token that can publish
+   public packages under `@museon`, store it as the protected `npm` environment
+   secret `MUSEON_NPM_BOOTSTRAP_TOKEN`, and approve that deployment. After all
+   seven packages exist, configure their trusted publishers and delete the
+   bootstrap secret before the next release.
 4. Protect `main` and `v*` tags. Require CI before a release tag can be created.
 5. Create a protected GitHub environment named `native-signing`. Configure
    Developer ID/notarization secrets `MUSEON_APPLE_CERTIFICATE_P12_BASE64`,
@@ -37,8 +44,12 @@ signing prerequisite below is complete:
 6. Review the generated third-party notices for every native target. The native
    build records the notice hash and package count; npm verification requires
    those notices and the approved project license in every artifact.
-7. Configure `MUSEON_RUNTIME_DISPATCH_TOKEN` only for the verified-wheel
-   repository dispatch to the private `Museon-AI/museon` runtime.
+7. Install a GitHub App on `Museon-AI/museon` with permission to dispatch
+   repository events and only the `Contents: write` repository permission.
+   Configure its numeric App ID as
+   `MUSEON_RUNTIME_APP_ID` and its private key as
+   `MUSEON_RUNTIME_APP_PRIVATE_KEY`. The workflow mints a short-lived token;
+   do not use a long-lived personal access token.
 
 `uv run python scripts/verify_release_prerequisites.py` enforces the repository
 license and package-metadata gates before any release job can publish. Later
