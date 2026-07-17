@@ -68,7 +68,7 @@ jobs:
         with:
           name: museoncli-python-dist
           path: reviewed
-      - run: python scripts/smoke_install.py --dist-dir reviewed
+      - run: python scripts/smoke_install.py --dist-dir reviewed/dist
 
   dependency-audit:
     name: Dependency vulnerability audit
