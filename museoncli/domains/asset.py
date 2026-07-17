@@ -84,6 +84,49 @@ PRODUCT_ASSET_TYPE_CHOICES = [
     "app_screenshot",
 ]
 
+PRODUCT_CATEGORY_CHOICES = [
+    "MARKETING_TOOLS",
+    "SALES_TOOLS",
+    "SOCIAL_MEDIA_MANAGEMENT",
+    "ECOMMERCE_TOOLS",
+    "JOB_SEARCH_TOOLS",
+    "ADS_CAMPAIGNS",
+    "LEARNING_PLATFORMS",
+    "LANGUAGE_LEARNING",
+    "KIDS_EDUCATION",
+    "SKILL_TRAINING",
+    "HEALTH_WELLNESS",
+    "SKINCARE",
+    "RECIPES_NUTRITION",
+    "HEALTH_GUIDANCE",
+    "MINDFULNESS",
+    "MENTAL_HEALTH",
+    "EMOTIONAL_SUPPORT",
+    "LIFESTYLE",
+    "DATING",
+    "PET_CARE",
+    "TRAVEL_PLANNING",
+    "FAMILY_PARENTING",
+    "GAMING_ENTERTAINMENT",
+    "AI_WRITING",
+    "IMAGE_DESIGN_EDITING",
+    "VOICE_GENERATION",
+    "MUSIC_GENERATION",
+    "VIDEO_GENERATION_EDITING",
+    "TRANSLATION_LOCALIZATION",
+    "AI_CHATBOT",
+    "VIRTUAL_COMPANION",
+    "VOICE_ASSISTANT",
+    "PRODUCTIVITY_TOOLS",
+    "AI_AUTOMATION_PLATFORM",
+    "AI_SEARCH",
+    "CODING_ASSISTANT",
+    "NO_CODE_TOOLS",
+    "DATA_INSIGHTS",
+    "INVESTING_TOOLS",
+    "GENERAL",
+]
+
 
 ASSET_SEARCH_TERMS_MAX = 20
 FORMAT_BATCH_GET_MAX_IDS = 100
@@ -234,6 +277,30 @@ def _build_asset_get_batch_arguments(args: argparse.Namespace) -> dict[str, Any]
     return payload
 
 
+def _add_asset_options_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--type", dest="asset_type", choices=["product"], required=True)
+    parser.add_argument("--field", choices=["category"], required=True)
+    parser.add_argument(
+        "--query",
+        help=(
+            "Optional intent search, such as education, edtech, or 教育. Omit it to return "
+            "all canonical values."
+        ),
+    )
+
+
+def _build_asset_options_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return _without_none(
+        {
+            **_load_structured_args(args),
+            "type": args.asset_type,
+            "field": args.field,
+            "query": args.query,
+        }
+    )
+
+
 def _add_asset_create_arguments(parser: argparse.ArgumentParser) -> None:
     _add_asset_write_arguments(parser, require_id=False, choices=ASSET_CREATE_TYPE_CHOICES)
 
@@ -298,7 +365,13 @@ def _add_asset_write_arguments(
     )
     parser.add_argument("--description")
     parser.add_argument("--website-url")
-    parser.add_argument("--category")
+    parser.add_argument(
+        "--category",
+        help=(
+            "Product category canonical value. See `museoncli schema asset.create` "
+            "or run `museoncli asset +options --type product --field category`."
+        ),
+    )
     parser.add_argument("--media-type", choices=["image", "video", "audio"])
     parser.add_argument("--brand-logo-media-id", action="append", dest="brand_logo_media_ids")
     parser.add_argument("--product-image-media-id", action="append", dest="product_image_media_ids")
@@ -342,7 +415,14 @@ def _add_asset_write_arguments(
     parser.add_argument("--analysis-file")
     parser.add_argument("--is-public", action="store_true")
     parser.add_argument("--publish-on-create", action="store_true")
-    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Validate without writing. Product create uses the authoritative server "
+            "validation path; other asset writes use local contract validation."
+        ),
+    )
 
 
 def _build_asset_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
@@ -948,6 +1028,32 @@ def _asset_get_batch_input_schema() -> dict[str, Any]:
     }
 
 
+def _asset_options_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "type": {
+                "type": "string",
+                "enum": ["product"],
+                "description": "Asset type whose field options should be discovered.",
+            },
+            "field": {
+                "type": "string",
+                "enum": ["category"],
+                "description": "Product field whose canonical values should be returned.",
+            },
+            "query": {
+                "type": ["string", "null"],
+                "description": (
+                    "Optional intent search such as education, edtech, or 教育. Omit it "
+                    "to return all canonical values."
+                ),
+            },
+        },
+        "required": ["type", "field"],
+    }
+
+
 def _asset_delete_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -958,6 +1064,56 @@ def _asset_delete_input_schema() -> dict[str, Any]:
         },
         "required": ["type", "id"],
     }
+
+
+def _product_write_payload_schema(*, create: bool) -> dict[str, Any]:
+    schema: dict[str, Any] = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Product display name.",
+            },
+            "category": {
+                "type": "string",
+                "enum": PRODUCT_CATEGORY_CHOICES,
+                "description": (
+                    "Canonical product category. For intent search and labels, run "
+                    "`museoncli asset +options --type product --field category`."
+                ),
+            },
+            "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Required product summary.",
+            },
+            "website_url": {"type": ["string", "null"], "format": "uri"},
+            "tags": {
+                "type": "array",
+                "items": {"type": "string", "minLength": 1},
+            },
+            "assets": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "media_id": {"type": "string", "format": "uuid"},
+                        "asset_type": {
+                            "type": "string",
+                            "enum": PRODUCT_ASSET_TYPE_CHOICES,
+                        },
+                    },
+                    "required": ["media_id", "asset_type"],
+                },
+            },
+        },
+    }
+    if create:
+        schema["required"] = ["name", "category", "description"]
+    return schema
 
 
 def _asset_write_input_schema(*, require_id: bool) -> dict[str, Any]:
@@ -997,7 +1153,22 @@ def _asset_write_input_schema(*, require_id: bool) -> dict[str, Any]:
     if require_id:
         properties["id"] = {"type": "string", "minLength": 1}
         required.insert(1, "id")
-    return {"type": "object", "properties": properties, "required": required}
+    return {
+        "type": "object",
+        "properties": properties,
+        "required": required,
+        "allOf": [
+            {
+                "if": {
+                    "properties": {"type": {"const": "product"}},
+                    "required": ["type"],
+                },
+                "then": {
+                    "properties": {"payload": _product_write_payload_schema(create=not require_id)}
+                },
+            }
+        ],
+    }
 
 
 def specs() -> list[CommandSpec]:
@@ -1076,8 +1247,36 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.ASSET,
+            shortcut="+options",
+            summary=(
+                "List canonical values and labels for an asset field. Product category "
+                "supports optional intent search, so a term such as education, edtech, or 教育 "
+                "returns the relevant learning categories without trial writes."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="asset_options",
+            input_schema=_asset_options_input_schema(),
+            output_schema=_direct_output_schema(
+                "Canonical asset-field options returned by Museon API."
+            ),
+            examples=[
+                "museoncli asset +options --type product --field category",
+                ("museoncli asset +options --type product --field category --query education"),
+                ("museoncli asset +options --type product --field category --query 教育"),
+            ],
+            add_arguments=_add_asset_options_arguments,
+            build_arguments=_build_asset_options_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.ASSET,
             shortcut="+create",
-            summary="Create one reusable product, persona, topic, format, or media asset.",
+            summary=(
+                "Create one reusable product, persona, topic, format, or media asset. "
+                "Product requires name, category, and description; discover canonical "
+                "categories with asset +options and use --dry-run for authoritative "
+                "server validation without writing."
+            ),
             risk_level="write",
             execution="direct",
             adapter_tool_name="asset_create",
@@ -1219,6 +1418,21 @@ async def _execute_get_batch(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_options(ctx: CommandContext) -> Any:
+    return await ctx.api_data(
+        ctx.cfg,
+        "GET",
+        "/agent-cli/assets/options",
+        params=compact_params(
+            {
+                "type": ctx.arguments.get("type"),
+                "field": ctx.arguments.get("field"),
+                "query": ctx.arguments.get("query"),
+            }
+        ),
+    )
+
+
 async def _execute_write(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -1235,6 +1449,17 @@ async def _execute_write(ctx: CommandContext) -> Any:
         if resource_type == "brand_product":
             payload = product_api_payload(payload, workspace_id=workspace_id, create=True)
             payload.pop("workspace_id", None)
+            if getattr(ctx.args, "dry_run", False):
+                return await api_data(
+                    cfg,
+                    "POST",
+                    "/agent-cli/assets:validate",
+                    json_body={
+                        "type": public_type,
+                        "workspace_id": workspace_id,
+                        "payload": payload,
+                    },
+                )
         elif resource_type == "persona":
             payload = persona_api_payload(payload, workspace_id=workspace_id, create=True)
             payload.pop("workspace_id", None)
@@ -1289,6 +1514,8 @@ async def _run_read(ctx: CommandContext) -> dict[str, Any]:
         raw = await _execute_list(ctx)
     elif ctx.spec.schema_name == "asset.get-batch":
         raw = await _execute_get_batch(ctx)
+    elif ctx.spec.schema_name == "asset.options":
+        raw = await _execute_options(ctx)
     else:
         raw = await _execute_get(ctx)
     if raw is None:
@@ -1327,6 +1554,7 @@ EXECUTORS = {
     "asset.list": _run_read,
     "asset.get": _run_read,
     "asset.get-batch": _run_read,
+    "asset.options": _run_read,
     "asset.create": _run_write,
     "asset.update": _run_write,
     "asset.delete": direct_enveloped(_execute_delete),

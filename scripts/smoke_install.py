@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_PUBLIC_COMMAND_COUNT = 105
+EXPECTED_PUBLIC_COMMAND_COUNT = 106
 
 
 def _run(command: list[str], *, env: dict[str, str] | None = None) -> str:

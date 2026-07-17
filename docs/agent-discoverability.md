@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-105 commands across 12 domains (source of truth: `museoncli schema`).
+106 commands across 12 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -46,7 +46,8 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `asset +list` | read | — | — | direct | List reusable product, persona, topic, format, or media assets. For multiple search concepts, repeat --search-term (max 20); do not join terms with commas in --search. Each resource includes a ref — paste it into report/pitchdeck markdown to embed a live card. Inline in a sentence renders a chip; alone on its own line renders a full card. |
 | `asset +get` | read | — | — | direct | Read one reusable product, persona, topic, format, or media asset. Each resource includes a ref — paste it into report/pitchdeck markdown to embed a live card. Inline in a sentence renders a chip; alone on its own line renders a full card. |
 | `asset +get-batch` | read | — | — | direct | Read 1-100 Formats by exact IDs in one request. When two or more known Format IDs must be queried, MUST use this command instead of looping asset +get. Items preserve request order; missing or inaccessible IDs are returned in missing_ids. |
-| `asset +create` | write | yes | — | direct | Create one reusable product, persona, topic, format, or media asset. |
+| `asset +options` | read | — | — | direct | List canonical values and labels for an asset field. Product category supports optional intent search, so a term such as education, edtech, or 教育 returns the relevant learning categories without trial writes. |
+| `asset +create` | write | yes | — | direct | Create one reusable product, persona, topic, format, or media asset. Product requires name, category, and description; discover canonical categories with asset +options and use --dry-run for authoritative server validation without writing. |
 | `asset +update` | write | yes | — | direct | Update one reusable product, persona, topic, format, or media asset. |
 | `asset +delete` | destructive | yes | `--yes` | direct | Delete one reusable product, persona, topic, format, or media asset. |
 

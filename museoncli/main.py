@@ -59,6 +59,20 @@ DEFAULT_CLI_RELEASE_MANIFEST_URL = "https://pypi.org/pypi/museoncli/json"
 PYPI_PROJECT_URL = "https://pypi.org/project/museoncli/"
 
 
+class ApiRequestError(RuntimeError):
+    """HTTP error that preserves an agent-readable structured API detail."""
+
+    def __init__(self, status_code: int, detail: Any) -> None:
+        self.status_code = status_code
+        self.detail = detail
+        rendered = (
+            json.dumps(detail, ensure_ascii=False, sort_keys=True)
+            if isinstance(detail, dict | list)
+            else str(detail)
+        )
+        super().__init__(f"HTTP {status_code}: {rendered}")
+
+
 def main() -> None:
     _configure_utf8_stdout()
     parser = build_parser()
@@ -71,7 +85,13 @@ def main() -> None:
         emit({"ok": False, "reason": "interrupted"})
         raise SystemExit(130) from None
     except Exception as exc:
-        emit({"ok": False, "reason": reason_from_exception(exc), "detail": str(exc)})
+        emit(
+            {
+                "ok": False,
+                "reason": reason_from_exception(exc),
+                "detail": exception_detail(exc),
+            }
+        )
         raise SystemExit(1) from None
     if result is not None:
         if not emit(
@@ -206,7 +226,11 @@ def command_uses_network(args: argparse.Namespace) -> bool:
     domain_command = getattr(args, "domain_command", None)
     if domain_command:
         spec = get_command_spec(domain_command)
-        return spec.transport != "local_process" and not getattr(args, "dry_run", False)
+        if spec.transport == "local_process":
+            return False
+        if not getattr(args, "dry_run", False):
+            return True
+        return spec.schema_name == "asset.create" and getattr(args, "asset_type", None) == "product"
     return False
 
 
@@ -438,7 +462,7 @@ async def _api_request(
     if response.status_code == 426:
         raise RuntimeError(f"cli_outdated: {response.text[:500]}")
     if response.status_code >= 400:
-        raise RuntimeError(f"HTTP {response.status_code}: {response.text[:500]}")
+        raise ApiRequestError(response.status_code, response_error_payload(response))
     payload = response.json()
     if unwrap_success and isinstance(payload, dict) and "success" in payload:
         if not payload.get("success"):
@@ -738,6 +762,13 @@ def clear_expired_pending_web_approval(cfg: Config) -> None:
 
 
 def reason_from_exception(exc: Exception) -> str:
+    if isinstance(exc, ApiRequestError):
+        if exc.status_code in {400, 422}:
+            return "invalid_input"
+        if exc.status_code == 404:
+            return "not_found"
+        if exc.status_code == 503:
+            return "service_unavailable"
     text = str(exc)
     if text in {
         "missing_auth",
@@ -763,11 +794,25 @@ def reason_from_exception(exc: Exception) -> str:
     return exc.__class__.__name__
 
 
+def exception_detail(exc: Exception) -> Any:
+    return exc.detail if isinstance(exc, ApiRequestError) else str(exc)
+
+
 def forbidden_error_message(response: httpx.Response) -> str:
     detail = response_error_detail(response)
     if not detail:
         return "forbidden"
     return f"forbidden: {detail}"
+
+
+def response_error_payload(response: httpx.Response) -> Any:
+    try:
+        payload = response.json()
+    except Exception:
+        return response.text[:500].strip() or f"HTTP {response.status_code}"
+    if isinstance(payload, dict) and "detail" in payload:
+        return payload["detail"]
+    return payload
 
 
 def response_error_detail(response: httpx.Response) -> str | None:
@@ -806,7 +851,12 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
     arguments = command_payload(args)
     validate_uuid_arguments(arguments)
     workspace_id = workspace_id_arg_or_selected(args, cfg)
-    if getattr(args, "dry_run", False):
+    server_validated_product_dry_run = (
+        spec.schema_name == "asset.create"
+        and arguments.get("type") == "brand_product"
+        and getattr(args, "dry_run", False)
+    )
+    if getattr(args, "dry_run", False) and not server_validated_product_dry_run:
         if spec.schema_name.startswith("skills."):
             dry_run_workspace_id = workspace_id if spec.schema_name == "skills.create" else None
             return domain_command_dry_run_envelope(
