@@ -159,10 +159,12 @@ def write_private_json(path: Path, payload: Mapping[str, object]) -> None:
     )
     temporary_path = Path(temporary_name)
     try:
-        try:
-            os.fchmod(descriptor, 0o600)
-        except OSError:
-            pass
+        fchmod = getattr(os, "fchmod", None)
+        if fchmod is not None:
+            try:
+                fchmod(descriptor, 0o600)
+            except OSError:
+                pass
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             handle.write(json.dumps(dict(payload), indent=2, ensure_ascii=False) + "\n")
             handle.flush()
