@@ -355,6 +355,10 @@ jobs:
           name: release-bundle
           path: release
       - name: Publish platform packages first and root last
+        env:
+          # One-time bootstrap only. npm trusted publishing is used when this
+          # secret is absent. Delete it after every package has its publisher.
+          NODE_AUTH_TOKEN: ${{ secrets.MUSEON_NPM_BOOTSTRAP_TOKEN }}
         run: python scripts/publish_npm_packages.py --tarball-dir release/npm
 
   publish-release:
@@ -381,19 +385,34 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Validate private runtime GitHub App ID
+        shell: bash
+        env:
+          APP_ID: ${{ secrets.MUSEON_RUNTIME_APP_ID || secrets.MUSEON_RUNTIME_APP_CLIENT_ID }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${APP_ID}" =~ ^[0-9]+$ ]]; then
+            echo "Configure MUSEON_RUNTIME_APP_ID with the numeric GitHub App ID." >&2
+            exit 1
+          fi
+      - name: Create short-lived private runtime token
+        id: runtime-app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ secrets.MUSEON_RUNTIME_APP_ID || secrets.MUSEON_RUNTIME_APP_CLIENT_ID }}
+          private-key: ${{ secrets.MUSEON_RUNTIME_APP_PRIVATE_KEY }}
+          owner: Museon-AI
+          repositories: museon
+          permission-contents: write
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-bundle
           path: release
       - name: Dispatch verified wheel to private Agent runtime
         env:
-          GH_TOKEN: ${{ secrets.MUSEON_RUNTIME_DISPATCH_TOKEN }}
+          GH_TOKEN: ${{ steps.runtime-app-token.outputs.token }}
         run: |
           set -euo pipefail
-          if [[ -z "${GH_TOKEN:-}" ]]; then
-            echo "MUSEON_RUNTIME_DISPATCH_TOKEN is not configured; runtime dispatch skipped."
-            exit 0
-          fi
           wheel=$(find release/python -name '*.whl' -type f -print -quit)
           wheel_name=$(basename "${wheel}")
           wheel_sha256=$(sha256sum "${wheel}" | awk '{print $1}')

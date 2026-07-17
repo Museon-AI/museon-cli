@@ -92,11 +92,11 @@ npm install --global @museon/cli@0.3.60
 ```
 
 npm 启动器没有依赖和生命周期脚本，会为 macOS arm64/x64、glibc Linux
-arm64/x64 或 Windows arm64/x64 安装版本完全一致的原生包。没有 npm 的主机可以使用
-Python 3.11+、`uv` 和 GitHub `v0.3.60` Release 中不可变的 wheel：
+arm64/x64 或 Windows arm64/x64 安装版本完全一致的原生包。在 npm 包可用之前，
+或没有 npm 的主机，可以使用 Python 3.11+、`uv` 和经过审查的不可变源码快照：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/archive/d8f5cfac156290e7d908ae60dc37e83e5e3e36f5.tar.gz"
 ```
 
 安装成功后继续配置 Skill 和浏览器授权：

@@ -57,7 +57,7 @@ function selectPlatform(options = {}) {
     if (libc !== 'gnu') {
       throw new DistributionError(
         'Museon CLI provides Linux native packages for glibc only; this host appears to use musl. ' +
-        'Use the immutable GitHub/uv fallback documented at https://github.com/Museon-AI/museon-cli/blob/main/docs/install.md.'
+        'Use the immutable GitHub/uv fallback documented at https://www.museon.ai/cli/install.md.'
       );
     }
     target += '-gnu';
