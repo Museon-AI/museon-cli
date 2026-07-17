@@ -13,7 +13,7 @@ from museoncli.domains import command_specs
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_ROOT = ROOT / "skills" / "museon-cli"
 INSTALL_GUIDE_URL = "https://www.museon.ai/cli/install.md"
-SOURCE_FALLBACK_REVISION = "d8f5cfac156290e7d908ae60dc37e83e5e3e36f5"
+SOURCE_FALLBACK_REVISION = "09870901783cf5b4894fba30032ccb0e4735b8fe"
 
 
 def _mentioned_commands(text: str) -> set[str]:

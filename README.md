@@ -122,7 +122,7 @@ arm64/x64. Until the npm package is available, or on a host without npm, use
 Python 3.11+, `uv`, and the immutable reviewed source snapshot:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/archive/d8f5cfac156290e7d908ae60dc37e83e5e3e36f5.tar.gz"
+uv tool install "https://github.com/Museon-AI/museon-cli/archive/09870901783cf5b4894fba30032ccb0e4735b8fe.tar.gz"
 ```
 
 Then continue with setup and browser authorization:

@@ -70,7 +70,7 @@ For a host without npm, or until the npm package is available, the immutable
 fallback is the reviewed `0.3.60` source snapshot:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/archive/d8f5cfac156290e7d908ae60dc37e83e5e3e36f5.tar.gz"
+uv tool install "https://github.com/Museon-AI/museon-cli/archive/09870901783cf5b4894fba30032ccb0e4735b8fe.tar.gz"
 ```
 
 Update discovery is off by default. Setting `MUSEONCLI_UPDATE_CHECK=true`

@@ -28,7 +28,7 @@ exists and the user asked to install Museon or complete a Museon task:
    source snapshot by its full commit hash:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/archive/d8f5cfac156290e7d908ae60dc37e83e5e3e36f5.tar.gz"
+   uv tool install "https://github.com/Museon-AI/museon-cli/archive/09870901783cf5b4894fba30032ccb0e4735b8fe.tar.gz"
    ```
 
 3. The npm package has no lifecycle scripts or runtime download. It supports
