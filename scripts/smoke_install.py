@@ -17,14 +17,19 @@ EXPECTED_PUBLIC_COMMAND_COUNT = 105
 
 
 def _run(command: list[str], *, env: dict[str, str] | None = None) -> str:
-    result = subprocess.run(
-        command,
-        check=True,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=env,
-    )
+    try:
+        result = subprocess.run(
+            command,
+            check=True,
+            encoding="utf-8",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(
+            f"command failed: {command!r}\nstdout:\n{exc.stdout}\nstderr:\n{exc.stderr}"
+        ) from exc
     return result.stdout.strip()
 
 

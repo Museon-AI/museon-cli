@@ -60,6 +60,7 @@ PYPI_PROJECT_URL = "https://pypi.org/project/museoncli/"
 
 
 def main() -> None:
+    _configure_utf8_stdout()
     parser = build_parser()
     argv = sys.argv[1:]
     args = parser.parse_args([item for item in argv if item != "--json"])
@@ -78,6 +79,17 @@ def main() -> None:
             command_hint=getattr(args, "domain_command", None),
         ):
             raise SystemExit(1)
+
+
+def _configure_utf8_stdout() -> None:
+    """Keep the machine-readable output contract UTF-8 across host locales."""
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if not callable(reconfigure):
+        return
+    try:
+        reconfigure(encoding="utf-8")
+    except (AttributeError, OSError, ValueError):
+        pass
 
 
 def build_parser() -> argparse.ArgumentParser:
