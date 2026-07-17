@@ -71,6 +71,7 @@ jobs:
           path: |
             dist/*
             contracts/command-catalog.json
+            docs/install.md
             release-assets/*
 
   publish-pypi:
@@ -105,6 +106,7 @@ jobs:
           --repo Museon-AI/museon-cli
           release/dist/*
           release/contracts/command-catalog.json
+          release/docs/install.md
           release/release-assets/*
           --clobber
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "museoncli"
-version = "0.3.57"
+version = "0.3.58"
 description = "Agent-ready CLI for Museon's social media operating platform"
 readme = "README.md"
 requires-python = ">=3.11"
