@@ -20,6 +20,15 @@ from museoncli.domains._shared import _direct_output_schema
 def _add_account_operation_submit_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--pool-account-id", required=True)
     parser.add_argument("--organization-id", required=True)
+    parser.add_argument(
+        "--product-id",
+        default=None,
+        help=(
+            "Optional workspace Product/CTA context: product truth, description/media, and "
+            "promotion guidance; an explicit audience action is optional. Re-submitting the "
+            "same Product is idempotent; changing it is rejected."
+        ),
+    )
     parser.add_argument("--niche", default=None)
     parser.add_argument("--persona-id", default=None)
     parser.add_argument(
@@ -55,6 +64,7 @@ def _build_account_operation_submit_arguments(args: argparse.Namespace) -> dict[
     return {
         "pool_account_id": args.pool_account_id,
         "organization_id": args.organization_id,
+        "product_id": args.product_id,
         "niche": args.niche,
         "persona_id": args.persona_id,
         "session_conversation_id": args.session_conversation_id,
@@ -71,6 +81,14 @@ def _add_account_operation_submit_batch_arguments(parser: argparse.ArgumentParse
         help="Comma-separated pool account ids (one shared session/campaign).",
     )
     parser.add_argument("--organization-id", required=True)
+    parser.add_argument(
+        "--product-id",
+        default=None,
+        help=(
+            "Optional shared workspace Product/CTA context for the entire batch. One batch "
+            "has at most one Product; per-account overrides are not supported."
+        ),
+    )
     parser.add_argument("--niche", default=None, help="Shared niche default for all accounts.")
     parser.add_argument("--session-conversation-id", default=None)
     parser.add_argument("--target-delivery-mode", default=None)
@@ -91,6 +109,7 @@ def _build_account_operation_submit_batch_arguments(args: argparse.Namespace) ->
     return {
         "pool_account_ids": args.pool_account_ids,
         "organization_id": args.organization_id,
+        "product_id": args.product_id,
         "niche": args.niche,
         "session_conversation_id": args.session_conversation_id,
         "target_delivery_mode": args.target_delivery_mode,
@@ -258,6 +277,10 @@ def _account_operation_specs() -> list[CommandSpec]:
                 "conversation). Response data.research_disposition tells the outcome: "
                 "established_seeded=直接 active(继承既有排期元素,无需调研); "
                 "research_directed/inductive/full=进入 onboarding 调研. "
+                "When a Product is resolved, pass optional --product-id once to bind product "
+                "truth, description/media, and promotion guidance to the operation; an "
+                "explicit audience action is optional. Same-Product retries are idempotent "
+                "and a different Product is rejected. "
                 "Pass --research-prompt/--reference-url ONLY when the operator explicitly "
                 "mentioned research direction or benchmark accounts. When submitting MULTIPLE "
                 "accounts in one turn, reply ONE consolidated confirmation card "
@@ -270,11 +293,19 @@ def _account_operation_specs() -> list[CommandSpec]:
             execution="direct",
             adapter_tool_name="account_operation_submit",
             input_schema=_account_operation_input_schema(
-                {"pool_account_id": "Pool account id", "organization_id": "Organization id"}
+                {
+                    "pool_account_id": "Pool account id",
+                    "organization_id": "Organization id",
+                    "product_id": (
+                        "Optional workspace Product/CTA asset id for product context. Stable "
+                        "for the operation; different-Product re-submission is rejected."
+                    ),
+                }
             ),
             output_schema=_direct_output_schema("Account operation registry row."),
             examples=[
-                "museoncli account-operation +submit --pool-account-id <uuid> --organization-id <uuid> --niche leather_care"
+                "museoncli account-operation +submit --pool-account-id <uuid> "
+                "--organization-id <uuid> --product-id <product_uuid> --niche leather_care"
             ],
             add_arguments=_add_account_operation_submit_arguments,
             build_arguments=_build_account_operation_submit_arguments,
@@ -287,8 +318,11 @@ def _account_operation_specs() -> list[CommandSpec]:
                 "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — "
                 "PREFERRED over N single +submit calls when the operator hands over a batch. "
                 "All accounts bind to the current session; account-operation submission does "
-                "NOT create a campaign monitor. Shared --niche/--research-prompt/--reference-url "
-                "apply to every account. Reply ONE consolidated confirmation card from the "
+                "NOT create a campaign monitor. One optional --product-id identifies the "
+                "shared Product/CTA context for the ENTIRE batch; one batch has at most one "
+                "Product and per-account overrides are forbidden. Shared "
+                "--niche/--research-prompt/--reference-url apply to every account. Reply ONE "
+                "consolidated confirmation card from the "
                 "response rows (username/op_id/research_disposition). "
                 "IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] "
                 "(each {pool_account_id, error}); if non-empty, call out the dropped accounts "
@@ -303,6 +337,9 @@ def _account_operation_specs() -> list[CommandSpec]:
                 "outcome='not_in_workspace' means the account does not belong to this workspace's "
                 "account pool and was NOT taken into 全托管运营 — pick an account from this "
                 "workspace. "
+                "outcome='existing_product_conflict' means that account is already managed for "
+                "another Product and was NOT changed; report current_product_id and "
+                "requested_product_id instead of silently switching it. "
                 "meta.created_count = how many were genuinely new."
             ),
             risk_level="write",
@@ -312,6 +349,11 @@ def _account_operation_specs() -> list[CommandSpec]:
                 {
                     "pool_account_ids": "Comma-separated pool account ids",
                     "organization_id": "Organization id",
+                    "product_id": (
+                        "Optional single workspace Product/CTA asset id shared by the entire "
+                        "batch; one batch has at most one Product and per-account overrides "
+                        "are forbidden."
+                    ),
                 }
             ),
             output_schema=_direct_output_schema(
@@ -319,11 +361,13 @@ def _account_operation_specs() -> list[CommandSpec]:
                 "meta.failed=[{pool_account_id, error}], "
                 "meta.created_count, meta.existing_count, meta.existing=[{pool_account_id, "
                 "outcome, current_session_conversation_id, conflict_session_url, "
-                "occupied_by_type, occupied_by_related_id}]."
+                "occupied_by_type, occupied_by_related_id, current_product_id, "
+                "requested_product_id}]."
             ),
             examples=[
                 "museoncli account-operation +submit-batch --pool-account-ids <uuid1>,<uuid2> "
-                "--organization-id <uuid> --niche diy_restoration --reference-url https://www.tiktok.com/@benchmark"
+                "--organization-id <uuid> --product-id <product_uuid> "
+                "--niche diy_restoration --reference-url https://www.tiktok.com/@benchmark"
             ],
             add_arguments=_add_account_operation_submit_batch_arguments,
             build_arguments=_build_account_operation_submit_batch_arguments,
@@ -752,6 +796,7 @@ async def _execute_submit(ctx: CommandContext) -> Any:
             "organization_id": arguments.get("organization_id"),
             "pool_account_id": arguments.get("pool_account_id"),
             "persona_id": arguments.get("persona_id"),
+            "product_id": arguments.get("product_id"),
             "niche": arguments.get("niche"),
             "session_conversation_id": session_conversation_id,
             "source_channel_message_id": source_channel_message_id,
@@ -779,6 +824,7 @@ async def _execute_submit_batch(ctx: CommandContext) -> Any:
             "session_conversation_id": session_conversation_id,
             "source_channel_message_id": runtime.get("source_channel_message_id"),
             "target_delivery_mode": arguments.get("target_delivery_mode"),
+            "product_id": arguments.get("product_id"),
             "niche": arguments.get("niche"),
             "research_prompt": arguments.get("research_prompt"),
             "reference_url": arguments.get("reference_url"),

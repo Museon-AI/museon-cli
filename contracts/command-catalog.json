@@ -23,7 +23,7 @@
           "risk_level": "write",
           "shortcut": "+submit",
           "stability": "stable",
-          "summary": "Submit a pool account into automated operation (registers + binds the agent conversation). Response data.research_disposition tells the outcome: established_seeded=直接 active(继承既有排期元素,无需调研); research_directed/inductive/full=进入 onboarding 调研. Pass --research-prompt/--reference-url ONLY when the operator explicitly mentioned research direction or benchmark accounts. When submitting MULTIPLE accounts in one turn, reply ONE consolidated confirmation card (per-account row: username/op_id/disposition) instead of N cards. NOTE: an account already operating under a DIFFERENT session is NOT moved here — you get the existing op back unchanged (no rebind); prefer +submit-batch which reports this explicitly in meta.existing[] with a conflict link.",
+          "summary": "Submit a pool account into automated operation (registers + binds the agent conversation). Response data.research_disposition tells the outcome: established_seeded=直接 active(继承既有排期元素,无需调研); research_directed/inductive/full=进入 onboarding 调研. When a Product is resolved, pass optional --product-id once to bind product truth, description/media, and promotion guidance to the operation; an explicit audience action is optional. Same-Product retries are idempotent and a different Product is rejected. Pass --research-prompt/--reference-url ONLY when the operator explicitly mentioned research direction or benchmark accounts. When submitting MULTIPLE accounts in one turn, reply ONE consolidated confirmation card (per-account row: username/op_id/disposition) instead of N cards. NOTE: an account already operating under a DIFFERENT session is NOT moved here — you get the existing op back unchanged (no rebind); prefer +submit-batch which reports this explicitly in meta.existing[] with a conflict link.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -48,7 +48,7 @@
           "risk_level": "write",
           "shortcut": "+submit-batch",
           "stability": "stable",
-          "summary": "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — PREFERRED over N single +submit calls when the operator hands over a batch. All accounts bind to the current session; account-operation submission does NOT create a campaign monitor. Shared --niche/--research-prompt/--reference-url apply to every account. Reply ONE consolidated confirmation card from the response rows (username/op_id/research_disposition). IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] (each {pool_account_id, error}); if non-empty, call out the dropped accounts in the confirmation and re-submit them, do NOT assume all landed. ALSO check meta.existing[]: these accounts were ALREADY in operation (not new). outcome='existing_other_session' means the account is already running under a DIFFERENT session and was NOT added here — pick a fresh 账号库 account instead, and surface conflict_session_url so the operator can open that session to check. outcome='occupied_other_business' means the account is already used by another business (occupied_by_type: account_publish / campaign) and was NOT taken into 全托管运营 — pick a different 账号库 (unoccupied) account. outcome='not_in_workspace' means the account does not belong to this workspace's account pool and was NOT taken into 全托管运营 — pick an account from this workspace. meta.created_count = how many were genuinely new.",
+          "summary": "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — PREFERRED over N single +submit calls when the operator hands over a batch. All accounts bind to the current session; account-operation submission does NOT create a campaign monitor. One optional --product-id identifies the shared Product/CTA context for the ENTIRE batch; one batch has at most one Product and per-account overrides are forbidden. Shared --niche/--research-prompt/--reference-url apply to every account. Reply ONE consolidated confirmation card from the response rows (username/op_id/research_disposition). IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] (each {pool_account_id, error}); if non-empty, call out the dropped accounts in the confirmation and re-submit them, do NOT assume all landed. ALSO check meta.existing[]: these accounts were ALREADY in operation (not new). outcome='existing_other_session' means the account is already running under a DIFFERENT session and was NOT added here — pick a fresh 账号库 account instead, and surface conflict_session_url so the operator can open that session to check. outcome='occupied_other_business' means the account is already used by another business (occupied_by_type: account_publish / campaign) and was NOT taken into 全托管运营 — pick a different 账号库 (unoccupied) account. outcome='not_in_workspace' means the account does not belong to this workspace's account pool and was NOT taken into 全托管运营 — pick an account from this workspace. outcome='existing_product_conflict' means that account is already managed for another Product and was NOT changed; report current_product_id and requested_product_id instead of silently switching it. meta.created_count = how many were genuinely new.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -5984,7 +5984,7 @@
       "capability_key": "account-operation.submit",
       "domain": "account-operation",
       "examples": [
-        "museoncli account-operation +submit --pool-account-id <uuid> --organization-id <uuid> --niche leather_care"
+        "museoncli account-operation +submit --pool-account-id <uuid> --organization-id <uuid> --product-id <product_uuid> --niche leather_care"
       ],
       "execution": "direct",
       "input_schema": {
@@ -5995,6 +5995,10 @@
           },
           "pool_account_id": {
             "description": "Pool account id",
+            "type": "string"
+          },
+          "product_id": {
+            "description": "Optional workspace Product/CTA asset id for product context. Stable for the operation; different-Product re-submission is rejected.",
             "type": "string"
           }
         },
@@ -6059,7 +6063,7 @@
       "risk_level": "write",
       "shortcut": "+submit",
       "stability": "stable",
-      "summary": "Submit a pool account into automated operation (registers + binds the agent conversation). Response data.research_disposition tells the outcome: established_seeded=直接 active(继承既有排期元素,无需调研); research_directed/inductive/full=进入 onboarding 调研. Pass --research-prompt/--reference-url ONLY when the operator explicitly mentioned research direction or benchmark accounts. When submitting MULTIPLE accounts in one turn, reply ONE consolidated confirmation card (per-account row: username/op_id/disposition) instead of N cards. NOTE: an account already operating under a DIFFERENT session is NOT moved here — you get the existing op back unchanged (no rebind); prefer +submit-batch which reports this explicitly in meta.existing[] with a conflict link.",
+      "summary": "Submit a pool account into automated operation (registers + binds the agent conversation). Response data.research_disposition tells the outcome: established_seeded=直接 active(继承既有排期元素,无需调研); research_directed/inductive/full=进入 onboarding 调研. When a Product is resolved, pass optional --product-id once to bind product truth, description/media, and promotion guidance to the operation; an explicit audience action is optional. Same-Product retries are idempotent and a different Product is rejected. Pass --research-prompt/--reference-url ONLY when the operator explicitly mentioned research direction or benchmark accounts. When submitting MULTIPLE accounts in one turn, reply ONE consolidated confirmation card (per-account row: username/op_id/disposition) instead of N cards. NOTE: an account already operating under a DIFFERENT session is NOT moved here — you get the existing op back unchanged (no rebind); prefer +submit-batch which reports this explicitly in meta.existing[] with a conflict link.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -6079,7 +6083,7 @@
       "capability_key": "account-operation.submit-batch",
       "domain": "account-operation",
       "examples": [
-        "museoncli account-operation +submit-batch --pool-account-ids <uuid1>,<uuid2> --organization-id <uuid> --niche diy_restoration --reference-url https://www.tiktok.com/@benchmark"
+        "museoncli account-operation +submit-batch --pool-account-ids <uuid1>,<uuid2> --organization-id <uuid> --product-id <product_uuid> --niche diy_restoration --reference-url https://www.tiktok.com/@benchmark"
       ],
       "execution": "direct",
       "input_schema": {
@@ -6091,13 +6095,17 @@
           "pool_account_ids": {
             "description": "Comma-separated pool account ids",
             "type": "string"
+          },
+          "product_id": {
+            "description": "Optional single workspace Product/CTA asset id shared by the entire batch; one batch has at most one Product and per-account overrides are forbidden.",
+            "type": "string"
           }
         },
         "type": "object"
       },
       "name": "account-operation.submit-batch",
       "output_schema": {
-        "description": "Batch result: data=[operation rows], meta.failed_count, meta.failed=[{pool_account_id, error}], meta.created_count, meta.existing_count, meta.existing=[{pool_account_id, outcome, current_session_conversation_id, conflict_session_url, occupied_by_type, occupied_by_related_id}].",
+        "description": "Batch result: data=[operation rows], meta.failed_count, meta.failed=[{pool_account_id, error}], meta.created_count, meta.existing_count, meta.existing=[{pool_account_id, outcome, current_session_conversation_id, conflict_session_url, occupied_by_type, occupied_by_related_id, current_product_id, requested_product_id}].",
         "properties": {
           "command": {
             "type": "string"
@@ -6154,7 +6162,7 @@
       "risk_level": "write",
       "shortcut": "+submit-batch",
       "stability": "stable",
-      "summary": "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — PREFERRED over N single +submit calls when the operator hands over a batch. All accounts bind to the current session; account-operation submission does NOT create a campaign monitor. Shared --niche/--research-prompt/--reference-url apply to every account. Reply ONE consolidated confirmation card from the response rows (username/op_id/research_disposition). IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] (each {pool_account_id, error}); if non-empty, call out the dropped accounts in the confirmation and re-submit them, do NOT assume all landed. ALSO check meta.existing[]: these accounts were ALREADY in operation (not new). outcome='existing_other_session' means the account is already running under a DIFFERENT session and was NOT added here — pick a fresh 账号库 account instead, and surface conflict_session_url so the operator can open that session to check. outcome='occupied_other_business' means the account is already used by another business (occupied_by_type: account_publish / campaign) and was NOT taken into 全托管运营 — pick a different 账号库 (unoccupied) account. outcome='not_in_workspace' means the account does not belong to this workspace's account pool and was NOT taken into 全托管运营 — pick an account from this workspace. meta.created_count = how many were genuinely new.",
+      "summary": "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — PREFERRED over N single +submit calls when the operator hands over a batch. All accounts bind to the current session; account-operation submission does NOT create a campaign monitor. One optional --product-id identifies the shared Product/CTA context for the ENTIRE batch; one batch has at most one Product and per-account overrides are forbidden. Shared --niche/--research-prompt/--reference-url apply to every account. Reply ONE consolidated confirmation card from the response rows (username/op_id/research_disposition). IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] (each {pool_account_id, error}); if non-empty, call out the dropped accounts in the confirmation and re-submit them, do NOT assume all landed. ALSO check meta.existing[]: these accounts were ALREADY in operation (not new). outcome='existing_other_session' means the account is already running under a DIFFERENT session and was NOT added here — pick a fresh 账号库 account instead, and surface conflict_session_url so the operator can open that session to check. outcome='occupied_other_business' means the account is already used by another business (occupied_by_type: account_publish / campaign) and was NOT taken into 全托管运营 — pick a different 账号库 (unoccupied) account. outcome='not_in_workspace' means the account does not belong to this workspace's account pool and was NOT taken into 全托管运营 — pick an account from this workspace. outcome='existing_product_conflict' means that account is already managed for another Product and was NOT changed; report current_product_id and requested_product_id instead of silently switching it. meta.created_count = how many were genuinely new.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
