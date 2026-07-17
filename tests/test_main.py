@@ -3,6 +3,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
+import subprocess
+import sys
 
 import pytest
 
@@ -83,6 +86,25 @@ def test_base_commands_remain_available() -> None:
         args = parse([command])
 
         assert args.command == command
+
+
+def test_schema_output_is_utf8_when_host_encoding_is_cp1252() -> None:
+    env = dict(os.environ)
+    env["PYTHONIOENCODING"] = "cp1252"
+    env["MUSEON_JSON_OFFLOAD_ENABLED"] = "false"
+
+    result = subprocess.run(
+        [sys.executable, "-c", "from museoncli.main import main; main()", "schema"],
+        check=True,
+        encoding="utf-8",
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert payload["data"]["commands"]
 
 
 def test_routines_list_parser_uses_standard_pagination() -> None:
