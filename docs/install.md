@@ -37,43 +37,18 @@ If it succeeds, do not reinstall the CLI. Continue to the Skill setup.
 
 If the command is unavailable:
 
-1. If Node.js and npm are available, check whether the exact package has been
-   published:
+1. Confirm that Python 3.11+ and `uv` are available, then install the exact
+   reviewed wheel from the official GitHub release:
 
    ```bash
-   npm view @museon/cli@0.3.60 version
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
    ```
 
-   When that command returns `0.3.60`, install it:
-
-   ```bash
-   npm install --global @museon/cli@0.3.60
-   ```
-
-   The package contains no lifecycle scripts and performs no install-time or
-   runtime download. It supports macOS arm64/x64, glibc Linux arm64/x64, and
-   Windows arm64/x64. If npm was configured with `--omit=optional`, reinstall with
-   `--include=optional`.
-
-   If npm reports that the package is not found, do not retry it. Continue to
-   the immutable source fallback below.
-
-2. Confirm that Python 3.11+ and `uv` already exist, then install the reviewed
-   `0.3.60` source snapshot by its full commit hash:
-
-   ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/archive/09870901783cf5b4894fba30032ccb0e4735b8fe.tar.gz"
-   ```
-
-   The commit hash is immutable; do not replace it with `main`. This fallback
-   is unsupported on musl Linux unless its Python runtime can satisfy Museon
-   CLI's dependencies. Do not replace Node.js, npm, Python, or `uv` without the
-   user's approval.
-
-3. If neither installation route is available, report the missing prerequisite
-   instead of claiming success. Do not clone the repository or install from a
-   mutable branch.
-4. Verify the installation with `museoncli version`. Do not claim success
+   Do not clone the repository, install from a mutable branch, or substitute a
+   different package source.
+2. If Python 3.11+ or `uv` is unavailable, report the missing prerequisite
+   instead of replacing the host's runtime without approval.
+3. Verify the installation with `museoncli version`. Do not claim success
    until it works.
 
 ## 2. Install the Museon CLI Skill
@@ -98,7 +73,7 @@ the Skill status as `installed` or `current` and includes its destination path.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install this folder:
 
-https://github.com/Museon-AI/museon-cli/tree/09870901783cf5b4894fba30032ccb0e4735b8fe/skills/museon-cli
+https://github.com/Museon-AI/museon-cli/tree/v0.3.60/skills/museon-cli
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and

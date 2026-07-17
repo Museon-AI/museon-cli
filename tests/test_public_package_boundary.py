@@ -68,11 +68,18 @@ def test_release_workflow_uses_short_lived_credentials() -> None:
     assert "MUSEON_RUNTIME_APP_PRIVATE_KEY" in workflow
     assert "permission-contents: write" in workflow
     assert "MUSEON_RUNTIME_DISPATCH_TOKEN" not in workflow
-    assert "MUSEON_NPM_BOOTSTRAP_TOKEN" in workflow
-    assert "id-token: write" in workflow
-    publish_step = workflow.split("- name: Publish platform packages first and root last", 1)[1]
-    before_publish_step = workflow.split(
-        "- name: Publish platform packages first and root last", 1
-    )[0]
-    assert "NODE_AUTH_TOKEN" in publish_step
-    assert "NODE_AUTH_TOKEN" not in before_publish_step
+
+
+def test_release_workflow_builds_one_wheel_before_privileged_publication() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+    build, publish = workflow.split("\n  publish:\n", 1)
+
+    assert "uv build --wheel" in build
+    assert "contents: write" not in build
+    assert "contents: write" in publish
+    assert "scripts/sync_release_assets.py" in publish
+    assert "npm" not in workflow.lower()
+    assert "native-signing" not in workflow
+    assert "pyinstaller" not in workflow.lower()

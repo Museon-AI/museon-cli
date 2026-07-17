@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Upload missing release assets and reject non-identical existing assets."""
+"""Upload missing release assets and reject any unexpected or changed asset."""
 
 from __future__ import annotations
 
@@ -42,11 +42,14 @@ def sync(tag: str, repository: str, assets: list[Path]) -> None:
         ).stdout
     )
     existing = {asset["name"] for asset in release.get("assets", [])}
-    names: set[str] = set()
+    expected = {asset.name for asset in assets}
+    unexpected = sorted(existing - expected)
+    if unexpected:
+        raise RuntimeError(f"release contains unexpected assets: {unexpected}")
+    if len(expected) != len(assets):
+        raise RuntimeError("release assets contain duplicate names")
+
     for asset in assets:
-        if asset.name in names:
-            raise RuntimeError(f"duplicate release asset name: {asset.name}")
-        names.add(asset.name)
         if asset.name not in existing:
             _gh("release", "upload", tag, str(asset), "--repo", repository)
             print(f"uploaded release asset: {asset.name}")

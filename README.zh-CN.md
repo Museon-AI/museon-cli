@@ -37,8 +37,8 @@ https://www.museon.ai/cli/install.md
 
 ## 接下来会发生什么
 
-1. **Agent 安装 Museon CLI。** 它会检查当前环境，安装固定版本的 npm 包，并确认
-   CLI 命令真正可用。
+1. **Agent 安装 Museon CLI。** 它会安装 GitHub Release 中固定版本的 Python wheel，
+   并确认 CLI 命令真正可用。
 2. **Museon CLI 安装 Skill。** CLI 内置的同版本 Skill 会告诉 Agent 如何完成社媒
    工作、什么时候需要向你确认，以及遇到登录问题时如何恢复。
 3. **你在浏览器里完成授权。** 登录 Museon，然后选择允许 Agent 使用的工作区。
@@ -85,18 +85,11 @@ CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用
 
 ## 不通过 Agent 手动安装
 
-如果你希望自己安装，请使用固定版本的 npm 包：
+如果你希望自己安装，请准备 Python 3.11+ 和 `uv`，然后安装 GitHub Release 中
+固定版本的 wheel：
 
 ```bash
-npm install --global @museon/cli@0.3.60
-```
-
-npm 启动器没有依赖和生命周期脚本，会为 macOS arm64/x64、glibc Linux
-arm64/x64 或 Windows arm64/x64 安装版本完全一致的原生包。在 npm 包可用之前，
-或没有 npm 的主机，可以使用 Python 3.11+、`uv` 和经过审查的不可变源码快照：
-
-```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/archive/09870901783cf5b4894fba30032ccb0e4735b8fe.tar.gz"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skill 和浏览器授权：
@@ -127,8 +120,7 @@ uv run ruff check .
 uv run pytest -q
 uv run python scripts/gen_command_docs.py --check
 uv run python scripts/gen_command_contract.py --check
-node --test npm/tests/*.test.cjs
-uv build
+uv build --wheel
 uv run python scripts/verify_public_artifacts.py
 ```
 

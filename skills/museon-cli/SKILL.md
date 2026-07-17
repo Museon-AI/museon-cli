@@ -13,33 +13,19 @@ work. The executable is `museoncli`; `museon` is an equivalent alias.
 Check whether `museoncli` or `museon` is already available. If neither command
 exists and the user asked to install Museon or complete a Museon task:
 
-1. If Node.js and npm are already available, check for and install the exact
-   public package:
+1. If Python 3.11+ and `uv` are available, install the exact reviewed wheel from
+   the official GitHub release:
 
    ```bash
-   npm view @museon/cli@0.3.60 version
-   npm install --global @museon/cli@0.3.60
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
    ```
 
-   If the registry reports that the package is not found, continue to the
-   immutable source fallback instead of retrying npm.
-
-2. If Python 3.11+ and `uv` already exist, install the reviewed `0.3.60`
-   source snapshot by its full commit hash:
-
-   ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/archive/09870901783cf5b4894fba30032ccb0e4735b8fe.tar.gz"
-   ```
-
-3. The npm package has no lifecycle scripts or runtime download. It supports
-   macOS arm64/x64, glibc Linux arm64/x64, and Windows arm64/x64. If optional
-   dependencies were omitted, reinstall with `--include=optional`.
-4. Do not install or replace Node.js, npm, Python, or `uv` without the user's
-   approval. Do not clone the repository or install from a mutable branch;
-   never replace the pinned commit hash with `main`.
-5. Verify the result with `museoncli version`. Do not claim installation
+2. Do not install or replace Python or `uv` without the user's approval. Do not
+   clone the repository, install from a mutable branch, or substitute another
+   package source.
+3. Verify the result with `museoncli version`. Do not claim installation
    succeeded until that command works.
-6. Continue the original task. If the user asked to sign in, start the browser
+4. Continue the original task. If the user asked to sign in, start the browser
    authorization flow described in
    [safety-and-auth.md](references/safety-and-auth.md).
 

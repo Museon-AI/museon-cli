@@ -45,9 +45,6 @@ dev = [
   "pytest>=8.2.0",
   "ruff>=0.4.4",
 ]
-distribution = [
-  "pyinstaller>=6.16.0,<7",
-]
 
 [tool.hatch.build.targets.wheel]
 packages = ["museoncli"]

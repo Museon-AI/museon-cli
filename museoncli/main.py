@@ -59,7 +59,6 @@ DEFAULT_CLI_RELEASE_MANIFEST_URL = (
     "https://api.github.com/repos/Museon-AI/museon-cli/releases/latest"
 )
 GITHUB_RELEASES_URL = "https://github.com/Museon-AI/museon-cli/releases"
-NPM_PACKAGE_NAME = "@museon/cli"
 
 
 class ApiRequestError(RuntimeError):
@@ -258,31 +257,22 @@ async def check_cli_update_notice(cfg: Config) -> dict[str, Any] | None:
     latest_version = latest_version.removeprefix("v")
     if not latest_version or not is_newer_cli_version(latest_version, __version__):
         return None
-    distribution_channel = os.environ.get("MUSEONCLI_DISTRIBUTION_CHANNEL", "").strip().lower()
-    npm_upgrade = f"npm install --global {NPM_PACKAGE_NAME}@{latest_version}"
     wheel_url = (
         "https://github.com/Museon-AI/museon-cli/releases/download/"
         f"v{latest_version}/museoncli-{latest_version}-py3-none-any.whl"
     )
     wheel_upgrade = f'uv tool install "{wheel_url}" --force'
-    if distribution_channel == "npm":
-        message = f"Museon CLI {latest_version} is available. Run `{npm_upgrade}`."
-        upgrade_commands = {"npm": npm_upgrade}
-    else:
-        message = (
-            f"Museon CLI {latest_version} is available. Install with npm using "
-            f"`{npm_upgrade}`, or replace this wheel using `{wheel_upgrade}`."
-        )
-        upgrade_commands = {"npm": npm_upgrade, "uv_wheel": wheel_upgrade}
     return {
         "current_version": __version__,
         "latest_version": latest_version,
-        "message": message + " Restart the host Agent after upgrading.",
-        "upgrade_commands": upgrade_commands,
+        "message": (
+            f"Museon CLI {latest_version} is available. Run `{wheel_upgrade}`. "
+            "Restart the host Agent after upgrading."
+        ),
+        "upgrade_command": wheel_upgrade,
         "source": "github_release",
         "manifest_url": manifest_url,
         "project_url": str(manifest.get("html_url") or GITHUB_RELEASES_URL),
-        "distribution_channel": distribution_channel or "python-wheel",
         "restart_required": True,
     }
 

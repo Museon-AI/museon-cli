@@ -40,8 +40,8 @@ repository, choose CLI flags, or configure credentials by hand.
 
 ## What happens next
 
-1. **Your Agent installs Museon CLI.** It checks the environment, installs the
-   exact npm release, and verifies that the command is available.
+1. **Your Agent installs Museon CLI.** It installs the exact Python wheel from
+   the official GitHub release and verifies that the command is available.
 2. **Museon CLI installs the Skill.** The bundled, same-version Skill teaches
    the Agent how to use Museon, when to ask for approval, and how to recover
    from authentication problems.
@@ -110,19 +110,11 @@ command set. Use the live schema rather than copying flags from an old transcrip
 
 ## Install without an Agent
 
-If you prefer to install the CLI yourself, use the exact npm release:
+If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
+wheel from the official GitHub release:
 
 ```bash
-npm install --global @museon/cli@0.3.60
-```
-
-The npm launcher has no dependencies or lifecycle scripts. It installs the
-matching native package for macOS arm64/x64, glibc Linux arm64/x64, or Windows
-arm64/x64. Until the npm package is available, or on a host without npm, use
-Python 3.11+, `uv`, and the immutable reviewed source snapshot:
-
-```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/archive/09870901783cf5b4894fba30032ccb0e4735b8fe.tar.gz"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.60/museoncli-0.3.60-py3-none-any.whl"
 ```
 
 Then continue with setup and browser authorization:
@@ -153,8 +145,7 @@ uv run ruff check .
 uv run pytest -q
 uv run python scripts/gen_command_docs.py --check
 uv run python scripts/gen_command_contract.py --check
-node --test npm/tests/*.test.cjs
-uv build
+uv build --wheel
 uv run python scripts/verify_public_artifacts.py
 ```
 
