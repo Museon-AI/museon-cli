@@ -196,6 +196,20 @@ def test_submit_batch_sends_one_shared_product_not_per_account(monkeypatch) -> N
     assert all("product_id" not in account for account in body["accounts"])
 
 
+def test_submit_contract_describes_account_publish_managed_takeover() -> None:
+    submit = get_command_spec("account-operation.submit")
+    batch = get_command_spec("account-operation.submit-batch")
+
+    assert "explicit Account Publish -> fully-managed mode switch" in submit.summary
+    assert "atomically transferred" in submit.summary
+    assert "existing publish configuration is preserved" in submit.summary
+    assert "account_publish_schedule_conflict" in submit.summary
+    assert "blocking_schedule_counts" in submit.summary
+    assert "idle account_publish holder is transferred automatically" in batch.summary
+    assert "cancel eligible work or wait for publishing to finish" in batch.summary
+    assert "blocking_schedule_counts" in batch.output_schema["description"]
+
+
 def test_get_and_list(monkeypatch) -> None:
     capture = _Capture()
     monkeypatch.setattr(main_module, "api_data_v2", capture)
