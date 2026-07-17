@@ -62,7 +62,7 @@ If the command is unavailable:
    `0.3.60` source snapshot by its full commit hash:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/archive/d8f5cfac156290e7d908ae60dc37e83e5e3e36f5.tar.gz"
+   uv tool install "https://github.com/Museon-AI/museon-cli/archive/09870901783cf5b4894fba30032ccb0e4735b8fe.tar.gz"
    ```
 
    The commit hash is immutable; do not replace it with `main`. This fallback
@@ -98,7 +98,7 @@ the Skill status as `installed` or `current` and includes its destination path.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install this folder:
 
-https://github.com/Museon-AI/museon-cli/tree/d8f5cfac156290e7d908ae60dc37e83e5e3e36f5/skills/museon-cli
+https://github.com/Museon-AI/museon-cli/tree/09870901783cf5b4894fba30032ccb0e4735b8fe/skills/museon-cli
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and
