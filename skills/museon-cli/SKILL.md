@@ -17,7 +17,7 @@ exists and the user asked to install Museon or complete a Museon task:
    the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.61/museoncli-0.3.61-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.62/museoncli-0.3.62-py3-none-any.whl"
    ```
 
 2. Do not install or replace Python or `uv` without the user's approval. Do not

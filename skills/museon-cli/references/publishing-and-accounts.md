@@ -75,6 +75,20 @@ the latest pools. Existing schedule items retain their prior asset snapshot and
 do not change silently; only run the separate schedule-plan rebuild flow when
 the user asks to update existing schedules.
 
+When the operator wants to remove current schedule items for one or more
+accounts, use `account-publish +schedule-plan-preview --operation cancel-only`
+as the primary operation. Present its cancellable and protected counts by
+status, then after explicit approval submit the identical account IDs,
+`--cancel-reason`, and opaque token with
+`account-publish +schedule-plan-batch --operation cancel-only
+--preview-token <preview_token> --idempotency-key <stable_key> --yes`. Poll only
+`+schedule-plan-status` and report every per-account cancelled, already
+cancelled, protected, and failed result. Do not supply start dates, days, slots,
+timezone, BGM, asset strategies, or conflict policy to cancel-only, and do not
+loop `social-account +schedule-delete`. `+schedule-plan-cancel` is job control
+only: it stops unfinished job work and never deletes schedule items already
+created.
+
 For multi-account build/rebuild or manually creating more than one schedule
 occurrence, use the canonical `account-publish` batch flow. Activating one
 existing publish-config version for one account with

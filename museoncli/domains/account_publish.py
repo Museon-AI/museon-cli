@@ -23,6 +23,7 @@ ACCOUNT_PUBLISH_MAX_ACCOUNTS = 200
 ACCOUNT_PUBLISH_MAX_DAILY_SLOTS = 24
 ACCOUNT_PUBLISH_MAX_DAYS = 180
 ACCOUNT_PUBLISH_MAX_OCCURRENCES = 5_000
+SCHEDULE_PLAN_OPERATION_CHOICES = ["plan", "cancel-only"]
 FORMAT_STRATEGY_CHOICES = ["random", "rotate"]
 TOPIC_STRATEGY_CHOICES = ["random", "rotate"]
 PRODUCT_POLICY_CHOICES = ["required", "optional"]
@@ -212,9 +213,7 @@ def _load_asset_pool_account_patches(args: argparse.Namespace) -> list[dict[str,
         output.append({"account_id": account_id, "patch": patch})
         seen.add(account_id)
     if len(output) > ACCOUNT_PUBLISH_MAX_ACCOUNTS:
-        raise ValueError(
-            f"{flag} accepts at most {ACCOUNT_PUBLISH_MAX_ACCOUNTS} account patches."
-        )
+        raise ValueError(f"{flag} accepts at most {ACCOUNT_PUBLISH_MAX_ACCOUNTS} account patches.")
     return output
 
 
@@ -231,16 +230,12 @@ def _normalize_asset_pool_patch(raw: dict[str, Any], *, context: str) -> dict[st
             raise ValueError(f"{context}.{field} must be an object.")
         operation = str(candidate.get("operation") or "").strip().lower()
         if operation not in ASSET_POOL_SCALAR_OPERATION_CHOICES:
-            raise ValueError(
-                f"{context}.{field}.operation must be set, clear, or unchanged."
-            )
+            raise ValueError(f"{context}.{field}.operation must be set, clear, or unchanged.")
         value_id = str(candidate.get("value_id") or "").strip()
         if operation == "set" and not value_id:
             raise ValueError(f"{context}.{field}.value_id is required for set.")
         if operation != "set" and value_id:
-            raise ValueError(
-                f"{context}.{field}.value_id is only allowed with operation set."
-            )
+            raise ValueError(f"{context}.{field}.value_id is only allowed with operation set.")
         normalized = {"operation": operation}
         if value_id:
             normalized["value_id"] = value_id
@@ -263,9 +258,7 @@ def _normalize_asset_pool_patch(raw: dict[str, Any], *, context: str) -> dict[st
         if operation in {"replace", "add", "remove"} and not ids:
             raise ValueError(f"{context}.{field}.ids is required for operation {operation}.")
         if operation in {"clear", "unchanged"} and ids:
-            raise ValueError(
-                f"{context}.{field}.ids is not allowed with operation {operation}."
-            )
+            raise ValueError(f"{context}.{field}.ids is not allowed with operation {operation}.")
         normalized = {"operation": operation}
         if ids:
             normalized["ids"] = ids
@@ -278,7 +271,9 @@ def _build_asset_pools_mutation_arguments(args: argparse.Namespace) -> dict[str,
     uniform_patch = _asset_pool_uniform_patch_from_args(args)
     account_patches = _load_asset_pool_account_patches(args)
     target_ids = set(account_ids)
-    outside_targets = [item["account_id"] for item in account_patches if item["account_id"] not in target_ids]
+    outside_targets = [
+        item["account_id"] for item in account_patches if item["account_id"] not in target_ids
+    ]
     if outside_targets:
         raise ValueError(
             "Every account_patches account_id must also be supplied with --account-id: "
@@ -332,30 +327,37 @@ def _build_asset_pools_batch_cancel_arguments(args: argparse.Namespace) -> dict[
 def _add_schedule_plan_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--workspace-id")
     parser.add_argument(
+        "--operation",
+        choices=SCHEDULE_PLAN_OPERATION_CHOICES,
+        default="plan",
+        help="plan creates/rebuilds schedule items; cancel-only cancels current eligible items.",
+    )
+    parser.add_argument(
         "--account-id",
         dest="account_ids",
         action="append",
         required=True,
         help=f"Pool account UUID; repeat for each account (max {ACCOUNT_PUBLISH_MAX_ACCOUNTS}).",
     )
-    parser.add_argument("--start-date", required=True)
-    parser.add_argument("--days", type=int, required=True)
+    parser.add_argument("--start-date")
+    parser.add_argument("--days", type=int)
     parser.add_argument(
         "--daily-slot",
         dest="daily_slots",
         action="append",
-        required=True,
         help="Local HH:MM posting time; repeat for each daily occurrence.",
     )
-    parser.add_argument("--timezone", required=True, help="IANA timezone, e.g. Asia/Shanghai.")
-    parser.add_argument("--format-strategy", choices=FORMAT_STRATEGY_CHOICES, default="rotate")
-    parser.add_argument("--topic-strategy", choices=TOPIC_STRATEGY_CHOICES, default="rotate")
-    parser.add_argument("--product-policy", choices=PRODUCT_POLICY_CHOICES, default="required")
-    parser.add_argument("--bgm-policy", choices=BGM_POLICY_CHOICES, default="required")
-    parser.add_argument("--bgm-strategy", choices=BGM_STRATEGY_CHOICES, default="rotate")
-    parser.add_argument("--bgm-platform", default="tiktok")
+    parser.add_argument("--timezone", help="IANA timezone, e.g. Asia/Shanghai.")
+    parser.add_argument("--format-strategy", choices=FORMAT_STRATEGY_CHOICES)
+    parser.add_argument("--topic-strategy", choices=TOPIC_STRATEGY_CHOICES)
+    parser.add_argument("--product-policy", choices=PRODUCT_POLICY_CHOICES)
+    parser.add_argument("--bgm-policy", choices=BGM_POLICY_CHOICES)
+    parser.add_argument("--bgm-strategy", choices=BGM_STRATEGY_CHOICES)
+    parser.add_argument("--bgm-platform")
+    parser.add_argument("--conflict-policy", choices=CONFLICT_POLICY_CHOICES)
     parser.add_argument(
-        "--conflict-policy", choices=CONFLICT_POLICY_CHOICES, default="upsert-occurrences"
+        "--cancel-reason",
+        help="Optional operator reason for cancel-only; forbidden for plan.",
     )
 
 
@@ -396,6 +398,46 @@ def _build_schedule_plan_arguments(args: argparse.Namespace) -> dict[str, Any]:
             "account-publish schedule planning accepts at most "
             f"{ACCOUNT_PUBLISH_MAX_ACCOUNTS} --account-id values."
         )
+    if args.operation == "cancel-only":
+        plan_only_fields = (
+            ("--start-date", args.start_date),
+            ("--days", args.days),
+            ("--daily-slot", args.daily_slots),
+            ("--timezone", args.timezone),
+            ("--format-strategy", args.format_strategy),
+            ("--topic-strategy", args.topic_strategy),
+            ("--product-policy", args.product_policy),
+            ("--bgm-policy", args.bgm_policy),
+            ("--bgm-strategy", args.bgm_strategy),
+            ("--bgm-platform", args.bgm_platform),
+            ("--conflict-policy", args.conflict_policy),
+        )
+        supplied_plan_fields = [flag for flag, value in plan_only_fields if value is not None]
+        if supplied_plan_fields:
+            raise ValueError(
+                f"{', '.join(supplied_plan_fields)} are not allowed with --operation cancel-only."
+            )
+        cancel_reason = _normalize_cancel_reason(args.cancel_reason)
+        return compact_params(
+            {
+                "operation": "cancel_only",
+                "account_ids": account_ids,
+                "cancel_reason": cancel_reason,
+            }
+        )
+
+    if args.cancel_reason is not None:
+        raise ValueError("--cancel-reason is only allowed with --operation cancel-only.")
+    required_plan_fields = (
+        ("--start-date", args.start_date),
+        ("--days", args.days),
+        ("--daily-slot", args.daily_slots),
+        ("--timezone", args.timezone),
+    )
+    missing_plan_fields = [flag for flag, value in required_plan_fields if value is None]
+    if missing_plan_fields:
+        raise ValueError(f"{', '.join(missing_plan_fields)} are required with --operation plan.")
+
     daily_slots = _ordered_unique(args.daily_slots)
     if len(daily_slots) > ACCOUNT_PUBLISH_MAX_DAILY_SLOTS:
         raise ValueError(
@@ -417,25 +459,26 @@ def _build_schedule_plan_arguments(args: argparse.Namespace) -> dict[str, Any]:
     _validate_timezone(args.timezone)
 
     bgm_policy = {
-        "mode": dekebab(args.bgm_policy),
-        "strategy": dekebab(args.bgm_strategy),
-        "platform": args.bgm_platform.strip().lower(),
+        "mode": dekebab(args.bgm_policy or "required"),
+        "strategy": dekebab(args.bgm_strategy or "rotate"),
+        "platform": (args.bgm_platform or "tiktok").strip().lower(),
     }
     if bgm_policy["mode"] == "disabled":
         bgm_policy.pop("strategy")
         bgm_policy.pop("platform")
 
     return {
+        "operation": "plan",
         "account_ids": account_ids,
         "start_date": args.start_date,
         "days": args.days,
         "daily_slots": daily_slots,
         "timezone": args.timezone,
-        "format_strategy": dekebab(args.format_strategy),
-        "topic_strategy": dekebab(args.topic_strategy),
-        "product_policy": dekebab(args.product_policy),
+        "format_strategy": dekebab(args.format_strategy or "rotate"),
+        "topic_strategy": dekebab(args.topic_strategy or "rotate"),
+        "product_policy": dekebab(args.product_policy or "required"),
         "bgm_policy": bgm_policy,
-        "conflict_policy": dekebab(args.conflict_policy),
+        "conflict_policy": dekebab(args.conflict_policy or "upsert-occurrences"),
     }
 
 
@@ -446,7 +489,16 @@ def _build_schedule_plan_preview_arguments(args: argparse.Namespace) -> dict[str
 def _build_schedule_plan_batch_arguments(args: argparse.Namespace) -> dict[str, Any]:
     payload = _build_schedule_plan_arguments(args)
     preview_token = str(args.preview_token or "").strip()
-    if payload["conflict_policy"] == "replace_non_published" and not preview_token:
+    if payload["operation"] == "cancel_only" and not preview_token:
+        raise ValueError(
+            "--preview-token is required with --operation cancel-only; "
+            "run +schedule-plan-preview first."
+        )
+    if (
+        payload["operation"] == "plan"
+        and payload["conflict_policy"] == "replace_non_published"
+        and not preview_token
+    ):
         raise ValueError(
             "--preview-token is required with --conflict-policy replace-non-published; "
             "run +schedule-plan-preview first."
@@ -462,6 +514,17 @@ def _build_schedule_plan_batch_arguments(args: argparse.Namespace) -> dict[str, 
         raise ValueError("--idempotency-key must be at most 240 characters.")
     payload["idempotency_key"] = idempotency_key
     return payload
+
+
+def _normalize_cancel_reason(value: Any) -> str | None:
+    if value is None:
+        return None
+    reason = str(value).strip()
+    if not reason:
+        raise ValueError("--cancel-reason must not be blank.")
+    if len(reason) > 500:
+        raise ValueError("--cancel-reason must be at most 500 characters.")
+    return reason
 
 
 def _build_schedule_plan_id_arguments(args: argparse.Namespace) -> dict[str, Any]:
@@ -546,11 +609,7 @@ def _asset_pool_collection_patch_schema() -> dict[str, Any]:
         "required": ["operation"],
         "allOf": [
             {
-                "if": {
-                    "properties": {
-                        "operation": {"enum": ["replace", "add", "remove"]}
-                    }
-                },
+                "if": {"properties": {"operation": {"enum": ["replace", "add", "remove"]}}},
                 "then": {"required": ["ids"]},
                 "else": {"not": {"required": ["ids"]}},
             }
@@ -671,6 +730,15 @@ def _asset_pools_async_output_schema() -> dict[str, Any]:
 
 def _schedule_plan_input_schema(*, include_idempotency_key: bool) -> dict[str, Any]:
     properties: dict[str, Any] = {
+        "operation": {
+            "type": "string",
+            "enum": SCHEDULE_PLAN_OPERATION_CHOICES,
+            "default": "plan",
+            "description": (
+                "plan creates/rebuilds schedule items; cancel-only cancels the account's "
+                "current eligible schedule items."
+            ),
+        },
         "account_ids": {
             "type": "array",
             "items": _uuid_id_schema("Pool account UUID."),
@@ -711,24 +779,58 @@ def _schedule_plan_input_schema(*, include_idempotency_key: bool) -> dict[str, A
         "conflict_policy": {
             "type": "string",
             "enum": CONFLICT_POLICY_CHOICES,
+            "default": "upsert-occurrences",
         },
+        "cancel_reason": {"type": "string", "minLength": 1, "maxLength": 500},
     }
     if include_idempotency_key:
-        properties["preview_token"] = {"type": ["string", "null"], "maxLength": 200}
+        properties["preview_token"] = {"type": "string", "minLength": 1, "maxLength": 200}
         properties["idempotency_key"] = {"type": "string", "minLength": 1, "maxLength": 240}
         properties["dry_run"] = {"type": "boolean", "default": False}
+    plan_only_fields = [
+        "start_date",
+        "days",
+        "daily_slots",
+        "timezone",
+        "format_strategy",
+        "topic_strategy",
+        "product_policy",
+        "bgm_policy",
+        "bgm_strategy",
+        "bgm_platform",
+        "conflict_policy",
+    ]
+    cancel_only_then: dict[str, Any] = {
+        "not": {"anyOf": [{"required": [field]} for field in plan_only_fields]}
+    }
+    if include_idempotency_key:
+        cancel_only_then["required"] = ["preview_token"]
     schema: dict[str, Any] = {
         "type": "object",
         "description": (
-            "The product of unique account_ids, days, and unique daily_slots must not "
-            f"exceed {ACCOUNT_PUBLISH_MAX_OCCURRENCES} total occurrences."
+            "operation=plan requires the plan fields and caps unique account_ids x days x "
+            f"unique daily_slots at {ACCOUNT_PUBLISH_MAX_OCCURRENCES} total occurrences. "
+            "operation=cancel-only forbids every plan-only field."
         ),
         "properties": properties,
-        "required": ["account_ids", "start_date", "days", "daily_slots", "timezone"],
+        "required": ["account_ids"],
+        "allOf": [
+            {
+                "if": {
+                    "properties": {"operation": {"const": "cancel-only"}},
+                    "required": ["operation"],
+                },
+                "then": cancel_only_then,
+                "else": {
+                    "required": ["start_date", "days", "daily_slots", "timezone"],
+                    "not": {"required": ["cancel_reason"]},
+                },
+            }
+        ],
     }
     if include_idempotency_key:
         schema["required"].append("idempotency_key")
-        schema["allOf"] = [
+        schema["allOf"].append(
             {
                 "if": {
                     "properties": {"conflict_policy": {"const": "replace-non-published"}},
@@ -736,7 +838,7 @@ def _schedule_plan_input_schema(*, include_idempotency_key: bool) -> dict[str, A
                 },
                 "then": {"required": ["preview_token"]},
             }
-        ]
+        )
     return schema
 
 
@@ -903,9 +1005,13 @@ def specs() -> list[CommandSpec]:
             domain=Domain.ACCOUNT_PUBLISH,
             shortcut="+schedule-plan-preview",
             summary=(
-                "Live-preview a durable batch schedule plan without writing. Use this before "
-                "replace-non-published; unlike generic --dry-run, it asks the server to inspect "
-                "current conflicts, account assets, product bindings, and BGM availability. "
+                "Live-preview a durable schedule-plan operation without writing. "
+                "--operation cancel-only is the primary way to inspect deletion of current "
+                "eligible schedule items: it returns cancellable/protected counts by status "
+                "and an opaque token for the matching batch. For --operation plan, use this "
+                "before replace-non-published; unlike generic --dry-run, it asks the server to "
+                "inspect current conflicts, account assets, product bindings, and BGM "
+                "availability. "
                 "After resolving account IDs in one bulk social-account +list call, invoke this "
                 "preview directly; do not preflight with per-account asset, BGM, schedule, or "
                 "publish-version calls. "
@@ -926,7 +1032,12 @@ def specs() -> list[CommandSpec]:
                     "--days 5 --daily-slot 17:00 --daily-slot 22:00 "
                     "--timezone Asia/Shanghai --conflict-policy replace-non-published "
                     "--bgm-policy required"
-                )
+                ),
+                (
+                    "museoncli account-publish +schedule-plan-preview "
+                    "--operation cancel-only --account-id <uuid1> --account-id <uuid2> "
+                    "--cancel-reason 'operator requested schedule removal'"
+                ),
             ],
             add_arguments=_add_schedule_plan_preview_arguments,
             build_arguments=_build_schedule_plan_preview_arguments,
@@ -935,8 +1046,12 @@ def specs() -> list[CommandSpec]:
             domain=Domain.ACCOUNT_PUBLISH,
             shortcut="+schedule-plan-batch",
             summary=(
-                "Submit one durable asynchronous schedule-plan job for MULTIPLE accounts or "
-                "MULTIPLE occurrences. MUST use this instead of looping social-account "
+                "Submit one durable asynchronous schedule-plan operation. --operation "
+                "cancel-only is the primary batch deletion path for current eligible schedule "
+                "items; it requires the matching preview token and reports cancelled, already "
+                "cancelled, and protected results by prior status. For --operation plan, create "
+                "MULTIPLE accounts or MULTIPLE occurrences. MUST use this command instead of "
+                "looping social-account "
                 "+schedule-list/+schedule-create/+schedule-delete or Python/shell scripts. "
                 "One plan accepts up to 200 accounts and 5,000 total occurrences. "
                 "BGM mode required makes an account fail when its pool has no valid BGM; it "
@@ -965,7 +1080,14 @@ def specs() -> list[CommandSpec]:
                     "--timezone Asia/Shanghai --conflict-policy replace-non-published "
                     "--preview-token <preview_token> --bgm-policy required "
                     "--idempotency-key <stable_key> --yes"
-                )
+                ),
+                (
+                    "museoncli account-publish +schedule-plan-batch "
+                    "--operation cancel-only --account-id <uuid1> --account-id <uuid2> "
+                    "--preview-token <preview_token> --cancel-reason "
+                    "'operator requested schedule removal' "
+                    "--idempotency-key <stable_key> --yes"
+                ),
             ],
             add_arguments=_add_schedule_plan_batch_arguments,
             build_arguments=_build_schedule_plan_batch_arguments,
@@ -976,8 +1098,10 @@ def specs() -> list[CommandSpec]:
             domain=Domain.ACCOUNT_PUBLISH,
             shortcut="+schedule-plan-status",
             summary=(
-                "Read durable batch schedule-plan progress and per-account results. This is the "
-                "only state source after submission. For --bgm-policy required with status "
+                "Read durable schedule-plan operation progress and per-account results. This is "
+                "the only state source after submission. cancel-only results include cancelled "
+                "and protected counts by prior status. For plan with --bgm-policy required and "
+                "status "
                 "succeeded, bgm_bound_count/summary.bgm_bound is the server-owned proof that "
                 "every created occurrence has concrete BGM; never call schedule-list, "
                 "bgm-asset-list, or routines for post-write verification, rescan accounts, or "
@@ -996,8 +1120,10 @@ def specs() -> list[CommandSpec]:
             domain=Domain.ACCOUNT_PUBLISH,
             shortcut="+schedule-plan-cancel",
             summary=(
-                "Request cancellation of a durable schedule-plan job. Stops work not yet started "
-                "but does not roll back accounts already completed."
+                "Abort unfinished work in a durable schedule-plan job. This is job control only: "
+                "it never deletes schedule items already created. Use "
+                "+schedule-plan-preview/+schedule-plan-batch --operation cancel-only when the "
+                "operator wants schedule items removed."
             ),
             risk_level="write",
             execution="direct",
@@ -1129,12 +1255,8 @@ EXECUTORS = {
         _execute_asset_pools_batch_preview
     ),
     "account-publish.asset-pools-batch-set": direct_enveloped(_execute_asset_pools_batch_set),
-    "account-publish.asset-pools-batch-status": direct_enveloped(
-        _execute_asset_pools_batch_status
-    ),
-    "account-publish.asset-pools-batch-cancel": direct_enveloped(
-        _execute_asset_pools_batch_cancel
-    ),
+    "account-publish.asset-pools-batch-status": direct_enveloped(_execute_asset_pools_batch_status),
+    "account-publish.asset-pools-batch-cancel": direct_enveloped(_execute_asset_pools_batch_cancel),
     "account-publish.schedule-plan-preview": direct_enveloped(_execute_schedule_plan_preview),
     "account-publish.schedule-plan-batch": direct_enveloped(_execute_schedule_plan_batch),
     "account-publish.schedule-plan-status": direct_enveloped(_execute_schedule_plan_status),
