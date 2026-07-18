@@ -475,7 +475,7 @@
           "risk_level": "read",
           "shortcut": "+schedule-plan-preview",
           "stability": "stable",
-          "summary": "Live-preview a durable batch schedule plan without writing. Use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission.",
+          "summary": "Live-preview a durable schedule-plan operation without writing. --operation cancel-only is the primary way to inspect deletion of current eligible schedule items: it returns cancellable/protected counts by status and an opaque token for the matching batch. For --operation plan, use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -500,7 +500,7 @@
           "risk_level": "destructive",
           "shortcut": "+schedule-plan-batch",
           "stability": "stable",
-          "summary": "Submit one durable asynchronous schedule-plan job for MULTIPLE accounts or MULTIPLE occurrences. MUST use this instead of looping social-account +schedule-list/+schedule-create/+schedule-delete or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +schedule-plan-status. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them.",
+          "summary": "Submit one durable asynchronous schedule-plan operation. --operation cancel-only is the primary batch deletion path for current eligible schedule items; it requires the matching preview token and reports cancelled, already cancelled, and protected results by prior status. For --operation plan, create MULTIPLE accounts or MULTIPLE occurrences. MUST use this command instead of looping social-account +schedule-list/+schedule-create/+schedule-delete or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +schedule-plan-status. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -525,7 +525,7 @@
           "risk_level": "read",
           "shortcut": "+schedule-plan-status",
           "stability": "stable",
-          "summary": "Read durable batch schedule-plan progress and per-account results. This is the only state source after submission. For --bgm-policy required with status succeeded, bgm_bound_count/summary.bgm_bound is the server-owned proof that every created occurrence has concrete BGM; never call schedule-list, bgm-asset-list, or routines for post-write verification, rescan accounts, or rely on /tmp state.",
+          "summary": "Read durable schedule-plan operation progress and per-account results. This is the only state source after submission. cancel-only results include cancelled and protected counts by prior status. For plan with --bgm-policy required and status succeeded, bgm_bound_count/summary.bgm_bound is the server-owned proof that every created occurrence has concrete BGM; never call schedule-list, bgm-asset-list, or routines for post-write verification, rescan accounts, or rely on /tmp state.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -550,7 +550,7 @@
           "risk_level": "write",
           "shortcut": "+schedule-plan-cancel",
           "stability": "stable",
-          "summary": "Request cancellation of a durable schedule-plan job. Stops work not yet started but does not roll back accounts already completed.",
+          "summary": "Abort unfinished work in a durable schedule-plan job. This is job control only: it never deletes schedule items already created. Use +schedule-plan-preview/+schedule-plan-batch --operation cancel-only when the operator wants schedule items removed.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -5001,7 +5001,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.61",
+  "contract_revision": "0.3.62",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -7950,11 +7950,101 @@
       "capability_key": "account-publish.schedule-plan-batch",
       "domain": "account-publish",
       "examples": [
-        "museoncli account-publish +schedule-plan-batch --account-id <uuid1> --account-id <uuid2> --start-date 2026-07-17 --days 5 --daily-slot 17:00 --daily-slot 22:00 --timezone Asia/Shanghai --conflict-policy replace-non-published --preview-token <preview_token> --bgm-policy required --idempotency-key <stable_key> --yes"
+        "museoncli account-publish +schedule-plan-batch --account-id <uuid1> --account-id <uuid2> --start-date 2026-07-17 --days 5 --daily-slot 17:00 --daily-slot 22:00 --timezone Asia/Shanghai --conflict-policy replace-non-published --preview-token <preview_token> --bgm-policy required --idempotency-key <stable_key> --yes",
+        "museoncli account-publish +schedule-plan-batch --operation cancel-only --account-id <uuid1> --account-id <uuid2> --preview-token <preview_token> --cancel-reason 'operator requested schedule removal' --idempotency-key <stable_key> --yes"
       ],
       "execution": "async_run",
       "input_schema": {
         "allOf": [
+          {
+            "else": {
+              "not": {
+                "required": [
+                  "cancel_reason"
+                ]
+              },
+              "required": [
+                "start_date",
+                "days",
+                "daily_slots",
+                "timezone"
+              ]
+            },
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "cancel-only"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "start_date"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "days"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "daily_slots"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "timezone"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "format_strategy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "topic_strategy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "product_policy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "bgm_policy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "bgm_strategy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "bgm_platform"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "conflict_policy"
+                    ]
+                  }
+                ]
+              },
+              "required": [
+                "preview_token"
+              ]
+            }
+          },
           {
             "if": {
               "properties": {
@@ -7973,7 +8063,7 @@
             }
           }
         ],
-        "description": "The product of unique account_ids, days, and unique daily_slots must not exceed 5000 total occurrences.",
+        "description": "operation=plan requires the plan fields and caps unique account_ids x days x unique daily_slots at 5000 total occurrences. operation=cancel-only forbids every plan-only field.",
         "properties": {
           "account_ids": {
             "items": {
@@ -8010,7 +8100,13 @@
             ],
             "type": "string"
           },
+          "cancel_reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
           "conflict_policy": {
+            "default": "upsert-occurrences",
             "enum": [
               "create-only",
               "replace-non-published",
@@ -8049,12 +8145,19 @@
             "minLength": 1,
             "type": "string"
           },
+          "operation": {
+            "default": "plan",
+            "description": "plan creates/rebuilds schedule items; cancel-only cancels the account's current eligible schedule items.",
+            "enum": [
+              "plan",
+              "cancel-only"
+            ],
+            "type": "string"
+          },
           "preview_token": {
             "maxLength": 200,
-            "type": [
-              "string",
-              "null"
-            ]
+            "minLength": 1,
+            "type": "string"
           },
           "product_policy": {
             "enum": [
@@ -8081,10 +8184,6 @@
         },
         "required": [
           "account_ids",
-          "start_date",
-          "days",
-          "daily_slots",
-          "timezone",
           "idempotency_key"
         ],
         "type": "object"
@@ -8171,7 +8270,7 @@
       "risk_level": "destructive",
       "shortcut": "+schedule-plan-batch",
       "stability": "stable",
-      "summary": "Submit one durable asynchronous schedule-plan job for MULTIPLE accounts or MULTIPLE occurrences. MUST use this instead of looping social-account +schedule-list/+schedule-create/+schedule-delete or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +schedule-plan-status. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them.",
+      "summary": "Submit one durable asynchronous schedule-plan operation. --operation cancel-only is the primary batch deletion path for current eligible schedule items; it requires the matching preview token and reports cancelled, already cancelled, and protected results by prior status. For --operation plan, create MULTIPLE accounts or MULTIPLE occurrences. MUST use this command instead of looping social-account +schedule-list/+schedule-create/+schedule-delete or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +schedule-plan-status. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -8277,7 +8376,7 @@
       "risk_level": "write",
       "shortcut": "+schedule-plan-cancel",
       "stability": "stable",
-      "summary": "Request cancellation of a durable schedule-plan job. Stops work not yet started but does not roll back accounts already completed.",
+      "summary": "Abort unfinished work in a durable schedule-plan job. This is job control only: it never deletes schedule items already created. Use +schedule-plan-preview/+schedule-plan-batch --operation cancel-only when the operator wants schedule items removed.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -8297,11 +8396,100 @@
       "capability_key": "account-publish.schedule-plan-preview",
       "domain": "account-publish",
       "examples": [
-        "museoncli account-publish +schedule-plan-preview --account-id <uuid1> --account-id <uuid2> --start-date 2026-07-17 --days 5 --daily-slot 17:00 --daily-slot 22:00 --timezone Asia/Shanghai --conflict-policy replace-non-published --bgm-policy required"
+        "museoncli account-publish +schedule-plan-preview --account-id <uuid1> --account-id <uuid2> --start-date 2026-07-17 --days 5 --daily-slot 17:00 --daily-slot 22:00 --timezone Asia/Shanghai --conflict-policy replace-non-published --bgm-policy required",
+        "museoncli account-publish +schedule-plan-preview --operation cancel-only --account-id <uuid1> --account-id <uuid2> --cancel-reason 'operator requested schedule removal'"
       ],
       "execution": "direct",
       "input_schema": {
-        "description": "The product of unique account_ids, days, and unique daily_slots must not exceed 5000 total occurrences.",
+        "allOf": [
+          {
+            "else": {
+              "not": {
+                "required": [
+                  "cancel_reason"
+                ]
+              },
+              "required": [
+                "start_date",
+                "days",
+                "daily_slots",
+                "timezone"
+              ]
+            },
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "cancel-only"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "start_date"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "days"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "daily_slots"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "timezone"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "format_strategy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "topic_strategy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "product_policy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "bgm_policy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "bgm_strategy"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "bgm_platform"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "conflict_policy"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "description": "operation=plan requires the plan fields and caps unique account_ids x days x unique daily_slots at 5000 total occurrences. operation=cancel-only forbids every plan-only field.",
         "properties": {
           "account_ids": {
             "items": {
@@ -8338,7 +8526,13 @@
             ],
             "type": "string"
           },
+          "cancel_reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
           "conflict_policy": {
+            "default": "upsert-occurrences",
             "enum": [
               "create-only",
               "replace-non-published",
@@ -8368,6 +8562,15 @@
             ],
             "type": "string"
           },
+          "operation": {
+            "default": "plan",
+            "description": "plan creates/rebuilds schedule items; cancel-only cancels the account's current eligible schedule items.",
+            "enum": [
+              "plan",
+              "cancel-only"
+            ],
+            "type": "string"
+          },
           "product_policy": {
             "enum": [
               "required",
@@ -8392,11 +8595,7 @@
           }
         },
         "required": [
-          "account_ids",
-          "start_date",
-          "days",
-          "daily_slots",
-          "timezone"
+          "account_ids"
         ],
         "type": "object"
       },
@@ -8459,7 +8658,7 @@
       "risk_level": "read",
       "shortcut": "+schedule-plan-preview",
       "stability": "stable",
-      "summary": "Live-preview a durable batch schedule plan without writing. Use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission.",
+      "summary": "Live-preview a durable schedule-plan operation without writing. --operation cancel-only is the primary way to inspect deletion of current eligible schedule items: it returns cancellable/protected counts by status and an opaque token for the matching batch. For --operation plan, use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -8554,7 +8753,7 @@
       "risk_level": "read",
       "shortcut": "+schedule-plan-status",
       "stability": "stable",
-      "summary": "Read durable batch schedule-plan progress and per-account results. This is the only state source after submission. For --bgm-policy required with status succeeded, bgm_bound_count/summary.bgm_bound is the server-owned proof that every created occurrence has concrete BGM; never call schedule-list, bgm-asset-list, or routines for post-write verification, rescan accounts, or rely on /tmp state.",
+      "summary": "Read durable schedule-plan operation progress and per-account results. This is the only state source after submission. cancel-only results include cancelled and protected counts by prior status. For plan with --bgm-policy required and status succeeded, bgm_bound_count/summary.bgm_bound is the server-owned proof that every created occurrence has concrete BGM; never call schedule-list, bgm-asset-list, or routines for post-write verification, rescan accounts, or rely on /tmp state.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

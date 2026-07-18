@@ -104,6 +104,33 @@ def _plan_args(shortcut: str, *, execute: bool = False) -> list[str]:
     return argv
 
 
+def _cancel_only_args(shortcut: str, *, execute: bool = False) -> list[str]:
+    argv = [
+        "account-publish",
+        shortcut,
+        "--operation",
+        "cancel-only",
+        "--account-id",
+        ACCOUNT_1,
+        "--account-id",
+        ACCOUNT_2,
+        "--cancel-reason",
+        "operator requested schedule removal",
+    ]
+    if shortcut == "+schedule-plan-batch":
+        argv.extend(
+            [
+                "--preview-token",
+                "cancel-preview-token-1",
+                "--idempotency-key",
+                "cancel-only-2026-07-17-v1",
+            ]
+        )
+    if execute:
+        argv.append("--yes")
+    return argv
+
+
 def _asset_pool_args(shortcut: str, *, execute: bool = False) -> list[str]:
     argv = [
         "account-publish",
@@ -177,9 +204,9 @@ def test_one_account_parser_builds_complete_five_pool_patch() -> None:
         BGM_ID,
     ]
 
-    payload = get_command_spec(
-        "account-publish.asset-pools-batch-preview"
-    ).build_arguments(_parse(argv))
+    payload = get_command_spec("account-publish.asset-pools-batch-preview").build_arguments(
+        _parse(argv)
+    )
 
     assert payload == {
         "account_ids": [ACCOUNT_1],
@@ -207,9 +234,9 @@ def test_asset_pool_per_account_patch_overrides_and_explicit_unchanged() -> None
         patches,
     ]
 
-    payload = get_command_spec(
-        "account-publish.asset-pools-batch-preview"
-    ).build_arguments(_parse(argv))
+    payload = get_command_spec("account-publish.asset-pools-batch-preview").build_arguments(
+        _parse(argv)
+    )
 
     assert payload["account_patches"] == [
         {
@@ -235,9 +262,7 @@ def test_asset_pool_schema_exposes_batch_and_patch_contract() -> None:
         "clear",
         "unchanged",
     ]
-    assert "unchanged" in patch_schema["properties"]["formats"]["properties"]["operation"][
-        "enum"
-    ]
+    assert "unchanged" in patch_schema["properties"]["formats"]["properties"]["operation"]["enum"]
     assert batch.input_schema["properties"]["preview_token"]["maxLength"] == 200
     assert batch.input_schema["properties"]["idempotency_key"]["maxLength"] == 240
     assert "managed_operation_approved" not in batch.input_schema["properties"]
@@ -256,9 +281,7 @@ def test_asset_pool_schema_exposes_batch_and_patch_contract() -> None:
         (["--product-operation", "clear", "--product-id", PRODUCT_ID], "only allowed"),
     ],
 )
-def test_asset_pool_builder_rejects_invalid_operations(
-    extra: list[str], message: str
-) -> None:
+def test_asset_pool_builder_rejects_invalid_operations(extra: list[str], message: str) -> None:
     argv = [
         "account-publish",
         "+asset-pools-batch-preview",
@@ -268,17 +291,11 @@ def test_asset_pool_builder_rejects_invalid_operations(
     ]
 
     with pytest.raises(ValueError, match=message):
-        get_command_spec("account-publish.asset-pools-batch-preview").build_arguments(
-            _parse(argv)
-        )
+        get_command_spec("account-publish.asset-pools-batch-preview").build_arguments(_parse(argv))
 
 
 def test_asset_pool_account_override_must_target_selected_account() -> None:
-    patches = (
-        '[{"account_id":"'
-        + ACCOUNT_2
-        + '","patch":{"product":{"operation":"clear"}}}]'
-    )
+    patches = '[{"account_id":"' + ACCOUNT_2 + '","patch":{"product":{"operation":"clear"}}}]'
     argv = [
         "account-publish",
         "+asset-pools-batch-preview",
@@ -289,9 +306,7 @@ def test_asset_pool_account_override_must_target_selected_account() -> None:
     ]
 
     with pytest.raises(ValueError, match="must also be supplied"):
-        get_command_spec("account-publish.asset-pools-batch-preview").build_arguments(
-            _parse(argv)
-        )
+        get_command_spec("account-publish.asset-pools-batch-preview").build_arguments(_parse(argv))
 
 
 def test_parser_and_builder_normalize_schedule_plan() -> None:
@@ -300,6 +315,7 @@ def test_parser_and_builder_normalize_schedule_plan() -> None:
 
     assert args.domain_command == "account-publish.schedule-plan-preview"
     assert spec.build_arguments(args) == {
+        "operation": "plan",
         "account_ids": [ACCOUNT_1, ACCOUNT_2],
         "start_date": "2026-07-17",
         "days": 5,
@@ -311,6 +327,72 @@ def test_parser_and_builder_normalize_schedule_plan() -> None:
         "bgm_policy": {"mode": "required", "strategy": "random", "platform": "tiktok"},
         "conflict_policy": "replace_non_published",
     }
+
+
+def test_cancel_only_parser_and_builder_map_to_api_operation() -> None:
+    args = _parse(_cancel_only_args("+schedule-plan-preview"))
+    spec = get_command_spec("account-publish.schedule-plan-preview")
+
+    assert args.operation == "cancel-only"
+    assert spec.build_arguments(args) == {
+        "operation": "cancel_only",
+        "account_ids": [ACCOUNT_1, ACCOUNT_2],
+        "cancel_reason": "operator requested schedule removal",
+    }
+
+
+def test_plan_defaults_are_preserved_after_conditional_argument_parsing() -> None:
+    argv = [
+        "account-publish",
+        "+schedule-plan-preview",
+        "--account-id",
+        ACCOUNT_1,
+        "--start-date",
+        "2026-07-17",
+        "--days",
+        "1",
+        "--daily-slot",
+        "17:00",
+        "--timezone",
+        "UTC",
+    ]
+
+    payload = get_command_spec("account-publish.schedule-plan-preview").build_arguments(
+        _parse(argv)
+    )
+
+    assert payload == {
+        "operation": "plan",
+        "account_ids": [ACCOUNT_1],
+        "start_date": "2026-07-17",
+        "days": 1,
+        "daily_slots": ["17:00"],
+        "timezone": "UTC",
+        "format_strategy": "rotate",
+        "topic_strategy": "rotate",
+        "product_policy": "required",
+        "bgm_policy": {
+            "mode": "required",
+            "strategy": "rotate",
+            "platform": "tiktok",
+        },
+        "conflict_policy": "upsert_occurrences",
+    }
+
+
+def test_cancel_only_reason_is_optional_but_explicit_blank_is_rejected() -> None:
+    argv = _cancel_only_args("+schedule-plan-preview")
+    reason_index = argv.index("--cancel-reason")
+    del argv[reason_index : reason_index + 2]
+    spec = get_command_spec("account-publish.schedule-plan-preview")
+
+    assert spec.build_arguments(_parse(argv)) == {
+        "operation": "cancel_only",
+        "account_ids": [ACCOUNT_1, ACCOUNT_2],
+    }
+
+    with pytest.raises(ValueError, match="must not be blank"):
+        spec.build_arguments(_parse([*argv, "--cancel-reason", ""]))
 
 
 def test_schema_advertises_cli_kebab_choices_and_batch_contract() -> None:
@@ -325,6 +407,16 @@ def test_schema_advertises_cli_kebab_choices_and_batch_contract() -> None:
     assert preview.input_schema["properties"]["days"]["maximum"] == 180
     assert preview.input_schema["properties"]["daily_slots"]["maxItems"] == 24
     assert preview.input_schema["properties"]["account_ids"]["maxItems"] == 200
+    assert preview.input_schema["properties"]["operation"] == {
+        "type": "string",
+        "enum": ["plan", "cancel-only"],
+        "default": "plan",
+        "description": (
+            "plan creates/rebuilds schedule items; cancel-only cancels the account's "
+            "current eligible schedule items."
+        ),
+    }
+    assert preview.input_schema["properties"]["cancel_reason"]["maxLength"] == 500
     for spec in (preview, batch):
         assert spec.input_schema["properties"]["bgm_policy"] == {
             "type": "string",
@@ -343,6 +435,12 @@ def test_schema_advertises_cli_kebab_choices_and_batch_contract() -> None:
     assert batch.input_schema["properties"]["idempotency_key"]["maxLength"] == 240
     assert batch.input_schema["properties"]["idempotency_key"]["type"] == "string"
     assert "idempotency_key" in batch.input_schema["required"]
+    replace_condition = batch.input_schema["allOf"][1]
+    assert replace_condition["if"] == {
+        "properties": {"conflict_policy": {"const": "replace-non-published"}},
+        "required": ["conflict_policy"],
+    }
+    assert replace_condition["then"] == {"required": ["preview_token"]}
     assert "5000 total occurrences" in batch.input_schema["description"]
     assert batch.risk_level == "destructive"
     assert batch.execution == "async_run"
@@ -351,11 +449,55 @@ def test_schema_advertises_cli_kebab_choices_and_batch_contract() -> None:
     assert "only state source is +schedule-plan-status" in batch.summary
     assert "bgm_bound_count/summary.bgm_bound" in batch.summary
     assert "never call schedule-list, bgm-asset-list, or routines" in batch.summary
+    assert "--operation cancel-only is the primary batch deletion path" in batch.summary
+    assert any("--operation cancel-only" in example for example in preview.examples)
+    assert any("--operation cancel-only" in example for example in batch.examples)
 
     status = get_command_spec("account-publish.schedule-plan-status")
     assert "only state source after submission" in status.summary
     assert "bgm_bound_count/summary.bgm_bound" in status.summary
     assert "never call schedule-list, bgm-asset-list, or routines" in status.summary
+
+    cancel = get_command_spec("account-publish.schedule-plan-cancel")
+    assert "job control only" in cancel.summary
+    assert "never deletes schedule items already created" in cancel.summary
+
+
+@pytest.mark.parametrize(
+    "plan_only_args",
+    [
+        ["--start-date", "2026-07-17"],
+        ["--days", "5"],
+        ["--daily-slot", "17:00"],
+        ["--timezone", "Asia/Shanghai"],
+        ["--bgm-policy", "required"],
+        ["--conflict-policy", "upsert-occurrences"],
+    ],
+)
+def test_cancel_only_rejects_plan_only_fields(plan_only_args: list[str]) -> None:
+    argv = _cancel_only_args("+schedule-plan-preview") + plan_only_args
+
+    with pytest.raises(ValueError, match="not allowed with --operation cancel-only"):
+        get_command_spec("account-publish.schedule-plan-preview").build_arguments(_parse(argv))
+
+
+def test_plan_rejects_cancel_reason() -> None:
+    argv = _plan_args("+schedule-plan-preview") + [
+        "--cancel-reason",
+        "not a plan field",
+    ]
+
+    with pytest.raises(ValueError, match="only allowed with --operation cancel-only"):
+        get_command_spec("account-publish.schedule-plan-preview").build_arguments(_parse(argv))
+
+
+def test_cancel_only_batch_requires_preview_token() -> None:
+    argv = _cancel_only_args("+schedule-plan-batch")
+    token_index = argv.index("--preview-token")
+    del argv[token_index : token_index + 2]
+
+    with pytest.raises(ValueError, match="preview-token is required"):
+        get_command_spec("account-publish.schedule-plan-batch").build_arguments(_parse(argv))
 
 
 def test_replace_batch_requires_preview_token() -> None:
@@ -427,7 +569,55 @@ def test_preview_is_a_real_server_request_with_workspace_override(
     assert capture.calls[0]["method"] == "POST"
     assert capture.calls[0]["path"] == "/account-publish/schedule-plans:preview"
     assert capture.calls[0]["json_body"]["workspace_id"] == WORKSPACE_2
+    assert capture.calls[0]["json_body"]["operation"] == "plan"
     assert capture.calls[0]["json_body"]["account_ids"] == [ACCOUNT_1, ACCOUNT_2]
+
+
+def test_cancel_only_preview_and_batch_send_api_operation_and_workspace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    capture = _Capture(
+        {
+            "job": {
+                "id": JOB_ID,
+                "status": "queued",
+                "recommended_wakeup_delay_seconds": 10,
+            }
+        }
+    )
+    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+
+    asyncio.run(
+        main_module.dispatch(
+            _parse(_cancel_only_args("+schedule-plan-preview") + ["--workspace-id", WORKSPACE_2])
+        )
+    )
+    batch_result = asyncio.run(
+        main_module.dispatch(_parse(_cancel_only_args("+schedule-plan-batch", execute=True)))
+    )
+
+    assert capture.calls[0] == {
+        "method": "POST",
+        "path": "/account-publish/schedule-plans:preview",
+        "json_body": {
+            "workspace_id": WORKSPACE_2,
+            "operation": "cancel_only",
+            "account_ids": [ACCOUNT_1, ACCOUNT_2],
+            "cancel_reason": "operator requested schedule removal",
+        },
+        "params": None,
+    }
+    assert capture.calls[1]["path"] == "/account-publish/schedule-plans:batch"
+    assert capture.calls[1]["json_body"] == {
+        "workspace_id": WORKSPACE_1,
+        "operation": "cancel_only",
+        "account_ids": [ACCOUNT_1, ACCOUNT_2],
+        "cancel_reason": "operator requested schedule removal",
+        "preview_token": "cancel-preview-token-1",
+        "idempotency_key": "cancel-only-2026-07-17-v1",
+    }
+    assert batch_result["run"]["id"] == JOB_ID
 
 
 def test_batch_requires_yes_before_server_call(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -473,6 +663,7 @@ def test_batch_returns_async_run_and_status_next_step(monkeypatch: pytest.Monkey
     )
 
     assert capture.calls[0]["path"] == "/account-publish/schedule-plans:batch"
+    assert capture.calls[0]["json_body"]["operation"] == "plan"
     assert capture.calls[0]["json_body"]["preview_token"] == "preview-token-1"
     assert capture.calls[0]["json_body"]["idempotency_key"] == "schedule-plan-2026-07-17-v1"
     assert result["run"] == {
@@ -590,9 +781,7 @@ def test_asset_pool_batch_set_requires_confirmation_and_supports_local_dry_run(
     with pytest.raises(RuntimeError, match="confirmation_required"):
         asyncio.run(main_module.dispatch(_parse(_asset_pool_args("+asset-pools-batch-set"))))
     dry_run = asyncio.run(
-        main_module.dispatch(
-            _parse(_asset_pool_args("+asset-pools-batch-set") + ["--dry-run"])
-        )
+        main_module.dispatch(_parse(_asset_pool_args("+asset-pools-batch-set") + ["--dry-run"]))
     )
 
     assert capture.calls == []
