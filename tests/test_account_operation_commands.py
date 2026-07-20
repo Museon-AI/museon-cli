@@ -205,11 +205,13 @@ def test_submit_contract_describes_account_publish_managed_takeover() -> None:
     assert "explicit Account Publish -> fully-managed mode switch" in submit.summary
     assert "atomically transferred" in submit.summary
     assert "existing publish configuration is preserved" in submit.summary
-    assert "account_publish_schedule_conflict" in submit.summary
-    assert "blocking_schedule_counts" in submit.summary
-    assert "idle account_publish holder is transferred automatically" in batch.summary
-    assert "cancel eligible work or wait for publishing to finish" in batch.summary
-    assert "blocking_schedule_counts" in batch.output_schema["description"]
+    assert "Live schedule work never blocks the switch" in submit.summary
+    assert "future scheduled items are adopted by the operation" in submit.summary
+    assert "account_publish_schedule_conflict" not in submit.summary
+    assert "blocking_schedule_counts" not in submit.summary
+    assert "account_publish holder is transferred automatically" in batch.summary
+    assert "never cancel schedules to unblock enrollment" in batch.summary
+    assert "blocking_schedule_counts" not in batch.output_schema["description"]
 
 
 def test_get_and_list(monkeypatch) -> None:
