@@ -4252,7 +4252,7 @@
           "risk_level": "write",
           "shortcut": "+config-update",
           "stability": "stable",
-          "summary": "Update account publish settings such as output language and approval-before-publish.",
+          "summary": "Update account publish settings such as output language, required hashtags, and approval-before-publish.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -5001,7 +5001,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.62",
+  "contract_revision": "0.3.63",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -5493,7 +5493,7 @@
       "capability_key": "account-operation.plan-submit",
       "domain": "account-operation",
       "examples": [
-        "museoncli account-operation +plan-submit --id <uuid> --format-ids f1,f2 --topic-ids t1,t2"
+        "museoncli account-operation +plan-submit --id <uuid> --format-ids f1,f2 --topic-ids t1,t2 --required-hashtags '#PlantSenso,#PlantCare'"
       ],
       "execution": "direct",
       "input_schema": {
@@ -5505,6 +5505,14 @@
           "operation_id": {
             "description": "Account operation id",
             "type": "string"
+          },
+          "required_hashtags": {
+            "description": "Account-wide required hashtags. Omit to preserve the current setting; pass an empty array to clear it.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
           },
           "topic_ids": {
             "description": "CSV topic ids",
@@ -18955,7 +18963,8 @@
       "domain": "social-account",
       "examples": [
         "museoncli social-account +config-update --id <pool_account_id> --require-approval-before-publish",
-        "museoncli social-account +config-update --id <pool_account_id> --output-language zh-CN"
+        "museoncli social-account +config-update --id <pool_account_id> --output-language zh-CN",
+        "museoncli social-account +config-update --id <pool_account_id> --required-hashtags '#PlantSenso,#PlantCare'"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -19000,6 +19009,11 @@
             "required": [
               "output_language"
             ]
+          },
+          {
+            "required": [
+              "required_hashtags"
+            ]
           }
         ],
         "properties": {
@@ -19015,6 +19029,14 @@
           },
           "require_approval_before_publish": {
             "type": "boolean"
+          },
+          "required_hashtags": {
+            "description": "Account-wide required hashtags. Omit to preserve the current setting; pass an empty array to clear it.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
           }
         },
         "required": [
@@ -19081,7 +19103,7 @@
       "risk_level": "write",
       "shortcut": "+config-update",
       "stability": "stable",
-      "summary": "Update account publish settings such as output language and approval-before-publish.",
+      "summary": "Update account publish settings such as output language, required hashtags, and approval-before-publish.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

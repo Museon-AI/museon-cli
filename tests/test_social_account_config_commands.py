@@ -78,6 +78,42 @@ def test_config_update_schema_allows_language_without_approval() -> None:
     assert {"required": ["output_language"]} in schema["anyOf"]
 
 
+def test_config_update_schema_allows_required_hashtags_only() -> None:
+    schema = get_command_spec("social-account.config-update").input_schema
+
+    assert schema["properties"]["required_hashtags"]["maxItems"] == 50
+    assert {"required": ["required_hashtags"]} in schema["anyOf"]
+
+
+@pytest.mark.parametrize(
+    ("raw_value", "expected"),
+    [
+        ("#PlantSenso, #PlantCare", ["#PlantSenso", "#PlantCare"]),
+        ("", []),
+    ],
+)
+def test_config_update_builds_required_hashtags_patch(
+    raw_value: str,
+    expected: list[str],
+) -> None:
+    args = _parse(
+        [
+            "social-account",
+            "+config-update",
+            "--id",
+            ACCOUNT_ID,
+            "--required-hashtags",
+            raw_value,
+        ]
+    )
+
+    built = get_command_spec("social-account.config-update").build_arguments(args)
+
+    assert built["required_hashtags"] == expected
+    assert "output_language" not in built
+    assert "require_approval_before_publish" not in built
+
+
 def test_config_update_dispatches_language_only(monkeypatch: pytest.MonkeyPatch) -> None:
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
@@ -141,4 +177,32 @@ def test_config_update_dispatches_language_and_approval(
             "require_approval_before_publish": False,
             "output_language": "ja",
         },
+    }
+
+
+def test_config_update_dispatches_explicit_empty_required_hashtags(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    capture = _Capture()
+    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "api_data", capture)
+
+    asyncio.run(
+        main_module.dispatch(
+            _parse(
+                [
+                    "social-account",
+                    "+config-update",
+                    "--id",
+                    ACCOUNT_ID,
+                    "--required-hashtags",
+                    "",
+                ]
+            )
+        )
+    )
+
+    assert capture.calls[0]["json_body"] == {
+        "workspace_id": "workspace-1",
+        "payload": {"required_hashtags": []},
     }
