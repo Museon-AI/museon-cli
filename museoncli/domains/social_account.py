@@ -325,6 +325,13 @@ def _add_social_account_config_update_arguments(parser: argparse.ArgumentParser)
             "(for example en, zh-CN, ja, pt-BR)."
         ),
     )
+    parser.add_argument(
+        "--required-hashtags",
+        default=None,
+        help=(
+            "Comma-separated account-wide required hashtags. Pass an empty string to clear them."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
 
 
@@ -334,13 +341,22 @@ def _build_social_account_config_update_arguments(args: argparse.Namespace) -> d
         payload["require_approval_before_publish"] = args.require_approval_before_publish
     if args.output_language is not None:
         payload["output_language"] = args.output_language
+    if args.required_hashtags is not None:
+        payload["required_hashtags"] = [
+            part.strip() for part in args.required_hashtags.split(",") if part.strip()
+        ]
     if not any(
-        field in payload for field in ("require_approval_before_publish", "output_language")
+        field in payload
+        for field in (
+            "require_approval_before_publish",
+            "output_language",
+            "required_hashtags",
+        )
     ):
         raise ValueError(
             "social-account +config-update requires "
             "--require-approval-before-publish, --no-require-approval-before-publish, "
-            "or --output-language."
+            "--output-language, or --required-hashtags."
         )
     return payload
 
@@ -913,11 +929,21 @@ def _social_account_config_update_input_schema() -> dict[str, Any]:
                     "hashtags (for example en, zh-CN, ja, pt-BR)."
                 ),
             },
+            "required_hashtags": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 50,
+                "description": (
+                    "Account-wide required hashtags. Omit to preserve the current setting; "
+                    "pass an empty array to clear it."
+                ),
+            },
         },
         "required": ["account_id"],
         "anyOf": [
             {"required": ["require_approval_before_publish"]},
             {"required": ["output_language"]},
+            {"required": ["required_hashtags"]},
         ],
     }
 
@@ -1564,8 +1590,8 @@ def specs() -> list[CommandSpec]:
             domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+config-update",
             summary=(
-                "Update account publish settings such as output language and "
-                "approval-before-publish."
+                "Update account publish settings such as output language, required hashtags, "
+                "and approval-before-publish."
             ),
             risk_level="write",
             execution="direct",
@@ -1582,6 +1608,10 @@ def specs() -> list[CommandSpec]:
                 (
                     "museoncli social-account +config-update --id <pool_account_id> "
                     "--output-language zh-CN"
+                ),
+                (
+                    "museoncli social-account +config-update --id <pool_account_id> "
+                    "--required-hashtags '#PlantSenso,#PlantCare'"
                 ),
             ],
             add_arguments=_add_social_account_config_update_arguments,
@@ -2079,7 +2109,11 @@ async def _execute_config_update(ctx: CommandContext) -> Any:
         raise RuntimeError(f"{command_name} requires account_id")
     changes = {
         field: arguments[field]
-        for field in ("require_approval_before_publish", "output_language")
+        for field in (
+            "require_approval_before_publish",
+            "output_language",
+            "required_hashtags",
+        )
         if field in arguments
     }
     return agent_domain_result(

@@ -163,6 +163,13 @@ def _add_account_operation_plan_arguments(parser: argparse.ArgumentParser) -> No
     parser.add_argument("--id", dest="operation_id", required=True)
     parser.add_argument("--format-ids", default=None, help="Comma-separated format ids.")
     parser.add_argument("--topic-ids", default=None, help="Comma-separated content topic ids.")
+    parser.add_argument(
+        "--required-hashtags",
+        default=None,
+        help=(
+            "Comma-separated account-wide required hashtags. Pass an empty string to clear them."
+        ),
+    )
     parser.add_argument("--note", default=None)
     parser.add_argument("--dry-run", action="store_true")
 
@@ -174,12 +181,15 @@ def _csv_id_list(value: str | None) -> list[str] | None:
 
 
 def _build_account_operation_plan_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {
+    payload = {
         "operation_id": args.operation_id,
         "format_ids": _csv_id_list(args.format_ids),
         "topic_ids": _csv_id_list(args.topic_ids),
         "note": args.note,
     }
+    if args.required_hashtags is not None:
+        payload["required_hashtags"] = _csv_id_list(args.required_hashtags)
+    return payload
 
 
 def _add_account_operation_persona_arguments(parser: argparse.ArgumentParser) -> None:
@@ -265,6 +275,26 @@ def _account_operation_input_schema(fields: dict[str, str]) -> dict[str, Any]:
             name: {"type": "string", "description": desc} for name, desc in fields.items()
         },
     }
+
+
+def _account_operation_plan_input_schema() -> dict[str, Any]:
+    schema = _account_operation_input_schema(
+        {
+            "operation_id": "Account operation id",
+            "format_ids": "CSV format ids",
+            "topic_ids": "CSV topic ids",
+        }
+    )
+    schema["properties"]["required_hashtags"] = {
+        "type": "array",
+        "items": {"type": "string"},
+        "maxItems": 50,
+        "description": (
+            "Account-wide required hashtags. Omit to preserve the current setting; "
+            "pass an empty array to clear it."
+        ),
+    }
+    return schema
 
 
 def _account_operation_specs() -> list[CommandSpec]:
@@ -514,16 +544,14 @@ def _account_operation_specs() -> list[CommandSpec]:
             risk_level="write",
             execution="direct",
             adapter_tool_name="account_operation_plan_submit",
-            input_schema=_account_operation_input_schema(
-                {
-                    "operation_id": "Account operation id",
-                    "format_ids": "CSV format ids",
-                    "topic_ids": "CSV topic ids",
-                }
-            ),
+            input_schema=_account_operation_plan_input_schema(),
             output_schema=_direct_output_schema("Updated account operation."),
             examples=[
-                "museoncli account-operation +plan-submit --id <uuid> --format-ids f1,f2 --topic-ids t1,t2"
+                (
+                    "museoncli account-operation +plan-submit --id <uuid> "
+                    "--format-ids f1,f2 --topic-ids t1,t2 "
+                    "--required-hashtags '#PlantSenso,#PlantCare'"
+                )
             ],
             add_arguments=_add_account_operation_plan_arguments,
             build_arguments=_build_account_operation_plan_arguments,
@@ -738,6 +766,8 @@ async def _execute_plan_submit(ctx: CommandContext) -> Any:
         "topic_ids": _account_operation_csv(arguments.get("topic_ids")),
         "note": arguments.get("note"),
     }
+    if "required_hashtags" in arguments:
+        payload["required_hashtags"] = _account_operation_csv(arguments.get("required_hashtags"))
     return await api_data_v2(
         cfg, "POST", f"/account-operations/{operation_id}/plan:submit", json_body=payload
     )

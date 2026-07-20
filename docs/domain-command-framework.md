@@ -98,7 +98,7 @@ The tables below are generated — edit code, then run
 | `social-account +bgm-asset-list` | read | — | — | direct | List workspace BGM assets (same-style reference videos). |
 | `social-account +bgm-asset-create` | write | yes | — | direct | Create a workspace BGM asset from a TikTok post URL. |
 | `social-account +config-get` | read | — | — | direct | Read account publish configuration, including the account-wide output language used for overlays, captions, and hashtags. |
-| `social-account +config-update` | write | yes | — | direct | Update account publish settings such as output language and approval-before-publish. |
+| `social-account +config-update` | write | yes | — | direct | Update account publish settings such as output language, required hashtags, and approval-before-publish. |
 | `social-account +version-list` | read | — | — | direct | List account publish config versions. |
 | `social-account +version-get` | read | — | — | direct | Read one account publish config version. |
 | `social-account +version-create` | write | yes | — | direct | Create a draft account publish config version. |

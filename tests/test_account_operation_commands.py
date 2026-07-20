@@ -10,6 +10,8 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+import pytest
+
 from museoncli import main as main_module
 from museoncli.config import Config
 from museoncli.main import build_parser
@@ -252,7 +254,13 @@ def test_worker_callbacks(monkeypatch) -> None:
     monkeypatch.setattr(main_module, "api_data_v2", capture)
     _direct(
         "account-operation.plan-submit",
-        {"operation_id": "op-1", "format_ids": "f1,f2", "topic_ids": "t1", "note": "n"},
+        {
+            "operation_id": "op-1",
+            "format_ids": "f1,f2",
+            "topic_ids": "t1",
+            "required_hashtags": "#PlantSenso,#PlantCare",
+            "note": "n",
+        },
     )
     _direct(
         "account-operation.strategy-decide",
@@ -271,6 +279,7 @@ def test_worker_callbacks(monkeypatch) -> None:
     assert plan["path"] == "/account-operations/op-1/plan:submit"
     assert plan["json_body"]["format_ids"] == ["f1", "f2"]
     assert plan["json_body"]["topic_ids"] == ["t1"]
+    assert plan["json_body"]["required_hashtags"] == ["#PlantSenso", "#PlantCare"]
     assert decide["path"] == "/account-operations/op-1/daily-runs/run-1/strategy:decide"
     assert decide["json_body"]["decided_by"] == "human"
     assert decide["json_body"]["decision"] == {"action": "override"}
@@ -396,6 +405,61 @@ def test_plan_submit_csv_ids_pass_uuid_validation_and_reach_api(monkeypatch) -> 
     assert call["path"] == f"/account-operations/{op_id}/plan:submit"
     assert call["json_body"]["format_ids"] == [format_a]
     assert call["json_body"]["topic_ids"] == [topic_a]
+
+
+@pytest.mark.parametrize(
+    ("cli_args", "expected_presence", "expected_value"),
+    [
+        ([], False, None),
+        (["--required-hashtags", "#PlantSenso, #PlantCare"], True, ["#PlantSenso", "#PlantCare"]),
+        (["--required-hashtags", ""], True, []),
+    ],
+)
+def test_plan_submit_required_hashtags_preserve_override_and_clear(
+    monkeypatch,
+    cli_args,
+    expected_presence,
+    expected_value,
+) -> None:
+    cfg = Config()
+    capture = _Capture()
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+
+    op_id = "33333333-3333-3333-3333-333333333333"
+    result = asyncio.run(
+        main_module.dispatch(
+            parse(
+                [
+                    "account-operation",
+                    "+plan-submit",
+                    "--id",
+                    op_id,
+                    *cli_args,
+                ]
+            )
+        )
+    )
+
+    assert result["command"] == "account-operation.plan-submit"
+    payload = capture.calls[0]["json_body"]
+    assert ("required_hashtags" in payload) is expected_presence
+    if expected_presence:
+        assert payload["required_hashtags"] == expected_value
+
+
+def test_plan_submit_schema_exposes_required_hashtags_array() -> None:
+    schema = get_command_spec("account-operation.plan-submit").input_schema
+
+    assert schema["properties"]["required_hashtags"] == {
+        "type": "array",
+        "items": {"type": "string"},
+        "maxItems": 50,
+        "description": (
+            "Account-wide required hashtags. Omit to preserve the current setting; "
+            "pass an empty array to clear it."
+        ),
+    }
 
 
 def test_all_write_command_specs_support_dry_run() -> None:
