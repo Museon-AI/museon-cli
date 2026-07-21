@@ -79,6 +79,8 @@ def direct_api_envelope(
         "social-account.profile-edit-batch-submit",
     }:
         run = _profile_edit_run_from_data(data)
+    elif command_name == "social-account.avatar-generate-batch":
+        run = _avatar_generate_run_from_data(data)
     elif command_name == "account-publish.asset-pools-batch-set":
         run = _asset_pools_batch_run_from_data(data)
     elif command_name == "account-publish.schedule-plan-batch":
@@ -455,6 +457,52 @@ def _profile_edit_run_from_data(data: Any) -> dict[str, Any] | None:
     }
 
 
+def _avatar_generate_run_from_data(data: Any) -> dict[str, Any] | None:
+    if not isinstance(data, dict):
+        return None
+    task_id = _profile_edit_task_id(data)
+    if not task_id:
+        return None
+    provider_status = data.get("provider_status")
+    summary = provider_status.get("summary") if isinstance(provider_status, dict) else None
+    return {
+        "id": task_id,
+        "type": "pool_account_avatar_generation",
+        "status": _avatar_generate_run_status(
+            data=data,
+            provider_status=provider_status,
+            summary=summary,
+        ),
+        "watch_command": f"museoncli social-account +avatar-generate-status --id {task_id}",
+    }
+
+
+def _avatar_generate_run_status(
+    *,
+    data: dict[str, Any],
+    provider_status: Any,
+    summary: Any,
+) -> str | None:
+    if isinstance(provider_status, dict) and provider_status.get("timed_out") is True:
+        return "timed_out"
+    if not isinstance(summary, dict):
+        status_value = data.get("status")
+        return str(status_value) if status_value is not None else None
+
+    succeeded = int(summary.get("succeeded") or 0)
+    failed = int(summary.get("failed") or 0)
+    settled = summary.get("settled") is True
+    if not settled:
+        return "running"
+    if failed > 0 and succeeded > 0:
+        return "partial_failed"
+    if failed > 0:
+        return "failed"
+    if succeeded > 0:
+        return "completed"
+    return "completed" if settled else "running"
+
+
 def _schedule_plan_run_from_data(data: Any) -> dict[str, Any] | None:
     if not isinstance(data, dict):
         return None
@@ -534,6 +582,15 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
         if isinstance(watch_command, str) and watch_command:
             return [f"Check profile edit status with: {watch_command}"]
         return ["Check the returned task id with social-account +profile-edit-status."]
+    if run.get("type") == "pool_account_avatar_generation":
+        watch_command = run.get("watch_command")
+        if isinstance(watch_command, str) and watch_command:
+            return [
+                f"Poll avatar generation with: {watch_command}. Then feed the "
+                "succeeded accounts' avatar_url into social-account "
+                "+profile-edit-batch-submit."
+            ]
+        return ["Poll the returned task id with social-account +avatar-generate-status."]
     if run.get("kind") == "content_analysis":
         status_value = str(run.get("status") or "").lower()
         if status_value in {"completed", "failed", "cancelled", "canceled"}:
