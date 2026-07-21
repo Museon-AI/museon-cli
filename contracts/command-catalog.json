@@ -140,6 +140,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "account-operation.daily-roster",
+          "domain": "account-operation",
+          "execution": "direct",
+          "name": "account-operation.daily-roster",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+daily-roster",
+          "stability": "stable",
+          "summary": "Per-account schedule/publish roster for ONE local day across the WHOLE publish-line fleet in one query — USE THIS to answer 'which accounts have no schedule / have not published for day X' instead of sampling +runs per account. Covers BOTH 全托管 and 半托管 accounts (each row tagged is_fully_managed); --managed all|full|semi filters. Returns data.summary (whole cohort: accounts_total, full_managed, semi_managed, scheduled, unscheduled, publish_success, publish_failed, no_publish) and data.accounts[] per account {is_fully_managed, lifecycle_status, scheduled_items, has_schedule, succeeded_items, failed_items, in_flight_items, waiting_items, cancelled_items, published_ok, unpublished_reason_kind (failed|in_flight|waiting|no_schedule)}. scheduled_items EXCLUDES cancelled/skipped. --success any (>=1 published, default) | all (every live item published). --date YYYY-MM-DD in --tz (default today); --filter narrows returned rows (all|unscheduled|failed|no-publish). Read-only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "account-operation.runs",
           "domain": "account-operation",
           "execution": "direct",
@@ -5153,6 +5178,122 @@
       "shortcut": "+attribution",
       "stability": "stable",
       "summary": "List an operated account's attribution reports (comment classes, recommendation, decision).",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "account-operation.daily-roster": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "account-operation.daily-roster",
+      "domain": "account-operation",
+      "examples": [
+        "museoncli account-operation +daily-roster --tz Asia/Shanghai",
+        "museoncli account-operation +daily-roster --date 2026-07-21 --tz Asia/Shanghai --filter no-publish"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "date": {
+            "description": "Local calendar day YYYY-MM-DD (default: today in timezone)",
+            "type": "string"
+          },
+          "filter": {
+            "description": "Row filter: all (default) | unscheduled | failed | no-publish",
+            "type": "string"
+          },
+          "managed": {
+            "description": "Management-mode filter: all (default) | full | semi",
+            "type": "string"
+          },
+          "page": {
+            "description": "Page number (1-based)",
+            "type": "string"
+          },
+          "page_size": {
+            "description": "Page size (default 200, max 500)",
+            "type": "string"
+          },
+          "success": {
+            "description": "published_ok basis: any (default) | all",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone, e.g. Asia/Shanghai (default UTC)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "account-operation.daily-roster",
+      "output_schema": {
+        "description": "Daily roster: data.summary (whole-cohort counts) + data.accounts[] (per-account schedule/publish status, tagged is_fully_managed) + data.pagination.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+daily-roster",
+      "stability": "stable",
+      "summary": "Per-account schedule/publish roster for ONE local day across the WHOLE publish-line fleet in one query — USE THIS to answer 'which accounts have no schedule / have not published for day X' instead of sampling +runs per account. Covers BOTH 全托管 and 半托管 accounts (each row tagged is_fully_managed); --managed all|full|semi filters. Returns data.summary (whole cohort: accounts_total, full_managed, semi_managed, scheduled, unscheduled, publish_success, publish_failed, no_publish) and data.accounts[] per account {is_fully_managed, lifecycle_status, scheduled_items, has_schedule, succeeded_items, failed_items, in_flight_items, waiting_items, cancelled_items, published_ok, unpublished_reason_kind (failed|in_flight|waiting|no_schedule)}. scheduled_items EXCLUDES cancelled/skipped. --success any (>=1 published, default) | all (every live item published). --date YYYY-MM-DD in --tz (default today); --filter narrows returned rows (all|unscheduled|failed|no-publish). Read-only.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

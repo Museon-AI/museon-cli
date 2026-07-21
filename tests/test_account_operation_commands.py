@@ -45,6 +45,7 @@ def _direct(command_name: str, arguments: dict[str, Any], *, runtime: dict | Non
         "account-operation.get": account_operation._execute_get,
         "account-operation.list": account_operation._execute_list,
         "account-operation.ops-status": account_operation._execute_ops_status,
+        "account-operation.daily-roster": account_operation._execute_daily_roster,
         "account-operation.plan-submit": account_operation._execute_plan_submit,
         "account-operation.strategy-decide": account_operation._execute_strategy_decide,
         "account-operation.elements-replace": account_operation._execute_elements_replace,
@@ -249,6 +250,43 @@ def test_ops_status_forwards_failed_reasons_window(monkeypatch) -> None:
     assert args.domain_command == "account-operation.ops-status"
     built = account_operation._build_account_operation_ops_status_arguments(args)
     assert built == {"window": "7d"}
+
+
+def test_daily_roster_posts_to_health_roster_endpoint(monkeypatch) -> None:
+    capture = _Capture(response={"data": {"summary": {}, "accounts": [], "pagination": {}}})
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+    _direct(
+        "account-operation.daily-roster",
+        {
+            "date": "2026-07-21",
+            "timezone": "Asia/Shanghai",
+            "result_filter": "no_publish",
+            "page": 1,
+            "page_size": 200,
+        },
+    )
+    call = capture.calls[0]
+    assert call["method"] == "POST"
+    assert call["path"] == "/account-ops-health/roster/query"
+    body = call["json_body"]
+    assert body["workspace_id"] == "ws-1"
+    assert body["date"] == "2026-07-21"
+    assert body["timezone"] == "Asia/Shanghai"
+    assert body["filter"] == "no_publish"
+    # Omitted optionals are dropped so the API defaults apply.
+    assert "managed" not in body
+    assert "success" not in body
+
+
+def test_daily_roster_parser_dekebabs_filter_and_keeps_workspace_from_context() -> None:
+    args = parse(
+        ["account-operation", "+daily-roster", "--filter", "no-publish", "--managed", "semi"]
+    )
+    assert args.domain_command == "account-operation.daily-roster"
+    built = account_operation._build_account_operation_daily_roster_arguments(args)
+    # Enum stays kebab on the CLI surface, dekebabbed onto the wire value.
+    assert built["result_filter"] == "no_publish"
+    assert built["managed"] == "semi"
 
 
 def test_worker_callbacks(monkeypatch) -> None:
