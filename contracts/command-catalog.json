@@ -5057,7 +5057,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.64",
+  "contract_revision": "0.3.65",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
