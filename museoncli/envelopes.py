@@ -74,7 +74,10 @@ def direct_api_envelope(
         run = _generation_run_from_data(data)
     elif command_name == "content-analysis.run":
         run = _content_analysis_run_from_data(data)
-    elif command_name == "social-account.profile-edit-submit":
+    elif command_name in {
+        "social-account.profile-edit-submit",
+        "social-account.profile-edit-batch-submit",
+    }:
         run = _profile_edit_run_from_data(data)
     elif command_name == "account-publish.asset-pools-batch-set":
         run = _asset_pools_batch_run_from_data(data)
@@ -448,7 +451,7 @@ def _profile_edit_run_from_data(data: Any) -> dict[str, Any] | None:
             provider_status=provider_status,
             summary=summary,
         ),
-        "watch_command": f"museoncli social-account +profile-edit-status --task-id {task_id}",
+        "watch_command": f"museoncli social-account +profile-edit-status --id {task_id}",
     }
 
 

@@ -2062,6 +2062,157 @@ def test_social_account_profile_edit_status_rejects_placeholder_task_id() -> Non
         asyncio.run(main_module.dispatch_domain_command(args, cfg))
 
 
+_BATCH_ACCOUNT_UPDATES_JSON = (
+    '[{"account_id":"ac000000-0000-4000-8000-000000000001",'
+    '"bio":"AI assistant"}]'
+)
+
+
+def test_social_account_profile_edit_batch_submit_parser() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            _BATCH_ACCOUNT_UPDATES_JSON,
+            "--update-bio",
+        ]
+    )
+
+    assert args.command == "social-account"
+    assert args.shortcut == "+profile-edit-batch-submit"
+    assert args.domain_command == "social-account.profile-edit-batch-submit"
+    payload = main_module.command_payload(args)
+    assert payload["account_updates"] == [
+        {"account_id": "ac000000-0000-4000-8000-000000000001", "bio": "AI assistant"}
+    ]
+    assert payload["update_bio"] is True
+    assert payload["update_nick_name"] is False
+    assert payload["wait"] is False
+
+
+def test_social_account_profile_edit_batch_submit_parser_with_wait() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            _BATCH_ACCOUNT_UPDATES_JSON,
+            "--update-bio",
+            "--wait",
+            "--timeout",
+            "60",
+        ]
+    )
+
+    payload = main_module.command_payload(args)
+    assert payload["wait"] is True
+    assert payload["wait_timeout_seconds"] == 60.0
+
+
+def test_social_account_profile_edit_batch_submit_rejects_empty_updates() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            "[]",
+            "--update-bio",
+        ]
+    )
+    with pytest.raises(ValueError, match="non-empty JSON array"):
+        main_module.command_payload(args)
+
+
+def test_social_account_profile_edit_batch_submit_rejects_invalid_json() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            "not-json",
+            "--update-bio",
+        ]
+    )
+    with pytest.raises(ValueError, match="must be valid JSON"):
+        main_module.command_payload(args)
+
+
+def test_dispatch_social_account_profile_edit_batch_submit_uses_agent_api(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, params, unwrap_success
+        calls.append({"method": method, "path": path, "json_body": json_body})
+        return {
+            "domain": "social-account",
+            "operation": "profile-edit-batch-submit",
+            "result": {
+                "task_id": "73000000-0000-4000-8000-000000000001",
+                "status": "pending",
+            },
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            _BATCH_ACCOUNT_UPDATES_JSON,
+            "--update-bio",
+        ]
+    )
+    result = asyncio.run(main_module.dispatch(args))
+
+    assert result["command"] == "social-account.profile-edit-batch-submit"
+    # The routine-wakeup path copies watch_command verbatim, so it must use the
+    # flag the status command actually accepts (--id, not --task-id).
+    assert result["run"] == {
+        "id": "73000000-0000-4000-8000-000000000001",
+        "type": "pool_account_profile_edit",
+        "status": "pending",
+        "watch_command": (
+            "museoncli social-account +profile-edit-status "
+            "--id 73000000-0000-4000-8000-000000000001"
+        ),
+    }
+    assert calls == [
+        {
+            "method": "POST",
+            "path": "/agent-cli/social-accounts/profile-edit/tasks",
+            "json_body": {
+                "workspace_id": "workspace-1",
+                "payload": {
+                    "account_updates": [
+                        {
+                            "account_id": "ac000000-0000-4000-8000-000000000001",
+                            "bio": "AI assistant",
+                        }
+                    ],
+                    "update_nick_name": False,
+                    "update_bio": True,
+                    "update_avatar": False,
+                },
+            },
+        }
+    ]
+
+
 def test_profile_edit_run_status_distinguishes_failed_provider_result() -> None:
     run = envelopes_module._profile_edit_run_from_data(
         {
@@ -2591,6 +2742,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "social-account.schedule-delete",
         "social-account.profile-edit-draft",
         "social-account.profile-edit-submit",
+        "social-account.profile-edit-batch-submit",
         "social-account.profile-edit-status",
     ]
     assert [item["name"] for item in result["data"]["commands"]["campaign-monitor"]] == [
@@ -5053,7 +5205,7 @@ def test_dispatch_social_account_profile_edit_submit_uses_agent_api(
         "status": "pending",
         "watch_command": (
             "museoncli social-account +profile-edit-status "
-            "--task-id 73000000-0000-4000-8000-000000000001"
+            "--id 73000000-0000-4000-8000-000000000001"
         ),
     }
     assert calls == [
