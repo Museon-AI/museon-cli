@@ -159,6 +159,65 @@ def _build_account_operation_ops_status_arguments(args: argparse.Namespace) -> d
     return {"window": args.window}
 
 
+def _add_account_operation_daily_roster_arguments(parser: argparse.ArgumentParser) -> None:
+    # Workspace comes from the global --workspace-id / selected workspace.
+    parser.add_argument(
+        "--date",
+        default=None,
+        help="Local calendar day YYYY-MM-DD (default: today in --tz).",
+    )
+    parser.add_argument(
+        "--tz",
+        dest="timezone",
+        default=None,
+        help="IANA timezone for --date and the day window, e.g. Asia/Shanghai (default UTC).",
+    )
+    parser.add_argument(
+        "--managed",
+        choices=["all", "full", "semi"],
+        default=None,
+        help="Management-mode filter: all (default) | full (全托管) | semi (半托管).",
+    )
+    parser.add_argument(
+        "--success",
+        choices=["any", "all"],
+        default=None,
+        help="published_ok basis: any (>=1 item published, default) | all (every live item published).",
+    )
+    parser.add_argument(
+        "--as-of",
+        dest="as_of",
+        default=None,
+        help=(
+            "Intra-day cutoff HH:MM (local, on --date/--tz), e.g. 18:00. Adds per-account "
+            "cutoff {due, published, unpublished} and enables --filter behind."
+        ),
+    )
+    parser.add_argument(
+        "--filter",
+        dest="result_filter",
+        choices=["all", "unscheduled", "failed", "no-publish", "behind"],
+        default=None,
+        help="Narrow returned rows (summary always covers the whole cohort). Default all. "
+        "'behind' needs --as-of.",
+    )
+    parser.add_argument("--page", type=int, default=1)
+    parser.add_argument("--page-size", type=int, default=200)
+
+
+def _build_account_operation_daily_roster_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "date": args.date,
+        "timezone": args.timezone,
+        "managed": args.managed,
+        "success": args.success,
+        "as_of": args.as_of,
+        "result_filter": dekebab(args.result_filter),
+        "page": args.page,
+        "page_size": args.page_size,
+    }
+
+
 def _add_account_operation_plan_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--id", dest="operation_id", required=True)
     parser.add_argument("--format-ids", default=None, help="Comma-separated format ids.")
@@ -496,6 +555,57 @@ def _account_operation_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.ACCOUNT_OPERATION,
+            shortcut="+daily-roster",
+            summary=(
+                "Per-account schedule/publish roster for ONE local day across the WHOLE "
+                "publish-line fleet in one query — USE THIS to answer 'which accounts have no "
+                "schedule / have not published for day X' instead of sampling +runs per account. "
+                "Covers BOTH 全托管 and 半托管 accounts (each row tagged is_fully_managed); "
+                "--managed all|full|semi filters. Returns data.summary (whole cohort: "
+                "accounts_total, full_managed, semi_managed, scheduled, unscheduled, "
+                "publish_success, publish_failed, no_publish) and data.accounts[] per account "
+                "{is_fully_managed, lifecycle_status, scheduled_items, has_schedule, "
+                "succeeded_items, failed_items, in_flight_items, waiting_items, cancelled_items, "
+                "published_ok, unpublished_reason_kind (failed|in_flight|waiting|no_schedule)}. "
+                "scheduled_items EXCLUDES cancelled/skipped. --success any (>=1 published, "
+                "default) | all (every live item published). --date YYYY-MM-DD in --tz "
+                "(default today). For a within-day 'not published by <time>' question "
+                "(e.g. BJT 18:00) pass --as-of 18:00: each row then carries cutoff "
+                "{due, published, unpublished} and --filter behind returns only accounts with "
+                "items due by the cutoff that had not published — excluding slots not yet due. "
+                "--filter narrows returned rows (all|unscheduled|failed|no-publish|behind). "
+                "Read-only."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="account_operation_daily_roster",
+            input_schema=_account_operation_input_schema(
+                {
+                    "date": "Local calendar day YYYY-MM-DD (default: today in timezone)",
+                    "timezone": "IANA timezone, e.g. Asia/Shanghai (default UTC)",
+                    "managed": "Management-mode filter: all (default) | full | semi",
+                    "success": "published_ok basis: any (default) | all",
+                    "as_of": "Intra-day cutoff HH:MM local (e.g. 18:00); enables cutoff + filter behind",
+                    "filter": "Row filter: all (default) | unscheduled | failed | no-publish | behind",
+                    "page": "Page number (1-based)",
+                    "page_size": "Page size (default 200, max 500)",
+                }
+            ),
+            output_schema=_direct_output_schema(
+                "Daily roster: data.summary (whole-cohort counts, incl. behind when as_of set) + "
+                "data.accounts[] (per-account schedule/publish status, tagged is_fully_managed, "
+                "plus cutoff when as_of set) + data.pagination."
+            ),
+            examples=[
+                "museoncli account-operation +daily-roster --tz Asia/Shanghai",
+                "museoncli account-operation +daily-roster --date 2026-07-21 --tz Asia/Shanghai --filter no-publish",
+                "museoncli account-operation +daily-roster --tz Asia/Shanghai --as-of 18:00 --filter behind",
+            ],
+            add_arguments=_add_account_operation_daily_roster_arguments,
+            build_arguments=_build_account_operation_daily_roster_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.ACCOUNT_OPERATION,
             shortcut="+runs",
             summary="List an operated account's daily runs (steps, attribution flag, schedule result).",
             risk_level="read",
@@ -712,6 +822,26 @@ async def _execute_ops_status(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_daily_roster(ctx: CommandContext) -> Any:
+    arguments = ctx.arguments
+    payload = compact_params(
+        {
+            "workspace_id": ctx.workspace_id,
+            "date": arguments.get("date"),
+            "timezone": arguments.get("timezone"),
+            "managed": arguments.get("managed"),
+            "success": arguments.get("success"),
+            "as_of": arguments.get("as_of"),
+            "filter": arguments.get("result_filter"),
+            "page": arguments.get("page"),
+            "page_size": arguments.get("page_size"),
+        }
+    )
+    return await ctx.api_data_v2(
+        ctx.cfg, "POST", "/account-ops-health/roster/query", json_body=payload
+    )
+
+
 async def _execute_runs(ctx: CommandContext) -> Any:
     operation_id = str(ctx.arguments.get("operation_id") or "")
     return await ctx.api_data_v2(
@@ -876,6 +1006,7 @@ async def _execute_submit_batch(ctx: CommandContext) -> Any:
 
 EXECUTORS = {
     "account-operation.attribution": direct_enveloped(_execute_attribution),
+    "account-operation.daily-roster": direct_enveloped(_execute_daily_roster),
     "account-operation.elements-replace": direct_enveloped(_execute_elements_replace),
     "account-operation.get": direct_enveloped(_execute_get),
     "account-operation.list": direct_enveloped(_execute_list),
