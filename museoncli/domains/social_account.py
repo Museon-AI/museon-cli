@@ -654,6 +654,47 @@ def _build_social_account_profile_edit_submit_arguments(args: argparse.Namespace
     return payload
 
 
+def _add_social_account_avatar_generate_batch_arguments(
+    parser: argparse.ArgumentParser,
+) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--id", action="append", dest="account_ids", required=True)
+    parser.add_argument("--prompt", required=True)
+    parser.add_argument("--wait", action="store_true")
+    parser.add_argument("--timeout", type=float, default=300.0)
+    parser.add_argument("--poll-interval", type=float, default=5.0)
+
+
+def _build_social_account_avatar_generate_batch_arguments(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    account_ids = args.account_ids or []
+    if not account_ids:
+        raise ValueError("--id must be provided at least once")
+    payload["account_ids"] = account_ids
+    payload["prompt"] = args.prompt
+    payload["wait"] = args.wait
+    payload["wait_timeout_seconds"] = args.timeout
+    payload["poll_interval_seconds"] = args.poll_interval
+    return payload
+
+
+def _add_social_account_avatar_generate_status_arguments(
+    parser: argparse.ArgumentParser,
+) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--id", dest="task_id", required=True)
+
+
+def _build_social_account_avatar_generate_status_arguments(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    payload["task_id"] = args.task_id
+    return payload
+
+
 def _add_social_account_profile_edit_status_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
     parser.add_argument("--id", dest="task_id", required=True)
@@ -1292,6 +1333,45 @@ def _social_account_profile_edit_batch_submit_input_schema() -> dict[str, Any]:
             "dry_run": {"type": "boolean", "default": False},
         },
         "required": ["account_updates"],
+    }
+
+
+def _social_account_avatar_generate_batch_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_ids": {
+                "description": (
+                    "Non-empty array of pool account UUIDs to generate avatar drafts for. "
+                    "Group accounts that share one base prompt into a single batch "
+                    "(at most 20 per batch)."
+                ),
+                "type": "array",
+                "minItems": 1,
+                "items": _uuid_id_schema("Pool account UUID with profile editing enabled."),
+            },
+            "prompt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Shared base avatar prompt; the server personalizes it per account.",
+            },
+            "wait": {"type": "boolean", "default": False},
+            "wait_timeout_seconds": {"type": "number", "default": 300},
+            "poll_interval_seconds": {"type": "number", "default": 5},
+        },
+        "required": ["account_ids", "prompt"],
+    }
+
+
+def _social_account_avatar_generate_status_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "task_id": _uuid_id_schema(
+                "Task UUID returned by social-account +avatar-generate-batch."
+            )
+        },
+        "required": ["task_id"],
     }
 
 
@@ -1984,6 +2064,48 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_social_account_profile_edit_status_arguments,
             build_arguments=_build_social_account_profile_edit_status_arguments,
         ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
+            shortcut="+avatar-generate-batch",
+            summary=(
+                "Generate TikTok profile avatar drafts for multiple accounts as one "
+                "async task. Poll +avatar-generate-status for per-account avatar URLs, "
+                "then feed the succeeded ones into +profile-edit-batch-submit."
+            ),
+            risk_level="read",
+            execution="async_run",
+            adapter_tool_name="social_account_avatar_generate_batch",
+            input_schema=_social_account_avatar_generate_batch_input_schema(),
+            output_schema=_async_output_schema(
+                "Accepted async avatar-draft generation task returned by Museon API."
+            ),
+            examples=[
+                (
+                    "museoncli social-account +avatar-generate-batch "
+                    "--id <uuid> --id <uuid> "
+                    "--prompt 'friendly late-night chef portrait'"
+                ),
+            ],
+            add_arguments=_add_social_account_avatar_generate_batch_arguments,
+            build_arguments=_build_social_account_avatar_generate_batch_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
+            shortcut="+avatar-generate-status",
+            summary="Read per-account status and avatar URLs for an avatar-generation task.",
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="social_account_avatar_generate_status",
+            input_schema=_social_account_avatar_generate_status_input_schema(),
+            output_schema=_direct_output_schema(
+                "Avatar-generation task status returned by Museon API."
+            ),
+            examples=[
+                "museoncli social-account +avatar-generate-status --id <task_id>",
+            ],
+            add_arguments=_add_social_account_avatar_generate_status_arguments,
+            build_arguments=_build_social_account_avatar_generate_status_arguments,
+        ),
     ]
 
 
@@ -2326,6 +2448,66 @@ async def _execute_profile_edit_draft(ctx: CommandContext) -> Any:
                 "workspace_id": workspace_id,
                 "payload": _dict_argument(arguments, "profile_edit"),
             },
+        )
+    )
+
+
+async def _execute_avatar_generate_batch(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    account_ids = arguments.get("account_ids")
+    if not isinstance(account_ids, list) or not account_ids:
+        raise RuntimeError(
+            "social-account.avatar-generate-batch requires a non-empty account_ids array"
+        )
+    payload = {
+        "account_ids": account_ids,
+        "prompt": arguments.get("prompt") or "",
+    }
+    result = agent_domain_result(
+        await api_data(
+            cfg,
+            "POST",
+            "/agent-cli/social-accounts/profile-edit/avatar-drafts",
+            json_body={
+                "workspace_id": workspace_id,
+                "payload": payload,
+            },
+        )
+    )
+    if arguments.get("wait"):
+        task_id = _profile_edit_task_id(result)
+        if task_id:
+            status_result = await _poll_avatar_generate_status(
+                cfg,
+                task_id=task_id,
+                timeout_seconds=float(arguments.get("wait_timeout_seconds") or 300.0),
+                poll_interval_seconds=float(arguments.get("poll_interval_seconds") or 5.0),
+            )
+            if isinstance(result, dict):
+                result["provider_status"] = status_result
+    return result
+
+
+async def _execute_avatar_generate_status(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    task_id = str(arguments.get("task_id") or "")
+    if not task_id:
+        raise RuntimeError("social-account.avatar-generate-status requires task_id")
+    return agent_domain_result(
+        await api_data(
+            cfg,
+            "GET",
+            f"/agent-cli/social-accounts/profile-edit/avatar-drafts/{task_id}",
         )
     )
 
@@ -2695,6 +2877,8 @@ EXECUTORS = {
     "social-account.get": direct_enveloped(_execute_get),
     "social-account.performance-get": direct_enveloped(_execute_performance_get),
     "social-account.list": direct_enveloped(_execute_list),
+    "social-account.avatar-generate-batch": direct_enveloped(_execute_avatar_generate_batch),
+    "social-account.avatar-generate-status": direct_enveloped(_execute_avatar_generate_status),
     "social-account.profile-edit-batch-submit": direct_enveloped(_execute_profile_edit_batch_submit),
     "social-account.profile-edit-draft": direct_enveloped(_execute_profile_edit_draft),
     "social-account.profile-edit-status": direct_enveloped(_execute_profile_edit_status),
@@ -2740,6 +2924,35 @@ async def _poll_connect_link_status(
         if elapsed >= timeout_seconds:
             return {**result, "timed_out": True}
         await asyncio.sleep(min(max(poll_interval_seconds, 0.1), timeout_seconds - elapsed))
+
+
+async def _poll_avatar_generate_status(
+    cfg: Config,
+    *,
+    task_id: str,
+    timeout_seconds: float,
+    poll_interval_seconds: float,
+) -> Any:
+    deadline = time.monotonic() + max(timeout_seconds, 0.0)
+    interval = max(poll_interval_seconds, 0.25)
+    last_result: Any = None
+    while True:
+        last_result = agent_domain_result(
+            await api_data(
+                cfg,
+                "GET",
+                f"/agent-cli/social-accounts/profile-edit/avatar-drafts/{task_id}",
+            )
+        )
+        if _profile_edit_status_is_settled(last_result):
+            return last_result
+        if time.monotonic() >= deadline:
+            return {
+                "timed_out": True,
+                "task_id": task_id,
+                "last_status": last_result,
+            }
+        await asyncio.sleep(interval)
 
 
 async def _poll_profile_edit_status(

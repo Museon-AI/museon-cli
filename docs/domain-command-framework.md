@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-107 commands across 12 domains (source of truth: `museoncli schema`).
+109 commands across 12 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -113,6 +113,8 @@ The tables below are generated — edit code, then run
 | `social-account +profile-edit-submit` | write | yes | — | async_run | Submit a TikTok profile edit task for one account. Use +profile-edit-status to confirm completion. |
 | `social-account +profile-edit-batch-submit` | write | yes | — | async_run | Submit a TikTok profile edit task for multiple accounts in one batch. Use +profile-edit-status to poll the single task for all account statuses. |
 | `social-account +profile-edit-status` | read | — | — | direct | Read execution status for a profile edit task. |
+| `social-account +avatar-generate-batch` | read | — | — | async_run | Generate TikTok profile avatar drafts for multiple accounts as one async task. Poll +avatar-generate-status for per-account avatar URLs, then feed the succeeded ones into +profile-edit-batch-submit. |
+| `social-account +avatar-generate-status` | read | — | — | direct | Read per-account status and avatar URLs for an avatar-generation task. |
 
 ### account-publish
 

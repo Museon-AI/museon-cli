@@ -2744,6 +2744,8 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "social-account.profile-edit-submit",
         "social-account.profile-edit-batch-submit",
         "social-account.profile-edit-status",
+        "social-account.avatar-generate-batch",
+        "social-account.avatar-generate-status",
     ]
     assert [item["name"] for item in result["data"]["commands"]["campaign-monitor"]] == [
         "campaign-monitor.list",
@@ -5302,6 +5304,244 @@ def test_dispatch_social_account_profile_edit_submit_waits_for_geelark_status(
             ),
             "json_body": None,
         },
+    ]
+
+
+def test_social_account_avatar_generate_batch_parser() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+avatar-generate-batch",
+            "--id",
+            "ac000000-0000-4000-8000-000000000001",
+            "--id",
+            "ac000000-0000-4000-8000-000000000002",
+            "--prompt",
+            "friendly late-night chef portrait",
+        ]
+    )
+
+    assert args.command == "social-account"
+    assert args.shortcut == "+avatar-generate-batch"
+    assert args.domain_command == "social-account.avatar-generate-batch"
+    payload = main_module.command_payload(args)
+    assert payload["account_ids"] == [
+        "ac000000-0000-4000-8000-000000000001",
+        "ac000000-0000-4000-8000-000000000002",
+    ]
+    assert payload["prompt"] == "friendly late-night chef portrait"
+    assert payload["wait"] is False
+    assert payload["wait_timeout_seconds"] == 300.0
+    assert payload["poll_interval_seconds"] == 5.0
+
+
+def test_social_account_avatar_generate_status_parser() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+avatar-generate-status",
+            "--id",
+            "73000000-0000-4000-8000-000000000001",
+        ]
+    )
+
+    assert args.domain_command == "social-account.avatar-generate-status"
+    assert main_module.command_payload(args) == {
+        "task_id": "73000000-0000-4000-8000-000000000001"
+    }
+
+
+def test_dispatch_social_account_avatar_generate_batch_uses_agent_api(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, params, unwrap_success
+        calls.append({"method": method, "path": path, "json_body": json_body})
+        return {
+            "domain": "social-account",
+            "operation": "avatar-generate-batch",
+            "result": {
+                "task_id": "73000000-0000-4000-8000-000000000001",
+                "status": "pending",
+            },
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    args = parse(
+        [
+            "social-account",
+            "+avatar-generate-batch",
+            "--id",
+            "ac000000-0000-4000-8000-000000000001",
+            "--prompt",
+            "friendly chef",
+        ]
+    )
+    result = asyncio.run(main_module.dispatch(args))
+
+    assert result["command"] == "social-account.avatar-generate-batch"
+    # watch_command must use --id (the flag +avatar-generate-status accepts); the
+    # routine-wakeup path copies it verbatim.
+    assert result["run"] == {
+        "id": "73000000-0000-4000-8000-000000000001",
+        "type": "pool_account_avatar_generation",
+        "status": "pending",
+        "watch_command": (
+            "museoncli social-account +avatar-generate-status "
+            "--id 73000000-0000-4000-8000-000000000001"
+        ),
+    }
+    assert calls == [
+        {
+            "method": "POST",
+            "path": "/agent-cli/social-accounts/profile-edit/avatar-drafts",
+            "json_body": {
+                "workspace_id": "workspace-1",
+                "payload": {
+                    "account_ids": ["ac000000-0000-4000-8000-000000000001"],
+                    "prompt": "friendly chef",
+                },
+            },
+        }
+    ]
+
+
+def test_dispatch_social_account_avatar_generate_batch_waits_for_status(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, params, unwrap_success
+        calls.append({"method": method, "path": path})
+        if method == "POST":
+            return {
+                "domain": "social-account",
+                "operation": "avatar-generate-batch",
+                "result": {
+                    "task_id": "73000000-0000-4000-8000-000000000001",
+                    "status": "pending",
+                },
+            }
+        return {
+            "domain": "social-account",
+            "operation": "avatar-generate-status",
+            "result": {
+                "summary": {"total": 1, "succeeded": 1, "failed": 0, "settled": True},
+                "accounts": [
+                    {"account_id": "ac000000-0000-4000-8000-000000000001", "status": "completed"}
+                ],
+            },
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    args = parse(
+        [
+            "social-account",
+            "+avatar-generate-batch",
+            "--id",
+            "ac000000-0000-4000-8000-000000000001",
+            "--prompt",
+            "friendly chef",
+            "--wait",
+            "--timeout",
+            "1",
+            "--poll-interval",
+            "0.25",
+        ]
+    )
+    result = asyncio.run(main_module.dispatch(args))
+
+    # without_provider_metadata renames provider_status -> delivery_status in the envelope.
+    assert result["data"]["delivery_status"]["summary"]["settled"] is True
+    assert calls == [
+        {"method": "POST", "path": "/agent-cli/social-accounts/profile-edit/avatar-drafts"},
+        {
+            "method": "GET",
+            "path": (
+                "/agent-cli/social-accounts/profile-edit/avatar-drafts/"
+                "73000000-0000-4000-8000-000000000001"
+            ),
+        },
+    ]
+
+
+def test_dispatch_social_account_avatar_generate_status_uses_agent_api(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, json_body, params, unwrap_success
+        calls.append({"method": method, "path": path})
+        return {
+            "domain": "social-account",
+            "operation": "avatar-generate-status",
+            "result": {
+                "summary": {"total": 1, "succeeded": 1, "failed": 0, "settled": True},
+                "accounts": [],
+            },
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    args = parse(
+        [
+            "social-account",
+            "+avatar-generate-status",
+            "--id",
+            "73000000-0000-4000-8000-000000000001",
+        ]
+    )
+    result = asyncio.run(main_module.dispatch(args))
+
+    assert result["command"] == "social-account.avatar-generate-status"
+    assert result["run"] is None
+    assert calls == [
+        {
+            "method": "GET",
+            "path": (
+                "/agent-cli/social-accounts/profile-edit/avatar-drafts/"
+                "73000000-0000-4000-8000-000000000001"
+            ),
+        }
     ]
 
 
