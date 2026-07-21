@@ -185,11 +185,21 @@ def _add_account_operation_daily_roster_arguments(parser: argparse.ArgumentParse
         help="published_ok basis: any (>=1 item published, default) | all (every live item published).",
     )
     parser.add_argument(
+        "--as-of",
+        dest="as_of",
+        default=None,
+        help=(
+            "Intra-day cutoff HH:MM (local, on --date/--tz), e.g. 18:00. Adds per-account "
+            "cutoff {due, published, unpublished} and enables --filter behind."
+        ),
+    )
+    parser.add_argument(
         "--filter",
         dest="result_filter",
-        choices=["all", "unscheduled", "failed", "no-publish"],
+        choices=["all", "unscheduled", "failed", "no-publish", "behind"],
         default=None,
-        help="Narrow returned rows (summary always covers the whole cohort). Default all.",
+        help="Narrow returned rows (summary always covers the whole cohort). Default all. "
+        "'behind' needs --as-of.",
     )
     parser.add_argument("--page", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=200)
@@ -201,6 +211,7 @@ def _build_account_operation_daily_roster_arguments(args: argparse.Namespace) ->
         "timezone": args.timezone,
         "managed": args.managed,
         "success": args.success,
+        "as_of": args.as_of,
         "result_filter": dekebab(args.result_filter),
         "page": args.page,
         "page_size": args.page_size,
@@ -558,8 +569,12 @@ def _account_operation_specs() -> list[CommandSpec]:
                 "published_ok, unpublished_reason_kind (failed|in_flight|waiting|no_schedule)}. "
                 "scheduled_items EXCLUDES cancelled/skipped. --success any (>=1 published, "
                 "default) | all (every live item published). --date YYYY-MM-DD in --tz "
-                "(default today); --filter narrows returned rows (all|unscheduled|failed|"
-                "no-publish). Read-only."
+                "(default today). For a within-day 'not published by <time>' question "
+                "(e.g. BJT 18:00) pass --as-of 18:00: each row then carries cutoff "
+                "{due, published, unpublished} and --filter behind returns only accounts with "
+                "items due by the cutoff that had not published — excluding slots not yet due. "
+                "--filter narrows returned rows (all|unscheduled|failed|no-publish|behind). "
+                "Read-only."
             ),
             risk_level="read",
             execution="direct",
@@ -570,19 +585,21 @@ def _account_operation_specs() -> list[CommandSpec]:
                     "timezone": "IANA timezone, e.g. Asia/Shanghai (default UTC)",
                     "managed": "Management-mode filter: all (default) | full | semi",
                     "success": "published_ok basis: any (default) | all",
-                    "filter": "Row filter: all (default) | unscheduled | failed | no-publish",
+                    "as_of": "Intra-day cutoff HH:MM local (e.g. 18:00); enables cutoff + filter behind",
+                    "filter": "Row filter: all (default) | unscheduled | failed | no-publish | behind",
                     "page": "Page number (1-based)",
                     "page_size": "Page size (default 200, max 500)",
                 }
             ),
             output_schema=_direct_output_schema(
-                "Daily roster: data.summary (whole-cohort counts) + data.accounts[] "
-                "(per-account schedule/publish status, tagged is_fully_managed) + "
-                "data.pagination."
+                "Daily roster: data.summary (whole-cohort counts, incl. behind when as_of set) + "
+                "data.accounts[] (per-account schedule/publish status, tagged is_fully_managed, "
+                "plus cutoff when as_of set) + data.pagination."
             ),
             examples=[
                 "museoncli account-operation +daily-roster --tz Asia/Shanghai",
                 "museoncli account-operation +daily-roster --date 2026-07-21 --tz Asia/Shanghai --filter no-publish",
+                "museoncli account-operation +daily-roster --tz Asia/Shanghai --as-of 18:00 --filter behind",
             ],
             add_arguments=_add_account_operation_daily_roster_arguments,
             build_arguments=_build_account_operation_daily_roster_arguments,
@@ -814,6 +831,7 @@ async def _execute_daily_roster(ctx: CommandContext) -> Any:
             "timezone": arguments.get("timezone"),
             "managed": arguments.get("managed"),
             "success": arguments.get("success"),
+            "as_of": arguments.get("as_of"),
             "filter": arguments.get("result_filter"),
             "page": arguments.get("page"),
             "page_size": arguments.get("page_size"),

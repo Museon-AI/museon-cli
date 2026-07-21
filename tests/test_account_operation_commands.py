@@ -289,6 +289,34 @@ def test_daily_roster_parser_dekebabs_filter_and_keeps_workspace_from_context() 
     assert built["managed"] == "semi"
 
 
+def test_daily_roster_forwards_as_of_cutoff_and_behind_filter(monkeypatch) -> None:
+    args = parse(
+        [
+            "account-operation",
+            "+daily-roster",
+            "--tz",
+            "Asia/Shanghai",
+            "--as-of",
+            "18:00",
+            "--filter",
+            "behind",
+        ]
+    )
+    built = account_operation._build_account_operation_daily_roster_arguments(args)
+    assert built["as_of"] == "18:00"
+    assert built["result_filter"] == "behind"
+
+    capture = _Capture(response={"data": {"summary": {}, "accounts": [], "pagination": {}}})
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+    _direct(
+        "account-operation.daily-roster",
+        {"timezone": "Asia/Shanghai", "as_of": "18:00", "result_filter": "behind"},
+    )
+    body = capture.calls[0]["json_body"]
+    assert body["as_of"] == "18:00"
+    assert body["filter"] == "behind"
+
+
 def test_worker_callbacks(monkeypatch) -> None:
     capture = _Capture()
     monkeypatch.setattr(main_module, "api_data_v2", capture)
