@@ -451,7 +451,7 @@ def _profile_edit_run_from_data(data: Any) -> dict[str, Any] | None:
             provider_status=provider_status,
             summary=summary,
         ),
-        "watch_command": f"museoncli social-account +profile-edit-status --task-id {task_id}",
+        "watch_command": f"museoncli social-account +profile-edit-status --id {task_id}",
     }
 
 
