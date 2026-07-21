@@ -588,6 +588,8 @@ _UUID_LIST_ARGUMENT_KEYS = frozenset(
         "account_ids",
         "add_format_ids",
         "add_topic_ids",
+        "resume_format_ids",
+        "resume_topic_ids",
         "pause_format_ids",
         "pause_topic_ids",
     }

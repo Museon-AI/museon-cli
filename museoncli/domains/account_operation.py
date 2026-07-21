@@ -310,6 +310,8 @@ def _add_account_operation_elements_arguments(parser: argparse.ArgumentParser) -
     parser.add_argument("--id", dest="operation_id", required=True)
     parser.add_argument("--add-format-ids", default=None)
     parser.add_argument("--add-topic-ids", default=None)
+    parser.add_argument("--resume-format-ids", default=None)
+    parser.add_argument("--resume-topic-ids", default=None)
     parser.add_argument("--pause-format-ids", default=None)
     parser.add_argument("--pause-topic-ids", default=None)
     parser.add_argument("--note", default=None)
@@ -321,6 +323,8 @@ def _build_account_operation_elements_arguments(args: argparse.Namespace) -> dic
         "operation_id": args.operation_id,
         "add_format_ids": _csv_id_list(args.add_format_ids),
         "add_topic_ids": _csv_id_list(args.add_topic_ids),
+        "resume_format_ids": _csv_id_list(args.resume_format_ids),
+        "resume_topic_ids": _csv_id_list(args.resume_topic_ids),
         "pause_format_ids": _csv_id_list(args.pause_format_ids),
         "pause_topic_ids": _csv_id_list(args.pause_topic_ids),
         "note": args.note,
@@ -759,7 +763,7 @@ def _account_operation_specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.ACCOUNT_OPERATION,
             shortcut="+elements-replace",
-            summary="Weak recovery write-back: add new formats/topics and pause failing ones.",
+            summary="Weak recovery write-back: add new formats/topics, resume paused ones, and pause failing ones.",
             risk_level="write",
             execution="direct",
             adapter_tool_name="account_operation_elements_replace",
@@ -768,11 +772,14 @@ def _account_operation_specs() -> list[CommandSpec]:
                     "operation_id": "Account operation id",
                     "add_format_ids": "CSV",
                     "add_topic_ids": "CSV",
+                    "resume_format_ids": "CSV format ids to move from pause back to testing",
+                    "resume_topic_ids": "CSV topic ids to move from pause back to testing",
                 }
             ),
             output_schema=_direct_output_schema("Updated account operation."),
             examples=[
-                "museoncli account-operation +elements-replace --id <uuid> --add-format-ids f9 --pause-format-ids f1"
+                "museoncli account-operation +elements-replace --id <uuid> --add-format-ids f9 --pause-format-ids f1",
+                "museoncli account-operation +elements-replace --id <uuid> --resume-format-ids f2 --note operator-confirmed",
             ],
             add_arguments=_add_account_operation_elements_arguments,
             build_arguments=_build_account_operation_elements_arguments,
@@ -794,6 +801,8 @@ async def _execute_elements_replace(ctx: CommandContext) -> Any:
     payload = {
         "add_format_ids": _account_operation_csv(arguments.get("add_format_ids")),
         "add_topic_ids": _account_operation_csv(arguments.get("add_topic_ids")),
+        "resume_format_ids": _account_operation_csv(arguments.get("resume_format_ids")),
+        "resume_topic_ids": _account_operation_csv(arguments.get("resume_topic_ids")),
         "pause_format_ids": _account_operation_csv(arguments.get("pause_format_ids")),
         "pause_topic_ids": _account_operation_csv(arguments.get("pause_topic_ids")),
         "note": arguments.get("note"),
