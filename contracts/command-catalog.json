@@ -348,7 +348,7 @@
           "risk_level": "write",
           "shortcut": "+elements-replace",
           "stability": "stable",
-          "summary": "Weak recovery write-back: add new formats/topics and pause failing ones.",
+          "summary": "Weak recovery write-back: add new formats/topics, resume paused ones, and pause failing ones.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -5194,7 +5194,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.67",
+  "contract_revision": "0.3.68",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -5430,7 +5430,8 @@
       "capability_key": "account-operation.elements-replace",
       "domain": "account-operation",
       "examples": [
-        "museoncli account-operation +elements-replace --id <uuid> --add-format-ids f9 --pause-format-ids f1"
+        "museoncli account-operation +elements-replace --id <uuid> --add-format-ids f9 --pause-format-ids f1",
+        "museoncli account-operation +elements-replace --id <uuid> --resume-format-ids f2 --note operator-confirmed"
       ],
       "execution": "direct",
       "input_schema": {
@@ -5445,6 +5446,14 @@
           },
           "operation_id": {
             "description": "Account operation id",
+            "type": "string"
+          },
+          "resume_format_ids": {
+            "description": "CSV format ids to move from pause back to testing",
+            "type": "string"
+          },
+          "resume_topic_ids": {
+            "description": "CSV topic ids to move from pause back to testing",
             "type": "string"
           }
         },
@@ -5509,7 +5518,7 @@
       "risk_level": "write",
       "shortcut": "+elements-replace",
       "stability": "stable",
-      "summary": "Weak recovery write-back: add new formats/topics and pause failing ones.",
+      "summary": "Weak recovery write-back: add new formats/topics, resume paused ones, and pause failing ones.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
