@@ -41,7 +41,7 @@ If the command is unavailable:
    reviewed wheel from the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.65/museoncli-0.3.65-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.66/museoncli-0.3.66-py3-none-any.whl"
    ```
 
    Do not clone the repository, install from a mutable branch, or substitute a
@@ -73,7 +73,7 @@ the Skill status as `installed` or `current` and includes its destination path.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install this folder:
 
-https://github.com/Museon-AI/museon-cli/tree/v0.3.65/skills/museon-cli
+https://github.com/Museon-AI/museon-cli/tree/v0.3.66/skills/museon-cli
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and
