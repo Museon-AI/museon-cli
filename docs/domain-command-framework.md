@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-106 commands across 12 domains (source of truth: `museoncli schema`).
+107 commands across 12 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -111,6 +111,7 @@ The tables below are generated — edit code, then run
 | `social-account +schedule-delete` | write | yes | — | direct | Cancel one account publish schedule item. |
 | `social-account +profile-edit-draft` | read | — | — | direct | Generate proposed TikTok display name, bio, or avatar drafts for one account. |
 | `social-account +profile-edit-submit` | write | yes | — | async_run | Submit a TikTok profile edit task for one account. Use +profile-edit-status to confirm completion. |
+| `social-account +profile-edit-batch-submit` | write | yes | — | async_run | Submit a TikTok profile edit task for multiple accounts in one batch. Use +profile-edit-status to poll the single task for all account statuses. |
 | `social-account +profile-edit-status` | read | — | — | direct | Read execution status for a profile edit task. |
 
 ### account-publish

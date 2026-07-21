@@ -4941,6 +4941,62 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "social-account.profile-edit-batch-submit",
+          "domain": "social-account",
+          "execution": "async_run",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts workspace.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.profile-edit-batch-submit",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+profile-edit-batch-submit",
+          "stability": "stable",
+          "summary": "Submit a TikTok profile edit task for multiple accounts in one batch. Use +profile-edit-status to poll the single task for all account statuses.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "social-account.profile-edit-status",
           "domain": "social-account",
           "execution": "direct",
@@ -19890,6 +19946,218 @@
       "stability": "stable",
       "summary": "Live-read performance for one social account: authorized channels first, with automatic public-data fallback when authorization is missing/expired or the platform exposes no history. Payload `source` marks provenance (official/managed analytics vs public_data) — relay that difference to customers and never show internal retrieval details. First page includes the profile block; posts paginate via --cursor.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "social-account.profile-edit-batch-submit": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "social-account.profile-edit-batch-submit",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account +profile-edit-batch-submit --account-updates '[{\"account_id\":\"<uuid>\",\"bio\":\"AI assistant\"}]' --update-bio --wait"
+      ],
+      "execution": "async_run",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts workspace.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "account_updates": {
+            "description": "Non-empty array of per-account profile edits. Each object must include account_id. Optional per-account fields: nick_name, bio, avatar_url.",
+            "items": {
+              "properties": {
+                "account_id": {
+                  "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID with profile editing enabled.",
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "avatar_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "bio": {
+                  "maxLength": 160,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "nick_name": {
+                  "description": "TikTok display name.",
+                  "maxLength": 30,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "account_id"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "avatar_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "poll_interval_seconds": {
+            "default": 5,
+            "type": "number"
+          },
+          "update_avatar": {
+            "default": false,
+            "type": "boolean"
+          },
+          "update_bio": {
+            "default": false,
+            "type": "boolean"
+          },
+          "update_nick_name": {
+            "default": false,
+            "type": "boolean"
+          },
+          "wait": {
+            "default": false,
+            "type": "boolean"
+          },
+          "wait_timeout_seconds": {
+            "default": 300,
+            "type": "number"
+          }
+        },
+        "required": [
+          "account_updates"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.profile-edit-batch-submit",
+      "output_schema": {
+        "description": "Accepted batch profile edit task returned by Museon API.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "watch_command": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ],
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+profile-edit-batch-submit",
+      "stability": "stable",
+      "summary": "Submit a TikTok profile edit task for multiple accounts in one batch. Use +profile-edit-status to poll the single task for all account statuses.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "social-account.profile-edit-draft": {

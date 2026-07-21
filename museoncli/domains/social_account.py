@@ -5,6 +5,7 @@ from __future__ import annotations
 from museoncli.domains._shared import dekebab, kebab_choices
 
 import asyncio
+import json
 import time
 from museoncli.config import Config
 from museoncli.envelopes import _profile_edit_task_id
@@ -666,6 +667,51 @@ def _build_social_account_profile_edit_status_arguments(
     return payload
 
 
+def _add_social_account_profile_edit_batch_submit_arguments(
+    parser: argparse.ArgumentParser,
+) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument(
+        "--account-updates",
+        required=True,
+        help="JSON array of {account_id, nick_name?, bio?, avatar_url?} objects.",
+    )
+    parser.add_argument("--update-nick-name", action="store_true")
+    parser.add_argument("--update-bio", action="store_true")
+    parser.add_argument("--update-avatar", action="store_true")
+    parser.add_argument("--avatar-url")
+    parser.add_argument("--wait", action="store_true")
+    parser.add_argument("--timeout", type=float, default=300.0)
+    parser.add_argument("--poll-interval", type=float, default=5.0)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_social_account_profile_edit_batch_submit_arguments(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    try:
+        account_updates = json.loads(args.account_updates)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"--account-updates must be valid JSON: {exc}"
+        ) from exc
+    if not isinstance(account_updates, list) or not account_updates:
+        raise ValueError(
+            "--account-updates must be a non-empty JSON array"
+        )
+    payload["account_updates"] = account_updates
+    payload["update_nick_name"] = getattr(args, "update_nick_name", False)
+    payload["update_bio"] = getattr(args, "update_bio", False)
+    payload["update_avatar"] = getattr(args, "update_avatar", False)
+    if args.avatar_url:
+        payload["avatar_url"] = args.avatar_url
+    payload["wait"] = args.wait
+    payload["wait_timeout_seconds"] = args.timeout
+    payload["poll_interval_seconds"] = args.poll_interval
+    return payload
+
+
 def _social_account_schedule_payload_from_args(
     args: argparse.Namespace,
     *,
@@ -1196,9 +1242,56 @@ def _social_account_profile_edit_status_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "task_id": _uuid_id_schema("Task UUID returned by social-account +profile-edit-submit.")
+            "task_id": _uuid_id_schema(
+                "Task UUID returned by social-account +profile-edit-submit."
+            )
         },
         "required": ["task_id"],
+    }
+
+
+def _social_account_profile_edit_batch_submit_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_updates": {
+                "description": (
+                    "Non-empty array of per-account profile edits. "
+                    "Each object must include account_id. "
+                    "Optional per-account fields: nick_name, bio, avatar_url."
+                ),
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "account_id": _uuid_id_schema(
+                            "Pool account UUID with profile editing enabled."
+                        ),
+                        "nick_name": {
+                            "type": ["string", "null"],
+                            "description": "TikTok display name.",
+                            "maxLength": 30,
+                        },
+                        "bio": {
+                            "type": ["string", "null"],
+                            "maxLength": 160,
+                        },
+                        "avatar_url": {"type": ["string", "null"]},
+                    },
+                    "required": ["account_id"],
+                },
+            },
+            "update_nick_name": {"type": "boolean", "default": False},
+            "update_bio": {"type": "boolean", "default": False},
+            "update_avatar": {"type": "boolean", "default": False},
+            "avatar_url": {"type": ["string", "null"]},
+            "wait": {"type": "boolean", "default": False},
+            "wait_timeout_seconds": {"type": "number", "default": 300},
+            "poll_interval_seconds": {"type": "number", "default": 5},
+            "dry_run": {"type": "boolean", "default": False},
+        },
+        "required": ["account_updates"],
     }
 
 
@@ -1853,6 +1946,31 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
+            shortcut="+profile-edit-batch-submit",
+            summary=(
+                "Submit a TikTok profile edit task for multiple accounts in one batch. "
+                "Use +profile-edit-status to poll the single task for all account statuses."
+            ),
+            risk_level="write",
+            execution="async_run",
+            adapter_tool_name="social_account_profile_edit_batch_submit",
+            input_schema=_social_account_profile_edit_batch_submit_input_schema(),
+            output_schema=_async_output_schema(
+                "Accepted batch profile edit task returned by Museon API."
+            ),
+            examples=[
+                (
+                    "museoncli social-account +profile-edit-batch-submit "
+                    "--account-updates '[{\"account_id\":\"<uuid>\",\"bio\":\"AI assistant\"}]' "
+                    "--update-bio --wait"
+                ),
+            ],
+            add_arguments=_add_social_account_profile_edit_batch_submit_arguments,
+            build_arguments=_build_social_account_profile_edit_batch_submit_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+profile-edit-status",
             summary="Read execution status for a profile edit task.",
             risk_level="read",
@@ -2267,6 +2385,52 @@ async def _execute_profile_edit_submit(ctx: CommandContext) -> Any:
     return result
 
 
+async def _execute_profile_edit_batch_submit(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    account_updates = arguments.get("account_updates")
+    if not isinstance(account_updates, list) or not account_updates:
+        raise RuntimeError(
+            "social-account.profile-edit-batch-submit requires a non-empty account_updates array"
+        )
+    payload = {
+        "account_updates": account_updates,
+        "update_nick_name": arguments.get("update_nick_name", False),
+        "update_bio": arguments.get("update_bio", False),
+        "update_avatar": arguments.get("update_avatar", False),
+    }
+    avatar_url = arguments.get("avatar_url")
+    if avatar_url:
+        payload["avatar_url"] = avatar_url
+    result = agent_domain_result(
+        await api_data(
+            cfg,
+            "POST",
+            "/agent-cli/social-accounts/profile-edit/tasks",
+            json_body={
+                "workspace_id": workspace_id,
+                "payload": payload,
+            },
+        )
+    )
+    if arguments.get("wait"):
+        task_id = _profile_edit_task_id(result)
+        if task_id:
+            status_result = await _poll_profile_edit_status(
+                cfg,
+                task_id=task_id,
+                timeout_seconds=float(arguments.get("wait_timeout_seconds") or 300.0),
+                poll_interval_seconds=float(arguments.get("poll_interval_seconds") or 5.0),
+            )
+            if isinstance(result, dict):
+                result["provider_status"] = status_result
+    return result
+
+
 async def _execute_schedule_create(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -2531,6 +2695,7 @@ EXECUTORS = {
     "social-account.get": direct_enveloped(_execute_get),
     "social-account.performance-get": direct_enveloped(_execute_performance_get),
     "social-account.list": direct_enveloped(_execute_list),
+    "social-account.profile-edit-batch-submit": direct_enveloped(_execute_profile_edit_batch_submit),
     "social-account.profile-edit-draft": direct_enveloped(_execute_profile_edit_draft),
     "social-account.profile-edit-status": direct_enveloped(_execute_profile_edit_status),
     "social-account.profile-edit-submit": direct_enveloped(_execute_profile_edit_submit),

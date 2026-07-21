@@ -2062,6 +2062,82 @@ def test_social_account_profile_edit_status_rejects_placeholder_task_id() -> Non
         asyncio.run(main_module.dispatch_domain_command(args, cfg))
 
 
+_BATCH_ACCOUNT_UPDATES_JSON = (
+    '[{"account_id":"ac000000-0000-4000-8000-000000000001",'
+    '"bio":"AI assistant"}]'
+)
+
+
+def test_social_account_profile_edit_batch_submit_parser() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            _BATCH_ACCOUNT_UPDATES_JSON,
+            "--update-bio",
+        ]
+    )
+
+    assert args.command == "social-account"
+    assert args.shortcut == "+profile-edit-batch-submit"
+    assert args.domain_command == "social-account.profile-edit-batch-submit"
+    payload = main_module.command_payload(args)
+    assert payload["account_updates"] == [
+        {"account_id": "ac000000-0000-4000-8000-000000000001", "bio": "AI assistant"}
+    ]
+    assert payload["update_bio"] is True
+    assert payload["update_nick_name"] is False
+    assert payload["wait"] is False
+
+
+def test_social_account_profile_edit_batch_submit_parser_with_wait() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            _BATCH_ACCOUNT_UPDATES_JSON,
+            "--update-bio",
+            "--wait",
+            "--timeout",
+            "60",
+        ]
+    )
+
+    payload = main_module.command_payload(args)
+    assert payload["wait"] is True
+    assert payload["wait_timeout_seconds"] == 60.0
+
+
+def test_social_account_profile_edit_batch_submit_rejects_empty_updates() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            "[]",
+            "--update-bio",
+        ]
+    )
+    with pytest.raises(ValueError, match="non-empty JSON array"):
+        main_module.command_payload(args)
+
+
+def test_social_account_profile_edit_batch_submit_rejects_invalid_json() -> None:
+    args = parse(
+        [
+            "social-account",
+            "+profile-edit-batch-submit",
+            "--account-updates",
+            "not-json",
+            "--update-bio",
+        ]
+    )
+    with pytest.raises(ValueError, match="must be valid JSON"):
+        main_module.command_payload(args)
+
+
 def test_profile_edit_run_status_distinguishes_failed_provider_result() -> None:
     run = envelopes_module._profile_edit_run_from_data(
         {
@@ -2591,6 +2667,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "social-account.schedule-delete",
         "social-account.profile-edit-draft",
         "social-account.profile-edit-submit",
+        "social-account.profile-edit-batch-submit",
         "social-account.profile-edit-status",
     ]
     assert [item["name"] for item in result["data"]["commands"]["campaign-monitor"]] == [
