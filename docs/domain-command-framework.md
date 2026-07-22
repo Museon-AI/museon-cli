@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-110 commands across 12 domains (source of truth: `museoncli schema`).
+111 commands across 12 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -99,6 +99,7 @@ The tables below are generated — edit code, then run
 | `social-account +bgm-asset-create` | write | yes | — | direct | Create a workspace BGM asset from a TikTok post URL. |
 | `social-account +config-get` | read | — | — | direct | Read account publish configuration, including the account-wide output language used for overlays, captions, and hashtags. |
 | `social-account +config-update` | write | yes | — | direct | Update account publish settings such as output language, required hashtags, and approval-before-publish. |
+| `social-account +config-batch-update` | write | yes | — | direct | Batch-update publish settings (output language, required hashtags, approval-before-publish) for up to 200 accounts in one call. Use instead of looping +config-update; returns a per-account summary. |
 | `social-account +version-list` | read | — | — | direct | List account publish config versions. |
 | `social-account +version-get` | read | — | — | direct | Read one account publish config version. |
 | `social-account +version-create` | write | yes | — | direct | Create a draft account publish config version. |

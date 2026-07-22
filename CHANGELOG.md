@@ -4,6 +4,10 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+- Added `social-account +config-batch-update` to set publish settings (output
+  language, required hashtags, approval-before-publish) on up to 200 accounts in
+  one synchronous call, so multi-account config edits no longer loop
+  `+config-update`.
 - Added canonical product-category discovery, type-specific product schemas,
   server-validated product dry-runs, generated command help, and structured API
   validation details.

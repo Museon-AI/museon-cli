@@ -4294,6 +4294,62 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "social-account.config-batch-update",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts workspace.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.config-batch-update",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+config-batch-update",
+          "stability": "stable",
+          "summary": "Batch-update publish settings (output language, required hashtags, approval-before-publish) for up to 200 accounts in one call. Use instead of looping +config-update; returns a per-account summary.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "social-account.version-list",
           "domain": "social-account",
           "execution": "direct",
@@ -5194,7 +5250,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.68",
+  "contract_revision": "0.3.69",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -19434,6 +19490,163 @@
       "stability": "stable",
       "summary": "List workspace BGM assets (same-style reference videos).",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "social-account.config-batch-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "social-account.config-batch-update",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account +config-batch-update --ids <id1>,<id2> --required-hashtags '#PlantSenso,#PlantCare'",
+        "museoncli social-account +config-batch-update --account-updates '[{\"account_id\":\"<uuid>\",\"output_language\":\"zh-CN\"}]'"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts workspace.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "account_updates": {
+            "description": "Per-account publish config updates. Each object sets the fields present for that account; an omitted field is preserved and an empty required_hashtags array clears it.",
+            "items": {
+              "properties": {
+                "account_id": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "output_language": {
+                  "description": "Account-wide language tag for generated overlays, captions, and hashtags (for example en, zh-CN, ja, pt-BR).",
+                  "maxLength": 32,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "require_approval_before_publish": {
+                  "type": "boolean"
+                },
+                "required_hashtags": {
+                  "description": "Account-wide required hashtags. Omit to preserve the current setting; pass an empty array to clear it.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "maxItems": 50,
+                  "type": "array"
+                }
+              },
+              "required": [
+                "account_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "account_updates"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.config-batch-update",
+      "output_schema": {
+        "description": "Per-account batch publish-config update summary returned by Museon API.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+config-batch-update",
+      "stability": "stable",
+      "summary": "Batch-update publish settings (output language, required hashtags, approval-before-publish) for up to 200 accounts in one call. Use instead of looping +config-update; returns a per-account summary.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "social-account.config-get": {
