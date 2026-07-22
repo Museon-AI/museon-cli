@@ -362,6 +362,98 @@ def _build_social_account_config_update_arguments(args: argparse.Namespace) -> d
     return payload
 
 
+def _add_social_account_config_batch_update_arguments(
+    parser: argparse.ArgumentParser,
+) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument(
+        "--account-updates",
+        help=(
+            "JSON array of per-account objects {account_id, required_hashtags?, "
+            "output_language?, require_approval_before_publish?}. Alternative to --ids."
+        ),
+    )
+    parser.add_argument(
+        "--ids",
+        help=(
+            "Comma-separated pool account ids to apply the uniform flags "
+            "(--required-hashtags / --output-language / "
+            "--require-approval-before-publish) to. Alternative to --account-updates."
+        ),
+    )
+    parser.set_defaults(require_approval_before_publish=None)
+    parser.add_argument(
+        "--require-approval-before-publish",
+        action="store_true",
+        dest="require_approval_before_publish",
+    )
+    parser.add_argument(
+        "--no-require-approval-before-publish",
+        action="store_false",
+        dest="require_approval_before_publish",
+    )
+    parser.add_argument(
+        "--output-language",
+        "--language",
+        dest="output_language",
+        help=(
+            "Account-wide language tag applied to every --ids account "
+            "(for example en, zh-CN, ja, pt-BR)."
+        ),
+    )
+    parser.add_argument(
+        "--required-hashtags",
+        default=None,
+        help=(
+            "Comma-separated account-wide required hashtags applied to every --ids "
+            "account. Pass an empty string to clear them."
+        ),
+    )
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_social_account_config_batch_update_arguments(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    if args.account_updates is not None:
+        try:
+            account_updates = json.loads(args.account_updates)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"--account-updates must be valid JSON: {exc}"
+            ) from exc
+        if not isinstance(account_updates, list) or not account_updates:
+            raise ValueError("--account-updates must be a non-empty JSON array")
+        payload["account_updates"] = account_updates
+        return payload
+
+    ids = [part.strip() for part in (args.ids or "").split(",") if part.strip()]
+    if not ids:
+        raise ValueError(
+            "social-account +config-batch-update requires --account-updates or --ids."
+        )
+    uniform: dict[str, Any] = {}
+    if args.require_approval_before_publish is not None:
+        uniform["require_approval_before_publish"] = args.require_approval_before_publish
+    if args.output_language is not None:
+        uniform["output_language"] = args.output_language
+    if args.required_hashtags is not None:
+        uniform["required_hashtags"] = [
+            part.strip() for part in args.required_hashtags.split(",") if part.strip()
+        ]
+    if not uniform:
+        raise ValueError(
+            "social-account +config-batch-update with --ids requires at least one of "
+            "--required-hashtags, --output-language, "
+            "--require-approval-before-publish, or --no-require-approval-before-publish."
+        )
+    payload["account_updates"] = [
+        {"account_id": account_id, **uniform} for account_id in ids
+    ]
+    return payload
+
+
 def _add_social_account_version_get_arguments(parser: argparse.ArgumentParser) -> None:
     _add_social_account_id_arguments(parser)
     parser.add_argument("--version-id", required=True)
@@ -1032,6 +1124,51 @@ def _social_account_config_update_input_schema() -> dict[str, Any]:
             {"required": ["output_language"]},
             {"required": ["required_hashtags"]},
         ],
+    }
+
+
+def _social_account_config_batch_update_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_updates": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 200,
+                "description": (
+                    "Per-account publish config updates. Each object sets the fields "
+                    "present for that account; an omitted field is preserved and an "
+                    "empty required_hashtags array clears it."
+                ),
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "account_id": {"type": "string", "minLength": 1},
+                        "require_approval_before_publish": {"type": "boolean"},
+                        "output_language": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 32,
+                            "description": (
+                                "Account-wide language tag for generated overlays, "
+                                "captions, and hashtags (for example en, zh-CN, ja, pt-BR)."
+                            ),
+                        },
+                        "required_hashtags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "maxItems": 50,
+                            "description": (
+                                "Account-wide required hashtags. Omit to preserve the "
+                                "current setting; pass an empty array to clear it."
+                            ),
+                        },
+                    },
+                    "required": ["account_id"],
+                },
+            },
+        },
+        "required": ["account_updates"],
     }
 
 
@@ -1793,6 +1930,35 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
+            shortcut="+config-batch-update",
+            summary=(
+                "Batch-update publish settings (output language, required hashtags, "
+                "approval-before-publish) for up to 200 accounts in one call. Use "
+                "instead of looping +config-update; returns a per-account summary."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="social_account_config_batch_update",
+            input_schema=_social_account_config_batch_update_input_schema(),
+            output_schema=_direct_output_schema(
+                "Per-account batch publish-config update summary returned by Museon API."
+            ),
+            examples=[
+                (
+                    "museoncli social-account +config-batch-update "
+                    "--ids <id1>,<id2> --required-hashtags '#PlantSenso,#PlantCare'"
+                ),
+                (
+                    "museoncli social-account +config-batch-update --account-updates "
+                    "'[{\"account_id\":\"<uuid>\",\"output_language\":\"zh-CN\"}]'"
+                ),
+            ],
+            add_arguments=_add_social_account_config_batch_update_arguments,
+            build_arguments=_build_social_account_config_batch_update_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+version-list",
             summary="List account publish config versions.",
             risk_level="read",
@@ -2369,6 +2535,30 @@ async def _execute_config_update(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_config_batch_update(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    command_name = ctx.spec.schema_name
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    account_updates = arguments.get("account_updates")
+    if not isinstance(account_updates, list) or not account_updates:
+        raise RuntimeError(f"{command_name} requires a non-empty account_updates array")
+    return agent_domain_result(
+        await api_data(
+            cfg,
+            "POST",
+            "/agent-cli/social-accounts/publish-config/settings:batch",
+            json_body={
+                "workspace_id": workspace_id,
+                "payload": {"account_updates": account_updates},
+            },
+        )
+    )
+
+
 async def _execute_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -2872,6 +3062,7 @@ EXECUTORS = {
     "social-account.bgm-asset-list": direct_enveloped(_execute_bgm_asset_list),
     "social-account.config-get": direct_enveloped(_execute_config_get),
     "social-account.config-update": direct_enveloped(_execute_config_update),
+    "social-account.config-batch-update": direct_enveloped(_execute_config_batch_update),
     "social-account.connect-link-create": direct_enveloped(_execute_connect_link_create),
     "social-account.connect-link-status": direct_enveloped(_execute_connect_link_status),
     "social-account.get": direct_enveloped(_execute_get),

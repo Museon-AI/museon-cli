@@ -206,3 +206,106 @@ def test_config_update_dispatches_explicit_empty_required_hashtags(
         "workspace_id": "workspace-1",
         "payload": {"required_hashtags": []},
     }
+
+
+ACCOUNT_ID_2 = "10000000-0000-4000-8000-000000000002"
+
+
+def test_config_batch_update_builds_account_updates_from_ids() -> None:
+    args = _parse(
+        [
+            "social-account",
+            "+config-batch-update",
+            "--ids",
+            f"{ACCOUNT_ID}, {ACCOUNT_ID_2}",
+            "--required-hashtags",
+            "#PlantSenso, #PlantCare",
+        ]
+    )
+
+    built = get_command_spec("social-account.config-batch-update").build_arguments(args)
+
+    assert built["account_updates"] == [
+        {"account_id": ACCOUNT_ID, "required_hashtags": ["#PlantSenso", "#PlantCare"]},
+        {"account_id": ACCOUNT_ID_2, "required_hashtags": ["#PlantSenso", "#PlantCare"]},
+    ]
+
+
+def test_config_batch_update_passes_through_account_updates_json() -> None:
+    args = _parse(
+        [
+            "social-account",
+            "+config-batch-update",
+            "--account-updates",
+            f'[{{"account_id":"{ACCOUNT_ID}","output_language":"zh-CN"}}]',
+        ]
+    )
+
+    built = get_command_spec("social-account.config-batch-update").build_arguments(args)
+
+    assert built["account_updates"] == [
+        {"account_id": ACCOUNT_ID, "output_language": "zh-CN"}
+    ]
+
+
+def test_config_batch_update_requires_ids_or_account_updates() -> None:
+    args = _parse(["social-account", "+config-batch-update"])
+    spec = get_command_spec("social-account.config-batch-update")
+
+    with pytest.raises(ValueError, match="--account-updates or --ids"):
+        spec.build_arguments(args)
+
+
+def test_config_batch_update_ids_requires_at_least_one_field() -> None:
+    args = _parse(["social-account", "+config-batch-update", "--ids", ACCOUNT_ID])
+    spec = get_command_spec("social-account.config-batch-update")
+
+    with pytest.raises(ValueError, match="at least one of"):
+        spec.build_arguments(args)
+
+
+def test_config_batch_update_schema_caps_accounts_and_hashtags() -> None:
+    schema = get_command_spec("social-account.config-batch-update").input_schema
+    account_updates = schema["properties"]["account_updates"]
+
+    assert account_updates["maxItems"] == 200
+    item = account_updates["items"]
+    assert item["required"] == ["account_id"]
+    assert item["properties"]["required_hashtags"]["maxItems"] == 50
+
+
+def test_config_batch_update_dispatches_to_batch_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    capture = _Capture()
+    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "api_data", capture)
+
+    asyncio.run(
+        main_module.dispatch(
+            _parse(
+                [
+                    "social-account",
+                    "+config-batch-update",
+                    "--ids",
+                    f"{ACCOUNT_ID},{ACCOUNT_ID_2}",
+                    "--required-hashtags",
+                    "#Soliya",
+                ]
+            )
+        )
+    )
+
+    assert capture.calls[0]["method"] == "POST"
+    assert capture.calls[0]["path"] == (
+        "/agent-cli/social-accounts/publish-config/settings:batch"
+    )
+    assert capture.calls[0]["json_body"] == {
+        "workspace_id": "workspace-1",
+        "payload": {
+            "account_updates": [
+                {"account_id": ACCOUNT_ID, "required_hashtags": ["#Soliya"]},
+                {"account_id": ACCOUNT_ID_2, "required_hashtags": ["#Soliya"]},
+            ]
+        },
+    }

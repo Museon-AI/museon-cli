@@ -2730,6 +2730,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "social-account.bgm-asset-create",
         "social-account.config-get",
         "social-account.config-update",
+        "social-account.config-batch-update",
         "social-account.version-list",
         "social-account.version-get",
         "social-account.version-create",
