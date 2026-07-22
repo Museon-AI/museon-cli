@@ -57,6 +57,20 @@ def _add_account_operation_submit_arguments(parser: argparse.ArgumentParser) -> 
             "ONLY pass when explicitly mentioned."
         ),
     )
+    parser.add_argument(
+        "--preferred-publish-time",
+        default=None,
+        help=(
+            "Preferred daily publish time as 24h HH:MM (e.g. 17:00). Stored on the "
+            "operation; the daily routine then schedules posts at this local time. "
+            "Pair with --publish-timezone."
+        ),
+    )
+    parser.add_argument(
+        "--publish-timezone",
+        default=None,
+        help="IANA timezone for --preferred-publish-time (e.g. Asia/Shanghai).",
+    )
     parser.add_argument("--dry-run", action="store_true")
 
 
@@ -71,6 +85,8 @@ def _build_account_operation_submit_arguments(args: argparse.Namespace) -> dict[
         "target_delivery_mode": args.target_delivery_mode,
         "research_prompt": args.research_prompt,
         "reference_url": args.reference_url,
+        "preferred_publish_time": args.preferred_publish_time,
+        "preferred_publish_timezone": args.publish_timezone,
     }
 
 
@@ -102,6 +118,19 @@ def _add_account_operation_submit_batch_arguments(parser: argparse.ArgumentParse
         default=None,
         help="Shared benchmark account URL. ONLY when explicitly mentioned.",
     )
+    parser.add_argument(
+        "--preferred-publish-time",
+        default=None,
+        help=(
+            "Shared preferred daily publish time (24h HH:MM, e.g. 17:00) applied to "
+            "every account in the batch. Pair with --publish-timezone."
+        ),
+    )
+    parser.add_argument(
+        "--publish-timezone",
+        default=None,
+        help="Shared IANA timezone for --preferred-publish-time (e.g. Asia/Shanghai).",
+    )
     parser.add_argument("--dry-run", action="store_true")
 
 
@@ -115,6 +144,8 @@ def _build_account_operation_submit_batch_arguments(args: argparse.Namespace) ->
         "target_delivery_mode": args.target_delivery_mode,
         "research_prompt": args.research_prompt,
         "reference_url": args.reference_url,
+        "preferred_publish_time": args.preferred_publish_time,
+        "preferred_publish_timezone": args.publish_timezone,
     }
 
 
@@ -982,6 +1013,8 @@ async def _execute_submit(ctx: CommandContext) -> Any:
             "target_delivery_mode": arguments.get("target_delivery_mode"),
             "research_prompt": arguments.get("research_prompt"),
             "reference_url": arguments.get("reference_url"),
+            "preferred_publish_time": arguments.get("preferred_publish_time"),
+            "preferred_publish_timezone": arguments.get("preferred_publish_timezone"),
         }
     )
     return await api_data_v2(cfg, "POST", "/account-operations", json_body=payload)
@@ -1007,6 +1040,8 @@ async def _execute_submit_batch(ctx: CommandContext) -> Any:
             "niche": arguments.get("niche"),
             "research_prompt": arguments.get("research_prompt"),
             "reference_url": arguments.get("reference_url"),
+            "preferred_publish_time": arguments.get("preferred_publish_time"),
+            "preferred_publish_timezone": arguments.get("preferred_publish_timezone"),
             "accounts": [{"pool_account_id": pid} for pid in pool_ids],
         }
     )

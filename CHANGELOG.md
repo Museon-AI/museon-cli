@@ -4,6 +4,10 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+- Added `--preferred-publish-time` (24h `HH:MM`) and `--publish-timezone` (IANA)
+  to `account-operation +submit` / `+submit-batch`, forwarded to the API and
+  stored on the operation so the daily routine schedules posts at that local
+  time (batch value is shared across the accounts).
 - Added `social-account +config-batch-update` to set publish settings (output
   language, required hashtags, approval-before-publish) on up to 200 accounts in
   one synchronous call, so multi-account config edits no longer loop
