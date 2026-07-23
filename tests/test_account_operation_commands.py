@@ -45,6 +45,7 @@ def _direct(command_name: str, arguments: dict[str, Any], *, runtime: dict | Non
         "account-operation.get": account_operation._execute_get,
         "account-operation.list": account_operation._execute_list,
         "account-operation.ops-status": account_operation._execute_ops_status,
+        "account-operation.ops-status-accounts": account_operation._execute_ops_status_accounts,
         "account-operation.daily-roster": account_operation._execute_daily_roster,
         "account-operation.plan-submit": account_operation._execute_plan_submit,
         "account-operation.strategy-decide": account_operation._execute_strategy_decide,
@@ -250,6 +251,63 @@ def test_ops_status_forwards_failed_reasons_window(monkeypatch) -> None:
     assert args.domain_command == "account-operation.ops-status"
     built = account_operation._build_account_operation_ops_status_arguments(args)
     assert built == {"window": "7d"}
+
+
+def test_ops_status_accounts_resolves_exact_pool_ids_read_only(monkeypatch) -> None:
+    pool_a = "11111111-1111-4111-8111-111111111111"
+    pool_b = "22222222-2222-4222-8222-222222222222"
+    args = parse(
+        [
+            "account-operation",
+            "+ops-status-accounts",
+            "--pool-account-ids",
+            f"{pool_a},{pool_b},{pool_a}",
+        ]
+    )
+    assert args.domain_command == "account-operation.ops-status-accounts"
+
+    capture = _Capture(response={"data": {"accounts": []}})
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+    _direct(
+        "account-operation.ops-status-accounts",
+        {"pool_account_ids": f"{pool_a},{pool_b},{pool_a}"},
+    )
+
+    call = capture.calls[0]
+    assert call["method"] == "POST"
+    assert call["path"] == "/account-operations/ops-status/accounts:resolve"
+    assert call["json_body"] == {
+        "workspace_id": "ws-1",
+        "pool_account_ids": [pool_a, pool_b],
+    }
+
+
+def test_ops_status_accounts_rejects_more_than_200_unique_ids(monkeypatch) -> None:
+    capture = _Capture()
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+
+    with pytest.raises(RuntimeError, match="at most 200"):
+        _direct(
+            "account-operation.ops-status-accounts",
+            {"pool_account_ids": ",".join(f"pool-{index}" for index in range(201))},
+        )
+
+    assert capture.calls == []
+
+
+def test_exact_status_contract_distinguishes_ids_and_forbids_write_probe() -> None:
+    exact = get_command_spec("account-operation.ops-status-accounts")
+    get = get_command_spec("account-operation.get")
+    listed = get_command_spec("account-operation.list")
+    roster = get_command_spec("account-operation.daily-roster")
+
+    assert "pool_account_id" in exact.summary
+    assert "operation_id" in exact.summary
+    assert "NEVER use +submit-batch as a read probe" in exact.summary
+    assert "aggregate whole-fleet health" in exact.summary
+    assert "NOT pool_account_id" in get.summary
+    assert "absence from one page is NOT evidence" in listed.summary
+    assert "operation_id" in roster.output_schema["description"]
 
 
 def test_daily_roster_posts_to_health_roster_endpoint(monkeypatch) -> None:

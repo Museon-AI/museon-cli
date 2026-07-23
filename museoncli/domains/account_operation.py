@@ -190,6 +190,22 @@ def _build_account_operation_ops_status_arguments(args: argparse.Namespace) -> d
     return {"window": args.window}
 
 
+def _add_account_operation_ops_status_accounts_arguments(
+    parser: argparse.ArgumentParser,
+) -> None:
+    parser.add_argument(
+        "--pool-account-ids",
+        required=True,
+        help="Comma-separated pool account ids to resolve exactly (maximum 200 unique ids).",
+    )
+
+
+def _build_account_operation_ops_status_accounts_arguments(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    return {"pool_account_ids": args.pool_account_ids}
+
+
 def _add_account_operation_daily_roster_arguments(parser: argparse.ArgumentParser) -> None:
     # Workspace comes from the global --workspace-id / selected workspace.
     parser.add_argument(
@@ -510,7 +526,11 @@ def _account_operation_specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.ACCOUNT_OPERATION,
             shortcut="+get",
-            summary="Get one operated account (lifecycle, health, baseline).",
+            summary=(
+                "Get one operated account (lifecycle, health, baseline) by account-operation id. "
+                "--id is operation_id, NOT pool_account_id; use +ops-status-accounts for exact "
+                "known pool-account ids."
+            ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="account_operation_get",
@@ -523,7 +543,11 @@ def _account_operation_specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.ACCOUNT_OPERATION,
             shortcut="+list",
-            summary="List operated accounts in the workspace.",
+            summary=(
+                "List operated accounts in the workspace, one page at a time. This is paginated: "
+                "absence from one page is NOT evidence that a pool account is unmanaged; use "
+                "+ops-status-accounts for exact known pool-account ids."
+            ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="account_operation_list",
@@ -590,6 +614,40 @@ def _account_operation_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.ACCOUNT_OPERATION,
+            shortcut="+ops-status-accounts",
+            summary=(
+                "Read-only exact full-management lookup for known pool-account ids (maximum 200) "
+                "in the current workspace. Returns one row per requested id, in request order, "
+                "including unmanaged rows. Use this for questions such as 'which of these accounts "
+                "are fully managed?'. The ids are pool_account_id values; +get instead requires an "
+                "operation_id. Do NOT infer unmanaged status from one paginated +list page, and "
+                "NEVER use +submit-batch as a read probe. +ops-status remains the aggregate "
+                "whole-fleet health query, not an account-membership lookup."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="account_operation_ops_status_accounts",
+            input_schema=_account_operation_input_schema(
+                {
+                    "pool_account_ids": (
+                        "Comma-separated pool account ids to resolve exactly (1-200 unique ids)"
+                    )
+                }
+            ),
+            output_schema=_direct_output_schema(
+                "Exact status rows in request order: pool_account_id, is_fully_managed, "
+                "operation_id, lifecycle_status, health_tag, session_conversation_id, "
+                "conflict_session_url."
+            ),
+            examples=[
+                "museoncli account-operation +ops-status-accounts "
+                "--pool-account-ids <pool_uuid1>,<pool_uuid2>"
+            ],
+            add_arguments=_add_account_operation_ops_status_accounts_arguments,
+            build_arguments=_build_account_operation_ops_status_accounts_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.ACCOUNT_OPERATION,
             shortcut="+daily-roster",
             summary=(
                 "Per-account schedule/publish roster for ONE local day across the WHOLE "
@@ -599,7 +657,7 @@ def _account_operation_specs() -> list[CommandSpec]:
                 "--managed all|full|semi filters. Returns data.summary (whole cohort: "
                 "accounts_total, full_managed, semi_managed, scheduled, unscheduled, "
                 "publish_success, publish_failed, no_publish) and data.accounts[] per account "
-                "{is_fully_managed, lifecycle_status, scheduled_items, has_schedule, "
+                "{operation_id, is_fully_managed, lifecycle_status, scheduled_items, has_schedule, "
                 "succeeded_items, failed_items, in_flight_items, waiting_items, cancelled_items, "
                 "published_ok, unpublished_reason_kind (failed|in_flight|waiting|no_schedule)}. "
                 "scheduled_items EXCLUDES cancelled/skipped. --success any (>=1 published, "
@@ -628,8 +686,8 @@ def _account_operation_specs() -> list[CommandSpec]:
             ),
             output_schema=_direct_output_schema(
                 "Daily roster: data.summary (whole-cohort counts, incl. behind when as_of set) + "
-                "data.accounts[] (per-account schedule/publish status, tagged is_fully_managed, "
-                "plus cutoff when as_of set) + data.pagination."
+                "data.accounts[] (per-account schedule/publish status, with operation_id and "
+                "is_fully_managed, plus cutoff when as_of set) + data.pagination."
             ),
             examples=[
                 "museoncli account-operation +daily-roster --tz Asia/Shanghai",
@@ -862,6 +920,25 @@ async def _execute_ops_status(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_ops_status_accounts(ctx: CommandContext) -> Any:
+    pool_account_ids = list(
+        dict.fromkeys(_account_operation_csv(ctx.arguments.get("pool_account_ids")))
+    )
+    if not pool_account_ids:
+        raise RuntimeError("--pool-account-ids requires at least one id")
+    if len(pool_account_ids) > 200:
+        raise RuntimeError("--pool-account-ids accepts at most 200 unique ids")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        "/account-operations/ops-status/accounts:resolve",
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "pool_account_ids": pool_account_ids,
+        },
+    )
+
+
 async def _execute_daily_roster(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     payload = compact_params(
@@ -1055,6 +1132,7 @@ EXECUTORS = {
     "account-operation.get": direct_enveloped(_execute_get),
     "account-operation.list": direct_enveloped(_execute_list),
     "account-operation.ops-status": direct_enveloped(_execute_ops_status),
+    "account-operation.ops-status-accounts": direct_enveloped(_execute_ops_status_accounts),
     "account-operation.plan-submit": direct_enveloped(_execute_plan_submit),
     "account-operation.runs": direct_enveloped(_execute_runs),
     "account-operation.set-persona": direct_enveloped(_execute_set_persona),
