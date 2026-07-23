@@ -871,3 +871,120 @@ def test_single_account_asset_commands_remain_but_are_not_batch_fallbacks() -> N
     assert "asset-pools-batch-get" in get.summary
     assert "exactly ONE" in set_assets.summary
     assert "asset-pools-batch-preview" in set_assets.summary
+
+
+_BULK_REQ = "account-publish.schedule-requirements-bulk-update"
+
+
+def _bulk_req_build(argv_tail: list[str]) -> dict[str, Any]:
+    argv = ["account-publish", "+schedule-requirements-bulk-update", *argv_tail]
+    return get_command_spec(_BULK_REQ).build_arguments(_parse(argv))
+
+
+def test_bulk_requirements_account_selector_and_preview() -> None:
+    payload = _bulk_req_build(
+        [
+            "--account-id",
+            ACCOUNT_1,
+            "--account-id",
+            ACCOUNT_2,
+            "--required-hashtag",
+            "#PlantSenso",
+            "--required-hashtag",
+            "#planttips",
+            "--preview",
+        ]
+    )
+    assert payload == {
+        "dry_run": True,
+        "account_ids": [ACCOUNT_1, ACCOUNT_2],
+        "required_hashtags": ["#PlantSenso", "#planttips"],
+    }
+
+
+def test_bulk_requirements_item_selector_json_and_clear_music() -> None:
+    payload = _bulk_req_build(
+        [
+            "--item-id",
+            ACCOUNT_1,
+            "--required-hashtags-json",
+            '["#a","#b"]',
+            "--clear-music",
+        ]
+    )
+    assert payload == {
+        "dry_run": False,
+        "item_ids": [ACCOUNT_1],
+        "required_hashtags": ["#a", "#b"],
+        "bgm_by_platform": {},
+    }
+
+
+def test_bulk_requirements_scheduled_after_dropped_for_item_selector() -> None:
+    payload = _bulk_req_build(
+        [
+            "--item-id",
+            ACCOUNT_1,
+            "--scheduled-after",
+            "2026-07-23T00:00:00Z",
+            "--required-mention",
+            "@brand",
+        ]
+    )
+    assert "scheduled_after" not in payload
+    assert payload["item_ids"] == [ACCOUNT_1]
+    assert payload["required_mentions"] == ["@brand"]
+
+
+def test_bulk_requirements_scheduled_after_kept_for_account_selector() -> None:
+    payload = _bulk_req_build(
+        [
+            "--account-id",
+            ACCOUNT_1,
+            "--scheduled-after",
+            "2026-07-23T00:00:00Z",
+            "--required-hashtag",
+            "#x",
+        ]
+    )
+    assert payload["scheduled_after"] == "2026-07-23T00:00:00Z"
+
+
+def test_bulk_requirements_requires_exactly_one_selector() -> None:
+    with pytest.raises(ValueError, match="exactly one selector"):
+        _bulk_req_build(["--required-hashtag", "#x"])
+    with pytest.raises(ValueError, match="exactly one selector"):
+        _bulk_req_build(
+            ["--account-id", ACCOUNT_1, "--item-id", ACCOUNT_2, "--required-hashtag", "#x"]
+        )
+
+
+def test_bulk_requirements_requires_at_least_one_field() -> None:
+    with pytest.raises(ValueError, match="at least one field"):
+        _bulk_req_build(["--account-id", ACCOUNT_1])
+
+
+def test_bulk_requirements_dispatches_to_v2_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    capture = _Capture({"matched": 2, "eligible": 2, "updated": 2})
+    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+
+    argv = [
+        "account-publish",
+        "+schedule-requirements-bulk-update",
+        "--account-id",
+        ACCOUNT_1,
+        "--required-hashtag",
+        "#x",
+        "--preview",
+    ]
+    asyncio.run(main_module.dispatch(_parse(argv)))
+
+    assert capture.calls[0]["method"] == "POST"
+    assert capture.calls[0]["path"] == "/account-publish/schedule-items:bulk-requirements"
+    assert capture.calls[0]["json_body"] == {
+        "workspace_id": WORKSPACE_1,
+        "dry_run": True,
+        "account_ids": [ACCOUNT_1],
+        "required_hashtags": ["#x"],
+    }

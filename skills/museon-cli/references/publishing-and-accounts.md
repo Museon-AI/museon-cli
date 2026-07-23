@@ -30,6 +30,18 @@ preserves the current setting. During fully managed onboarding,
 `account-operation +plan-submit` accepts the same flag and semantics; the
 operation itself does not retain a separate copy.
 
+The account-level write only reaches **future** schedule items; items that are
+already scheduled keep the hashtags/mentions/BGM snapshotted when they were
+created. When the operator wants **existing, not-yet-published** items to pick
+up changed required hashtags, required @mentions, or BGM **without regenerating
+their content**, use `account-publish +schedule-requirements-bulk-update` (pass
+one selector — repeated `--account-id` or explicit repeated `--item-id` — plus
+only the fields to change; `--preview` shows matched/eligible/skipped counts).
+Do NOT reach for a schedule-plan rebuild in this case: a rebuild regenerates and
+discards the existing content, whereas this command updates in place. Only use
+the schedule-plan rebuild flow when the schedule's format/topic/product
+composition itself must change.
+
 ## Connect a user-owned account
 
 1. Inspect `museoncli schema social-account.connect-link-create`.

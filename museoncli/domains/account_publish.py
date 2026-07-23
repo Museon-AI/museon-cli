@@ -933,11 +933,13 @@ def _build_schedule_requirements_bulk_update_arguments(
     payload: dict[str, Any] = {"dry_run": bool(getattr(args, "preview", False))}
     if account_ids is not None:
         payload["account_ids"] = account_ids
+        # scheduled_after only applies to the account-id selector; item-id
+        # selection is explicit, so drop it there (help says "ignored").
+        scheduled_after = getattr(args, "scheduled_after", None)
+        if scheduled_after:
+            payload["scheduled_after"] = scheduled_after
     else:
         payload["item_ids"] = item_ids
-    scheduled_after = getattr(args, "scheduled_after", None)
-    if scheduled_after:
-        payload["scheduled_after"] = scheduled_after
 
     # Publication-requirement fields: include only when explicitly provided. The
     # server treats an omitted field as untouched and a supplied [] / {} as an
