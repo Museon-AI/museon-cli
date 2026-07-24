@@ -98,7 +98,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List operated accounts in the workspace, one page at a time. This is paginated: absence from one page is NOT evidence that a pool account is unmanaged; use +ops-status-accounts for exact known pool-account ids.",
+          "summary": "List operated accounts in the workspace, one page at a time. This is paginated: absence from one page is NOT evidence that a pool account is unmanaged; use +ops-status-accounts for exact known pool-account ids. --status <lifecycle_status> (e.g. resetting) returns only matching ops with full ids, paging the whole roster.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5275,7 +5275,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.71",
+  "contract_revision": "0.3.72",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -5722,6 +5722,10 @@
           "page_size": {
             "description": "Page size",
             "type": "string"
+          },
+          "status": {
+            "description": "Optional lifecycle_status filter, e.g. resetting",
+            "type": "string"
           }
         },
         "type": "object"
@@ -5785,7 +5789,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List operated accounts in the workspace, one page at a time. This is paginated: absence from one page is NOT evidence that a pool account is unmanaged; use +ops-status-accounts for exact known pool-account ids.",
+      "summary": "List operated accounts in the workspace, one page at a time. This is paginated: absence from one page is NOT evidence that a pool account is unmanaged; use +ops-status-accounts for exact known pool-account ids. --status <lifecycle_status> (e.g. resetting) returns only matching ops with full ids, paging the whole roster.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

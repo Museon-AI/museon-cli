@@ -160,6 +160,16 @@ def _build_account_operation_id_arguments(args: argparse.Namespace) -> dict[str,
 def _add_account_operation_list_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--page", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=50)
+    parser.add_argument(
+        "--status",
+        dest="lifecycle_status",
+        default=None,
+        help=(
+            "Filter to one lifecycle_status (e.g. resetting). Returns ONLY matching "
+            "operations, each with its FULL operation_id, paging the whole workspace "
+            "roster so a large roster cannot hide them."
+        ),
+    )
 
 
 def _add_account_operation_id_limit_arguments(parser: argparse.ArgumentParser) -> None:
@@ -172,7 +182,11 @@ def _build_account_operation_id_limit_arguments(args: argparse.Namespace) -> dic
 
 
 def _build_account_operation_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {"page": args.page, "page_size": args.page_size}
+    return {
+        "page": args.page,
+        "page_size": args.page_size,
+        "lifecycle_status": getattr(args, "lifecycle_status", None),
+    }
 
 
 def _add_account_operation_ops_status_arguments(parser: argparse.ArgumentParser) -> None:
@@ -546,13 +560,18 @@ def _account_operation_specs() -> list[CommandSpec]:
             summary=(
                 "List operated accounts in the workspace, one page at a time. This is paginated: "
                 "absence from one page is NOT evidence that a pool account is unmanaged; use "
-                "+ops-status-accounts for exact known pool-account ids."
+                "+ops-status-accounts for exact known pool-account ids. --status <lifecycle_status> "
+                "(e.g. resetting) returns only matching ops with full ids, paging the whole roster."
             ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="account_operation_list",
             input_schema=_account_operation_input_schema(
-                {"page": "Page number (1-based)", "page_size": "Page size"}
+                {
+                    "page": "Page number (1-based)",
+                    "page_size": "Page size",
+                    "status": "Optional lifecycle_status filter, e.g. resetting",
+                }
             ),
             output_schema=_direct_output_schema("Account operation list."),
             examples=["museoncli account-operation +list --page-size 20"],
@@ -989,6 +1008,38 @@ async def _execute_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data_v2 = ctx.api_data_v2
+    status_filter = arguments.get("lifecycle_status")
+    if status_filter:
+        # A raw +list of a large roster is large-json-offloaded at render time, which
+        # hid per-row lifecycle_status behind the offload (2026-07-24). Page the whole
+        # roster client-side and return only the matching rows — each with its FULL
+        # operation_id — so a large roster cannot hide them.
+        matched: list[Any] = []
+        offset = 0
+        for _ in range(50):
+            resp = await api_data_v2(
+                cfg,
+                "GET",
+                "/account-operations",
+                params=compact_params(
+                    {"workspace_id": workspace_id, "limit": 200, "offset": offset}
+                ),
+            )
+            rows = resp.get("data") if isinstance(resp, dict) else resp
+            if not rows:
+                break
+            matched.extend(
+                row
+                for row in rows
+                if isinstance(row, dict) and row.get("lifecycle_status") == status_filter
+            )
+            if len(rows) < 200:
+                break
+            offset += 200
+        return {
+            "data": matched,
+            "meta": {"count": len(matched), "lifecycle_status": status_filter},
+        }
     return await api_data_v2(
         cfg,
         "GET",
