@@ -603,6 +603,31 @@
           "summary": "Abort unfinished work in a durable schedule-plan job. This is job control only: it never deletes schedule items already created. Use +schedule-plan-preview/+schedule-plan-batch --operation cancel-only when the operator wants schedule items removed.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "account-publish.schedule-requirements-bulk-update",
+          "domain": "account-publish",
+          "execution": "direct",
+          "name": "account-publish.schedule-requirements-bulk-update",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+schedule-requirements-bulk-update",
+          "stability": "stable",
+          "summary": "Bulk-update the publish requirements (required hashtags, required @mentions, BGM) of MANY existing schedule items IN PLACE, without regenerating their content. Use this when the operator wants already-scheduled, not-yet-published items to pick up changed hashtags/@mentions/BGM. It fills the gap between social-account +config-update / +config-batch-update (which change only the account default and reach FUTURE schedule items; existing items keep their snapshot) and +schedule-plan-batch (which REGENERATES and discards existing content). Safe because these fields are applied at publish time, not baked into generated media. Pass exactly one selector: --account-id (resolve the set once with a bulk social-account +list) or explicit --item-id; plus only the fields to change (an omitted field is untouched; --required-hashtags-json '[]' or --clear-music clears one). The server updates in place ONLY items with no reserved publish task that are not publishing/published, and returns per-item skipped reasons for the rest; that returned summary is the authoritative result — never rescan or loop +schedule-update. Run once with --preview to see matched/eligible/skipped counts before applying.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
         }
       ],
       "artifacts": [
@@ -9262,6 +9287,143 @@
       "stability": "stable",
       "summary": "Read durable schedule-plan operation progress and per-account results. This is the only state source after submission. cancel-only results include cancelled and protected counts by prior status. For plan with --bgm-policy required and status succeeded, bgm_bound_count/summary.bgm_bound is the server-owned proof that every created occurrence has concrete BGM; never call schedule-list, bgm-asset-list, or routines for post-write verification, rescan accounts, or rely on /tmp state.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "account-publish.schedule-requirements-bulk-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "account-publish.schedule-requirements-bulk-update",
+      "domain": "account-publish",
+      "examples": [
+        "museoncli account-publish +schedule-requirements-bulk-update --account-id <uuid1> --account-id <uuid2> --required-hashtag '#PlantSenso' --required-hashtag '#planttips' --preview",
+        "museoncli account-publish +schedule-requirements-bulk-update --item-id <uuid1> --item-id <uuid2> --required-hashtags-json '[\"#PlantSenso\",\"#planttips\"]'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "account_ids": {
+            "description": "Selector: update future items for these accounts (XOR item_ids).",
+            "items": {
+              "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "bgm_by_platform": {
+            "type": "object"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "item_ids": {
+            "description": "Selector: update these explicit schedule items (XOR account_ids).",
+            "items": {
+              "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Schedule-item UUID.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "required_hashtags": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "required_mentions": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "scheduled_after": {
+            "description": "ISO-8601 lower bound for the account_ids selector; default now.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "account-publish.schedule-requirements-bulk-update",
+      "output_schema": {
+        "description": "Bulk in-place schedule-item requirement update result (matched / eligible / updated / skipped) returned by Museon API.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+schedule-requirements-bulk-update",
+      "stability": "stable",
+      "summary": "Bulk-update the publish requirements (required hashtags, required @mentions, BGM) of MANY existing schedule items IN PLACE, without regenerating their content. Use this when the operator wants already-scheduled, not-yet-published items to pick up changed hashtags/@mentions/BGM. It fills the gap between social-account +config-update / +config-batch-update (which change only the account default and reach FUTURE schedule items; existing items keep their snapshot) and +schedule-plan-batch (which REGENERATES and discards existing content). Safe because these fields are applied at publish time, not baked into generated media. Pass exactly one selector: --account-id (resolve the set once with a bulk social-account +list) or explicit --item-id; plus only the fields to change (an omitted field is untouched; --required-hashtags-json '[]' or --clear-music clears one). The server updates in place ONLY items with no reserved publish task that are not publishing/published, and returns per-item skipped reasons for the rest; that returned summary is the authoritative result — never rescan or loop +schedule-update. Run once with --preview to see matched/eligible/skipped counts before applying.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "artifacts.share": {

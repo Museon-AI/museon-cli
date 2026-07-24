@@ -13,6 +13,7 @@ from museoncli.domains._shared import (
     _async_output_schema,
     _direct_output_schema,
     _json_list,
+    _json_object,
     _uuid_id_schema,
     dekebab,
 )
@@ -863,6 +864,153 @@ def _schedule_plan_async_output_schema() -> dict[str, Any]:
     return schema
 
 
+def _add_schedule_requirements_bulk_update_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--workspace-id")
+    parser.add_argument(
+        "--account-id",
+        dest="account_ids",
+        action="append",
+        help=(
+            "Pool account UUID; repeat per account (max "
+            f"{ACCOUNT_PUBLISH_MAX_ACCOUNTS}). Updates the account's future, "
+            "not-yet-published schedule items. Mutually exclusive with --item-id."
+        ),
+    )
+    parser.add_argument(
+        "--item-id",
+        dest="item_ids",
+        action="append",
+        help=(
+            "Explicit schedule-item UUID; repeat per item (max "
+            f"{ACCOUNT_PUBLISH_MAX_OCCURRENCES}). Mutually exclusive with --account-id."
+        ),
+    )
+    parser.add_argument(
+        "--scheduled-after",
+        help=(
+            "ISO-8601 lower bound for the --account-id selector; defaults to now so only "
+            "future items are touched. Ignored when --item-id is used."
+        ),
+    )
+    parser.add_argument("--required-mention", action="append", dest="required_mentions")
+    parser.add_argument("--required-mentions-json")
+    parser.add_argument("--required-hashtag", action="append", dest="required_hashtags")
+    parser.add_argument("--required-hashtags-json")
+    parser.add_argument(
+        "--bgm-by-platform-json",
+        help=(
+            'JSON object keyed by platform, e.g. {"tiktok": {"ref_video_id": "<aweme_id>", '
+            '"source_url": "<post-url>"}}. Validated per account; accounts whose BGM is '
+            "invalid have their items skipped rather than failing the whole batch."
+        ),
+    )
+    parser.add_argument("--clear-music", action="store_true", help="Clear BGM (sets {}).")
+    parser.add_argument(
+        "--preview",
+        action="store_true",
+        help=(
+            "Server-side preview: return matched / eligible / skipped counts and write "
+            "nothing. (The generic --dry-run only echoes arguments locally.)"
+        ),
+    )
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_schedule_requirements_bulk_update_arguments(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    account_ids = _ordered_unique(args.account_ids) if getattr(args, "account_ids", None) else None
+    item_ids = _ordered_unique(args.item_ids) if getattr(args, "item_ids", None) else None
+    if (account_ids is None) == (item_ids is None):
+        raise ValueError(
+            "provide exactly one selector: --account-id (repeatable) or --item-id (repeatable)."
+        )
+    if account_ids is not None and len(account_ids) > ACCOUNT_PUBLISH_MAX_ACCOUNTS:
+        raise ValueError(f"--account-id accepts at most {ACCOUNT_PUBLISH_MAX_ACCOUNTS} values.")
+    if item_ids is not None and len(item_ids) > ACCOUNT_PUBLISH_MAX_OCCURRENCES:
+        raise ValueError(f"--item-id accepts at most {ACCOUNT_PUBLISH_MAX_OCCURRENCES} values.")
+
+    payload: dict[str, Any] = {"dry_run": bool(getattr(args, "preview", False))}
+    if account_ids is not None:
+        payload["account_ids"] = account_ids
+        # scheduled_after only applies to the account-id selector; item-id
+        # selection is explicit, so drop it there (help says "ignored").
+        scheduled_after = getattr(args, "scheduled_after", None)
+        if scheduled_after:
+            payload["scheduled_after"] = scheduled_after
+    else:
+        payload["item_ids"] = item_ids
+
+    # Publication-requirement fields: include only when explicitly provided. The
+    # server treats an omitted field as untouched and a supplied [] / {} as an
+    # explicit clear.
+    if getattr(args, "required_mentions_json", None):
+        payload["required_mentions"] = _json_list(
+            args.required_mentions_json, flag="--required-mentions-json"
+        )
+    elif getattr(args, "required_mentions", None):
+        payload["required_mentions"] = list(args.required_mentions)
+    if getattr(args, "required_hashtags_json", None):
+        payload["required_hashtags"] = _json_list(
+            args.required_hashtags_json, flag="--required-hashtags-json"
+        )
+    elif getattr(args, "required_hashtags", None):
+        payload["required_hashtags"] = list(args.required_hashtags)
+    if getattr(args, "bgm_by_platform_json", None):
+        payload["bgm_by_platform"] = _json_object(
+            args.bgm_by_platform_json, flag="--bgm-by-platform-json"
+        )
+    elif getattr(args, "clear_music", False):
+        payload["bgm_by_platform"] = {}
+
+    if not ({"required_mentions", "required_hashtags", "bgm_by_platform"} & payload.keys()):
+        raise ValueError(
+            "provide at least one field to change: --required-hashtag(s-json) / "
+            "--required-mention(s-json) / --bgm-by-platform-json / --clear-music."
+        )
+    return payload
+
+
+def _schedule_requirements_bulk_update_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_ids": {
+                "type": "array",
+                "items": _uuid_id_schema("Pool account UUID."),
+                "minItems": 1,
+                "maxItems": ACCOUNT_PUBLISH_MAX_ACCOUNTS,
+                "uniqueItems": True,
+                "description": "Selector: update future items for these accounts (XOR item_ids).",
+            },
+            "item_ids": {
+                "type": "array",
+                "items": _uuid_id_schema("Schedule-item UUID."),
+                "minItems": 1,
+                "maxItems": ACCOUNT_PUBLISH_MAX_OCCURRENCES,
+                "uniqueItems": True,
+                "description": "Selector: update these explicit schedule items (XOR account_ids).",
+            },
+            "scheduled_after": {
+                "type": "string",
+                "description": "ISO-8601 lower bound for the account_ids selector; default now.",
+            },
+            "required_mentions": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 50,
+            },
+            "required_hashtags": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 50,
+            },
+            "bgm_by_platform": {"type": "object"},
+            "dry_run": {"type": "boolean", "default": False},
+        },
+    }
+
+
 def specs() -> list[CommandSpec]:
     return [
         CommandSpec(
@@ -1139,6 +1287,54 @@ def specs() -> list[CommandSpec]:
             build_arguments=_build_schedule_plan_cancel_arguments,
             supports_dry_run=True,
         ),
+        CommandSpec(
+            domain=Domain.ACCOUNT_PUBLISH,
+            shortcut="+schedule-requirements-bulk-update",
+            summary=(
+                "Bulk-update the publish requirements (required hashtags, required "
+                "@mentions, BGM) of MANY existing schedule items IN PLACE, without "
+                "regenerating their content. Use this when the operator wants "
+                "already-scheduled, not-yet-published items to pick up changed "
+                "hashtags/@mentions/BGM. It fills the gap between social-account "
+                "+config-update / +config-batch-update (which change only the account "
+                "default and reach FUTURE schedule items; existing items keep their "
+                "snapshot) and +schedule-plan-batch (which REGENERATES and discards "
+                "existing content). Safe because these fields are applied at publish "
+                "time, not baked into generated media. Pass exactly one selector: "
+                "--account-id (resolve the set once with a bulk social-account +list) or "
+                "explicit --item-id; plus only the fields to change (an omitted field is "
+                "untouched; --required-hashtags-json '[]' or --clear-music clears one). "
+                "The server updates in place ONLY items with no reserved publish task "
+                "that are not publishing/published, and returns per-item skipped reasons "
+                "for the rest; that returned summary is the authoritative result — never "
+                "rescan or loop +schedule-update. Run once with --preview to see "
+                "matched/eligible/skipped counts before applying."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="account_publish_schedule_requirements_bulk_update",
+            input_schema=_schedule_requirements_bulk_update_input_schema(),
+            output_schema=_direct_output_schema(
+                "Bulk in-place schedule-item requirement update result "
+                "(matched / eligible / updated / skipped) returned by Museon API."
+            ),
+            examples=[
+                (
+                    "museoncli account-publish +schedule-requirements-bulk-update "
+                    "--account-id <uuid1> --account-id <uuid2> "
+                    "--required-hashtag '#PlantSenso' --required-hashtag '#planttips' "
+                    "--preview"
+                ),
+                (
+                    "museoncli account-publish +schedule-requirements-bulk-update "
+                    "--item-id <uuid1> --item-id <uuid2> "
+                    "--required-hashtags-json '[\"#PlantSenso\",\"#planttips\"]'"
+                ),
+            ],
+            add_arguments=_add_schedule_requirements_bulk_update_arguments,
+            build_arguments=_build_schedule_requirements_bulk_update_arguments,
+            supports_dry_run=True,
+        ),
     ]
 
 
@@ -1249,6 +1445,17 @@ async def _execute_schedule_plan_cancel(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_schedule_requirements_bulk_update(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        "/account-publish/schedule-items:bulk-requirements",
+        json_body={"workspace_id": ctx.workspace_id, **ctx.arguments},
+    )
+
+
 EXECUTORS = {
     "account-publish.asset-pools-batch-get": direct_enveloped(_execute_asset_pools_batch_get),
     "account-publish.asset-pools-batch-preview": direct_enveloped(
@@ -1261,4 +1468,7 @@ EXECUTORS = {
     "account-publish.schedule-plan-batch": direct_enveloped(_execute_schedule_plan_batch),
     "account-publish.schedule-plan-status": direct_enveloped(_execute_schedule_plan_status),
     "account-publish.schedule-plan-cancel": direct_enveloped(_execute_schedule_plan_cancel),
+    "account-publish.schedule-requirements-bulk-update": direct_enveloped(
+        _execute_schedule_requirements_bulk_update
+    ),
 }
