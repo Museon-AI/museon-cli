@@ -5306,6 +5306,7 @@
           },
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           }
         },
@@ -5527,6 +5528,7 @@
           },
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           },
           "resume_format_ids": {
@@ -5626,6 +5628,7 @@
         "properties": {
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           }
         },
@@ -6003,6 +6006,7 @@
           },
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           },
           "required_hashtags": {
@@ -6110,6 +6114,7 @@
           },
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           }
         },
@@ -6209,6 +6214,7 @@
           },
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           },
           "tags": {
@@ -6304,6 +6310,7 @@
         "properties": {
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           },
           "reason": {
@@ -6403,10 +6410,12 @@
           },
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           },
           "run_id": {
             "description": "Daily run id",
+            "format": "uuid",
             "type": "string"
           }
         },
@@ -6696,6 +6705,7 @@
         "properties": {
           "operation_id": {
             "description": "Account operation id",
+            "format": "uuid",
             "type": "string"
           }
         },

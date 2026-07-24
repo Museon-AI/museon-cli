@@ -396,7 +396,12 @@ def _account_operation_input_schema(fields: dict[str, str]) -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            name: {"type": "string", "description": desc} for name, desc in fields.items()
+            name: {
+                "type": "string",
+                **({"format": "uuid"} if name in {"operation_id", "run_id"} else {}),
+                "description": desc,
+            }
+            for name, desc in fields.items()
         },
     }
 

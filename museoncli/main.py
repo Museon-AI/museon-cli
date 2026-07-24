@@ -563,6 +563,8 @@ _UUID_SCALAR_ARGUMENT_KEYS = frozenset(
         "schedule_item_id",
         "task_id",
         "job_id",
+        "operation_id",
+        "run_id",
         "persona_id",
         "product_id",
         "format_id",
