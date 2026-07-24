@@ -5275,7 +5275,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.72",
+  "contract_revision": "0.3.73",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -11796,7 +11796,7 @@
       "capability_key": "campaign-monitor.content-list",
       "domain": "campaign-monitor",
       "examples": [
-        "museoncli campaign-monitor +content-list --id <campaign_id> --platform tiktok --page-size 20"
+        "museoncli campaign-monitor +content-list --id <campaign_id> --date-from 2026-06-16 --date-to 2026-07-15 --views-min 10000 --likes-min 10 --likes-max 99 --sort views_desc --page-size 100"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -11867,6 +11867,20 @@
               "null"
             ]
           },
+          "likes_max": {
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "likes_min": {
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "page": {
             "default": 1,
             "minimum": 1,
@@ -11893,6 +11907,20 @@
           "sort": {
             "type": [
               "string",
+              "null"
+            ]
+          },
+          "views_max": {
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "views_min": {
+            "minimum": 0,
+            "type": [
+              "integer",
               "null"
             ]
           }

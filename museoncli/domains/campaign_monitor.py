@@ -108,6 +108,10 @@ def _build_campaign_monitor_creator_list_arguments(
 def _add_campaign_monitor_content_list_arguments(parser: argparse.ArgumentParser) -> None:
     _add_campaign_monitor_paged_tracking_arguments(parser)
     parser.add_argument("--creator-id", dest="creator_id")
+    parser.add_argument("--views-min", dest="views_min", type=int)
+    parser.add_argument("--views-max", dest="views_max", type=int)
+    parser.add_argument("--likes-min", dest="likes_min", type=int)
+    parser.add_argument("--likes-max", dest="likes_max", type=int)
 
 
 def _add_campaign_monitor_content_remove_arguments(parser: argparse.ArgumentParser) -> None:
@@ -139,6 +143,10 @@ def _build_campaign_monitor_content_list_arguments(
                 "platform": args.platform,
                 "sort": args.sort,
                 "creator_id": args.creator_id,
+                "views_min": args.views_min,
+                "views_max": args.views_max,
+                "likes_min": args.likes_min,
+                "likes_max": args.likes_max,
             }
         )
     )
@@ -339,6 +347,10 @@ def _campaign_monitor_content_list_input_schema() -> dict[str, Any]:
     schema["properties"].update(
         {
             "creator_id": {"type": ["string", "null"]},
+            "views_min": {"type": ["integer", "null"], "minimum": 0},
+            "views_max": {"type": ["integer", "null"], "minimum": 0},
+            "likes_min": {"type": ["integer", "null"], "minimum": 0},
+            "likes_max": {"type": ["integer", "null"], "minimum": 0},
         }
     )
     return schema
@@ -577,7 +589,9 @@ def specs() -> list[CommandSpec]:
             examples=[
                 (
                     "museoncli campaign-monitor +content-list "
-                    "--id <campaign_id> --platform tiktok --page-size 20"
+                    "--id <campaign_id> --date-from 2026-06-16 --date-to 2026-07-15 "
+                    "--views-min 10000 --likes-min 10 --likes-max 99 "
+                    "--sort views_desc --page-size 100"
                 ),
             ],
             add_arguments=_add_campaign_monitor_content_list_arguments,
@@ -772,6 +786,10 @@ async def _execute_content_list(ctx: CommandContext) -> Any:
                     "platform": arguments.get("platform"),
                     "sort": arguments.get("sort"),
                     "creator_id": arguments.get("creator_id"),
+                    "views_min": arguments.get("views_min"),
+                    "views_max": arguments.get("views_max"),
+                    "likes_min": arguments.get("likes_min"),
+                    "likes_max": arguments.get("likes_max"),
                 }
             ),
         )

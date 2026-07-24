@@ -2063,8 +2063,7 @@ def test_social_account_profile_edit_status_rejects_placeholder_task_id() -> Non
 
 
 _BATCH_ACCOUNT_UPDATES_JSON = (
-    '[{"account_id":"ac000000-0000-4000-8000-000000000001",'
-    '"bio":"AI assistant"}]'
+    '[{"account_id":"ac000000-0000-4000-8000-000000000001","bio":"AI assistant"}]'
 )
 
 
@@ -2401,6 +2400,12 @@ def test_campaign_monitor_content_list_parser() -> None:
             "10",
             "--sort",
             "views_desc",
+            "--views-min",
+            "10000",
+            "--likes-min",
+            "10",
+            "--likes-max",
+            "99",
         ]
     )
 
@@ -2415,6 +2420,9 @@ def test_campaign_monitor_content_list_parser() -> None:
         "platform": "tiktok",
         "sort": "views_desc",
         "creator_id": "c4000000-0000-4000-8000-000000000001",
+        "views_min": 10000,
+        "likes_min": 10,
+        "likes_max": 99,
     }
 
 
@@ -2440,6 +2448,11 @@ def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
         "campaign-monitor.post-performance-get",
         "campaign-monitor.post-resolve",
     ]
+    content_list = main_module.schema_payload("campaign-monitor.content-list")
+    properties = content_list["input_schema"]["properties"]
+    assert properties["views_min"]["minimum"] == 0
+    assert properties["likes_min"]["minimum"] == 0
+    assert properties["likes_max"]["minimum"] == 0
 
 
 @pytest.mark.parametrize(
@@ -5347,9 +5360,7 @@ def test_social_account_avatar_generate_status_parser() -> None:
     )
 
     assert args.domain_command == "social-account.avatar-generate-status"
-    assert main_module.command_payload(args) == {
-        "task_id": "73000000-0000-4000-8000-000000000001"
-    }
+    assert main_module.command_payload(args) == {"task_id": "73000000-0000-4000-8000-000000000001"}
 
 
 def test_dispatch_social_account_avatar_generate_batch_uses_agent_api(
