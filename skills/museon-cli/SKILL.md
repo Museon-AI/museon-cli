@@ -1,6 +1,6 @@
 ---
 name: museon-cli
-description: "Install and use Museon CLI for end-to-end social-media operations: research markets, competitors, creators, and posts; analyze content; generate images and slideshows; connect accounts; automate routines; schedule or publish content; review performance; and preserve reusable reports and assets. Trigger when the user asks to install Museon, mentions Museon, or asks an Agent to run social media, including 调研、内容分析、做图、slideshow、自动化、发布、复盘或沉淀。"
+description: "Install and operate Museon CLI for social-media research, content, accounts, scheduling, publishing, automation, and performance review. Use when a user asks to install Museon, mentions Museon for a task, or asks an Agent to perform social-media operations through Museon."
 ---
 
 # Museon CLI
@@ -36,12 +36,14 @@ exists and the user asked to install Museon or complete a Museon task:
    missing.
 2. Discover the current CLI surface before acting. Never rely on remembered
    flags or an old transcript.
-3. Read the relevant state before proposing a change.
-4. For a state-changing command, explain the exact change and obtain a separate
+3. For strategic work, follow the business-Skill step below before gathering
+   evidence or making recommendations.
+4. Read the relevant state before proposing a change.
+5. For a state-changing command, explain the exact change and obtain a separate
    explicit approval before execution.
-5. Execute, verify with a read-back, and present customer-useful links and
+6. Execute, verify with a read-back, and present customer-useful links and
    previews instead of dumping raw JSON.
-6. Carry evidence, outcomes, and reusable assets into the next operating cycle.
+7. Carry evidence, outcomes, and reusable assets into the next operating cycle.
 
 ## Discover commands
 
@@ -60,6 +62,20 @@ museoncli schema research.social-media-search
 - If the schema does not expose a command, do not call or invent it.
 - Parse stdout as JSON. Success is `{"ok": true, ...}`; failure is
   `{"ok": false, "reason": "...", "detail": "..."}`.
+
+## Business Skills
+
+Business Skills are runtime playbooks for strategy and operations. Before a
+strategy, research, audit, review, onboarding, or operating-plan task:
+
+1. Run `museoncli skills +list`.
+2. Read every directly relevant Skill with
+   `museoncli skills +get --name <name>`.
+3. Apply its methodology with current data and the relevant local reference.
+
+Skip this only for a narrow factual lookup, schema inspection, or status read
+that needs no recommendation. Load a user-named Skill directly; otherwise do
+not guess names or use a stale list.
 
 ## Route the request
 
@@ -121,5 +137,6 @@ workspace-visible strategy, methodology, and content frameworks.
 
 Do not use the business-skill commands to load this local integration Skill.
 Do not assume Mel-specific personas, internal subagents, output styles, or
-runtime-only tools are available. Use the host Agent's native planning,
-clarification, browser, scheduling, and file capabilities when needed.
+runtime-only tools are available unless a loaded business Skill explicitly
+requires them. Use the host Agent's native planning, clarification, browser,
+scheduling, and file capabilities when needed.
