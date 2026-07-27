@@ -15,7 +15,7 @@ import pytest
 from museoncli import main as main_module
 from museoncli.config import Config
 from museoncli.main import build_parser
-from museoncli.domains import account_operation, get_command_spec
+from museoncli.domains import account_operation, command_executor, get_command_spec
 from museoncli.execution import CommandContext
 
 
@@ -50,6 +50,8 @@ def _direct(command_name: str, arguments: dict[str, Any], *, runtime: dict | Non
         "account-operation.plan-submit": account_operation._execute_plan_submit,
         "account-operation.strategy-decide": account_operation._execute_strategy_decide,
         "account-operation.elements-replace": account_operation._execute_elements_replace,
+        "account-operation.issue-result": account_operation._execute_issue_result,
+        "account-operation.resolve": account_operation._execute_resolve,
     }[command_name]
     ctx = CommandContext(
         cfg=cfg,
@@ -63,6 +65,22 @@ def _direct(command_name: str, arguments: dict[str, Any], *, runtime: dict | Non
         upload_artifact_file=main_module.upload_artifact_file,
     )
     return asyncio.run(executor(ctx))
+
+
+def _redacted(command_name: str, arguments: dict[str, Any]):
+    cfg = Config()
+    ctx = CommandContext(
+        cfg=cfg,
+        spec=get_command_spec(command_name),
+        args=None,
+        arguments=arguments,
+        workspace_id="ws-1",
+        api_data=main_module.api_data,
+        api_data_v2=main_module.api_data_v2,
+        upload_media_file=main_module.upload_media_file,
+        upload_artifact_file=main_module.upload_artifact_file,
+    )
+    return asyncio.run(command_executor(command_name)(ctx))
 
 
 def test_parser_registers_account_operation_commands() -> None:
@@ -116,6 +134,59 @@ def test_parser_registers_account_operation_commands() -> None:
         "operation_id": "33333333-3333-3333-3333-333333333333",
         "reason": "历史冲突换一批账号",
     }
+
+
+def test_issue_result_and_resolve_are_additive_commands(monkeypatch) -> None:
+    issue_args = parse(
+        [
+            "account-operation",
+            "+issue-result",
+            "--issue-id",
+            "issue-1",
+            "--dispatch-key",
+            "dispatch-1",
+            "--sop",
+            "recover-publish",
+            "--outcome",
+            "no-change",
+            "--summary",
+            "provider still unavailable",
+            "--evidence",
+            '{"attempts":2}',
+        ]
+    )
+    built = account_operation._build_account_operation_issue_result_arguments(issue_args)
+    assert built["sop"] == "recover_publish"
+    assert built["outcome"] == "no_change"
+
+    capture = _Capture(
+        {
+            "data": {
+                "id": "issue-1",
+                "account_operation_id": "secret-operation-id",
+            }
+        }
+    )
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+    issue_result = _redacted("account-operation.issue-result", built)
+    call = capture.calls[0]
+    assert call["path"] == "/account-operation-issues/issue-1:report-sop-result"
+    assert call["json_body"]["evidence"] == {"attempts": 2}
+    assert "secret-operation-id" not in repr(issue_result)
+
+    resolve_capture = _Capture(
+        {
+            "data": {
+                "operation_id": "secret-operation-id",
+                "pool_account_id": "pool-1",
+                "username": "maker",
+            }
+        }
+    )
+    monkeypatch.setattr(main_module, "api_data_v2", resolve_capture)
+    result = _redacted("account-operation.resolve", {"account": "maker"})
+    assert "secret-operation-id" not in repr(result)
+    assert resolve_capture.calls[0]["params"]["account"] == "maker"
 
 
 def test_submit_posts_with_conversation_from_runtime_context(monkeypatch) -> None:

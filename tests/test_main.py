@@ -2705,6 +2705,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "evaluator",
         "routines",
         "account-operation",
+        "agentic-campaign",
     ]
     assert [item["name"] for item in result["data"]["commands"]["research"]] == [
         "research.web-research",

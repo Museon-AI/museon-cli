@@ -13,6 +13,7 @@ from museoncli.domains import command_specs
 
 # commands where --limit is a true "top N" cap (server has no offset paging)
 LIMIT_CAP_COMMANDS = {
+    "agentic-campaign.issues-pull",
     "research.web-research",
     "research.social-media-search",
     "research.community-search",

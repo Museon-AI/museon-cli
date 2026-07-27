@@ -9,6 +9,7 @@ from museoncli.execution import compact_params, read_json_option
 from museoncli.execution import (
     CommandContext,
     direct_enveloped,
+    redacted_direct_enveloped,
 )
 
 import argparse
@@ -381,6 +382,49 @@ def _add_account_operation_stop_arguments(parser: argparse.ArgumentParser) -> No
 
 def _build_account_operation_stop_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {"operation_id": args.operation_id, "reason": args.reason}
+
+
+def _add_account_operation_issue_result_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--issue-id", required=True)
+    parser.add_argument("--dispatch-key", required=True)
+    parser.add_argument(
+        "--sop",
+        required=True,
+        choices=["ensure-schedule", "recover-generation", "recover-publish"],
+    )
+    parser.add_argument("--outcome", required=True, choices=["succeeded", "failed", "no-change"])
+    parser.add_argument("--summary", required=True)
+    parser.add_argument("--reason", default=None)
+    parser.add_argument("--evidence", default=None, help="JSON object; defaults to {}.")
+    parser.add_argument("--request-human", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_account_operation_issue_result_arguments(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    return {
+        "issue_id": args.issue_id,
+        "dispatch_key": args.dispatch_key,
+        "sop": dekebab(args.sop),
+        "outcome": dekebab(args.outcome),
+        "summary": args.summary,
+        "reason": args.reason,
+        "evidence": args.evidence,
+        "request_human": args.request_human,
+    }
+
+
+def _add_account_operation_resolve_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--account",
+        required=True,
+        help="Pool account id or exact username/handle.",
+    )
+
+
+def _build_account_operation_resolve_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {"account": args.account}
 
 
 def _add_account_operation_elements_arguments(parser: argparse.ArgumentParser) -> None:
@@ -946,6 +990,70 @@ def _account_operation_specs() -> list[CommandSpec]:
             build_arguments=_build_account_operation_elements_arguments,
             supports_dry_run=True,
         ),
+        CommandSpec(
+            domain=Domain.ACCOUNT_OPERATION,
+            shortcut="+issue-result",
+            summary=(
+                "Report the result of a claimed Account Operation Issue SOP. Uses the current "
+                "Agent CLI workspace-bound credential. --reason is required by the server when "
+                "--request-human is set."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="account_operation_issue_result",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "issue_id": {"type": "string"},
+                    "dispatch_key": {"type": "string"},
+                    "sop": {
+                        "type": "string",
+                        "enum": ["ensure-schedule", "recover-generation", "recover-publish"],
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "enum": ["succeeded", "failed", "no-change"],
+                    },
+                    "summary": {"type": "string"},
+                    "reason": {"type": ["string", "null"]},
+                    "evidence": {"type": ["object", "null"]},
+                    "request_human": {"type": "boolean"},
+                },
+                "required": ["issue_id", "dispatch_key", "sop", "outcome", "summary"],
+            },
+            output_schema=_direct_output_schema("Updated Account Operation Issue."),
+            examples=[
+                "museoncli account-operation +issue-result "
+                "--issue-id 77777777-7777-4777-8777-777777777777 "
+                "--dispatch-key dispatch-1 --sop ensure-schedule --outcome succeeded "
+                '--summary "schedule restored" --evidence \'{"scheduled":1}\''
+            ],
+            add_arguments=_add_account_operation_issue_result_arguments,
+            build_arguments=_build_account_operation_issue_result_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=Domain.ACCOUNT_OPERATION,
+            shortcut="+resolve",
+            summary=(
+                "Resolve an active account operation by pool account id or exact username. "
+                "Returns account identity and operation summary without exposing operation_id."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="account_operation_resolve",
+            input_schema={
+                "type": "object",
+                "properties": {"account": {"type": "string"}},
+                "required": ["account"],
+            },
+            output_schema=_direct_output_schema(
+                "Resolved account identity and operation summary; operation id is omitted."
+            ),
+            examples=["museoncli account-operation +resolve --account @creator"],
+            add_arguments=_add_account_operation_resolve_arguments,
+            build_arguments=_build_account_operation_resolve_arguments,
+        ),
     ]
 
 
@@ -1169,6 +1277,45 @@ async def _execute_stop(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_issue_result(ctx: CommandContext) -> Any:
+    arguments = ctx.arguments
+    if arguments.get("request_human") and not str(arguments.get("reason") or "").strip():
+        raise RuntimeError("--reason is required when --request-human is set")
+    evidence = (
+        read_json_option(value=arguments.get("evidence"), file_path=None, field="evidence")
+        if arguments.get("evidence") is not None
+        else {}
+    )
+    if not isinstance(evidence, dict):
+        raise RuntimeError("evidence must be a JSON object")
+    payload = compact_params(
+        {
+            "dispatch_key": arguments.get("dispatch_key"),
+            "sop_name": arguments.get("sop"),
+            "outcome": arguments.get("outcome"),
+            "summary": arguments.get("summary"),
+            "reason_code": arguments.get("reason"),
+            "evidence": evidence,
+            "request_human": bool(arguments.get("request_human")),
+        }
+    )
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/account-operation-issues/{arguments.get('issue_id')}:report-sop-result",
+        json_body=payload,
+    )
+
+
+async def _execute_resolve(ctx: CommandContext) -> Any:
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "GET",
+        "/account-operations:resolve",
+        params={"workspace_id": ctx.workspace_id, "account": ctx.arguments.get("account")},
+    )
+
+
 async def _execute_submit(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -1235,11 +1382,13 @@ EXECUTORS = {
     "account-operation.daily-roster": direct_enveloped(_execute_daily_roster),
     "account-operation.elements-replace": direct_enveloped(_execute_elements_replace),
     "account-operation.get": direct_enveloped(_execute_get),
+    "account-operation.issue-result": redacted_direct_enveloped(_execute_issue_result),
     "account-operation.list": direct_enveloped(_execute_list),
     "account-operation.ops-status": direct_enveloped(_execute_ops_status),
     "account-operation.ops-status-accounts": direct_enveloped(_execute_ops_status_accounts),
     "account-operation.plan-submit": direct_enveloped(_execute_plan_submit),
     "account-operation.runs": direct_enveloped(_execute_runs),
+    "account-operation.resolve": redacted_direct_enveloped(_execute_resolve),
     "account-operation.set-persona": direct_enveloped(_execute_set_persona),
     "account-operation.stop": direct_enveloped(_execute_stop),
     "account-operation.strategy-decide": direct_enveloped(_execute_strategy_decide),
