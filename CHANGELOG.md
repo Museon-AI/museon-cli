@@ -4,6 +4,9 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+- Required `--agentic-persona-plan-id` for `account-operation +submit` and
+  `+submit-batch`, forwarding the plan-owned persona admission context to the
+  API and retiring per-account persona assignment for linked operations.
 - Added `--preferred-publish-time` (24h `HH:MM`) and `--publish-timezone` (IANA)
   to `account-operation +submit` / `+submit-batch`, forwarded to the API and
   stored on the operation so the daily routine schedules posts at that local

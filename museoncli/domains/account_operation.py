@@ -21,6 +21,14 @@ def _add_account_operation_submit_arguments(parser: argparse.ArgumentParser) -> 
     parser.add_argument("--pool-account-id", required=True)
     parser.add_argument("--organization-id", required=True)
     parser.add_argument(
+        "--agentic-persona-plan-id",
+        required=True,
+        help=(
+            "Required Agentic Persona Plan. The plan must be active, have a persona, "
+            "and belong to the same workspace and organization."
+        ),
+    )
+    parser.add_argument(
         "--product-id",
         default=None,
         help=(
@@ -30,7 +38,6 @@ def _add_account_operation_submit_arguments(parser: argparse.ArgumentParser) -> 
         ),
     )
     parser.add_argument("--niche", default=None)
-    parser.add_argument("--persona-id", default=None)
     parser.add_argument(
         "--session-conversation-id",
         default=None,
@@ -78,9 +85,9 @@ def _build_account_operation_submit_arguments(args: argparse.Namespace) -> dict[
     return {
         "pool_account_id": args.pool_account_id,
         "organization_id": args.organization_id,
+        "agentic_persona_plan_id": args.agentic_persona_plan_id,
         "product_id": args.product_id,
         "niche": args.niche,
-        "persona_id": args.persona_id,
         "session_conversation_id": args.session_conversation_id,
         "target_delivery_mode": args.target_delivery_mode,
         "research_prompt": args.research_prompt,
@@ -97,6 +104,14 @@ def _add_account_operation_submit_batch_arguments(parser: argparse.ArgumentParse
         help="Comma-separated pool account ids (one shared session/campaign).",
     )
     parser.add_argument("--organization-id", required=True)
+    parser.add_argument(
+        "--agentic-persona-plan-id",
+        required=True,
+        help=(
+            "Required shared Agentic Persona Plan for every account in the batch. "
+            "Accounts needing a different persona require a separate batch."
+        ),
+    )
     parser.add_argument(
         "--product-id",
         default=None,
@@ -138,6 +153,7 @@ def _build_account_operation_submit_batch_arguments(args: argparse.Namespace) ->
     return {
         "pool_account_ids": args.pool_account_ids,
         "organization_id": args.organization_id,
+        "agentic_persona_plan_id": args.agentic_persona_plan_id,
         "product_id": args.product_id,
         "niche": args.niche,
         "session_conversation_id": args.session_conversation_id,
@@ -426,6 +442,41 @@ def _account_operation_plan_input_schema() -> dict[str, Any]:
     return schema
 
 
+def _account_operation_submit_input_schema(*, batch: bool) -> dict[str, Any]:
+    account_key = "pool_account_ids" if batch else "pool_account_id"
+    schema = _account_operation_input_schema(
+        {
+            account_key: ("Comma-separated pool account ids" if batch else "Pool account id"),
+            "organization_id": "Organization id",
+            "agentic_persona_plan_id": (
+                "REQUIRED (V2 admission gate), batch-level -- shared by every account "
+                "in this batch, no per-account override. A Persona Plan owns one "
+                "persona shared by every account under it; accounts needing a different "
+                "persona must be submitted as a separate batch."
+                if batch
+                else "REQUIRED (V2 admission gate). The Agentic Persona Plan this "
+                "account is admitted under -- persona is decided once per plan, never "
+                "per account. The plan must exist, be active, have a persona, and share "
+                "this request's workspace/organization."
+            ),
+            "product_id": (
+                "Optional single workspace Product/CTA asset id shared by the entire "
+                "batch; one batch has at most one Product and per-account overrides "
+                "are forbidden."
+                if batch
+                else "Optional workspace Product/CTA asset id for product context. "
+                "Stable for the operation; different-Product re-submission is rejected."
+            ),
+        }
+    )
+    schema["required"] = [
+        "organization_id",
+        account_key,
+        "agentic_persona_plan_id",
+    ]
+    return schema
+
+
 def _account_operation_specs() -> list[CommandSpec]:
     return [
         CommandSpec(
@@ -433,7 +484,14 @@ def _account_operation_specs() -> list[CommandSpec]:
             shortcut="+submit",
             summary=(
                 "Submit a pool account into automated operation (registers + binds the agent "
-                "conversation). Response data.research_disposition tells the outcome: "
+                "conversation). REQUIRES --agentic-persona-plan-id (V2 admission gate): "
+                "persona is decided once per Persona Plan under the target campaign, not per "
+                "account; pick/create that plan BEFORE submitting. The server rejects the "
+                "submit with a structured error if the plan does not exist, is not active, "
+                "has no persona, or belongs to a different campaign/workspace/organization "
+                "-- pick a valid plan and retry, do not fall back to any per-account persona "
+                "flow (+set-persona is retired). Response data.research_disposition tells "
+                "the outcome: "
                 "established_seeded=直接 active(继承既有排期元素,无需调研); "
                 "research_directed/inductive/full=进入 onboarding 调研. "
                 "When a Product is resolved, pass optional --product-id once to bind product "
@@ -457,20 +515,12 @@ def _account_operation_specs() -> list[CommandSpec]:
             risk_level="write",
             execution="direct",
             adapter_tool_name="account_operation_submit",
-            input_schema=_account_operation_input_schema(
-                {
-                    "pool_account_id": "Pool account id",
-                    "organization_id": "Organization id",
-                    "product_id": (
-                        "Optional workspace Product/CTA asset id for product context. Stable "
-                        "for the operation; different-Product re-submission is rejected."
-                    ),
-                }
-            ),
+            input_schema=_account_operation_submit_input_schema(batch=False),
             output_schema=_direct_output_schema("Account operation registry row."),
             examples=[
                 "museoncli account-operation +submit --pool-account-id <uuid> "
-                "--organization-id <uuid> --product-id <product_uuid> --niche leather_care"
+                "--organization-id <uuid> --agentic-persona-plan-id <plan_uuid> "
+                "--product-id <product_uuid> --niche leather_care"
             ],
             add_arguments=_add_account_operation_submit_arguments,
             build_arguments=_build_account_operation_submit_arguments,
@@ -482,6 +532,13 @@ def _account_operation_specs() -> list[CommandSpec]:
             summary=(
                 "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — "
                 "PREFERRED over N single +submit calls when the operator hands over a batch. "
+                "REQUIRES --agentic-persona-plan-id (V2 admission gate), shared by the WHOLE "
+                "batch: a Persona Plan owns one persona shared by every account under it, so "
+                "per-account persona overrides are forbidden -- accounts needing a different "
+                "persona must be submitted as a SEPARATE batch under a different plan. The "
+                "server rejects the whole call atomically (before reserving any account) if "
+                "the plan does not exist, is not active, has no persona, or belongs to a "
+                "different campaign/workspace/organization. "
                 "All accounts bind to the current session; account-operation submission does "
                 "NOT create a campaign monitor. One optional --product-id identifies the "
                 "shared Product/CTA context for the ENTIRE batch; one batch has at most one "
@@ -514,17 +571,7 @@ def _account_operation_specs() -> list[CommandSpec]:
             risk_level="write",
             execution="direct",
             adapter_tool_name="account_operation_submit_batch",
-            input_schema=_account_operation_input_schema(
-                {
-                    "pool_account_ids": "Comma-separated pool account ids",
-                    "organization_id": "Organization id",
-                    "product_id": (
-                        "Optional single workspace Product/CTA asset id shared by the entire "
-                        "batch; one batch has at most one Product and per-account overrides "
-                        "are forbidden."
-                    ),
-                }
-            ),
+            input_schema=_account_operation_submit_input_schema(batch=True),
             output_schema=_direct_output_schema(
                 "Batch result: data=[operation rows], meta.failed_count, "
                 "meta.failed=[{pool_account_id, error}], "
@@ -535,7 +582,8 @@ def _account_operation_specs() -> list[CommandSpec]:
             ),
             examples=[
                 "museoncli account-operation +submit-batch --pool-account-ids <uuid1>,<uuid2> "
-                "--organization-id <uuid> --product-id <product_uuid> "
+                "--organization-id <uuid> --agentic-persona-plan-id <plan_uuid> "
+                "--product-id <product_uuid> "
                 "--niche diy_restoration --reference-url https://www.tiktok.com/@benchmark"
             ],
             add_arguments=_add_account_operation_submit_batch_arguments,
@@ -788,14 +836,14 @@ def _account_operation_specs() -> list[CommandSpec]:
             domain=Domain.ACCOUNT_OPERATION,
             shortcut="+set-persona",
             summary=(
-                "Author & attach the account's persona (REQUIRED first step of onboarding "
-                "research, BEFORE +plan-submit). 全托管 accounts have no persona ref, so the "
-                "publish pipeline generates from the persona set here; without it, generation "
-                "fails. Define {name, description, tags} from research: for a 对标账号 "
-                "(reference_url) capture that creator's voice/audience/style; for "
-                "established_seeded use the account's OWN seed content; otherwise from open "
-                "research. Creates a workspace persona and sets account_operations.persona_id. "
-                "Idempotent-safe to re-call to replace the persona."
+                "RETIRED (V2 admission gate). Persona is now a Persona Plan property, decided "
+                "once when the plan is created/admitted and never per-account. This route "
+                "always returns a structured 409 (code=persona_owned_by_persona_plan) pointing "
+                "the caller to the account's Persona Plan instead of writing anything. Do not "
+                "call this to onboard an account -- pick/create the Persona Plan under the "
+                "campaign BEFORE +submit/+submit-batch, which now require "
+                "agentic_persona_plan_id instead of persona_id. Known follow-up (V5): a "
+                "plan-level set-persona command replaces this entirely."
             ),
             risk_level="write",
             execution="direct",
@@ -1138,7 +1186,7 @@ async def _execute_submit(ctx: CommandContext) -> Any:
             "workspace_id": workspace_id,
             "organization_id": arguments.get("organization_id"),
             "pool_account_id": arguments.get("pool_account_id"),
-            "persona_id": arguments.get("persona_id"),
+            "agentic_persona_plan_id": arguments.get("agentic_persona_plan_id"),
             "product_id": arguments.get("product_id"),
             "niche": arguments.get("niche"),
             "session_conversation_id": session_conversation_id,
@@ -1166,6 +1214,7 @@ async def _execute_submit_batch(ctx: CommandContext) -> Any:
         {
             "workspace_id": ctx.workspace_id,
             "organization_id": arguments.get("organization_id"),
+            "agentic_persona_plan_id": arguments.get("agentic_persona_plan_id"),
             "session_conversation_id": session_conversation_id,
             "source_channel_message_id": runtime.get("source_channel_message_id"),
             "target_delivery_mode": arguments.get("target_delivery_mode"),
