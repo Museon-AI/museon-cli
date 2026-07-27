@@ -16,9 +16,9 @@ wheel; the private runtime adds its own overlay afterward.
    test suite, builds the wheel once, checks its public boundary,
    and performs a clean wheel install.
 5. The workflow publishes the wheel, command contract, install guide,
-   and SHA-256 checksums in a GitHub Release.
-6. After publication, the workflow sends the exact wheel URL/hash and command
-   contract URL/hash to the private Agent runtime release workflow.
+   deterministic `skills.tar.gz`, and SHA-256 checksums in a GitHub Release.
+6. After publication, the workflow sends the exact wheel, command contract,
+   and skills archive URLs/hashes to the private Agent runtime release workflow.
 7. Verify the public wheel URL, then sync the command contract and install guide
    to the Museon monorepo. The live guide must never point at an unpublished
    wheel.

@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-119 commands across 13 domains (source of truth: `museoncli schema`).
+121 commands across 13 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -194,6 +194,8 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
+| `agentic-campaign +candidate-submit` | write | yes | — | direct | Submit one Persona Plan candidate and its first version. |
+| `agentic-campaign +candidate-revise` | write | yes | — | direct | Submit a new version to a Persona Plan candidate's current head. |
 | `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
 | `agentic-campaign +get` | read | — | — | direct | Get an Agentic Creative Campaign detail by campaign id. |
 | `agentic-campaign +plan-list` | read | — | — | direct | List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted. |

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Experiment Brain"
+  short_description: "Run social persona experiments with operator approval"
+  default_prompt: "Use the experiment methodology to propose persona, content, and CTA tests without applying decisions for the operator."
