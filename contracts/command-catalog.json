@@ -5503,7 +5503,7 @@
       "agentic-campaign"
     ]
   },
-  "contract_revision": "0.3.77",
+  "contract_revision": "0.3.78",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
