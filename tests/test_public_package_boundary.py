@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import subprocess
+import sys
+import tarfile
 from pathlib import Path
 
 from museoncli.config import AuthState, stored_auth_fields
@@ -83,3 +87,36 @@ def test_release_workflow_builds_one_wheel_before_privileged_publication() -> No
     assert "npm" not in workflow.lower()
     assert "native-signing" not in workflow
     assert "pyinstaller" not in workflow.lower()
+
+
+def test_release_workflow_publishes_deterministic_skills_asset(tmp_path: Path) -> None:
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+    first = tmp_path / "first.tar.gz"
+    second = tmp_path / "second.tar.gz"
+    command = [sys.executable, str(ROOT / "scripts" / "build_skills_archive.py")]
+
+    subprocess.run([*command, "--output", str(first)], check=True)
+    subprocess.run([*command, "--output", str(second)], check=True)
+
+    assert hashlib.sha256(first.read_bytes()).digest() == hashlib.sha256(
+        second.read_bytes()
+    ).digest()
+    with tarfile.open(first, "r:gz") as archive:
+        members = archive.getmembers()
+    assert "skills/museon-cli/SKILL.md" in {member.name for member in members}
+    assert "skills/experiment-brain/SKILL.md" in {member.name for member in members}
+    assert all(
+        member.mtime == 0
+        and member.uid == 0
+        and member.gid == 0
+        and member.uname == "root"
+        and member.gname == "root"
+        for member in members
+    )
+
+    assert "uv run python scripts/build_skills_archive.py" in workflow
+    assert "(cd release && sha256sum -- * > checksums.txt)" in workflow
+    assert "skills_url: $skills_url" in workflow
+    assert "skills_sha256: $skills_sha256" in workflow

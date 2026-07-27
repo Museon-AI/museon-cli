@@ -40,6 +40,7 @@ jobs:
           set -euo pipefail
           mkdir release
           cp dist/*.whl contracts/command-catalog.json docs/install.md release/
+          uv run python scripts/build_skills_archive.py
           (cd release && sha256sum -- * > checksums.txt)
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -100,7 +101,7 @@ jobs:
           owner: Museon-AI
           repositories: museon
           permission-contents: write
-      - name: Dispatch wheel to private Agent runtime
+      - name: Dispatch release to private Agent runtime
         env:
           GH_TOKEN: ${{ steps.runtime-app-token.outputs.token }}
         run: |
@@ -110,11 +111,15 @@ jobs:
           wheel_sha256=$(sha256sum "${wheel}" | awk '{print $1}')
           contract=release/command-catalog.json
           contract_sha256=$(sha256sum "${contract}" | awk '{print $1}')
+          skills=release/skills.tar.gz
+          skills_sha256=$(sha256sum "${skills}" | awk '{print $1}')
           jq -n \
             --arg wheel_url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${wheel_name}" \
             --arg wheel_sha256 "${wheel_sha256}" \
             --arg contract_url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/command-catalog.json" \
             --arg contract_sha256 "${contract_sha256}" \
+            --arg skills_url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/skills.tar.gz" \
+            --arg skills_sha256 "${skills_sha256}" \
             --arg version "${GITHUB_REF_NAME#v}" \
-            '{event_type: "museoncli-release", client_payload: {wheel_url: $wheel_url, wheel_sha256: $wheel_sha256, contract_url: $contract_url, contract_sha256: $contract_sha256, version: $version}}' \
+            '{event_type: "museoncli-release", client_payload: {wheel_url: $wheel_url, wheel_sha256: $wheel_sha256, contract_url: $contract_url, contract_sha256: $contract_sha256, skills_url: $skills_url, skills_sha256: $skills_sha256, version: $version}}' \
             | gh api --method POST repos/Museon-AI/museon/dispatches --input -
