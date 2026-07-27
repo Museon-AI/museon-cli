@@ -220,7 +220,7 @@ The tables below are generated — edit code, then run
 | `agentic-campaign +plan-strategy-decide` | write | yes | — | direct | Fan out a strategy decision to the latest awaiting-review run in a Persona Plan. |
 | `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +plan-attribution` | read | — | — | direct | Aggregate attribution across a Persona Plan, omitting account operation ids. |
-| `agentic-campaign +issues-pull` | write | yes | — | direct | Pull and lease Account Operation Issues for the current Mel session, optionally limited to one Agentic Creative Campaign. Uses the server-attested assertion from runtime context and omits account_operation_id from claims. |
+| `agentic-campaign +issues-pull` | write | yes | — | direct | Pull and lease Account Operation Issues from one required Agentic Creative Campaign. The campaign selects candidates; the runtime conversation identity is used only for lease and message context. Claims omit account_operation_id. |
 
 <!-- END GENERATED COMMANDS -->
 

@@ -155,7 +155,7 @@ def _build_strategy_decide_arguments(args: argparse.Namespace) -> dict[str, Any]
 
 
 def _add_issues_pull_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--campaign-id", default=None)
+    parser.add_argument("--campaign-id", required=True)
     parser.add_argument("--limit", type=int, required=True)
     parser.add_argument("--dry-run", action="store_true")
 
@@ -424,9 +424,9 @@ def specs() -> list[CommandSpec]:
             domain=domain,
             shortcut="+issues-pull",
             summary=(
-                "Pull and lease Account Operation Issues for the current Mel session, optionally "
-                "limited to one Agentic Creative Campaign. Uses the server-attested assertion "
-                "from runtime context and omits account_operation_id from claims."
+                "Pull and lease Account Operation Issues from one required Agentic Creative "
+                "Campaign. The campaign selects candidates; the runtime conversation identity is "
+                "used only for lease and message context. Claims omit account_operation_id."
             ),
             risk_level="write",
             execution="direct",
@@ -434,17 +434,20 @@ def specs() -> list[CommandSpec]:
             input_schema=_schema(
                 {
                     "campaign_id": {
-                        "type": ["string", "null"],
+                        "type": "string",
                         "format": "uuid",
                     },
                     "limit": {"type": "integer", "minimum": 1, "maximum": 50},
                 },
-                required=["limit"],
+                required=["campaign_id", "limit"],
             ),
             output_schema=_direct_output_schema(
                 "Leased Issue claims with pool_account_id and handle; operation ids are omitted."
             ),
-            examples=["museoncli agentic-campaign +issues-pull --limit 20"],
+            examples=[
+                "museoncli agentic-campaign +issues-pull "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 --limit 20"
+            ],
             add_arguments=_add_issues_pull_arguments,
             build_arguments=_build_issues_pull_arguments,
             supports_dry_run=True,
@@ -665,11 +668,8 @@ async def _execute_plan_attribution(ctx: CommandContext) -> Any:
 async def _execute_issues_pull(ctx: CommandContext) -> Any:
     runtime = ctx.cfg.runtime_context if isinstance(ctx.cfg.runtime_context, dict) else {}
     session_id = runtime.get("conversation_id")
-    assertion = runtime.get("account_operation_issue_pull_assertion")
     if not session_id:
         raise RuntimeError("runtime context has no conversation identity")
-    if not assertion:
-        raise RuntimeError("runtime context has no Issue pull session assertion")
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",
@@ -678,7 +678,6 @@ async def _execute_issues_pull(ctx: CommandContext) -> Any:
             {
                 "workspace_id": ctx.workspace_id,
                 "session_conversation_id": session_id,
-                "session_assertion": assertion,
                 "scope_conversation_id": runtime.get("scope_conversation_id"),
                 "campaign_id": ctx.arguments.get("campaign_id"),
                 "limit": ctx.arguments.get("limit"),

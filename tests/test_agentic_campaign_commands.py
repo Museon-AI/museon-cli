@@ -324,7 +324,6 @@ def test_issues_pull_uses_full_v2_url_and_complete_payload(monkeypatch) -> None:
     cfg.workspace.id = "11111111-1111-4111-8111-111111111111"
     cfg.runtime_context = {
         "conversation_id": "55555555-5555-4555-8555-555555555555",
-        "account_operation_issue_pull_assertion": "v1." + ("a" * 64),
         "scope_conversation_id": "66666666-6666-4666-8666-666666666666",
     }
     args = parse(
@@ -344,12 +343,20 @@ def test_issues_pull_uses_full_v2_url_and_complete_payload(monkeypatch) -> None:
     assert sent["json_body"] == {
         "workspace_id": "11111111-1111-4111-8111-111111111111",
         "session_conversation_id": "55555555-5555-4555-8555-555555555555",
-        "session_assertion": "v1." + ("a" * 64),
         "scope_conversation_id": "66666666-6666-4666-8666-666666666666",
         "campaign_id": campaign_id,
         "limit": 17,
     }
     assert "secret-op-id" not in repr(result)
+
+
+def test_issues_pull_requires_campaign_id_in_cli_and_contract() -> None:
+    with pytest.raises(SystemExit):
+        parse(["agentic-campaign", "+issues-pull", "--limit", "20"])
+
+    spec = get_command_spec("agentic-campaign.issues-pull")
+    assert spec.input_schema["required"] == ["campaign_id", "limit"]
+    assert spec.input_schema["properties"]["campaign_id"]["type"] == "string"
 
 
 @pytest.mark.parametrize(
@@ -417,15 +424,14 @@ def test_agentic_error_boundary_redacts_api_detail() -> None:
     assert "secret-operation-id" not in str(raised.value)
 
 
-def test_issues_pull_requires_server_attested_runtime_context() -> None:
-    with pytest.raises(RuntimeError, match="session assertion"):
+def test_issues_pull_requires_runtime_conversation_identity() -> None:
+    with pytest.raises(RuntimeError, match="conversation identity"):
         asyncio.run(
             agentic_campaign._execute_issues_pull(
                 context(
                     "agentic-campaign.issues-pull",
                     {"limit": 20},
                     Capture(),
-                    runtime={"conversation_id": "session-1"},
                 )
             )
         )
