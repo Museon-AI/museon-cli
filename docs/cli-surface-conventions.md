@@ -21,7 +21,8 @@ museoncli <domain> +<shortcut> [flags]
   `social-account +connect-link-status --id`)
 - Write commands scoped inside a parent entity use `--id` for the parent and
   qualified flags for children (`social-account +schedule-update --id <account>
-  --schedule-item-id <item>`, `account-operation +strategy-decide --id <op> --run-id <run>`).
+  --schedule-item-id <item>`, `campaign-monitor +content-remove --id <campaign>
+  --collection-content-id <content>`).
 - Foreign references are always qualified: `--<entity>-id`.
 - Positional IDs are forbidden. The only allowed positional is a mode selector
   (`routines +record output|memory`).

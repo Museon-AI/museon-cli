@@ -47,9 +47,6 @@ def _direct(command_name: str, arguments: dict[str, Any], *, runtime: dict | Non
         "account-operation.ops-status": account_operation._execute_ops_status,
         "account-operation.ops-status-accounts": account_operation._execute_ops_status_accounts,
         "account-operation.daily-roster": account_operation._execute_daily_roster,
-        "account-operation.plan-submit": account_operation._execute_plan_submit,
-        "account-operation.strategy-decide": account_operation._execute_strategy_decide,
-        "account-operation.elements-replace": account_operation._execute_elements_replace,
         "account-operation.issue-result": account_operation._execute_issue_result,
         "account-operation.resolve": account_operation._execute_resolve,
     }[command_name]
@@ -103,20 +100,6 @@ def test_parser_registers_account_operation_commands() -> None:
     assert args.domain_command == "account-operation.submit"
     assert args.agentic_persona_plan_id == "33333333-3333-4333-8333-333333333333"
     assert args.product_id == "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
-
-    decide = parse(
-        [
-            "account-operation",
-            "+strategy-decide",
-            "--id",
-            "33333333-3333-3333-3333-333333333333",
-            "--run-id",
-            "44444444-4444-4444-4444-444444444444",
-            "--decided-by",
-            "auto-timeout",
-        ]
-    )
-    assert decide.domain_command == "account-operation.strategy-decide"
 
     stop = parse(
         [
@@ -497,45 +480,6 @@ def test_daily_roster_forwards_as_of_cutoff_and_behind_filter(monkeypatch) -> No
     assert body["filter"] == "behind"
 
 
-def test_worker_callbacks(monkeypatch) -> None:
-    capture = _Capture()
-    monkeypatch.setattr(main_module, "api_data_v2", capture)
-    _direct(
-        "account-operation.plan-submit",
-        {
-            "operation_id": "op-1",
-            "format_ids": "f1,f2",
-            "topic_ids": "t1",
-            "required_hashtags": "#PlantSenso,#PlantCare",
-            "note": "n",
-        },
-    )
-    _direct(
-        "account-operation.strategy-decide",
-        {
-            "operation_id": "op-1",
-            "run_id": "run-1",
-            "decided_by": "human",
-            "decision_json": '{"action": "override"}',
-        },
-    )
-    _direct(
-        "account-operation.elements-replace",
-        {"operation_id": "op-1", "add_format_ids": "f9", "pause_topic_ids": "t0"},
-    )
-    plan, decide, elements = capture.calls
-    assert plan["path"] == "/account-operations/op-1/plan:submit"
-    assert plan["json_body"]["format_ids"] == ["f1", "f2"]
-    assert plan["json_body"]["topic_ids"] == ["t1"]
-    assert plan["json_body"]["required_hashtags"] == ["#PlantSenso", "#PlantCare"]
-    assert decide["path"] == "/account-operations/op-1/daily-runs/run-1/strategy:decide"
-    assert decide["json_body"]["decided_by"] == "human"
-    assert decide["json_body"]["decision"] == {"action": "override"}
-    assert elements["path"] == "/account-operations/op-1/elements:replace"
-    assert elements["json_body"]["add_format_ids"] == ["f9"]
-    assert elements["json_body"]["pause_topic_ids"] == ["t0"]
-
-
 def test_stop_posts_reason_to_stop_endpoint(monkeypatch) -> None:
     # Conflict-swap retirement: +stop is the ONLY agent-facing way to retire an
     # op (swapping in replacement accounts does not GC the originals).
@@ -565,10 +509,7 @@ def test_write_commands_dry_run_do_not_call_api(monkeypatch) -> None:
     pool_id = "11111111-1111-1111-1111-111111111111"
     org_id = "22222222-2222-2222-2222-222222222222"
     op_id = "33333333-3333-3333-3333-333333333333"
-    run_id = "44444444-4444-4444-4444-444444444444"
     plan_id = "77777777-7777-4777-8777-777777777777"
-    format_a = "55555555-5555-4555-8555-555555555555"
-    format_b = "66666666-6666-4666-8666-666666666666"
     argvs = [
         [
             "account-operation",
@@ -579,35 +520,6 @@ def test_write_commands_dry_run_do_not_call_api(monkeypatch) -> None:
             org_id,
             "--agentic-persona-plan-id",
             plan_id,
-            "--dry-run",
-        ],
-        [
-            "account-operation",
-            "+plan-submit",
-            "--id",
-            op_id,
-            "--format-ids",
-            f"{format_a},{format_b}",
-            "--dry-run",
-        ],
-        [
-            "account-operation",
-            "+strategy-decide",
-            "--id",
-            op_id,
-            "--run-id",
-            run_id,
-            "--decided-by",
-            "human",
-            "--dry-run",
-        ],
-        [
-            "account-operation",
-            "+elements-replace",
-            "--id",
-            op_id,
-            "--add-format-ids",
-            format_a,
             "--dry-run",
         ],
         [
@@ -623,94 +535,6 @@ def test_write_commands_dry_run_do_not_call_api(monkeypatch) -> None:
     for argv in argvs:
         result = asyncio.run(main_module.dispatch(parse(argv)))
         assert result["data"]["dry_run"] is True, argv
-
-
-def test_plan_submit_csv_ids_pass_uuid_validation_and_reach_api(monkeypatch) -> None:
-    """Regression: CSV *_ids used to stay strings and fail UUID list validation."""
-    cfg = Config()
-    capture = _Capture()
-    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
-    monkeypatch.setattr(main_module, "api_data_v2", capture)
-
-    op_id = "33333333-3333-3333-3333-333333333333"
-    format_a = "55555555-5555-4555-8555-555555555555"
-    topic_a = "77777777-7777-4777-8777-777777777777"
-    result = asyncio.run(
-        main_module.dispatch(
-            parse(
-                [
-                    "account-operation",
-                    "+plan-submit",
-                    "--id",
-                    op_id,
-                    "--format-ids",
-                    format_a,
-                    "--topic-ids",
-                    topic_a,
-                ]
-            )
-        )
-    )
-    assert result["command"] == "account-operation.plan-submit"
-    call = capture.calls[0]
-    assert call["path"] == f"/account-operations/{op_id}/plan:submit"
-    assert call["json_body"]["format_ids"] == [format_a]
-    assert call["json_body"]["topic_ids"] == [topic_a]
-
-
-@pytest.mark.parametrize(
-    ("cli_args", "expected_presence", "expected_value"),
-    [
-        ([], False, None),
-        (["--required-hashtags", "#PlantSenso, #PlantCare"], True, ["#PlantSenso", "#PlantCare"]),
-        (["--required-hashtags", ""], True, []),
-    ],
-)
-def test_plan_submit_required_hashtags_preserve_override_and_clear(
-    monkeypatch,
-    cli_args,
-    expected_presence,
-    expected_value,
-) -> None:
-    cfg = Config()
-    capture = _Capture()
-    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
-    monkeypatch.setattr(main_module, "api_data_v2", capture)
-
-    op_id = "33333333-3333-3333-3333-333333333333"
-    result = asyncio.run(
-        main_module.dispatch(
-            parse(
-                [
-                    "account-operation",
-                    "+plan-submit",
-                    "--id",
-                    op_id,
-                    *cli_args,
-                ]
-            )
-        )
-    )
-
-    assert result["command"] == "account-operation.plan-submit"
-    payload = capture.calls[0]["json_body"]
-    assert ("required_hashtags" in payload) is expected_presence
-    if expected_presence:
-        assert payload["required_hashtags"] == expected_value
-
-
-def test_plan_submit_schema_exposes_required_hashtags_array() -> None:
-    schema = get_command_spec("account-operation.plan-submit").input_schema
-
-    assert schema["properties"]["required_hashtags"] == {
-        "type": "array",
-        "items": {"type": "string"},
-        "maxItems": 50,
-        "description": (
-            "Account-wide required hashtags. Omit to preserve the current setting; "
-            "pass an empty array to clear it."
-        ),
-    }
 
 
 def test_all_write_command_specs_support_dry_run() -> None:
