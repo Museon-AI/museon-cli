@@ -1822,7 +1822,12 @@ def specs() -> list[CommandSpec]:
                 "+asset-pools-batch-preview then +asset-pools-batch-set instead of looping. "
                 "For a fully-managed account, first relay the "
                 "returned impact to the user; retry with --managed-operation-approved "
-                "only after explicit confirmation."
+                "only after explicit confirmation. --persona-id on a fully-managed account "
+                "whose Persona Plan is linked (V2 admission gate) always returns a structured "
+                "409 (code=persona_owned_by_persona_plan) -- persona is plan-owned and cannot "
+                "be changed per account; direct the user to the Persona Plan instead. "
+                "--persona-id still works normally on a pre-V2 unlinked managed account or "
+                "an ordinary (non-managed) account."
             ),
             risk_level="write",
             execution="direct",

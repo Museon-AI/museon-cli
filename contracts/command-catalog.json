@@ -23,7 +23,7 @@
           "risk_level": "write",
           "shortcut": "+submit",
           "stability": "stable",
-          "summary": "Submit a pool account into automated operation (registers + binds the agent conversation). Response data.research_disposition tells the outcome: established_seeded=直接 active(继承既有排期元素,无需调研); research_directed/inductive/full=进入 onboarding 调研. When a Product is resolved, pass optional --product-id once to bind product truth, description/media, and promotion guidance to the operation; an explicit audience action is optional. Same-Product retries are idempotent and a different Product is rejected. Submitting is the explicit Account Publish -> fully-managed mode switch: an account_publish allocation is atomically transferred and existing publish configuration is preserved. Live schedule work never blocks the switch and must NOT be cancelled first: future scheduled items are adopted by the operation as managed schedule, and generating/generated/publishing items simply finish outside managed attribution. Pass --research-prompt/--reference-url ONLY when the operator explicitly mentioned research direction or benchmark accounts. When submitting MULTIPLE accounts in one turn, reply ONE consolidated confirmation card (per-account row: username/op_id/disposition) instead of N cards. NOTE: an account already operating under a DIFFERENT session is NOT moved here — you get the existing op back unchanged (no rebind); prefer +submit-batch which reports this explicitly in meta.existing[] with a conflict link.",
+          "summary": "Submit a pool account into automated operation (registers + binds the agent conversation). REQUIRES --agentic-persona-plan-id (V2 admission gate): persona is decided once per Persona Plan under the target campaign, not per account; pick/create that plan BEFORE submitting. The server rejects the submit with a structured error if the plan does not exist, is not active, has no persona, or belongs to a different campaign/workspace/organization -- pick a valid plan and retry, do not fall back to any per-account persona flow (+set-persona is retired). Response data.research_disposition tells the outcome: established_seeded=直接 active(继承既有排期元素,无需调研); research_directed/inductive/full=进入 onboarding 调研. When a Product is resolved, pass optional --product-id once to bind product truth, description/media, and promotion guidance to the operation; an explicit audience action is optional. Same-Product retries are idempotent and a different Product is rejected. Submitting is the explicit Account Publish -> fully-managed mode switch: an account_publish allocation is atomically transferred and existing publish configuration is preserved. Live schedule work never blocks the switch and must NOT be cancelled first: future scheduled items are adopted by the operation as managed schedule, and generating/generated/publishing items simply finish outside managed attribution. Pass --research-prompt/--reference-url ONLY when the operator explicitly mentioned research direction or benchmark accounts. When submitting MULTIPLE accounts in one turn, reply ONE consolidated confirmation card (per-account row: username/op_id/disposition) instead of N cards. NOTE: an account already operating under a DIFFERENT session is NOT moved here — you get the existing op back unchanged (no rebind); prefer +submit-batch which reports this explicitly in meta.existing[] with a conflict link.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -48,7 +48,7 @@
           "risk_level": "write",
           "shortcut": "+submit-batch",
           "stability": "stable",
-          "summary": "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — PREFERRED over N single +submit calls when the operator hands over a batch. All accounts bind to the current session; account-operation submission does NOT create a campaign monitor. One optional --product-id identifies the shared Product/CTA context for the ENTIRE batch; one batch has at most one Product and per-account overrides are forbidden. Shared --niche/--research-prompt/--reference-url apply to every account. Reply ONE consolidated confirmation card from the response rows (username/op_id/research_disposition). IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] (each {pool_account_id, error}); if non-empty, call out the dropped accounts in the confirmation and re-submit them, do NOT assume all landed. ALSO check meta.existing[]: these accounts were ALREADY in operation (not new). outcome='existing_other_session' means the account is already running under a DIFFERENT session and was NOT added here — pick a fresh 账号库 account instead, and surface conflict_session_url so the operator can open that session to check. outcome='occupied_other_business' means the account is already used by another business (for example campaign) and was NOT taken into 全托管运营 — pick a different 账号库 (unoccupied) account. An account_publish holder is transferred automatically during submit; its live schedule never blocks the transfer — future scheduled items are adopted by the operation and in-flight items finish as-is, so never cancel schedules to unblock enrollment. outcome='not_in_workspace' means the account does not belong to this workspace's account pool and was NOT taken into 全托管运营 — pick an account from this workspace. outcome='existing_product_conflict' means that account is already managed for another Product and was NOT changed; report current_product_id and requested_product_id instead of silently switching it. meta.created_count = how many were genuinely new.",
+          "summary": "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — PREFERRED over N single +submit calls when the operator hands over a batch. REQUIRES --agentic-persona-plan-id (V2 admission gate), shared by the WHOLE batch: a Persona Plan owns one persona shared by every account under it, so per-account persona overrides are forbidden -- accounts needing a different persona must be submitted as a SEPARATE batch under a different plan. The server rejects the whole call atomically (before reserving any account) if the plan does not exist, is not active, has no persona, or belongs to a different campaign/workspace/organization. All accounts bind to the current session; account-operation submission does NOT create a campaign monitor. One optional --product-id identifies the shared Product/CTA context for the ENTIRE batch; one batch has at most one Product and per-account overrides are forbidden. Shared --niche/--research-prompt/--reference-url apply to every account. Reply ONE consolidated confirmation card from the response rows (username/op_id/research_disposition). IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] (each {pool_account_id, error}); if non-empty, call out the dropped accounts in the confirmation and re-submit them, do NOT assume all landed. ALSO check meta.existing[]: these accounts were ALREADY in operation (not new). outcome='existing_other_session' means the account is already running under a DIFFERENT session and was NOT added here — pick a fresh 账号库 account instead, and surface conflict_session_url so the operator can open that session to check. outcome='occupied_other_business' means the account is already used by another business (for example campaign) and was NOT taken into 全托管运营 — pick a different 账号库 (unoccupied) account. An account_publish holder is transferred automatically during submit; its live schedule never blocks the transfer — future scheduled items are adopted by the operation and in-flight items finish as-is, so never cancel schedules to unblock enrollment. outcome='not_in_workspace' means the account does not belong to this workspace's account pool and was NOT taken into 全托管运营 — pick an account from this workspace. outcome='existing_product_conflict' means that account is already managed for another Product and was NOT changed; report current_product_id and requested_product_id instead of silently switching it. meta.created_count = how many were genuinely new.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -298,7 +298,7 @@
           "risk_level": "write",
           "shortcut": "+set-persona",
           "stability": "stable",
-          "summary": "Author & attach the account's persona (REQUIRED first step of onboarding research, BEFORE +plan-submit). 全托管 accounts have no persona ref, so the publish pipeline generates from the persona set here; without it, generation fails. Define {name, description, tags} from research: for a 对标账号 (reference_url) capture that creator's voice/audience/style; for established_seeded use the account's OWN seed content; otherwise from open research. Creates a workspace persona and sets account_operations.persona_id. Idempotent-safe to re-call to replace the persona.",
+          "summary": "RETIRED (V2 admission gate). Persona is now a Persona Plan property, decided once when the plan is created/admitted and never per-account. This route always returns a structured 409 (code=persona_owned_by_persona_plan) pointing the caller to the account's Persona Plan instead of writing anything. Do not call this to onboard an account -- pick/create the Persona Plan under the campaign BEFORE +submit/+submit-batch, which now require agentic_persona_plan_id instead of persona_id. Known follow-up (V5): a plan-level set-persona command replaces this entirely.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -4078,7 +4078,7 @@
           "risk_level": "write",
           "shortcut": "+assets-set",
           "stability": "stable",
-          "summary": "Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation.",
+          "summary": "Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation. --persona-id on a fully-managed account whose Persona Plan is linked (V2 admission gate) always returns a structured 409 (code=persona_owned_by_persona_plan) -- persona is plan-owned and cannot be changed per account; direct the user to the Persona Plan instead. --persona-id still works normally on a pre-V2 unlinked managed account or an ordinary (non-managed) account.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -5275,7 +5275,7 @@
       "account-operation"
     ]
   },
-  "contract_revision": "0.3.73",
+  "contract_revision": "0.3.74",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -6283,7 +6283,7 @@
       "risk_level": "write",
       "shortcut": "+set-persona",
       "stability": "stable",
-      "summary": "Author & attach the account's persona (REQUIRED first step of onboarding research, BEFORE +plan-submit). 全托管 accounts have no persona ref, so the publish pipeline generates from the persona set here; without it, generation fails. Define {name, description, tags} from research: for a 对标账号 (reference_url) capture that creator's voice/audience/style; for established_seeded use the account's OWN seed content; otherwise from open research. Creates a workspace persona and sets account_operations.persona_id. Idempotent-safe to re-call to replace the persona.",
+      "summary": "RETIRED (V2 admission gate). Persona is now a Persona Plan property, decided once when the plan is created/admitted and never per-account. This route always returns a structured 409 (code=persona_owned_by_persona_plan) pointing the caller to the account's Persona Plan instead of writing anything. Do not call this to onboard an account -- pick/create the Persona Plan under the campaign BEFORE +submit/+submit-batch, which now require agentic_persona_plan_id instead of persona_id. Known follow-up (V5): a plan-level set-persona command replaces this entirely.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -6500,11 +6500,15 @@
       "capability_key": "account-operation.submit",
       "domain": "account-operation",
       "examples": [
-        "museoncli account-operation +submit --pool-account-id <uuid> --organization-id <uuid> --product-id <product_uuid> --niche leather_care"
+        "museoncli account-operation +submit --pool-account-id <uuid> --organization-id <uuid> --agentic-persona-plan-id <plan_uuid> --product-id <product_uuid> --niche leather_care"
       ],
       "execution": "direct",
       "input_schema": {
         "properties": {
+          "agentic_persona_plan_id": {
+            "description": "REQUIRED (V2 admission gate). The Agentic Persona Plan this account is admitted under -- persona is decided once per plan, never per account. The plan must exist, be active, have a persona, and share this request's workspace/organization.",
+            "type": "string"
+          },
           "organization_id": {
             "description": "Organization id",
             "type": "string"
@@ -6518,6 +6522,11 @@
             "type": "string"
           }
         },
+        "required": [
+          "organization_id",
+          "pool_account_id",
+          "agentic_persona_plan_id"
+        ],
         "type": "object"
       },
       "name": "account-operation.submit",
@@ -6579,7 +6588,7 @@
       "risk_level": "write",
       "shortcut": "+submit",
       "stability": "stable",
-      "summary": "Submit a pool account into automated operation (registers + binds the agent conversation). Response data.research_disposition tells the outcome: established_seeded=直接 active(继承既有排期元素,无需调研); research_directed/inductive/full=进入 onboarding 调研. When a Product is resolved, pass optional --product-id once to bind product truth, description/media, and promotion guidance to the operation; an explicit audience action is optional. Same-Product retries are idempotent and a different Product is rejected. Submitting is the explicit Account Publish -> fully-managed mode switch: an account_publish allocation is atomically transferred and existing publish configuration is preserved. Live schedule work never blocks the switch and must NOT be cancelled first: future scheduled items are adopted by the operation as managed schedule, and generating/generated/publishing items simply finish outside managed attribution. Pass --research-prompt/--reference-url ONLY when the operator explicitly mentioned research direction or benchmark accounts. When submitting MULTIPLE accounts in one turn, reply ONE consolidated confirmation card (per-account row: username/op_id/disposition) instead of N cards. NOTE: an account already operating under a DIFFERENT session is NOT moved here — you get the existing op back unchanged (no rebind); prefer +submit-batch which reports this explicitly in meta.existing[] with a conflict link.",
+      "summary": "Submit a pool account into automated operation (registers + binds the agent conversation). REQUIRES --agentic-persona-plan-id (V2 admission gate): persona is decided once per Persona Plan under the target campaign, not per account; pick/create that plan BEFORE submitting. The server rejects the submit with a structured error if the plan does not exist, is not active, has no persona, or belongs to a different campaign/workspace/organization -- pick a valid plan and retry, do not fall back to any per-account persona flow (+set-persona is retired). Response data.research_disposition tells the outcome: established_seeded=直接 active(继承既有排期元素,无需调研); research_directed/inductive/full=进入 onboarding 调研. When a Product is resolved, pass optional --product-id once to bind product truth, description/media, and promotion guidance to the operation; an explicit audience action is optional. Same-Product retries are idempotent and a different Product is rejected. Submitting is the explicit Account Publish -> fully-managed mode switch: an account_publish allocation is atomically transferred and existing publish configuration is preserved. Live schedule work never blocks the switch and must NOT be cancelled first: future scheduled items are adopted by the operation as managed schedule, and generating/generated/publishing items simply finish outside managed attribution. Pass --research-prompt/--reference-url ONLY when the operator explicitly mentioned research direction or benchmark accounts. When submitting MULTIPLE accounts in one turn, reply ONE consolidated confirmation card (per-account row: username/op_id/disposition) instead of N cards. NOTE: an account already operating under a DIFFERENT session is NOT moved here — you get the existing op back unchanged (no rebind); prefer +submit-batch which reports this explicitly in meta.existing[] with a conflict link.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -6599,11 +6608,15 @@
       "capability_key": "account-operation.submit-batch",
       "domain": "account-operation",
       "examples": [
-        "museoncli account-operation +submit-batch --pool-account-ids <uuid1>,<uuid2> --organization-id <uuid> --product-id <product_uuid> --niche diy_restoration --reference-url https://www.tiktok.com/@benchmark"
+        "museoncli account-operation +submit-batch --pool-account-ids <uuid1>,<uuid2> --organization-id <uuid> --agentic-persona-plan-id <plan_uuid> --product-id <product_uuid> --niche diy_restoration --reference-url https://www.tiktok.com/@benchmark"
       ],
       "execution": "direct",
       "input_schema": {
         "properties": {
+          "agentic_persona_plan_id": {
+            "description": "REQUIRED (V2 admission gate), batch-level -- shared by every account in this batch, no per-account override. A Persona Plan owns one persona shared by every account under it; accounts needing a different persona must be submitted as a separate batch.",
+            "type": "string"
+          },
           "organization_id": {
             "description": "Organization id",
             "type": "string"
@@ -6617,6 +6630,11 @@
             "type": "string"
           }
         },
+        "required": [
+          "organization_id",
+          "pool_account_ids",
+          "agentic_persona_plan_id"
+        ],
         "type": "object"
       },
       "name": "account-operation.submit-batch",
@@ -6678,7 +6696,7 @@
       "risk_level": "write",
       "shortcut": "+submit-batch",
       "stability": "stable",
-      "summary": "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — PREFERRED over N single +submit calls when the operator hands over a batch. All accounts bind to the current session; account-operation submission does NOT create a campaign monitor. One optional --product-id identifies the shared Product/CTA context for the ENTIRE batch; one batch has at most one Product and per-account overrides are forbidden. Shared --niche/--research-prompt/--reference-url apply to every account. Reply ONE consolidated confirmation card from the response rows (username/op_id/research_disposition). IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] (each {pool_account_id, error}); if non-empty, call out the dropped accounts in the confirmation and re-submit them, do NOT assume all landed. ALSO check meta.existing[]: these accounts were ALREADY in operation (not new). outcome='existing_other_session' means the account is already running under a DIFFERENT session and was NOT added here — pick a fresh 账号库 account instead, and surface conflict_session_url so the operator can open that session to check. outcome='occupied_other_business' means the account is already used by another business (for example campaign) and was NOT taken into 全托管运营 — pick a different 账号库 (unoccupied) account. An account_publish holder is transferred automatically during submit; its live schedule never blocks the transfer — future scheduled items are adopted by the operation and in-flight items finish as-is, so never cancel schedules to unblock enrollment. outcome='not_in_workspace' means the account does not belong to this workspace's account pool and was NOT taken into 全托管运营 — pick an account from this workspace. outcome='existing_product_conflict' means that account is already managed for another Product and was NOT changed; report current_product_id and requested_product_id instead of silently switching it. meta.created_count = how many were genuinely new.",
+      "summary": "Batch-submit MULTIPLE pool accounts into automated operation in ONE call — PREFERRED over N single +submit calls when the operator hands over a batch. REQUIRES --agentic-persona-plan-id (V2 admission gate), shared by the WHOLE batch: a Persona Plan owns one persona shared by every account under it, so per-account persona overrides are forbidden -- accounts needing a different persona must be submitted as a SEPARATE batch under a different plan. The server rejects the whole call atomically (before reserving any account) if the plan does not exist, is not active, has no persona, or belongs to a different campaign/workspace/organization. All accounts bind to the current session; account-operation submission does NOT create a campaign monitor. One optional --product-id identifies the shared Product/CTA context for the ENTIRE batch; one batch has at most one Product and per-account overrides are forbidden. Shared --niche/--research-prompt/--reference-url apply to every account. Reply ONE consolidated confirmation card from the response rows (username/op_id/research_disposition). IMPORTANT: per-account failures are isolated — ALWAYS check meta.failed[] (each {pool_account_id, error}); if non-empty, call out the dropped accounts in the confirmation and re-submit them, do NOT assume all landed. ALSO check meta.existing[]: these accounts were ALREADY in operation (not new). outcome='existing_other_session' means the account is already running under a DIFFERENT session and was NOT added here — pick a fresh 账号库 account instead, and surface conflict_session_url so the operator can open that session to check. outcome='occupied_other_business' means the account is already used by another business (for example campaign) and was NOT taken into 全托管运营 — pick a different 账号库 (unoccupied) account. An account_publish holder is transferred automatically during submit; its live schedule never blocks the transfer — future scheduled items are adopted by the operation and in-flight items finish as-is, so never cancel schedules to unblock enrollment. outcome='not_in_workspace' means the account does not belong to this workspace's account pool and was NOT taken into 全托管运营 — pick an account from this workspace. outcome='existing_product_conflict' means that account is already managed for another Product and was NOT changed; report current_product_id and requested_product_id instead of silently switching it. meta.created_count = how many were genuinely new.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -19062,7 +19080,7 @@
       "risk_level": "write",
       "shortcut": "+assets-set",
       "stability": "stable",
-      "summary": "Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation.",
+      "summary": "Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation. --persona-id on a fully-managed account whose Persona Plan is linked (V2 admission gate) always returns a structured 409 (code=persona_owned_by_persona_plan) -- persona is plan-owned and cannot be changed per account; direct the user to the Persona Plan instead. --persona-id still works normally on a pre-V2 unlinked managed account or an ordinary (non-managed) account.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

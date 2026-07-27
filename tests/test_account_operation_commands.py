@@ -74,6 +74,8 @@ def test_parser_registers_account_operation_commands() -> None:
             "11111111-1111-1111-1111-111111111111",
             "--organization-id",
             "22222222-2222-2222-2222-222222222222",
+            "--agentic-persona-plan-id",
+            "33333333-3333-4333-8333-333333333333",
             "--product-id",
             "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
             "--niche",
@@ -81,6 +83,7 @@ def test_parser_registers_account_operation_commands() -> None:
         ]
     )
     assert args.domain_command == "account-operation.submit"
+    assert args.agentic_persona_plan_id == "33333333-3333-4333-8333-333333333333"
     assert args.product_id == "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 
     decide = parse(
@@ -123,6 +126,7 @@ def test_submit_posts_with_conversation_from_runtime_context(monkeypatch) -> Non
         {
             "pool_account_id": "pool-1",
             "organization_id": "org-1",
+            "agentic_persona_plan_id": "plan-1",
             "product_id": "product-1",
             "niche": "leather",
         },
@@ -133,6 +137,7 @@ def test_submit_posts_with_conversation_from_runtime_context(monkeypatch) -> Non
     body = call["json_body"]
     assert body["workspace_id"] == "ws-1"
     assert body["pool_account_id"] == "pool-1"
+    assert body["agentic_persona_plan_id"] == "plan-1"
     assert body["product_id"] == "product-1"
     assert body["session_conversation_id"] == "conv-9"  # defaulted from per-turn runtime context
 
@@ -146,9 +151,12 @@ def test_submit_allows_omitted_optional_product(monkeypatch) -> None:
             "pool-1",
             "--organization-id",
             "org-1",
+            "--agentic-persona-plan-id",
+            "plan-1",
         ]
     )
     assert args.product_id is None
+    assert args.agentic_persona_plan_id == "plan-1"
 
     capture = _Capture()
     monkeypatch.setattr(main_module, "api_data_v2", capture)
@@ -157,10 +165,36 @@ def test_submit_allows_omitted_optional_product(monkeypatch) -> None:
         {
             "pool_account_id": "pool-1",
             "organization_id": "org-1",
+            "agentic_persona_plan_id": "plan-1",
             "product_id": None,
         },
     )
     assert "product_id" not in capture.calls[0]["json_body"]
+
+
+def test_submit_requires_agentic_persona_plan() -> None:
+    with pytest.raises(SystemExit):
+        parse(
+            [
+                "account-operation",
+                "+submit",
+                "--pool-account-id",
+                "pool-1",
+                "--organization-id",
+                "org-1",
+            ]
+        )
+    with pytest.raises(SystemExit):
+        parse(
+            [
+                "account-operation",
+                "+submit-batch",
+                "--pool-account-ids",
+                "pool-1,pool-2",
+                "--organization-id",
+                "org-1",
+            ]
+        )
 
 
 def test_submit_batch_sends_one_shared_product_not_per_account(monkeypatch) -> None:
@@ -172,12 +206,15 @@ def test_submit_batch_sends_one_shared_product_not_per_account(monkeypatch) -> N
             "pool-1,pool-2",
             "--organization-id",
             "org-1",
+            "--agentic-persona-plan-id",
+            "plan-1",
             "--product-id",
             "product-1",
         ]
     )
     built = account_operation._build_account_operation_submit_batch_arguments(args)
     assert built["product_id"] == "product-1"
+    assert built["agentic_persona_plan_id"] == "plan-1"
 
     capture = _Capture(response={"data": [], "meta": {}})
     monkeypatch.setattr(main_module, "api_data_v2", capture)
@@ -186,6 +223,7 @@ def test_submit_batch_sends_one_shared_product_not_per_account(monkeypatch) -> N
         {
             "pool_account_ids": "pool-1,pool-2",
             "organization_id": "org-1",
+            "agentic_persona_plan_id": "plan-1",
             "product_id": "product-1",
         },
         runtime={"conversation_id": "conv-9"},
@@ -193,6 +231,7 @@ def test_submit_batch_sends_one_shared_product_not_per_account(monkeypatch) -> N
 
     body = capture.calls[0]["json_body"]
     assert body["product_id"] == "product-1"
+    assert body["agentic_persona_plan_id"] == "plan-1"
     assert body["accounts"] == [
         {"pool_account_id": "pool-1"},
         {"pool_account_id": "pool-2"},
@@ -214,6 +253,18 @@ def test_submit_contract_describes_account_publish_managed_takeover() -> None:
     assert "account_publish holder is transferred automatically" in batch.summary
     assert "never cancel schedules to unblock enrollment" in batch.summary
     assert "blocking_schedule_counts" not in batch.output_schema["description"]
+    assert "--agentic-persona-plan-id" in submit.summary
+    assert "--agentic-persona-plan-id" in batch.summary
+    assert submit.input_schema["required"] == [
+        "organization_id",
+        "pool_account_id",
+        "agentic_persona_plan_id",
+    ]
+    assert batch.input_schema["required"] == [
+        "organization_id",
+        "pool_account_ids",
+        "agentic_persona_plan_id",
+    ]
 
 
 def test_get_and_list(monkeypatch) -> None:
@@ -444,6 +495,7 @@ def test_write_commands_dry_run_do_not_call_api(monkeypatch) -> None:
     org_id = "22222222-2222-2222-2222-222222222222"
     op_id = "33333333-3333-3333-3333-333333333333"
     run_id = "44444444-4444-4444-4444-444444444444"
+    plan_id = "77777777-7777-4777-8777-777777777777"
     format_a = "55555555-5555-4555-8555-555555555555"
     format_b = "66666666-6666-4666-8666-666666666666"
     argvs = [
@@ -454,6 +506,8 @@ def test_write_commands_dry_run_do_not_call_api(monkeypatch) -> None:
             pool_id,
             "--organization-id",
             org_id,
+            "--agentic-persona-plan-id",
+            plan_id,
             "--dry-run",
         ],
         [
