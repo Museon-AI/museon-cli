@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 from typing import Any
 
 import pytest
@@ -116,6 +117,100 @@ def test_parser_registers_domain_and_server_dry_run_defaults() -> None:
     assert built["pause_format_ids"] == ["f1"]
     assert built["pause_topic_ids"] == ["t1"]
     assert built["dry_run"] is False
+
+
+@pytest.mark.parametrize(
+    ("shortcut", "candidate_args", "expected_suffix", "expected_body"),
+    [
+        (
+            "+candidate-submit",
+            ["--name", "DIY problem solver"],
+            "/candidates:submit",
+            {"name": "DIY problem solver"},
+        ),
+        (
+            "+candidate-revise",
+            [
+                "--candidate-id",
+                "77777777-7777-4777-8777-777777777777",
+                "--note",
+                "Brighter visual direction",
+            ],
+            "/candidates/77777777-7777-4777-8777-777777777777:revise",
+            {"note": "Brighter visual direction"},
+        ),
+    ],
+)
+def test_candidate_commands_dispatch_to_live_api_contract(
+    monkeypatch,
+    shortcut: str,
+    candidate_args: list[str],
+    expected_suffix: str,
+    expected_body: dict[str, Any],
+) -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    persona_payload = {
+        "name": "Mia",
+        "description": "Practical maker",
+        "visual_prompt": "Warm workshop portrait",
+        "reference_media_ids": ["88888888-8888-4888-8888-888888888888"],
+    }
+    elements = [
+        {
+            "format_id": "44444444-4444-4444-8444-444444444444",
+            "topic_id": "55555555-5555-4555-8555-555555555555",
+            "cta_target_id": "66666666-6666-4666-8666-666666666666",
+        }
+    ]
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id),
+        {"candidate": {"id": "candidate-1"}, "operation_id": "secret-operation-id"},
+    )
+    monkeypatch.setattr(main_module, "api_data_v2", capture)
+    cfg = Config()
+    cfg.workspace.id = "11111111-1111-4111-8111-111111111111"
+    args = parse(
+        [
+            "agentic-campaign",
+            shortcut,
+            "--plan-id",
+            plan_id,
+            *candidate_args,
+            "--persona-payload-json",
+            json.dumps(persona_payload),
+            "--elements-json",
+            json.dumps(elements),
+        ]
+    )
+
+    result = asyncio.run(main_module.dispatch_domain_command(args, cfg))
+
+    call = capture.calls[-1]
+    assert call["method"] == "POST"
+    assert call["path"].endswith(expected_suffix)
+    assert call["json_body"] == {
+        "workspace_id": "11111111-1111-4111-8111-111111111111",
+        "persona_payload": persona_payload,
+        "elements": elements,
+        **expected_body,
+    }
+    assert "secret-operation-id" not in repr(result)
+
+
+def test_candidate_contract_matches_submit_and_revise_note_boundary() -> None:
+    submit = get_command_spec("agentic-campaign.candidate-submit")
+    revise = get_command_spec("agentic-campaign.candidate-revise")
+
+    assert "note" not in submit.input_schema["properties"]
+    assert revise.input_schema["properties"]["note"]["maxLength"] == 2000
+    assert submit.input_schema["properties"]["plan_id"]["format"] == "uuid"
+    assert (
+        submit.input_schema["properties"]["elements"]["items"]["properties"]["format_id"][
+            "examples"
+        ]
+        == ["33333333-3333-4333-8333-333333333333"]
+    )
 
 
 def test_plan_get_resolves_campaign_and_only_returns_display_account_identity() -> None:

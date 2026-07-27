@@ -519,6 +519,56 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.candidate-submit",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.candidate-submit",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+candidate-submit",
+          "stability": "stable",
+          "summary": "Submit one Persona Plan candidate and its first version.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.candidate-revise",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.candidate-revise",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+candidate-revise",
+          "stability": "stable",
+          "summary": "Submit a new version to a Persona Plan candidate's current head.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.list",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -9087,6 +9137,456 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "agentic-campaign.candidate-revise": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.candidate-revise",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +candidate-revise --plan-id 33333333-3333-4333-8333-333333333333 --candidate-id 77777777-7777-4777-8777-777777777777 --persona-payload-json '{\"name\":\"Mia\",\"description\":\"Practical maker\",\"visual_prompt\":\"Bright workshop portrait\",\"reference_media_ids\":[]}' --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\",\"cta_target_id\":\"66666666-6666-4666-8666-666666666666\"}]' --note 'Tighten the visual direction'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "candidate_id": {
+            "description": "Persona Plan candidate id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "elements": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "cta_target_id": {
+                  "description": "Optional CTA target id",
+                  "examples": [
+                    "66666666-6666-4666-8666-666666666666"
+                  ],
+                  "format": "uuid",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "format_id": {
+                  "description": "Format id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "topic_id": {
+                  "description": "Content topic id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "format_id",
+                "topic_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "note": {
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "persona_payload": {
+            "additionalProperties": false,
+            "properties": {
+              "avatar_style": {
+                "maxLength": 2000,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bio_template": {
+                "maxLength": 2000,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "name": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "reference_media_ids": {
+                "default": [],
+                "items": {
+                  "description": "Reference media id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "required_hashtags": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "required_mentions": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "visual_prompt": {
+                "maxLength": 10000,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "description",
+              "visual_prompt"
+            ],
+            "type": "object"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id",
+          "candidate_id",
+          "persona_payload",
+          "elements"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.candidate-revise",
+      "output_schema": {
+        "description": "Candidate, new head version, elements, and generation task ids.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+candidate-revise",
+      "stability": "stable",
+      "summary": "Submit a new version to a Persona Plan candidate's current head.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.candidate-submit": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.candidate-submit",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +candidate-submit --plan-id 33333333-3333-4333-8333-333333333333 --name 'DIY problem solver' --persona-payload-json '{\"name\":\"Mia\",\"description\":\"Practical maker\",\"visual_prompt\":\"Warm workshop portrait\",\"reference_media_ids\":[]}' --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "elements": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "cta_target_id": {
+                  "description": "Optional CTA target id",
+                  "examples": [
+                    "66666666-6666-4666-8666-666666666666"
+                  ],
+                  "format": "uuid",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "format_id": {
+                  "description": "Format id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "topic_id": {
+                  "description": "Content topic id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "format_id",
+                "topic_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "persona_payload": {
+            "additionalProperties": false,
+            "properties": {
+              "avatar_style": {
+                "maxLength": 2000,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bio_template": {
+                "maxLength": 2000,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "name": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "reference_media_ids": {
+                "default": [],
+                "items": {
+                  "description": "Reference media id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "required_hashtags": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "required_mentions": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "visual_prompt": {
+                "maxLength": 10000,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "description",
+              "visual_prompt"
+            ],
+            "type": "object"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id",
+          "name",
+          "persona_payload",
+          "elements"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.candidate-submit",
+      "output_schema": {
+        "description": "Created candidate, first version, elements, and generation task ids.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+candidate-submit",
+      "stability": "stable",
+      "summary": "Submit one Persona Plan candidate and its first version.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "agentic-campaign.get": {
       "authorization": {
         "authentication_required": true,
@@ -9110,6 +9610,9 @@
         "properties": {
           "campaign_id": {
             "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           }
@@ -9413,6 +9916,9 @@
         "properties": {
           "plan_id": {
             "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           }
@@ -9542,6 +10048,9 @@
           },
           "plan_id": {
             "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           },
@@ -9649,6 +10158,9 @@
         "properties": {
           "plan_id": {
             "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           }
@@ -9744,6 +10256,9 @@
         "properties": {
           "campaign_id": {
             "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           }
@@ -9839,11 +10354,17 @@
         "properties": {
           "persona_id": {
             "description": "Persona id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           },
           "plan_id": {
             "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           }
@@ -9958,6 +10479,9 @@
           },
           "plan_id": {
             "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           },
@@ -10077,6 +10601,9 @@
           },
           "plan_id": {
             "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           },
@@ -10189,6 +10716,9 @@
         "properties": {
           "plan_id": {
             "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
             "format": "uuid",
             "type": "string"
           }

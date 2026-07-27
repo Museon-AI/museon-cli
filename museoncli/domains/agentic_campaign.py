@@ -24,7 +24,12 @@ def _csv(value: Any) -> list[str]:
 
 
 def _uuid_property(description: str) -> dict[str, Any]:
-    return {"type": "string", "format": "uuid", "description": description}
+    return {
+        "type": "string",
+        "format": "uuid",
+        "description": description,
+        "examples": ["33333333-3333-4333-8333-333333333333"],
+    }
 
 
 def _add_list_arguments(parser: argparse.ArgumentParser) -> None:
@@ -71,6 +76,70 @@ def _add_set_persona_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _build_set_persona_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {"plan_id": args.plan_id, "persona_id": args.persona_id}
+
+
+def _add_candidate_arguments(
+    parser: argparse.ArgumentParser,
+    *,
+    submit: bool,
+) -> None:
+    _add_plan_id_arguments(parser)
+    if not submit:
+        parser.add_argument("--candidate-id", required=True)
+    if submit:
+        parser.add_argument("--name", required=True)
+    parser.add_argument("--persona-payload-json", required=True)
+    parser.add_argument("--elements-json", required=True)
+    if not submit:
+        parser.add_argument("--note", default=None)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _candidate_json(value: str, *, field: str, expected_type: type) -> Any:
+    parsed = read_json_option(value=value, file_path=None, field=field)
+    if not isinstance(parsed, expected_type):
+        expected_name = "object" if expected_type is dict else "array"
+        raise ValueError(f"{field} must be a JSON {expected_name}")
+    return parsed
+
+
+def _build_candidate_arguments(args: argparse.Namespace, *, submit: bool) -> dict[str, Any]:
+    payload = {
+        "plan_id": args.plan_id,
+        "persona_payload": _candidate_json(
+            args.persona_payload_json,
+            field="persona-payload",
+            expected_type=dict,
+        ),
+        "elements": _candidate_json(
+            args.elements_json,
+            field="elements",
+            expected_type=list,
+        ),
+        "dry_run": args.dry_run,
+    }
+    if submit:
+        payload["name"] = args.name
+    else:
+        payload["candidate_id"] = args.candidate_id
+        payload["note"] = args.note
+    return payload
+
+
+def _add_candidate_submit_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_candidate_arguments(parser, submit=True)
+
+
+def _build_candidate_submit_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return _build_candidate_arguments(args, submit=True)
+
+
+def _add_candidate_revise_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_candidate_arguments(parser, submit=False)
+
+
+def _build_candidate_revise_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return _build_candidate_arguments(args, submit=False)
 
 
 def _add_plan_submit_arguments(parser: argparse.ArgumentParser) -> None:
@@ -182,9 +251,131 @@ def _plan_schema(extra: dict[str, Any] | None = None, required: list[str] | None
     )
 
 
+def _persona_payload_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "name": {"type": "string", "minLength": 1, "maxLength": 200},
+            "description": {"type": "string", "minLength": 1, "maxLength": 4000},
+            "visual_prompt": {"type": "string", "minLength": 1, "maxLength": 10000},
+            "reference_media_ids": {
+                "type": "array",
+                "items": _uuid_property("Reference media id"),
+                "default": [],
+            },
+            "avatar_style": {"type": ["string", "null"], "maxLength": 2000},
+            "bio_template": {"type": ["string", "null"], "maxLength": 2000},
+            "required_hashtags": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 100,
+                "default": [],
+            },
+            "required_mentions": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 100,
+                "default": [],
+            },
+        },
+        "required": ["name", "description", "visual_prompt"],
+    }
+
+
+def _candidate_elements_schema() -> dict[str, Any]:
+    return {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 100,
+        "items": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "format_id": _uuid_property("Format id"),
+                "topic_id": _uuid_property("Content topic id"),
+                "cta_target_id": {
+                    "type": ["string", "null"],
+                    "format": "uuid",
+                    "description": "Optional CTA target id",
+                    "examples": ["66666666-6666-4666-8666-666666666666"],
+                },
+            },
+            "required": ["format_id", "topic_id"],
+        },
+    }
+
+
 def specs() -> list[CommandSpec]:
     domain = Domain.AGENTIC_CAMPAIGN
     return [
+        CommandSpec(
+            domain=domain,
+            shortcut="+candidate-submit",
+            summary="Submit one Persona Plan candidate and its first version.",
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_candidate_submit",
+            input_schema=_plan_schema(
+                {
+                    "name": {"type": "string", "minLength": 1, "maxLength": 200},
+                    "persona_payload": _persona_payload_schema(),
+                    "elements": _candidate_elements_schema(),
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["name", "persona_payload", "elements"],
+            ),
+            output_schema=_direct_output_schema(
+                "Created candidate, first version, elements, and generation task ids."
+            ),
+            examples=[
+                "museoncli agentic-campaign +candidate-submit "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--name 'DIY problem solver' "
+                """--persona-payload-json '{"name":"Mia","description":"Practical maker","""
+                """"visual_prompt":"Warm workshop portrait","reference_media_ids":[]}' """
+                """--elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
+                """"topic_id":"55555555-5555-4555-8555-555555555555"}]'"""
+            ],
+            add_arguments=_add_candidate_submit_arguments,
+            build_arguments=_build_candidate_submit_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+candidate-revise",
+            summary="Submit a new version to a Persona Plan candidate's current head.",
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_candidate_revise",
+            input_schema=_plan_schema(
+                {
+                    "candidate_id": _uuid_property("Persona Plan candidate id"),
+                    "persona_payload": _persona_payload_schema(),
+                    "elements": _candidate_elements_schema(),
+                    "note": {"type": ["string", "null"], "maxLength": 2000},
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["candidate_id", "persona_payload", "elements"],
+            ),
+            output_schema=_direct_output_schema(
+                "Candidate, new head version, elements, and generation task ids."
+            ),
+            examples=[
+                "museoncli agentic-campaign +candidate-revise "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--candidate-id 77777777-7777-4777-8777-777777777777 "
+                """--persona-payload-json '{"name":"Mia","description":"Practical maker","""
+                """"visual_prompt":"Bright workshop portrait","reference_media_ids":[]}' """
+                """--elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
+                """"topic_id":"55555555-5555-4555-8555-555555555555","""
+                """"cta_target_id":"66666666-6666-4666-8666-666666666666"}]' """
+                "--note 'Tighten the visual direction'"
+            ],
+            add_arguments=_add_candidate_revise_arguments,
+            build_arguments=_build_candidate_revise_arguments,
+            supports_dry_run=True,
+        ),
         CommandSpec(
             domain=domain,
             shortcut="+list",
@@ -582,6 +773,43 @@ async def _execute_plan_set_persona(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_candidate_submit(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
+            f"{plan['id']}/candidates:submit"
+        ),
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "name": ctx.arguments.get("name"),
+            "persona_payload": ctx.arguments.get("persona_payload"),
+            "elements": ctx.arguments.get("elements"),
+        },
+    )
+
+
+async def _execute_candidate_revise(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    candidate_id = ctx.arguments.get("candidate_id")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"candidates/{candidate_id}:revise"
+        ),
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "persona_payload": ctx.arguments.get("persona_payload"),
+            "elements": ctx.arguments.get("elements"),
+            "note": ctx.arguments.get("note"),
+        },
+    )
+
+
 async def _plan_post(ctx: CommandContext, action: str, payload: dict[str, Any]) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     return await ctx.api_data_v2(
@@ -687,6 +915,12 @@ async def _execute_issues_pull(ctx: CommandContext) -> Any:
 
 
 EXECUTORS = {
+    "agentic-campaign.candidate-revise": redacted_direct_enveloped(
+        _execute_candidate_revise, redact_api_errors=True
+    ),
+    "agentic-campaign.candidate-submit": redacted_direct_enveloped(
+        _execute_candidate_submit, redact_api_errors=True
+    ),
     "agentic-campaign.get": redacted_direct_enveloped(_execute_get, redact_api_errors=True),
     "agentic-campaign.issues-pull": redacted_direct_enveloped(
         _execute_issues_pull, redact_api_errors=True
