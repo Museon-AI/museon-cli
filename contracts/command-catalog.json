@@ -777,7 +777,7 @@
           "risk_level": "write",
           "shortcut": "+issues-pull",
           "stability": "stable",
-          "summary": "Pull and lease Account Operation Issues for the current Mel session, optionally limited to one Agentic Creative Campaign. Uses the server-attested assertion from runtime context and omits account_operation_id from claims.",
+          "summary": "Pull and lease Account Operation Issues from one required Agentic Creative Campaign. The campaign selects candidates; the runtime conversation identity is used only for lease and message context. Claims omit account_operation_id.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -5453,7 +5453,7 @@
       "agentic-campaign"
     ]
   },
-  "contract_revision": "0.3.76",
+  "contract_revision": "0.3.77",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -9198,17 +9198,14 @@
       "capability_key": "agentic-campaign.issues-pull",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +issues-pull --limit 20"
+        "museoncli agentic-campaign +issues-pull --campaign-id 22222222-2222-4222-8222-222222222222 --limit 20"
       ],
       "execution": "direct",
       "input_schema": {
         "properties": {
           "campaign_id": {
             "format": "uuid",
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "limit": {
             "maximum": 50,
@@ -9217,6 +9214,7 @@
           }
         },
         "required": [
+          "campaign_id",
           "limit"
         ],
         "type": "object"
@@ -9280,7 +9278,7 @@
       "risk_level": "write",
       "shortcut": "+issues-pull",
       "stability": "stable",
-      "summary": "Pull and lease Account Operation Issues for the current Mel session, optionally limited to one Agentic Creative Campaign. Uses the server-attested assertion from runtime context and omits account_operation_id from claims.",
+      "summary": "Pull and lease Account Operation Issues from one required Agentic Creative Campaign. The campaign selects candidates; the runtime conversation identity is used only for lease and message context. Claims omit account_operation_id.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
