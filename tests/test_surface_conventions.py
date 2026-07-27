@@ -23,7 +23,6 @@ LIMIT_CAP_COMMANDS = {
     "evaluator.list",
     "evaluator.run-list",
     "account-operation.runs",
-    "account-operation.attribution",
 }
 # positional mode selectors (never IDs)
 ALLOWED_POSITIONALS = {"routines.record": ["kind"]}

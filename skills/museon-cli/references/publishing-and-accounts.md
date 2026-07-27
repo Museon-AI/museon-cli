@@ -27,7 +27,7 @@ Account-wide required hashtags belong to publish settings. Use
 `social-account +config-update --required-hashtags '#Brand,#Campaign'` to
 replace them, or `--required-hashtags ""` to clear them. Omitting the flag
 preserves the current setting. During fully managed onboarding,
-`account-operation +plan-submit` accepts the same flag and semantics; the
+`agentic-campaign +plan-submit` accepts the same flag and semantics; the
 operation itself does not retain a separate copy.
 
 ## Connect a user-owned account

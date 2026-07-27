@@ -296,77 +296,6 @@ def _build_account_operation_daily_roster_arguments(args: argparse.Namespace) ->
     }
 
 
-def _add_account_operation_plan_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--id", dest="operation_id", required=True)
-    parser.add_argument("--format-ids", default=None, help="Comma-separated format ids.")
-    parser.add_argument("--topic-ids", default=None, help="Comma-separated content topic ids.")
-    parser.add_argument(
-        "--required-hashtags",
-        default=None,
-        help=(
-            "Comma-separated account-wide required hashtags. Pass an empty string to clear them."
-        ),
-    )
-    parser.add_argument("--note", default=None)
-    parser.add_argument("--dry-run", action="store_true")
-
-
-def _csv_id_list(value: str | None) -> list[str] | None:
-    if value is None:
-        return None
-    return [part.strip() for part in str(value).split(",") if part.strip()]
-
-
-def _build_account_operation_plan_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    payload = {
-        "operation_id": args.operation_id,
-        "format_ids": _csv_id_list(args.format_ids),
-        "topic_ids": _csv_id_list(args.topic_ids),
-        "note": args.note,
-    }
-    if args.required_hashtags is not None:
-        payload["required_hashtags"] = _csv_id_list(args.required_hashtags)
-    return payload
-
-
-def _add_account_operation_persona_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--id", dest="operation_id", required=True)
-    parser.add_argument("--name", required=True, help="Persona name (人设名).")
-    parser.add_argument(
-        "--description",
-        default=None,
-        help="Persona voice/audience/positioning summary.",
-    )
-    parser.add_argument("--tags", default=None, help="Comma-separated style/audience tags.")
-    parser.add_argument("--dry-run", action="store_true")
-
-
-def _build_account_operation_persona_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {
-        "operation_id": args.operation_id,
-        "name": args.name,
-        "description": args.description,
-        "tags": _csv_id_list(args.tags),
-    }
-
-
-def _add_account_operation_decide_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--id", dest="operation_id", required=True)
-    parser.add_argument("--run-id", required=True)
-    parser.add_argument("--decided-by", required=True, choices=["human", "auto-timeout"])
-    parser.add_argument("--decision-json", default=None, help="Optional decision JSON object.")
-    parser.add_argument("--dry-run", action="store_true")
-
-
-def _build_account_operation_decide_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {
-        "operation_id": args.operation_id,
-        "run_id": args.run_id,
-        "decided_by": dekebab(args.decided_by),
-        "decision_json": args.decision_json,
-    }
-
-
 def _add_account_operation_stop_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--id", dest="operation_id", required=True)
     parser.add_argument(
@@ -427,31 +356,6 @@ def _build_account_operation_resolve_arguments(args: argparse.Namespace) -> dict
     return {"account": args.account}
 
 
-def _add_account_operation_elements_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--id", dest="operation_id", required=True)
-    parser.add_argument("--add-format-ids", default=None)
-    parser.add_argument("--add-topic-ids", default=None)
-    parser.add_argument("--resume-format-ids", default=None)
-    parser.add_argument("--resume-topic-ids", default=None)
-    parser.add_argument("--pause-format-ids", default=None)
-    parser.add_argument("--pause-topic-ids", default=None)
-    parser.add_argument("--note", default=None)
-    parser.add_argument("--dry-run", action="store_true")
-
-
-def _build_account_operation_elements_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {
-        "operation_id": args.operation_id,
-        "add_format_ids": _csv_id_list(args.add_format_ids),
-        "add_topic_ids": _csv_id_list(args.add_topic_ids),
-        "resume_format_ids": _csv_id_list(args.resume_format_ids),
-        "resume_topic_ids": _csv_id_list(args.resume_topic_ids),
-        "pause_format_ids": _csv_id_list(args.pause_format_ids),
-        "pause_topic_ids": _csv_id_list(args.pause_topic_ids),
-        "note": args.note,
-    }
-
-
 def _account_operation_input_schema(fields: dict[str, str]) -> dict[str, Any]:
     return {
         "type": "object",
@@ -464,26 +368,6 @@ def _account_operation_input_schema(fields: dict[str, str]) -> dict[str, Any]:
             for name, desc in fields.items()
         },
     }
-
-
-def _account_operation_plan_input_schema() -> dict[str, Any]:
-    schema = _account_operation_input_schema(
-        {
-            "operation_id": "Account operation id",
-            "format_ids": "CSV format ids",
-            "topic_ids": "CSV topic ids",
-        }
-    )
-    schema["properties"]["required_hashtags"] = {
-        "type": "array",
-        "items": {"type": "string"},
-        "maxItems": 50,
-        "description": (
-            "Account-wide required hashtags. Omit to preserve the current setting; "
-            "pass an empty array to clear it."
-        ),
-    }
-    return schema
 
 
 def _account_operation_submit_input_schema(*, batch: bool) -> dict[str, Any]:
@@ -534,7 +418,7 @@ def _account_operation_specs() -> list[CommandSpec]:
                 "submit with a structured error if the plan does not exist, is not active, "
                 "has no persona, or belongs to a different campaign/workspace/organization "
                 "-- pick a valid plan and retry, do not fall back to any per-account persona "
-                "flow (+set-persona is retired). Response data.research_disposition tells "
+                "flow. Response data.research_disposition tells "
                 "the outcome: "
                 "established_seeded=直接 active(继承既有排期元素,无需调研); "
                 "research_directed/inductive/full=进入 onboarding 调研. "
@@ -830,112 +714,6 @@ def _account_operation_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.ACCOUNT_OPERATION,
-            shortcut="+tags",
-            summary="List an operated account's element tags (format/topic/combo lifecycle).",
-            risk_level="read",
-            execution="direct",
-            adapter_tool_name="account_operation_tags",
-            input_schema=_account_operation_input_schema({"operation_id": "Account operation id"}),
-            output_schema=_direct_output_schema("Element tag list."),
-            examples=["museoncli account-operation +tags --id <uuid>"],
-            add_arguments=_add_account_operation_id_arguments,
-            build_arguments=_build_account_operation_id_arguments,
-        ),
-        CommandSpec(
-            domain=Domain.ACCOUNT_OPERATION,
-            shortcut="+attribution",
-            summary="List an operated account's attribution reports (comment classes, recommendation, decision).",
-            risk_level="read",
-            execution="direct",
-            adapter_tool_name="account_operation_attribution",
-            input_schema=_account_operation_input_schema(
-                {"operation_id": "Account operation id", "limit": "Max rows (default 10)"}
-            ),
-            output_schema=_direct_output_schema("Attribution report list."),
-            examples=["museoncli account-operation +attribution --id <uuid> --limit 5"],
-            add_arguments=_add_account_operation_id_limit_arguments,
-            build_arguments=_build_account_operation_id_limit_arguments,
-        ),
-        CommandSpec(
-            domain=Domain.ACCOUNT_OPERATION,
-            shortcut="+plan-submit",
-            summary="Write back the onboarding/reset research plan (seed formats/topics) -> cold_start.",
-            risk_level="write",
-            execution="direct",
-            adapter_tool_name="account_operation_plan_submit",
-            input_schema=_account_operation_plan_input_schema(),
-            output_schema=_direct_output_schema("Updated account operation."),
-            examples=[
-                (
-                    "museoncli account-operation +plan-submit --id <uuid> "
-                    "--format-ids f1,f2 --topic-ids t1,t2 "
-                    "--required-hashtags '#PlantSenso,#PlantCare'"
-                )
-            ],
-            add_arguments=_add_account_operation_plan_arguments,
-            build_arguments=_build_account_operation_plan_arguments,
-            supports_dry_run=True,
-        ),
-        CommandSpec(
-            domain=Domain.ACCOUNT_OPERATION,
-            shortcut="+set-persona",
-            summary=(
-                "RETIRED (V2 admission gate). Persona is now a Persona Plan property, decided "
-                "once when the plan is created/admitted and never per-account. This route "
-                "always returns a structured 409 (code=persona_owned_by_persona_plan) pointing "
-                "the caller to the account's Persona Plan instead of writing anything. Do not "
-                "call this to onboard an account -- pick/create the Persona Plan under the "
-                "campaign BEFORE +submit/+submit-batch, which now require "
-                "agentic_persona_plan_id instead of persona_id. Known follow-up (V5): a "
-                "plan-level set-persona command replaces this entirely."
-            ),
-            risk_level="write",
-            execution="direct",
-            adapter_tool_name="account_operation_set_persona",
-            input_schema=_account_operation_input_schema(
-                {
-                    "operation_id": "Account operation id",
-                    "name": "Persona name",
-                    "description": "Persona voice/audience/positioning summary",
-                    "tags": "CSV style/audience tags",
-                }
-            ),
-            output_schema=_direct_output_schema(
-                "data.persona_id (new persona) + data.operation_id."
-            ),
-            examples=[
-                'museoncli account-operation +set-persona --id <uuid> --name "Rustic DIY Restorer" '
-                '--description "warm, hands-on cast-iron restoration voice for beginner DIYers" '
-                "--tags diy,cast_iron,beginner_friendly"
-            ],
-            add_arguments=_add_account_operation_persona_arguments,
-            build_arguments=_build_account_operation_persona_arguments,
-            supports_dry_run=True,
-        ),
-        CommandSpec(
-            domain=Domain.ACCOUNT_OPERATION,
-            shortcut="+strategy-decide",
-            summary="Decide the attribution review (human override or auto timeout) and resume the daily run.",
-            risk_level="write",
-            execution="direct",
-            adapter_tool_name="account_operation_strategy_decide",
-            input_schema=_account_operation_input_schema(
-                {
-                    "operation_id": "Account operation id",
-                    "run_id": "Daily run id",
-                    "decided_by": "human|auto-timeout",
-                }
-            ),
-            output_schema=_direct_output_schema("Daily run after the decision."),
-            examples=[
-                "museoncli account-operation +strategy-decide --id <uuid> --run-id <uuid> --decided-by auto-timeout"
-            ],
-            add_arguments=_add_account_operation_decide_arguments,
-            build_arguments=_build_account_operation_decide_arguments,
-            supports_dry_run=True,
-        ),
-        CommandSpec(
-            domain=Domain.ACCOUNT_OPERATION,
             shortcut="+stop",
             summary=(
                 "Retire an account from automated operation (TERMINAL). USE WHEN the operator "
@@ -963,31 +741,6 @@ def _account_operation_specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_account_operation_stop_arguments,
             build_arguments=_build_account_operation_stop_arguments,
-            supports_dry_run=True,
-        ),
-        CommandSpec(
-            domain=Domain.ACCOUNT_OPERATION,
-            shortcut="+elements-replace",
-            summary="Weak recovery write-back: add new formats/topics, resume paused ones, and pause failing ones.",
-            risk_level="write",
-            execution="direct",
-            adapter_tool_name="account_operation_elements_replace",
-            input_schema=_account_operation_input_schema(
-                {
-                    "operation_id": "Account operation id",
-                    "add_format_ids": "CSV",
-                    "add_topic_ids": "CSV",
-                    "resume_format_ids": "CSV format ids to move from pause back to testing",
-                    "resume_topic_ids": "CSV topic ids to move from pause back to testing",
-                }
-            ),
-            output_schema=_direct_output_schema("Updated account operation."),
-            examples=[
-                "museoncli account-operation +elements-replace --id <uuid> --add-format-ids f9 --pause-format-ids f1",
-                "museoncli account-operation +elements-replace --id <uuid> --resume-format-ids f2 --note operator-confirmed",
-            ],
-            add_arguments=_add_account_operation_elements_arguments,
-            build_arguments=_build_account_operation_elements_arguments,
             supports_dry_run=True,
         ),
         CommandSpec(
@@ -1062,25 +815,6 @@ def specs() -> list[CommandSpec]:
 
 
 # ---- executors (generated from main.py direct_* chains) ----
-async def _execute_elements_replace(ctx: CommandContext) -> Any:
-    cfg = ctx.cfg
-    arguments = ctx.arguments
-    api_data_v2 = ctx.api_data_v2
-    operation_id = str(arguments.get("operation_id") or "")
-    payload = {
-        "add_format_ids": _account_operation_csv(arguments.get("add_format_ids")),
-        "add_topic_ids": _account_operation_csv(arguments.get("add_topic_ids")),
-        "resume_format_ids": _account_operation_csv(arguments.get("resume_format_ids")),
-        "resume_topic_ids": _account_operation_csv(arguments.get("resume_topic_ids")),
-        "pause_format_ids": _account_operation_csv(arguments.get("pause_format_ids")),
-        "pause_topic_ids": _account_operation_csv(arguments.get("pause_topic_ids")),
-        "note": arguments.get("note"),
-    }
-    return await api_data_v2(
-        cfg, "POST", f"/account-operations/{operation_id}/elements:replace", json_body=payload
-    )
-
-
 async def _execute_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -1149,21 +883,6 @@ async def _execute_runs(ctx: CommandContext) -> Any:
     )
 
 
-async def _execute_tags(ctx: CommandContext) -> Any:
-    operation_id = str(ctx.arguments.get("operation_id") or "")
-    return await ctx.api_data_v2(ctx.cfg, "GET", f"/account-operations/{operation_id}/tags")
-
-
-async def _execute_attribution(ctx: CommandContext) -> Any:
-    operation_id = str(ctx.arguments.get("operation_id") or "")
-    return await ctx.api_data_v2(
-        ctx.cfg,
-        "GET",
-        f"/account-operations/{operation_id}/attribution-reports",
-        params={"limit": ctx.arguments.get("limit", 10)},
-    )
-
-
 async def _execute_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -1212,60 +931,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
                 "offset": (int(arguments.get("page", 1)) - 1) * int(arguments.get("page_size", 50)),
             }
         ),
-    )
-
-
-async def _execute_plan_submit(ctx: CommandContext) -> Any:
-    cfg = ctx.cfg
-    arguments = ctx.arguments
-    api_data_v2 = ctx.api_data_v2
-    operation_id = str(arguments.get("operation_id") or "")
-    payload = {
-        "format_ids": _account_operation_csv(arguments.get("format_ids")),
-        "topic_ids": _account_operation_csv(arguments.get("topic_ids")),
-        "note": arguments.get("note"),
-    }
-    if "required_hashtags" in arguments:
-        payload["required_hashtags"] = _account_operation_csv(arguments.get("required_hashtags"))
-    return await api_data_v2(
-        cfg, "POST", f"/account-operations/{operation_id}/plan:submit", json_body=payload
-    )
-
-
-async def _execute_set_persona(ctx: CommandContext) -> Any:
-    cfg = ctx.cfg
-    arguments = ctx.arguments
-    api_data_v2 = ctx.api_data_v2
-    operation_id = str(arguments.get("operation_id") or "")
-    payload = compact_params(
-        {
-            "name": arguments.get("name"),
-            "description": arguments.get("description"),
-            "tags": _account_operation_csv(arguments.get("tags")),
-        }
-    )
-    return await api_data_v2(
-        cfg, "POST", f"/account-operations/{operation_id}/persona", json_body=payload
-    )
-
-
-async def _execute_strategy_decide(ctx: CommandContext) -> Any:
-    cfg = ctx.cfg
-    arguments = ctx.arguments
-    api_data_v2 = ctx.api_data_v2
-    operation_id = str(arguments.get("operation_id") or "")
-    run_id = str(arguments.get("run_id") or "")
-    decision = (
-        read_json_option(value=arguments.get("decision_json"), file_path=None, field="decision")
-        if arguments.get("decision_json")
-        else None
-    )
-    payload = compact_params({"decided_by": arguments.get("decided_by"), "decision": decision})
-    return await api_data_v2(
-        cfg,
-        "POST",
-        f"/account-operations/{operation_id}/daily-runs/{run_id}/strategy:decide",
-        json_body=payload,
     )
 
 
@@ -1378,23 +1043,17 @@ async def _execute_submit_batch(ctx: CommandContext) -> Any:
 
 
 EXECUTORS = {
-    "account-operation.attribution": direct_enveloped(_execute_attribution),
     "account-operation.daily-roster": direct_enveloped(_execute_daily_roster),
-    "account-operation.elements-replace": direct_enveloped(_execute_elements_replace),
     "account-operation.get": direct_enveloped(_execute_get),
     "account-operation.issue-result": redacted_direct_enveloped(_execute_issue_result),
     "account-operation.list": direct_enveloped(_execute_list),
     "account-operation.ops-status": direct_enveloped(_execute_ops_status),
     "account-operation.ops-status-accounts": direct_enveloped(_execute_ops_status_accounts),
-    "account-operation.plan-submit": direct_enveloped(_execute_plan_submit),
     "account-operation.runs": direct_enveloped(_execute_runs),
     "account-operation.resolve": redacted_direct_enveloped(_execute_resolve),
-    "account-operation.set-persona": direct_enveloped(_execute_set_persona),
     "account-operation.stop": direct_enveloped(_execute_stop),
-    "account-operation.strategy-decide": direct_enveloped(_execute_strategy_decide),
     "account-operation.submit": direct_enveloped(_execute_submit),
     "account-operation.submit-batch": direct_enveloped(_execute_submit_batch),
-    "account-operation.tags": direct_enveloped(_execute_tags),
 }
 
 
