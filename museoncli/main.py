@@ -564,6 +564,7 @@ _UUID_SCALAR_ARGUMENT_KEYS = frozenset(
         "task_id",
         "job_id",
         "operation_id",
+        "plan_id",
         "run_id",
         "persona_id",
         "product_id",
@@ -864,12 +865,16 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
     arguments = command_payload(args)
     validate_uuid_arguments(arguments)
     workspace_id = workspace_id_arg_or_selected(args, cfg)
-    server_validated_product_dry_run = (
-        spec.schema_name == "asset.create"
-        and arguments.get("type") == "brand_product"
-        and getattr(args, "dry_run", False)
+    server_validated_dry_run = getattr(args, "dry_run", False) and (
+        (spec.schema_name == "asset.create" and arguments.get("type") == "brand_product")
+        or spec.schema_name
+        in {
+            "agentic-campaign.plan-submit",
+            "agentic-campaign.plan-elements-replace",
+            "agentic-campaign.plan-strategy-decide",
+        }
     )
-    if getattr(args, "dry_run", False) and not server_validated_product_dry_run:
+    if getattr(args, "dry_run", False) and not server_validated_dry_run:
         if spec.schema_name.startswith("skills."):
             dry_run_workspace_id = workspace_id if spec.schema_name == "skills.create" else None
             return domain_command_dry_run_envelope(

@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-112 commands across 12 domains (source of truth: `museoncli schema`).
+125 commands across 13 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -193,6 +193,24 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `account-operation +strategy-decide` | write | yes | — | direct | Decide the attribution review (human override or auto timeout) and resume the daily run. |
 | `account-operation +stop` | write | yes | — | direct | Retire an account from automated operation (TERMINAL). USE WHEN the operator removes an account from 全托管 — e.g. conflict accounts being replaced by a new batch (历史冲突，换一批账号), or the operator says an account should no longer be operated. IMPORTANT: submitting replacement accounts does NOT retire the originals — without +stop they stay live and the system keeps dispatching research/persona/daily-run tasks for them forever. Full GC: cancels the op's pending schedule items, releases the account reservation, unbinds the work session, detaches the campaign, and frees the account so it can be +submit-ed afresh later. Pass --reason quoting the operator's instruction (audit trail). |
 | `account-operation +elements-replace` | write | yes | — | direct | Weak recovery write-back: add new formats/topics, resume paused ones, and pause failing ones. |
+| `account-operation +issue-result` | write | yes | — | direct | Report the result of a claimed Account Operation Issue SOP. Uses the current Agent CLI workspace-bound credential. --reason is required by the server when --request-human is set. |
+| `account-operation +resolve` | read | — | — | direct | Resolve an active account operation by pool account id or exact username. Returns account identity and operation summary without exposing operation_id. |
+
+### agentic-campaign
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
+| `agentic-campaign +get` | read | — | — | direct | Get an Agentic Creative Campaign detail by campaign id. |
+| `agentic-campaign +plan-list` | read | — | — | direct | List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted. |
+| `agentic-campaign +plan-get` | read | — | — | direct | Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted. |
+| `agentic-campaign +plan-set-persona` | write | yes | — | direct | Set a Persona Plan's persona, using its current version for concurrency control. |
+| `agentic-campaign +plan-submit` | write | yes | — | direct | Fan out an onboarding/reset plan to every account in a Persona Plan. |
+| `agentic-campaign +plan-elements-replace` | write | yes | — | direct | Fan out add/resume/pause format and topic changes to a Persona Plan's accounts. |
+| `agentic-campaign +plan-strategy-decide` | write | yes | — | direct | Fan out a strategy decision to the latest awaiting-review run in a Persona Plan. |
+| `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |
+| `agentic-campaign +plan-attribution` | read | — | — | direct | Aggregate attribution across a Persona Plan, omitting account operation ids. |
+| `agentic-campaign +issues-pull` | write | yes | — | direct | Pull and lease Account Operation Issues for the current Mel session, optionally limited to one Agentic Creative Campaign. Uses the server-attested assertion from runtime context and omits account_operation_id from claims. |
 
 <!-- END GENERATED COMMANDS -->
 

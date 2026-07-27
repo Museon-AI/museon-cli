@@ -43,6 +43,7 @@ class Domain(str, Enum):
     EVALUATOR = "evaluator"
     ROUTINES = ROUTINES_DOMAIN
     ACCOUNT_OPERATION = "account-operation"
+    AGENTIC_CAMPAIGN = "agentic-campaign"
 
 
 @dataclass(frozen=True, slots=True)

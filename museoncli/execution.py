@@ -57,6 +57,48 @@ def direct_enveloped(fn: RawCommand, *, with_workspace: bool = True) -> Executor
     return run
 
 
+def deep_redact_operation_ids(value: Any, *, _in_op_units: bool = False) -> Any:
+    """Copy a response while removing account-operation identifiers at any depth."""
+
+    if isinstance(value, dict):
+        return {
+            key: deep_redact_operation_ids(
+                item,
+                _in_op_units=(key == "op_units"),
+            )
+            for key, item in value.items()
+            if key not in {"operation_id", "account_operation_id"}
+            and not (_in_op_units and key == "id")
+        }
+    if isinstance(value, list):
+        return [deep_redact_operation_ids(item, _in_op_units=_in_op_units) for item in value]
+    return value
+
+
+def redacted_direct_enveloped(
+    fn: RawCommand,
+    *,
+    with_workspace: bool = True,
+    redact_api_errors: bool = False,
+) -> Executor:
+    async def redacted(ctx: CommandContext) -> Any:
+        try:
+            return deep_redact_operation_ids(await fn(ctx))
+        except Exception as exc:
+            if redact_api_errors:
+                # Late import avoids the execution <-> main module cycle.
+                from museoncli.main import ApiRequestError
+
+                if isinstance(exc, ApiRequestError):
+                    raise ApiRequestError(
+                        exc.status_code,
+                        deep_redact_operation_ids(exc.detail),
+                    ) from exc
+            raise
+
+    return direct_enveloped(redacted, with_workspace=with_workspace)
+
+
 def routines_enveloped(fn: RawCommand) -> Executor:
     async def run(ctx: CommandContext) -> dict[str, Any]:
         raw = await fn(ctx)
