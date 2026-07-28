@@ -325,7 +325,7 @@
           "risk_level": "read",
           "shortcut": "+asset-pools-batch-preview",
           "stability": "stable",
-          "summary": "Live-preview one multi-account asset-pool change without writing. Supports a uniform patch plus per-account precise overrides for persona, product, formats, topics, and BGM. Always run this before +asset-pools-batch-set, present every changed/skipped/failed account and existing-schedule impact, then obtain explicit approval. Fully-managed accounts fail per-account in v1 and cannot be bypassed.",
+          "summary": "Live-preview one multi-account asset-pool change without writing. Supports a uniform patch plus per-account precise overrides for persona, product, formats, topics, and BGM. Always run this before +asset-pools-batch-set, present every changed/skipped/failed account and existing-schedule impact, then obtain explicit approval. Fully-managed accounts are previewed normally and marked requires_managed_operation_approved=true; after explicit approval, submit with --managed-operation-approved.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -350,7 +350,7 @@
           "risk_level": "destructive",
           "shortcut": "+asset-pools-batch-set",
           "stability": "stable",
-          "summary": "Submit one durable Cloud Task job to change publish asset pools for MULTIPLE accounts. MUST use this instead of looping social-account +assets-set or writing Python/shell scripts; keep the single command for small, precise one-account edits. This batch command is preferred when atomically configuring all five pools for one account. Requires the opaque token and identical normalized patches from a fresh live preview, plus a stable idempotency key and --yes. After submission, poll only +asset-pools-batch-status and inspect every failed/skipped account. Fully-managed accounts fail per-account in v1 and cannot be bypassed.",
+          "summary": "Submit one durable Cloud Task job to change publish asset pools for MULTIPLE accounts. MUST use this instead of looping social-account +assets-set or writing Python/shell scripts; keep the single command for small, precise one-account edits. This batch command is preferred when atomically configuring all five pools for one account. Requires the opaque token and identical normalized patches from a fresh live preview, plus a stable idempotency key and --yes. After submission, poll only +asset-pools-batch-status and inspect every failed/skipped account. If preview marks any fully-managed account requires_managed_operation_approved=true, relay its impact and add --managed-operation-approved only after explicit approval; without it those accounts fail per-account.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -4230,7 +4230,7 @@
           "risk_level": "write",
           "shortcut": "+assets-set",
           "stability": "stable",
-          "summary": "Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation. --persona-id on a fully-managed account whose Persona Plan is linked (V2 admission gate) always returns a structured 409 (code=persona_owned_by_persona_plan) -- persona is plan-owned and cannot be changed per account; direct the user to the Persona Plan instead. --persona-id still works normally on a pre-V2 unlinked managed account or an ordinary (non-managed) account.",
+          "summary": "Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation. An approved --persona-id becomes that account's explicit effective-persona override while its Persona Plan binding remains unchanged.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -7436,7 +7436,7 @@
       "risk_level": "read",
       "shortcut": "+asset-pools-batch-preview",
       "stability": "stable",
-      "summary": "Live-preview one multi-account asset-pool change without writing. Supports a uniform patch plus per-account precise overrides for persona, product, formats, topics, and BGM. Always run this before +asset-pools-batch-set, present every changed/skipped/failed account and existing-schedule impact, then obtain explicit approval. Fully-managed accounts fail per-account in v1 and cannot be bypassed.",
+      "summary": "Live-preview one multi-account asset-pool change without writing. Supports a uniform patch plus per-account precise overrides for persona, product, formats, topics, and BGM. Always run this before +asset-pools-batch-set, present every changed/skipped/failed account and existing-schedule impact, then obtain explicit approval. Fully-managed accounts are previewed normally and marked requires_managed_operation_approved=true; after explicit approval, submit with --managed-operation-approved.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -7778,6 +7778,11 @@
             "maxLength": 240,
             "minLength": 1,
             "type": "string"
+          },
+          "managed_operation_approved": {
+            "default": false,
+            "description": "Set only after relaying the fully-managed account impact from batch preview and receiving explicit approval.",
+            "type": "boolean"
           },
           "preview_token": {
             "maxLength": 200,
@@ -8140,7 +8145,7 @@
       "risk_level": "destructive",
       "shortcut": "+asset-pools-batch-set",
       "stability": "stable",
-      "summary": "Submit one durable Cloud Task job to change publish asset pools for MULTIPLE accounts. MUST use this instead of looping social-account +assets-set or writing Python/shell scripts; keep the single command for small, precise one-account edits. This batch command is preferred when atomically configuring all five pools for one account. Requires the opaque token and identical normalized patches from a fresh live preview, plus a stable idempotency key and --yes. After submission, poll only +asset-pools-batch-status and inspect every failed/skipped account. Fully-managed accounts fail per-account in v1 and cannot be bypassed.",
+      "summary": "Submit one durable Cloud Task job to change publish asset pools for MULTIPLE accounts. MUST use this instead of looping social-account +assets-set or writing Python/shell scripts; keep the single command for small, precise one-account edits. This batch command is preferred when atomically configuring all five pools for one account. Requires the opaque token and identical normalized patches from a fresh live preview, plus a stable idempotency key and --yes. After submission, poll only +asset-pools-batch-status and inspect every failed/skipped account. If preview marks any fully-managed account requires_managed_operation_approved=true, relay its impact and add --managed-operation-approved only after explicit approval; without it those accounts fail per-account.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -20231,7 +20236,7 @@
       "risk_level": "write",
       "shortcut": "+assets-set",
       "stability": "stable",
-      "summary": "Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation. --persona-id on a fully-managed account whose Persona Plan is linked (V2 admission gate) always returns a structured 409 (code=persona_owned_by_persona_plan) -- persona is plan-owned and cannot be changed per account; direct the user to the Persona Plan instead. --persona-id still works normally on a pre-V2 unlinked managed account or an ordinary (non-managed) account.",
+      "summary": "Update publish asset refs for exactly ONE account and/or its workspace tags. For multi-account publish assets, MUST use account-publish +asset-pools-batch-preview then +asset-pools-batch-set instead of looping. For a fully-managed account, first relay the returned impact to the user; retry with --managed-operation-approved only after explicit confirmation. An approved --persona-id becomes that account's explicit effective-persona override while its Persona Plan binding remains unchanged.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
