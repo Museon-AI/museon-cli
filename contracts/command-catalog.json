@@ -578,7 +578,7 @@
           "shortcut": "+plan-revise",
           "stability": "stable",
           "summary": "Create an adjustment proposal for operator review.",
-          "supports_dry_run": false,
+          "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
         {
@@ -603,7 +603,7 @@
           "shortcut": "+campaign-rename",
           "stability": "stable",
           "summary": "Rename an Agentic Creative Campaign.",
-          "supports_dry_run": false,
+          "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
         {
@@ -9216,6 +9216,10 @@
             "format": "uuid",
             "type": "string"
           },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
           "name": {
             "maxLength": 160,
             "minLength": 1,
@@ -9288,7 +9292,7 @@
       "shortcut": "+campaign-rename",
       "stability": "stable",
       "summary": "Rename an Agentic Creative Campaign.",
-      "supports_dry_run": false,
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "agentic-campaign.candidate-revise": {
@@ -10625,6 +10629,10 @@
             ],
             "type": "object"
           },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
           "note": {
             "maxLength": 2000,
             "type": [
@@ -10707,7 +10715,7 @@
       "shortcut": "+plan-revise",
       "stability": "stable",
       "summary": "Create an adjustment proposal for operator review.",
-      "supports_dry_run": false,
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "agentic-campaign.plan-set-persona": {

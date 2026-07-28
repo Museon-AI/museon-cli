@@ -148,6 +148,7 @@ def _add_plan_revise_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--retire-element-ids")
     parser.add_argument("--boost-elements-json")
     parser.add_argument("--note", default=None)
+    parser.add_argument("--dry-run", action="store_true")
 
 
 def _revision_json_list(value: str | None, *, field: str) -> list[Any]:
@@ -190,16 +191,18 @@ def _build_plan_revise_arguments(args: argparse.Namespace) -> dict[str, Any]:
             ),
         ),
         "note": args.note,
+        "dry_run": args.dry_run,
     }
 
 
 def _add_campaign_rename_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--campaign-id", required=True)
     parser.add_argument("--name", required=True)
+    parser.add_argument("--dry-run", action="store_true")
 
 
 def _build_campaign_rename_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {"campaign_id": args.campaign_id, "name": args.name}
+    return {"campaign_id": args.campaign_id, "name": args.name, "dry_run": args.dry_run}
 
 
 def _add_plan_submit_arguments(parser: argparse.ArgumentParser) -> None:
@@ -504,6 +507,7 @@ def specs() -> list[CommandSpec]:
                         ],
                     },
                     "note": {"type": ["string", "null"], "maxLength": 2000},
+                    "dry_run": {"type": "boolean", "default": False},
                 },
                 required=["changes"],
             ),
@@ -520,6 +524,7 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_plan_revise_arguments,
             build_arguments=_build_plan_revise_arguments,
+            supports_dry_run=True,
         ),
         CommandSpec(
             domain=domain,
@@ -532,6 +537,7 @@ def specs() -> list[CommandSpec]:
                 {
                     "campaign_id": _uuid_property("Agentic Creative Campaign id"),
                     "name": {"type": "string", "minLength": 1, "maxLength": 160},
+                    "dry_run": {"type": "boolean", "default": False},
                 },
                 required=["campaign_id", "name"],
             ),
@@ -543,6 +549,7 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_campaign_rename_arguments,
             build_arguments=_build_campaign_rename_arguments,
+            supports_dry_run=True,
         ),
         CommandSpec(
             domain=domain,
