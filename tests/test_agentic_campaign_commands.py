@@ -230,7 +230,172 @@ def test_plan_propose_dispatches_active_adjustment() -> None:
     }
 
 
-def test_plan_propose_schema_has_two_content_shapes_and_dry_run() -> None:
+def test_proposal_get_returns_operator_revision_context() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    feedback_summary = (
+        "提案修订意见（坐标以预览左上角为原点）：\n\n"
+        "整体意见：\n让视觉更明亮\n\n逐项标注：\n- 保留完整意见"
+    )
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {
+            "id": proposal_id,
+            "status": "awaiting_review",
+            "revision_round": 2,
+            "changes": {
+                "add_elements": [{"format_id": "format-1"}],
+                "retire_element_ids": ["element-old"],
+                "boost_elements": [{"element_id": "element-winner"}],
+            },
+            "elements": [
+                {
+                    "id": "internal-element-id",
+                    "format_id": "44444444-4444-4444-8444-444444444444",
+                    "topic_id": "55555555-5555-4555-8555-555555555555",
+                    "cta_target_id": "66666666-6666-4666-8666-666666666666",
+                }
+            ],
+            "feedback_summary": feedback_summary,
+        },
+    )
+    result = asyncio.run(
+        agentic_campaign._execute_proposal_get(
+            context(
+                "agentic-campaign.proposal-get",
+                {"plan_id": plan_id, "proposal_id": proposal_id},
+                capture,
+            )
+        )
+    )
+
+    assert capture.calls[-1] == {
+        "method": "GET",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}"
+        ),
+        "json_body": None,
+        "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+    }
+    assert result == {
+        "status": "awaiting_review",
+        "revision_round": 2,
+        "change_summary": {
+            "new_directions": 1,
+            "directions_to_stop": 1,
+            "winner_boosts": 1,
+        },
+        "elements": [
+            {
+                "format_id": "44444444-4444-4444-8444-444444444444",
+                "topic_id": "55555555-5555-4555-8555-555555555555",
+                "cta_target_id": "66666666-6666-4666-8666-666666666666",
+            }
+        ],
+        "feedback_summary": feedback_summary,
+        "next_step": "请在 Museon 审阅台查看这一稿；运营可继续标注意见或确认。",
+    }
+    assert "internal-element-id" not in repr(result)
+
+
+def test_plan_propose_submits_active_proposal_revision() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    elements = [
+        {
+            "format_id": "44444444-4444-4444-8444-444444444444",
+            "topic_id": "55555555-5555-4555-8555-555555555555",
+            "cta_target_id": "66666666-6666-4666-8666-666666666666",
+        }
+    ]
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"elements": [{"id": "new-element"}], "round": 3, "dispatched_task_count": 1},
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+            "--elements-json",
+            json.dumps(elements),
+            "--note",
+            "Apply the compiled feedback",
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    result = asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
+    )
+
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:submit-revision"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "elements": elements,
+            "note": "Apply the compiled feedback",
+        },
+        "params": None,
+    }
+    assert result == {
+        "revision_round": 3,
+        "new_element_count": 1,
+        "preview_task_count": 1,
+        "next_step": "第 3 稿已提交；运营将在审阅台看到新一稿。",
+    }
+
+
+@pytest.mark.parametrize("forbidden_option", ["--name", "--persona-json"])
+def test_plan_propose_revision_rejects_name_and_persona(forbidden_option: str) -> None:
+    value = (
+        "not applicable"
+        if forbidden_option == "--name"
+        else json.dumps(
+            {
+                "name": "Mia",
+                "description": "Practical maker",
+                "visual_prompt": "Portrait",
+            }
+        )
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--elements-json",
+            json.dumps(
+                [
+                    {
+                        "format_id": "44444444-4444-4444-8444-444444444444",
+                        "topic_id": "55555555-5555-4555-8555-555555555555",
+                    }
+                ]
+            ),
+            forbidden_option,
+            value,
+        ]
+    )
+    with pytest.raises(ValueError, match="--name and --persona-json are not valid"):
+        agentic_campaign._build_plan_propose_arguments(args)
+
+
+def test_plan_propose_schema_has_three_content_shapes_and_dry_run() -> None:
     spec = get_command_spec("agentic-campaign.plan-propose")
     args = parse(
         [
@@ -242,9 +407,13 @@ def test_plan_propose_schema_has_two_content_shapes_and_dry_run() -> None:
             "--dry-run",
         ]
     )
-    assert len(spec.input_schema["oneOf"]) == 2
+    assert len(spec.input_schema["oneOf"]) == 3
     assert spec.supports_dry_run is True
     assert args.dry_run is True
+
+    proposal_get = get_command_spec("agentic-campaign.proposal-get")
+    assert proposal_get.risk_level == "read"
+    assert proposal_get.input_schema["required"] == ["plan_id", "proposal_id"]
 
 
 def test_plan_propose_requires_one_complete_content_shape() -> None:

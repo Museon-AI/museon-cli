@@ -544,6 +544,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.proposal-get",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-get",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+proposal-get",
+          "stability": "stable",
+          "summary": "Read an adjustment proposal and its latest revision guidance.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.campaign-rename",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -9765,7 +9790,7 @@
       ],
       "execution": "direct",
       "input_schema": {
-        "description": "For a draft plan, submit a complete solution (name, persona_payload, and elements), optionally revising a candidate with candidate_id. For an active plan, submit at least one adjustment in changes; candidate_id is not allowed.",
+        "description": "For a draft plan, submit a complete solution (name, persona_payload, and elements), optionally revising a candidate with candidate_id. For an active plan, submit at least one adjustment in changes. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Candidate and proposal ids are scenario-specific.",
         "oneOf": [
           {
             "anyOf": [
@@ -9787,8 +9812,17 @@
               }
             ],
             "not": {
-              "required": [
-                "changes"
+              "anyOf": [
+                {
+                  "required": [
+                    "changes"
+                  ]
+                },
+                {
+                  "required": [
+                    "proposal_id"
+                  ]
+                }
               ]
             },
             "required": [
@@ -9814,6 +9848,11 @@
                   "required": [
                     "elements"
                   ]
+                },
+                {
+                  "required": [
+                    "proposal_id"
+                  ]
                 }
               ]
             },
@@ -9821,6 +9860,43 @@
               "changes"
             ],
             "title": "Active plan adjustment"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "candidate_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "name"
+                  ]
+                },
+                {
+                  "required": [
+                    "persona_payload"
+                  ]
+                },
+                {
+                  "required": [
+                    "changes"
+                  ]
+                }
+              ]
+            },
+            "properties": {
+              "proposal_id": {
+                "format": "uuid",
+                "type": "string"
+              }
+            },
+            "required": [
+              "proposal_id",
+              "elements"
+            ],
+            "title": "Adjustment proposal revision"
           }
         ],
         "properties": {
@@ -10084,6 +10160,14 @@
             ],
             "format": "uuid",
             "type": "string"
+          },
+          "proposal_id": {
+            "description": "Active-plan adjustment proposal id to revise",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -10249,6 +10333,113 @@
       "shortcut": "+plan-tags",
       "stability": "stable",
       "summary": "Aggregate element tags across a Persona Plan, omitting account operation ids.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.proposal-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-get",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +proposal-get --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "description": "Adjustment proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id",
+          "proposal_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-get",
+      "output_schema": {
+        "description": "Proposal status, revision round, changes, current elements, feedback, and review reminder.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+proposal-get",
+      "stability": "stable",
+      "summary": "Read an adjustment proposal and its latest revision guidance.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
