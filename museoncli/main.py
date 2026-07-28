@@ -869,8 +869,6 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
         (spec.schema_name == "asset.create" and arguments.get("type") == "brand_product")
         or spec.schema_name
         in {
-            "agentic-campaign.plan-submit",
-            "agentic-campaign.plan-elements-replace",
             "agentic-campaign.plan-strategy-decide",
         }
     )

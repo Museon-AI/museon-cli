@@ -205,60 +205,6 @@ def _build_campaign_rename_arguments(args: argparse.Namespace) -> dict[str, Any]
     return {"campaign_id": args.campaign_id, "name": args.name, "dry_run": args.dry_run}
 
 
-def _add_plan_submit_arguments(parser: argparse.ArgumentParser) -> None:
-    _add_plan_id_arguments(parser)
-    parser.add_argument("--format-ids", required=True, help="Comma-separated format ids.")
-    parser.add_argument("--topic-ids", default=None, help="Comma-separated topic ids.")
-    parser.add_argument("--required-hashtags", default=None, help="Comma-separated hashtags.")
-    parser.add_argument("--note", default=None)
-    parser.add_argument(
-        "--dry-run",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Preview by default; pass --no-dry-run to apply.",
-    )
-
-
-def _build_plan_submit_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "plan_id": args.plan_id,
-        "format_ids": _csv(args.format_ids),
-        "topic_ids": _csv(args.topic_ids),
-        "note": args.note,
-        "dry_run": args.dry_run,
-    }
-    if args.required_hashtags is not None:
-        payload["required_hashtags"] = _csv(args.required_hashtags)
-    return payload
-
-
-def _add_elements_replace_arguments(parser: argparse.ArgumentParser) -> None:
-    _add_plan_id_arguments(parser)
-    for action in ("add", "resume", "pause"):
-        parser.add_argument(f"--{action}-format-ids", default=None)
-        parser.add_argument(f"--{action}-topic-ids", default=None)
-    parser.add_argument("--note", default=None)
-    parser.add_argument(
-        "--dry-run",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help="Preview by default; pass --no-dry-run to apply.",
-    )
-
-
-def _build_elements_replace_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {
-        "plan_id": args.plan_id,
-        **{
-            f"{action}_{kind}_ids": _csv(getattr(args, f"{action}_{kind}_ids"))
-            for action in ("add", "resume", "pause")
-            for kind in ("format", "topic")
-        },
-        "note": args.note,
-        "dry_run": args.dry_run,
-    }
-
-
 def _add_strategy_decide_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
     parser.add_argument(
@@ -649,76 +595,6 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=domain,
-            shortcut="+plan-submit",
-            summary="Fan out an onboarding/reset plan to every account in a Persona Plan.",
-            risk_level="write",
-            execution="direct",
-            adapter_tool_name="agentic_campaign_plan_submit",
-            input_schema=_plan_schema(
-                {
-                    "format_ids": {"type": "array", "items": {"type": "string"}, "minItems": 1},
-                    "topic_ids": {"type": "array", "items": {"type": "string"}},
-                    "required_hashtags": {
-                        "type": ["array", "null"],
-                        "items": {"type": "string"},
-                        "maxItems": 50,
-                    },
-                    "note": {"type": ["string", "null"]},
-                    "dry_run": {"type": "boolean", "default": True},
-                },
-                required=["format_ids"],
-            ),
-            output_schema=_direct_output_schema(
-                "Per-account result with pool_account_id and handle; operation ids are omitted."
-            ),
-            examples=[
-                "museoncli agentic-campaign +plan-submit "
-                "--plan-id 33333333-3333-4333-8333-333333333333 "
-                "--format-ids 44444444-4444-4444-8444-444444444444,"
-                "55555555-5555-4555-8555-555555555555 --no-dry-run"
-            ],
-            add_arguments=_add_plan_submit_arguments,
-            build_arguments=_build_plan_submit_arguments,
-            supports_dry_run=True,
-        ),
-        CommandSpec(
-            domain=domain,
-            shortcut="+plan-elements-replace",
-            summary=(
-                "Fan out add/resume/pause format and topic changes to a Persona Plan's accounts."
-            ),
-            risk_level="write",
-            execution="direct",
-            adapter_tool_name="agentic_campaign_plan_elements_replace",
-            input_schema=_plan_schema(
-                {
-                    **{
-                        f"{action}_{kind}_ids": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                        }
-                        for action in ("add", "resume", "pause")
-                        for kind in ("format", "topic")
-                    },
-                    "note": {"type": ["string", "null"]},
-                    "dry_run": {"type": "boolean", "default": True},
-                }
-            ),
-            output_schema=_direct_output_schema(
-                "Per-account result with pool_account_id and handle; operation ids are omitted."
-            ),
-            examples=[
-                "museoncli agentic-campaign +plan-elements-replace "
-                "--plan-id 33333333-3333-4333-8333-333333333333 "
-                "--add-format-ids 44444444-4444-4444-8444-444444444444 "
-                "--pause-topic-ids 55555555-5555-4555-8555-555555555555 --no-dry-run"
-            ],
-            add_arguments=_add_elements_replace_arguments,
-            build_arguments=_build_elements_replace_arguments,
-            supports_dry_run=True,
-        ),
-        CommandSpec(
-            domain=domain,
             shortcut="+plan-strategy-decide",
             summary="Fan out a strategy decision to the latest awaiting-review run in a Persona Plan.",
             risk_level="write",
@@ -1047,31 +923,6 @@ async def _plan_post(ctx: CommandContext, action: str, payload: dict[str, Any]) 
     )
 
 
-async def _execute_plan_submit(ctx: CommandContext) -> Any:
-    payload = {
-        "dry_run": bool(ctx.arguments.get("dry_run", True)),
-        "format_ids": _csv(ctx.arguments.get("format_ids")),
-        "topic_ids": _csv(ctx.arguments.get("topic_ids")),
-        "note": ctx.arguments.get("note"),
-    }
-    if "required_hashtags" in ctx.arguments:
-        payload["required_hashtags"] = _csv(ctx.arguments.get("required_hashtags"))
-    return await _plan_post(ctx, "plan-submit", payload)
-
-
-async def _execute_elements_replace(ctx: CommandContext) -> Any:
-    payload = {
-        "dry_run": bool(ctx.arguments.get("dry_run", True)),
-        **{
-            f"{action}_{kind}_ids": _csv(ctx.arguments.get(f"{action}_{kind}_ids"))
-            for action in ("add", "resume", "pause")
-            for kind in ("format", "topic")
-        },
-        "note": ctx.arguments.get("note"),
-    }
-    return await _plan_post(ctx, "elements-replace", payload)
-
-
 async def _execute_strategy_decide(ctx: CommandContext) -> Any:
     decision = (
         read_json_option(
@@ -1159,9 +1010,6 @@ EXECUTORS = {
     "agentic-campaign.plan-attribution": redacted_direct_enveloped(
         _execute_plan_attribution, redact_api_errors=True
     ),
-    "agentic-campaign.plan-elements-replace": redacted_direct_enveloped(
-        _execute_elements_replace, redact_api_errors=True
-    ),
     "agentic-campaign.plan-get": redacted_direct_enveloped(
         _execute_plan_get, redact_api_errors=True
     ),
@@ -1176,9 +1024,6 @@ EXECUTORS = {
     ),
     "agentic-campaign.plan-strategy-decide": redacted_direct_enveloped(
         _execute_strategy_decide, redact_api_errors=True
-    ),
-    "agentic-campaign.plan-submit": redacted_direct_enveloped(
-        _execute_plan_submit, redact_api_errors=True
     ),
     "agentic-campaign.plan-tags": redacted_direct_enveloped(
         _execute_plan_tags, redact_api_errors=True

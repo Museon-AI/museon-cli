@@ -1,8 +1,8 @@
 """Red tests for the `account-operation` command group.
 
 The agent-facing linkage to /api/v2/account-operations: submit / get / list /
-plan-submit / strategy-decide / elements-replace, all via api_data_v2 with the
-sandbox credential system. session_conversation_id defaults from the per-turn runtime_context (current topic/thread).
+strategy-decide, all via api_data_v2 with the sandbox credential system.
+session_conversation_id defaults from the per-turn runtime_context (current topic/thread).
 """
 
 from __future__ import annotations

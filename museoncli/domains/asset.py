@@ -354,7 +354,7 @@ def _add_asset_write_arguments(
         help=(
             "Manual text spec for format create. Yields a text_post format "
             "(no source images -> content_form=text_post, immutable), which "
-            "managed-account (全托管) plan-submit and slideshow generation "
+            "managed-account (全托管) onboarding and slideshow generation "
             "REJECT (image_post only) — for those, create the format from an "
             "image-bearing --url or uploaded images instead."
         ),
@@ -1136,7 +1136,7 @@ def _asset_write_input_schema(*, require_id: bool) -> dict[str, Any]:
                 "is inferred from the source and immutable: image post URL or "
                 "uploaded images -> image_post, video -> video_post, manual "
                 "format_input text or text-only posts (x/linkedin) -> text_post. "
-                "Managed-account (全托管) plan-submit and slideshow generation "
+                "Managed-account (全托管) onboarding and slideshow generation "
                 "accept image_post formats only, so never build a managed-account "
                 "format from manual format_input text; use an image-bearing post "
                 "URL or uploaded images, then confirm content_form=image_post "

@@ -85,40 +85,6 @@ def campaign_detail(plan_id: str) -> dict[str, Any]:
     }
 
 
-def test_parser_registers_domain_and_server_dry_run_defaults() -> None:
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-submit",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--format-ids",
-            "f1,f2",
-        ]
-    )
-    assert args.domain_command == "agentic-campaign.plan-submit"
-    assert args.dry_run is True
-    assert agentic_campaign._build_plan_submit_arguments(args)["format_ids"] == ["f1", "f2"]
-
-    apply_args = parse(
-        [
-            "agentic-campaign",
-            "+plan-elements-replace",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--pause-format-ids",
-            "f1",
-            "--pause-topic-ids",
-            "t1",
-            "--no-dry-run",
-        ]
-    )
-    built = agentic_campaign._build_elements_replace_arguments(apply_args)
-    assert built["pause_format_ids"] == ["f1"]
-    assert built["pause_topic_ids"] == ["t1"]
-    assert built["dry_run"] is False
-
-
 @pytest.mark.parametrize(
     ("shortcut", "candidate_args", "expected_suffix", "expected_body"),
     [
@@ -434,53 +400,9 @@ def test_plan_set_persona_uses_current_plan_version() -> None:
     }
 
 
-def test_plan_submit_sends_server_dry_run_and_hashtags() -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"results": []})
-    asyncio.run(
-        agentic_campaign._execute_plan_submit(
-            context(
-                "agentic-campaign.plan-submit",
-                {
-                    "plan_id": plan_id,
-                    "format_ids": ["f1"],
-                    "topic_ids": ["t1"],
-                    "required_hashtags": ["#DIY"],
-                    "dry_run": True,
-                },
-                capture,
-            )
-        )
-    )
-    assert capture.calls[-1]["json_body"] == {
-        "workspace_id": "11111111-1111-4111-8111-111111111111",
-        "dry_run": True,
-        "format_ids": ["f1"],
-        "topic_ids": ["t1"],
-        "note": None,
-        "required_hashtags": ["#DIY"],
-    }
-
-
 @pytest.mark.parametrize(
     ("shortcut", "extra_args", "expected_suffix"),
     [
-        (
-            "+plan-submit",
-            [
-                "--format-ids",
-                "44444444-4444-4444-8444-444444444444",
-            ],
-            ":plan-submit",
-        ),
-        (
-            "+plan-elements-replace",
-            [
-                "--pause-topic-ids",
-                "55555555-5555-4555-8555-555555555555",
-            ],
-            ":elements-replace",
-        ),
         (
             "+plan-strategy-decide",
             [],

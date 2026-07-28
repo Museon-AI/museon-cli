@@ -744,56 +744,6 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
-          "capability_key": "agentic-campaign.plan-submit",
-          "domain": "agentic-campaign",
-          "execution": "direct",
-          "name": "agentic-campaign.plan-submit",
-          "requires_confirmation": false,
-          "risk_level": "write",
-          "shortcut": "+plan-submit",
-          "stability": "stable",
-          "summary": "Fan out an onboarding/reset plan to every account in a Persona Plan.",
-          "supports_dry_run": true,
-          "transport": "agent_cli_api"
-        },
-        {
-          "authorization": {
-            "authentication_required": true,
-            "enforcement": "museon_server",
-            "required_roles": [
-              "workspace_member"
-            ],
-            "required_scopes": [
-              "agent_cli.access"
-            ],
-            "resource_policy": "server_evaluated_workspace_and_resource_access",
-            "workspace_bound": true
-          },
-          "capability_key": "agentic-campaign.plan-elements-replace",
-          "domain": "agentic-campaign",
-          "execution": "direct",
-          "name": "agentic-campaign.plan-elements-replace",
-          "requires_confirmation": false,
-          "risk_level": "write",
-          "shortcut": "+plan-elements-replace",
-          "stability": "stable",
-          "summary": "Fan out add/resume/pause format and topic changes to a Persona Plan's accounts.",
-          "supports_dry_run": true,
-          "transport": "agent_cli_api"
-        },
-        {
-          "authorization": {
-            "authentication_required": true,
-            "enforcement": "museon_server",
-            "required_roles": [
-              "workspace_member"
-            ],
-            "required_scopes": [
-              "agent_cli.access"
-            ],
-            "resource_policy": "server_evaluated_workspace_and_resource_access",
-            "workspace_bound": true
-          },
           "capability_key": "agentic-campaign.plan-strategy-decide",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -10149,150 +10099,6 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
-    "agentic-campaign.plan-elements-replace": {
-      "authorization": {
-        "authentication_required": true,
-        "enforcement": "museon_server",
-        "required_roles": [
-          "workspace_member"
-        ],
-        "required_scopes": [
-          "agent_cli.access"
-        ],
-        "resource_policy": "server_evaluated_workspace_and_resource_access",
-        "workspace_bound": true
-      },
-      "capability_key": "agentic-campaign.plan-elements-replace",
-      "domain": "agentic-campaign",
-      "examples": [
-        "museoncli agentic-campaign +plan-elements-replace --plan-id 33333333-3333-4333-8333-333333333333 --add-format-ids 44444444-4444-4444-8444-444444444444 --pause-topic-ids 55555555-5555-4555-8555-555555555555 --no-dry-run"
-      ],
-      "execution": "direct",
-      "input_schema": {
-        "properties": {
-          "add_format_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "add_topic_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "dry_run": {
-            "default": true,
-            "type": "boolean"
-          },
-          "note": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "pause_format_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "pause_topic_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "plan_id": {
-            "description": "Agentic Persona Plan id",
-            "examples": [
-              "33333333-3333-4333-8333-333333333333"
-            ],
-            "format": "uuid",
-            "type": "string"
-          },
-          "resume_format_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "resume_topic_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "plan_id"
-        ],
-        "type": "object"
-      },
-      "name": "agentic-campaign.plan-elements-replace",
-      "output_schema": {
-        "description": "Per-account result with pool_account_id and handle; operation ids are omitted.",
-        "properties": {
-          "command": {
-            "type": "string"
-          },
-          "data": {
-            "type": [
-              "object",
-              "array",
-              "string",
-              "number",
-              "boolean",
-              "null"
-            ]
-          },
-          "next_steps": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "ok": {
-            "type": "boolean"
-          },
-          "run": {
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "warnings": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "workspace": {
-            "type": [
-              "object",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "ok",
-          "command",
-          "data",
-          "run",
-          "warnings",
-          "next_steps"
-        ],
-        "type": "object"
-      },
-      "requires_confirmation": false,
-      "risk_level": "write",
-      "shortcut": "+plan-elements-replace",
-      "stability": "stable",
-      "summary": "Fan out add/resume/pause format and topic changes to a Persona Plan's accounts.",
-      "supports_dry_run": true,
-      "transport": "agent_cli_api"
-    },
     "agentic-campaign.plan-get": {
       "authorization": {
         "authentication_required": true,
@@ -10945,138 +10751,6 @@
       "shortcut": "+plan-strategy-decide",
       "stability": "stable",
       "summary": "Fan out a strategy decision to the latest awaiting-review run in a Persona Plan.",
-      "supports_dry_run": true,
-      "transport": "agent_cli_api"
-    },
-    "agentic-campaign.plan-submit": {
-      "authorization": {
-        "authentication_required": true,
-        "enforcement": "museon_server",
-        "required_roles": [
-          "workspace_member"
-        ],
-        "required_scopes": [
-          "agent_cli.access"
-        ],
-        "resource_policy": "server_evaluated_workspace_and_resource_access",
-        "workspace_bound": true
-      },
-      "capability_key": "agentic-campaign.plan-submit",
-      "domain": "agentic-campaign",
-      "examples": [
-        "museoncli agentic-campaign +plan-submit --plan-id 33333333-3333-4333-8333-333333333333 --format-ids 44444444-4444-4444-8444-444444444444,55555555-5555-4555-8555-555555555555 --no-dry-run"
-      ],
-      "execution": "direct",
-      "input_schema": {
-        "properties": {
-          "dry_run": {
-            "default": true,
-            "type": "boolean"
-          },
-          "format_ids": {
-            "items": {
-              "type": "string"
-            },
-            "minItems": 1,
-            "type": "array"
-          },
-          "note": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "plan_id": {
-            "description": "Agentic Persona Plan id",
-            "examples": [
-              "33333333-3333-4333-8333-333333333333"
-            ],
-            "format": "uuid",
-            "type": "string"
-          },
-          "required_hashtags": {
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 50,
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "topic_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "plan_id",
-          "format_ids"
-        ],
-        "type": "object"
-      },
-      "name": "agentic-campaign.plan-submit",
-      "output_schema": {
-        "description": "Per-account result with pool_account_id and handle; operation ids are omitted.",
-        "properties": {
-          "command": {
-            "type": "string"
-          },
-          "data": {
-            "type": [
-              "object",
-              "array",
-              "string",
-              "number",
-              "boolean",
-              "null"
-            ]
-          },
-          "next_steps": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "ok": {
-            "type": "boolean"
-          },
-          "run": {
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "warnings": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "workspace": {
-            "type": [
-              "object",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "ok",
-          "command",
-          "data",
-          "run",
-          "warnings",
-          "next_steps"
-        ],
-        "type": "object"
-      },
-      "requires_confirmation": false,
-      "risk_level": "write",
-      "shortcut": "+plan-submit",
-      "stability": "stable",
-      "summary": "Fan out an onboarding/reset plan to every account in a Persona Plan.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -11924,7 +11598,7 @@
             "type": "boolean"
           },
           "payload": {
-            "description": "Type-specific asset payload. product create requires name, category, and description; website_url, tags, and assets are optional. persona uses name, description, tags, and assets. topic_direction uses title, description, and tags. topic create uses topics=[{title,narrative,topic_direction_id?,keywords?,tags?,metadata?}]. format create uses URL, uploaded media, or manual format_input payloads; source_kind supports tiktok, instagram, x, linkedin, xhs, upload, manual, and cross_post. The created format's content_form (the post form it PRODUCES, not the input medium) is inferred from the source and immutable: image post URL or uploaded images -> image_post, video -> video_post, manual format_input text or text-only posts (x/linkedin) -> text_post. Managed-account (全托管) plan-submit and slideshow generation accept image_post formats only, so never build a managed-account format from manual format_input text; use an image-bearing post URL or uploaded images, then confirm content_form=image_post via asset +get before submitting; format update supports title, tags, is_public, and format_json, including markdown in format_json.md. media create uses URL import or local file upload payloads. bgm uses url, title, description, tags, and status.",
+            "description": "Type-specific asset payload. product create requires name, category, and description; website_url, tags, and assets are optional. persona uses name, description, tags, and assets. topic_direction uses title, description, and tags. topic create uses topics=[{title,narrative,topic_direction_id?,keywords?,tags?,metadata?}]. format create uses URL, uploaded media, or manual format_input payloads; source_kind supports tiktok, instagram, x, linkedin, xhs, upload, manual, and cross_post. The created format's content_form (the post form it PRODUCES, not the input medium) is inferred from the source and immutable: image post URL or uploaded images -> image_post, video -> video_post, manual format_input text or text-only posts (x/linkedin) -> text_post. Managed-account (全托管) onboarding and slideshow generation accept image_post formats only, so never build a managed-account format from manual format_input text; use an image-bearing post URL or uploaded images, then confirm content_form=image_post via asset +get before submitting; format update supports title, tags, is_public, and format_json, including markdown in format_json.md. media create uses URL import or local file upload payloads. bgm uses url, title, description, tags, and status.",
             "type": "object"
           },
           "type": {
@@ -13281,7 +12955,7 @@
             "type": "string"
           },
           "payload": {
-            "description": "Type-specific asset payload. product create requires name, category, and description; website_url, tags, and assets are optional. persona uses name, description, tags, and assets. topic_direction uses title, description, and tags. topic create uses topics=[{title,narrative,topic_direction_id?,keywords?,tags?,metadata?}]. format create uses URL, uploaded media, or manual format_input payloads; source_kind supports tiktok, instagram, x, linkedin, xhs, upload, manual, and cross_post. The created format's content_form (the post form it PRODUCES, not the input medium) is inferred from the source and immutable: image post URL or uploaded images -> image_post, video -> video_post, manual format_input text or text-only posts (x/linkedin) -> text_post. Managed-account (全托管) plan-submit and slideshow generation accept image_post formats only, so never build a managed-account format from manual format_input text; use an image-bearing post URL or uploaded images, then confirm content_form=image_post via asset +get before submitting; format update supports title, tags, is_public, and format_json, including markdown in format_json.md. media create uses URL import or local file upload payloads. bgm uses url, title, description, tags, and status.",
+            "description": "Type-specific asset payload. product create requires name, category, and description; website_url, tags, and assets are optional. persona uses name, description, tags, and assets. topic_direction uses title, description, and tags. topic create uses topics=[{title,narrative,topic_direction_id?,keywords?,tags?,metadata?}]. format create uses URL, uploaded media, or manual format_input payloads; source_kind supports tiktok, instagram, x, linkedin, xhs, upload, manual, and cross_post. The created format's content_form (the post form it PRODUCES, not the input medium) is inferred from the source and immutable: image post URL or uploaded images -> image_post, video -> video_post, manual format_input text or text-only posts (x/linkedin) -> text_post. Managed-account (全托管) onboarding and slideshow generation accept image_post formats only, so never build a managed-account format from manual format_input text; use an image-bearing post URL or uploaded images, then confirm content_form=image_post via asset +get before submitting; format update supports title, tags, is_public, and format_json, including markdown in format_json.md. media create uses URL import or local file upload payloads. bgm uses url, title, description, tags, and status.",
             "type": "object"
           },
           "type": {
