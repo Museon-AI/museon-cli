@@ -26,9 +26,7 @@ write requires a canonical ID.
 Account-wide required hashtags belong to publish settings. Use
 `social-account +config-update --required-hashtags '#Brand,#Campaign'` to
 replace them, or `--required-hashtags ""` to clear them. Omitting the flag
-preserves the current setting. During fully managed onboarding,
-`agentic-campaign +plan-submit` accepts the same flag and semantics; the
-operation itself does not retain a separate copy.
+preserves the current setting.
 
 ## Connect a user-owned account
 

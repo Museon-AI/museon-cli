@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-123 commands across 13 domains (source of truth: `museoncli schema`).
+121 commands across 13 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -203,8 +203,6 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `agentic-campaign +plan-list` | read | — | — | direct | List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-get` | read | — | — | direct | Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-set-persona` | write | yes | — | direct | Set a Persona Plan's persona, using its current version for concurrency control. |
-| `agentic-campaign +plan-submit` | write | yes | — | direct | Fan out an onboarding/reset plan to every account in a Persona Plan. |
-| `agentic-campaign +plan-elements-replace` | write | yes | — | direct | Fan out add/resume/pause format and topic changes to a Persona Plan's accounts. |
 | `agentic-campaign +plan-strategy-decide` | write | yes | — | direct | Fan out a strategy decision to the latest awaiting-review run in a Persona Plan. |
 | `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +plan-attribution` | read | — | — | direct | Aggregate attribution across a Persona Plan, omitting account operation ids. |
