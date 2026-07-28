@@ -33,6 +33,8 @@ def test_creative_search_ads_parser_builds_server_payload() -> None:
         [
             "research",
             "+creative-search-ads",
+            "--idempotency-key",
+            "ads-search-1",
             "--keyword",
             "eco soap",
             "--keyword",
@@ -48,6 +50,7 @@ def test_creative_search_ads_parser_builds_server_payload() -> None:
 
     assert args.domain_command == "research.creative-search-ads"
     assert command_payload(args) == {
+        "idempotency_key": "ads-search-1",
         "keywords": ["eco soap", "refill soap"],
         "ad_platforms": ["meta_ads"],
         "media_types": ["photo"],
@@ -60,17 +63,80 @@ def test_creative_search_ads_parser_applies_safe_defaults() -> None:
         [
             "research",
             "+creative-search-ads",
+            "--idempotency-key",
+            "ads-search-defaults",
             "--keyword",
             "eco soap",
         ]
     )
 
     assert command_payload(args) == {
+        "idempotency_key": "ads-search-defaults",
         "keywords": ["eco soap"],
         "ad_platforms": ["meta_ads", "tiktok_ads"],
         "media_types": ["video"],
         "limit_per_platform": 20,
     }
+
+
+def test_creative_search_ads_parser_requires_idempotency_key() -> None:
+    args = _parse(
+        [
+            "research",
+            "+creative-search-ads",
+            "--keyword",
+            "eco soap",
+        ]
+    )
+
+    with pytest.raises(ValueError, match="idempotency-key"):
+        command_payload(args)
+
+
+def test_creative_search_ads_accepts_idempotency_key_from_structured_args() -> None:
+    args = _parse(
+        [
+            "research",
+            "+creative-search-ads",
+            "--args-json",
+            json.dumps(
+                {
+                    "idempotency_key": "ads-search-structured",
+                    "keywords": ["eco soap"],
+                }
+            ),
+        ]
+    )
+
+    assert command_payload(args) == {
+        "idempotency_key": "ads-search-structured",
+        "keywords": ["eco soap"],
+        "ad_platforms": ["meta_ads", "tiktok_ads"],
+        "media_types": ["video"],
+        "limit_per_platform": 20,
+    }
+
+
+@pytest.mark.parametrize("idempotency_key", [123, "   ", "x" * 241])
+def test_creative_search_ads_rejects_invalid_structured_idempotency_key(
+    idempotency_key: object,
+) -> None:
+    args = _parse(
+        [
+            "research",
+            "+creative-search-ads",
+            "--args-json",
+            json.dumps(
+                {
+                    "idempotency_key": idempotency_key,
+                    "keywords": ["eco soap"],
+                }
+            ),
+        ]
+    )
+
+    with pytest.raises(ValueError, match="idempotency-key"):
+        command_payload(args)
 
 
 @pytest.mark.parametrize(
@@ -87,6 +153,8 @@ def test_creative_search_ads_rejects_invalid_structured_keywords(
         [
             "research",
             "+creative-search-ads",
+            "--idempotency-key",
+            "ads-search-invalid",
             "--args-json",
             json.dumps({"keywords": keywords}),
         ]
@@ -128,6 +196,7 @@ def test_creative_search_ads_schema_is_discoverable_and_provider_neutral() -> No
     assert schema["risk_level"] == "write"
     assert schema["execution"] == "async_run"
     assert schema["supports_dry_run"] is True
+    assert "idempotency_key" in schema["input_schema"]["required"]
     assert "provider" not in json.dumps(schema).lower()
 
 
@@ -146,6 +215,8 @@ def test_creative_search_ads_dry_run_makes_no_api_call(
                 [
                     "research",
                     "+creative-search-ads",
+                    "--idempotency-key",
+                    "ads-search-dry-run",
                     "--keyword",
                     "eco soap",
                     "--dry-run",
@@ -199,6 +270,8 @@ def test_dispatch_creative_search_ads_returns_async_run(
                 [
                     "research",
                     "+creative-search-ads",
+                    "--idempotency-key",
+                    "ads-search-dispatch-1",
                     "--keyword",
                     "eco soap",
                 ]
@@ -229,6 +302,7 @@ def test_dispatch_creative_search_ads_returns_async_run(
             "json_body": {
                 "workspace_id": "workspace-1",
                 "payload": {
+                    "idempotency_key": "ads-search-dispatch-1",
                     "keywords": ["eco soap"],
                     "ad_platforms": ["meta_ads", "tiktok_ads"],
                     "media_types": ["video"],

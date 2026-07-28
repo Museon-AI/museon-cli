@@ -334,6 +334,10 @@ def _build_community_search_arguments(args: argparse.Namespace) -> dict[str, Any
 
 def _add_creative_search_ads_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
+    parser.add_argument(
+        "--idempotency-key",
+        help="Stable key for safe retries; use a new key only for an intentional new search.",
+    )
     parser.add_argument("--keyword", dest="keywords", action="append")
     parser.add_argument(
         "--ad-platform",
@@ -361,6 +365,19 @@ def _build_creative_search_ads_arguments(args: argparse.Namespace) -> dict[str, 
         fields={"provider", "provider_name", "source_type"},
         context="research +creative-search-ads",
     )
+    raw_idempotency_key = (
+        args.idempotency_key
+        if args.idempotency_key is not None
+        else payload.get("idempotency_key")
+    )
+    if not isinstance(raw_idempotency_key, str):
+        raise ValueError("--idempotency-key must be a string.")
+    idempotency_key = raw_idempotency_key.strip()
+    if not idempotency_key:
+        raise ValueError("--idempotency-key must not be blank.")
+    if len(idempotency_key) > 240:
+        raise ValueError("--idempotency-key must be at most 240 characters.")
+    payload["idempotency_key"] = idempotency_key
     if args.keywords:
         payload["keywords"] = list(args.keywords)
     if args.ad_platforms:
@@ -747,6 +764,14 @@ def _creative_search_ads_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
+            "idempotency_key": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 240,
+                "description": (
+                    "Caller-stable key reused only when retrying the same Ads search intent."
+                ),
+            },
             "keywords": {
                 "type": "array",
                 "minItems": 1,
@@ -786,7 +811,7 @@ def _creative_search_ads_input_schema() -> dict[str, Any]:
                 "description": "Maximum results per keyword and ad library.",
             },
         },
-        "required": ["keywords"],
+        "required": ["idempotency_key", "keywords"],
     }
 
 
@@ -981,7 +1006,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+creative-search-ads",
             summary=(
                 "Start a durable Creative Search Ads task across Meta and TikTok ad "
-                "libraries. This is Ads-only and never falls back to organic social search."
+                "libraries. Requires a stable idempotency key for safe retries. "
+                "This is Ads-only and never falls back to organic social search."
             ),
             risk_level="write",
             execution="async_run",
@@ -994,11 +1020,12 @@ def specs() -> list[CommandSpec]:
             examples=[
                 (
                     "museoncli research +creative-search-ads --keyword 'eco soap' "
-                    "--ad-platform meta-ads --ad-platform tiktok-ads --media-type video"
+                    "--ad-platform meta-ads --ad-platform tiktok-ads --media-type video "
+                    "--idempotency-key <stable_key>"
                 ),
                 (
                     "museoncli research +creative-search-ads --keyword 'summer dress' "
-                    "--media-type photo --limit 20 --dry-run"
+                    "--media-type photo --limit 20 --idempotency-key <stable_key> --dry-run"
                 ),
             ],
             add_arguments=_add_creative_search_ads_arguments,

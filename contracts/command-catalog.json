@@ -3557,7 +3557,7 @@
           "risk_level": "write",
           "shortcut": "+creative-search-ads",
           "stability": "stable",
-          "summary": "Start a durable Creative Search Ads task across Meta and TikTok ad libraries. This is Ads-only and never falls back to organic social search.",
+          "summary": "Start a durable Creative Search Ads task across Meta and TikTok ad libraries. Requires a stable idempotency key for safe retries. This is Ads-only and never falls back to organic social search.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -19104,8 +19104,8 @@
       "capability_key": "research.creative-search-ads",
       "domain": "research",
       "examples": [
-        "museoncli research +creative-search-ads --keyword 'eco soap' --ad-platform meta-ads --ad-platform tiktok-ads --media-type video",
-        "museoncli research +creative-search-ads --keyword 'summer dress' --media-type photo --limit 20 --dry-run"
+        "museoncli research +creative-search-ads --keyword 'eco soap' --ad-platform meta-ads --ad-platform tiktok-ads --media-type video --idempotency-key <stable_key>",
+        "museoncli research +creative-search-ads --keyword 'summer dress' --media-type photo --limit 20 --idempotency-key <stable_key> --dry-run"
       ],
       "execution": "async_run",
       "input_schema": {
@@ -19127,6 +19127,12 @@
             "minItems": 1,
             "type": "array",
             "uniqueItems": true
+          },
+          "idempotency_key": {
+            "description": "Caller-stable key reused only when retrying the same Ads search intent.",
+            "maxLength": 240,
+            "minLength": 1,
+            "type": "string"
           },
           "keywords": {
             "description": "One to ten Ads search keywords.",
@@ -19165,6 +19171,7 @@
           }
         },
         "required": [
+          "idempotency_key",
           "keywords"
         ],
         "type": "object"
@@ -19246,7 +19253,7 @@
       "risk_level": "write",
       "shortcut": "+creative-search-ads",
       "stability": "stable",
-      "summary": "Start a durable Creative Search Ads task across Meta and TikTok ad libraries. This is Ads-only and never falls back to organic social search.",
+      "summary": "Start a durable Creative Search Ads task across Meta and TikTok ad libraries. Requires a stable idempotency key for safe retries. This is Ads-only and never falls back to organic social search.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
