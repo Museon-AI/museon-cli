@@ -205,12 +205,135 @@ def test_candidate_contract_matches_submit_and_revise_note_boundary() -> None:
     assert "note" not in submit.input_schema["properties"]
     assert revise.input_schema["properties"]["note"]["maxLength"] == 2000
     assert submit.input_schema["properties"]["plan_id"]["format"] == "uuid"
-    assert (
-        submit.input_schema["properties"]["elements"]["items"]["properties"]["format_id"][
-            "examples"
-        ]
-        == ["33333333-3333-4333-8333-333333333333"]
+    assert submit.input_schema["properties"]["elements"]["items"]["properties"]["format_id"][
+        "examples"
+    ] == ["33333333-3333-4333-8333-333333333333"]
+
+
+def test_plan_revise_sends_exact_revision_proposal_changes() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    add_elements = [
+        {
+            "format_id": "44444444-4444-4444-8444-444444444444",
+            "topic_id": "55555555-5555-4555-8555-555555555555",
+            "cta_target_id": "66666666-6666-4666-8666-666666666666",
+        }
+    ]
+    boost_elements = [
+        {
+            "element_id": "77777777-7777-4777-8777-777777777777",
+            "account_count": 3,
+            "days": 7,
+        }
+    ]
+    retire_element_ids = ["88888888-8888-4888-8888-888888888888"]
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id),
+        {"proposal": {"id": "proposal-1"}},
     )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-revise",
+            "--plan-id",
+            plan_id,
+            "--add-elements-json",
+            json.dumps(add_elements),
+            "--retire-element-ids",
+            ",".join(retire_element_ids),
+            "--boost-elements-json",
+            json.dumps(boost_elements),
+            "--note",
+            "Expand the winner",
+        ]
+    )
+    arguments = agentic_campaign._build_plan_revise_arguments(args)
+
+    result = asyncio.run(
+        agentic_campaign._execute_plan_revise(
+            context("agentic-campaign.plan-revise", arguments, capture)
+        )
+    )
+
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "note": "Expand the winner",
+            "changes": {
+                "add_elements": add_elements,
+                "retire_element_ids": retire_element_ids,
+                "boost_elements": boost_elements,
+            },
+        },
+        "params": None,
+    }
+    assert result == {
+        "proposal_id": "proposal-1",
+        "change_summary": {
+            "new_directions": 1,
+            "directions_to_stop": 1,
+            "winner_boosts": 1,
+        },
+        "next_step": "Please review the adjustment in Museon and confirm it there.",
+    }
+
+
+def test_plan_revise_requires_at_least_one_change() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-revise",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+        ]
+    )
+    with pytest.raises(ValueError, match="requires at least one"):
+        agentic_campaign._build_plan_revise_arguments(args)
+
+
+def test_campaign_rename_gets_version_and_only_patches_name() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    capture = Capture(
+        {"campaign": {"id": campaign_id, "version": 9, "name": "Old name"}},
+        {"campaign": {"id": campaign_id, "version": 10, "name": "New name"}},
+    )
+
+    asyncio.run(
+        agentic_campaign._execute_campaign_rename(
+            context(
+                "agentic-campaign.campaign-rename",
+                {"campaign_id": campaign_id, "name": "New name"},
+                capture,
+            )
+        )
+    )
+
+    assert capture.calls == [
+        {
+            "method": "GET",
+            "path": f"/agentic-creative-campaigns/{campaign_id}",
+            "json_body": None,
+            "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+        },
+        {
+            "method": "PATCH",
+            "path": f"/agentic-creative-campaigns/{campaign_id}",
+            "json_body": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+                "expected_version": 9,
+                "name": "New name",
+            },
+            "params": None,
+        },
+    ]
+    business_patch = capture.calls[-1]["json_body"]
+    assert set(business_patch) - {"workspace_id", "expected_version"} == {"name"}
 
 
 def test_plan_get_resolves_campaign_and_only_returns_display_account_identity() -> None:
