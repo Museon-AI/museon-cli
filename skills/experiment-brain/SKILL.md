@@ -98,6 +98,35 @@ museoncli agentic-campaign +candidate-revise \
   --note "Tighten the visual direction"
 ```
 
+## 6. Adjustment proposals
+
+Use the experiment scoreboard before proposing a live-plan adjustment:
+
+- Add a new direction when the current holdings leave a meaningful hypothesis
+  untested. Define it as one format × topic × optional CTA combination.
+- Retire a direction only after enough comparable observations and consistently
+  weak performance across repeated posts. Never stop a direction because of
+  one poor result or an undersized sample.
+- Boost only a `Winner` supported by sufficient, repeatable evidence. State the
+  proposed allocation explicitly as `account count × days` so the operator can
+  judge the added commitment.
+
+Create one adjustment proposal containing any combination of additions,
+retirements, and Winner boosts:
+
+```bash
+museoncli agentic-campaign +plan-revise \
+  --plan-id 33333333-3333-4333-8333-333333333333 \
+  --add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
+  --retire-element-ids 77777777-7777-4777-8777-777777777777 \
+  --boost-elements-json '[{"element_id":"88888888-8888-4888-8888-888888888888","account_count":3,"days":7}]' \
+  --note "Add one distinct direction, stop the repeatedly weak direction, and boost the Winner across 3 accounts for 7 days"
+```
+
+The command creates an `调整记录` for review; it never confirms it. Tell the
+operator what will be added, stopped, and boosted, then direct them to review
+the visuals and confirm on the page.
+
 Mel always produces proposals only. Applying a proposal requires the operator
 to review its visuals and confirm it on the page. Never select, merge, finalize,
 enable, boost, or stop a direction on the operator's behalf.

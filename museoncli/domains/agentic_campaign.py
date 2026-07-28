@@ -142,6 +142,66 @@ def _build_candidate_revise_arguments(args: argparse.Namespace) -> dict[str, Any
     return _build_candidate_arguments(args, submit=False)
 
 
+def _add_plan_revise_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--add-elements-json")
+    parser.add_argument("--retire-element-ids")
+    parser.add_argument("--boost-elements-json")
+    parser.add_argument("--note", default=None)
+
+
+def _revision_json_list(value: str | None, *, field: str) -> list[Any]:
+    if value is None:
+        return []
+    return _candidate_json(value, field=field, expected_type=list)
+
+
+def _revision_changes(
+    *,
+    add_elements: Any,
+    retire_element_ids: Any,
+    boost_elements: Any,
+) -> dict[str, list[Any]]:
+    changes = {
+        "add_elements": list(add_elements or []),
+        "retire_element_ids": _csv(retire_element_ids),
+        "boost_elements": list(boost_elements or []),
+    }
+    if not any(changes.values()):
+        raise ValueError(
+            "agentic-campaign +plan-revise requires at least one of "
+            "--add-elements-json, --retire-element-ids, or --boost-elements-json."
+        )
+    return changes
+
+
+def _build_plan_revise_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "plan_id": args.plan_id,
+        "changes": _revision_changes(
+            add_elements=_revision_json_list(
+                args.add_elements_json,
+                field="add-elements",
+            ),
+            retire_element_ids=args.retire_element_ids,
+            boost_elements=_revision_json_list(
+                args.boost_elements_json,
+                field="boost-elements",
+            ),
+        ),
+        "note": args.note,
+    }
+
+
+def _add_campaign_rename_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--name", required=True)
+
+
+def _build_campaign_rename_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {"campaign_id": args.campaign_id, "name": args.name}
+
+
 def _add_plan_submit_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
     parser.add_argument("--format-ids", required=True, help="Comma-separated format ids.")
@@ -306,6 +366,29 @@ def _candidate_elements_schema() -> dict[str, Any]:
     }
 
 
+def _revision_boosts_schema() -> dict[str, Any]:
+    return {
+        "type": "array",
+        "maxItems": 100,
+        "items": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "element_id": _uuid_property("Experiment direction id"),
+                "account_count": {"type": "integer", "minimum": 1},
+                "days": {"type": "integer", "minimum": 1, "maximum": 14},
+            },
+            "required": ["element_id", "account_count", "days"],
+        },
+    }
+
+
+def _revision_add_elements_schema() -> dict[str, Any]:
+    schema = _candidate_elements_schema()
+    schema.pop("minItems")
+    return schema
+
+
 def specs() -> list[CommandSpec]:
     domain = Domain.AGENTIC_CAMPAIGN
     return [
@@ -375,6 +458,91 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_candidate_revise_arguments,
             build_arguments=_build_candidate_revise_arguments,
             supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+plan-revise",
+            summary="Create an adjustment proposal for operator review.",
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_plan_revise",
+            input_schema=_plan_schema(
+                {
+                    "changes": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "anyOf": [
+                            {
+                                "properties": {
+                                    "add_elements": {"minItems": 1},
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "retire_element_ids": {"minItems": 1},
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "boost_elements": {"minItems": 1},
+                                }
+                            },
+                        ],
+                        "properties": {
+                            "add_elements": _revision_add_elements_schema(),
+                            "retire_element_ids": {
+                                "type": "array",
+                                "maxItems": 100,
+                                "items": _uuid_property("Experiment direction id"),
+                            },
+                            "boost_elements": _revision_boosts_schema(),
+                        },
+                        "required": [
+                            "add_elements",
+                            "retire_element_ids",
+                            "boost_elements",
+                        ],
+                    },
+                    "note": {"type": ["string", "null"], "maxLength": 2000},
+                },
+                required=["changes"],
+            ),
+            output_schema=_direct_output_schema(
+                "Adjustment proposal id, change summary, and operator review reminder."
+            ),
+            examples=[
+                "museoncli agentic-campaign +plan-revise "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                """--add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
+                """"topic_id":"55555555-5555-4555-8555-555555555555"}]' """
+                """--boost-elements-json '[{"element_id":"66666666-6666-4666-8666-666666666666","""
+                """"account_count":3,"days":7}]' --note 'Expand the proven direction'"""
+            ],
+            add_arguments=_add_plan_revise_arguments,
+            build_arguments=_build_plan_revise_arguments,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+campaign-rename",
+            summary="Rename an Agentic Creative Campaign.",
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_campaign_rename",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "name": {"type": "string", "minLength": 1, "maxLength": 160},
+                },
+                required=["campaign_id", "name"],
+            ),
+            output_schema=_direct_output_schema("Renamed campaign detail."),
+            examples=[
+                "museoncli agentic-campaign +campaign-rename "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--name 'Summer maker campaign'"
+            ],
+            add_arguments=_add_campaign_rename_arguments,
+            build_arguments=_build_campaign_rename_arguments,
         ),
         CommandSpec(
             domain=domain,
@@ -778,10 +946,7 @@ async def _execute_candidate_submit(ctx: CommandContext) -> Any:
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",
-        (
-            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
-            f"{plan['id']}/candidates:submit"
-        ),
+        (f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/candidates:submit"),
         json_body={
             "workspace_id": ctx.workspace_id,
             "name": ctx.arguments.get("name"),
@@ -806,6 +971,61 @@ async def _execute_candidate_revise(ctx: CommandContext) -> Any:
             "persona_payload": ctx.arguments.get("persona_payload"),
             "elements": ctx.arguments.get("elements"),
             "note": ctx.arguments.get("note"),
+        },
+    )
+
+
+async def _execute_plan_revise(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    raw_changes = ctx.arguments.get("changes")
+    if not isinstance(raw_changes, dict):
+        raw_changes = {}
+    changes = _revision_changes(
+        add_elements=raw_changes.get("add_elements"),
+        retire_element_ids=raw_changes.get("retire_element_ids"),
+        boost_elements=raw_changes.get("boost_elements"),
+    )
+    response = await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
+            f"{plan['id']}/revision-proposals"
+        ),
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "note": ctx.arguments.get("note"),
+            "changes": changes,
+        },
+    )
+    payload = _payload_data(response)
+    proposal = payload.get("proposal") if isinstance(payload, dict) else {}
+    proposal_id = proposal.get("id") if isinstance(proposal, dict) else None
+    return {
+        "proposal_id": proposal_id,
+        "change_summary": {
+            "new_directions": len(changes["add_elements"]),
+            "directions_to_stop": len(changes["retire_element_ids"]),
+            "winner_boosts": len(changes["boost_elements"]),
+        },
+        "next_step": "Please review the adjustment in Museon and confirm it there.",
+    }
+
+
+async def _execute_campaign_rename(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    detail = _payload_data(await _detail(ctx, campaign_id))
+    campaign = detail.get("campaign") if isinstance(detail, dict) else None
+    if not isinstance(campaign, dict) or campaign.get("version") is None:
+        raise RuntimeError("campaign detail did not include its current version")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "PATCH",
+        f"/agentic-creative-campaigns/{campaign_id}",
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "expected_version": campaign["version"],
+            "name": ctx.arguments.get("name"),
         },
     )
 
@@ -915,6 +1135,9 @@ async def _execute_issues_pull(ctx: CommandContext) -> Any:
 
 
 EXECUTORS = {
+    "agentic-campaign.campaign-rename": redacted_direct_enveloped(
+        _execute_campaign_rename, redact_api_errors=True
+    ),
     "agentic-campaign.candidate-revise": redacted_direct_enveloped(
         _execute_candidate_revise, redact_api_errors=True
     ),
@@ -937,6 +1160,9 @@ EXECUTORS = {
     ),
     "agentic-campaign.plan-list": redacted_direct_enveloped(
         _execute_plan_list, redact_api_errors=True
+    ),
+    "agentic-campaign.plan-revise": redacted_direct_enveloped(
+        _execute_plan_revise, redact_api_errors=True
     ),
     "agentic-campaign.plan-set-persona": redacted_direct_enveloped(
         _execute_plan_set_persona, redact_api_errors=True

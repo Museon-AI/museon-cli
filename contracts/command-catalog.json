@@ -569,6 +569,56 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.plan-revise",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-revise",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+plan-revise",
+          "stability": "stable",
+          "summary": "Create an adjustment proposal for operator review.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.campaign-rename",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.campaign-rename",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+campaign-rename",
+          "stability": "stable",
+          "summary": "Rename an Agentic Creative Campaign.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.list",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -9137,6 +9187,110 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "agentic-campaign.campaign-rename": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.campaign-rename",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +campaign-rename --campaign-id 22222222-2222-4222-8222-222222222222 --name 'Summer maker campaign'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.campaign-rename",
+      "output_schema": {
+        "description": "Renamed campaign detail.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+campaign-rename",
+      "stability": "stable",
+      "summary": "Rename an Agentic Creative Campaign.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "agentic-campaign.candidate-revise": {
       "authorization": {
         "authentication_required": true,
@@ -10328,6 +10482,231 @@
       "shortcut": "+plan-list",
       "stability": "stable",
       "summary": "List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-revise": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-revise",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +plan-revise --plan-id 33333333-3333-4333-8333-333333333333 --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --boost-elements-json '[{\"element_id\":\"66666666-6666-4666-8666-666666666666\",\"account_count\":3,\"days\":7}]' --note 'Expand the proven direction'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "changes": {
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "properties": {
+                  "add_elements": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "retire_element_ids": {
+                    "minItems": 1
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "boost_elements": {
+                    "minItems": 1
+                  }
+                }
+              }
+            ],
+            "properties": {
+              "add_elements": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cta_target_id": {
+                      "description": "Optional CTA target id",
+                      "examples": [
+                        "66666666-6666-4666-8666-666666666666"
+                      ],
+                      "format": "uuid",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "format_id": {
+                      "description": "Format id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "topic_id": {
+                      "description": "Content topic id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "format_id",
+                    "topic_id"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "boost_elements": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "account_count": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "days": {
+                      "maximum": 14,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "element_id": {
+                      "description": "Experiment direction id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "element_id",
+                    "account_count",
+                    "days"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "retire_element_ids": {
+                "items": {
+                  "description": "Experiment direction id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "required": [
+              "add_elements",
+              "retire_element_ids",
+              "boost_elements"
+            ],
+            "type": "object"
+          },
+          "note": {
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id",
+          "changes"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-revise",
+      "output_schema": {
+        "description": "Adjustment proposal id, change summary, and operator review reminder.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+plan-revise",
+      "stability": "stable",
+      "summary": "Create an adjustment proposal for operator review.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
