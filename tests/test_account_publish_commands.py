@@ -176,6 +176,24 @@ def test_asset_pool_uniform_patch_parser_and_builder() -> None:
     }
 
 
+def test_asset_pool_batch_set_builder_omits_managed_operation_approved_by_default() -> None:
+    args = _parse(_asset_pool_args("+asset-pools-batch-set"))
+    spec = get_command_spec("account-publish.asset-pools-batch-set")
+
+    payload = spec.build_arguments(args)
+
+    assert "managed_operation_approved" not in payload
+
+
+def test_asset_pool_batch_set_builder_includes_managed_operation_approved_when_flagged() -> None:
+    args = _parse(_asset_pool_args("+asset-pools-batch-set") + ["--managed-operation-approved"])
+    spec = get_command_spec("account-publish.asset-pools-batch-set")
+
+    payload = spec.build_arguments(args)
+
+    assert payload["managed_operation_approved"] is True
+
+
 def test_one_account_parser_builds_complete_five_pool_patch() -> None:
     argv = [
         "account-publish",
@@ -265,7 +283,15 @@ def test_asset_pool_schema_exposes_batch_and_patch_contract() -> None:
     assert "unchanged" in patch_schema["properties"]["formats"]["properties"]["operation"]["enum"]
     assert batch.input_schema["properties"]["preview_token"]["maxLength"] == 200
     assert batch.input_schema["properties"]["idempotency_key"]["maxLength"] == 240
-    assert "managed_operation_approved" not in batch.input_schema["properties"]
+    assert batch.input_schema["properties"]["managed_operation_approved"] == {
+        "type": "boolean",
+        "default": False,
+        "description": (
+            "Set only after relaying the fully-managed account impact from "
+            "batch preview and receiving explicit approval."
+        ),
+    }
+    assert "managed_operation_approved" not in preview.input_schema["properties"]
     assert batch.risk_level == "destructive"
     assert batch.execution == "async_run"
     assert batch.requires_confirmation is True

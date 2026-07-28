@@ -121,6 +121,14 @@ def _add_asset_pools_batch_set_arguments(parser: argparse.ArgumentParser) -> Non
     )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--yes", action="store_true")
+    parser.add_argument(
+        "--managed-operation-approved",
+        action="store_true",
+        help=(
+            "Set only after relaying the fully-managed account impact from batch "
+            "preview and receiving explicit approval."
+        ),
+    )
 
 
 def _add_asset_pools_job_arguments(parser: argparse.ArgumentParser) -> None:
@@ -313,6 +321,8 @@ def _build_asset_pools_batch_set_arguments(args: argparse.Namespace) -> dict[str
             "idempotency_key": idempotency_key,
         }
     )
+    if args.managed_operation_approved:
+        payload["managed_operation_approved"] = True
     return payload
 
 
@@ -696,6 +706,14 @@ def _asset_pools_mutation_input_schema(*, include_submission: bool) -> dict[str,
                 "preview_token": {"type": "string", "minLength": 1, "maxLength": 200},
                 "idempotency_key": {"type": "string", "minLength": 1, "maxLength": 240},
                 "dry_run": {"type": "boolean", "default": False},
+                "managed_operation_approved": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": (
+                        "Set only after relaying the fully-managed account impact from "
+                        "batch preview and receiving explicit approval."
+                    ),
+                },
             }
         )
         required.extend(["preview_token", "idempotency_key"])
@@ -900,7 +918,9 @@ def specs() -> list[CommandSpec]:
                 "uniform patch plus per-account precise overrides for persona, product, formats, "
                 "topics, and BGM. Always run this before +asset-pools-batch-set, present every "
                 "changed/skipped/failed account and existing-schedule impact, then obtain explicit "
-                "approval. Fully-managed accounts fail per-account in v1 and cannot be bypassed."
+                "approval. Fully-managed accounts are previewed normally and marked "
+                "requires_managed_operation_approved=true; after explicit approval, submit with "
+                "--managed-operation-approved."
             ),
             risk_level="read",
             execution="direct",
@@ -936,8 +956,10 @@ def specs() -> list[CommandSpec]:
                 "pools for one account. "
                 "Requires the opaque token and identical normalized patches from a fresh live "
                 "preview, plus a stable idempotency key and --yes. After submission, poll only "
-                "+asset-pools-batch-status and inspect every failed/skipped account. Fully-managed "
-                "accounts fail per-account in v1 and cannot be bypassed."
+                "+asset-pools-batch-status and inspect every failed/skipped account. If preview "
+                "marks any fully-managed account requires_managed_operation_approved=true, relay "
+                "its impact and add --managed-operation-approved only after explicit approval; "
+                "without it those accounts fail per-account."
             ),
             risk_level="destructive",
             execution="async_run",
