@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-117 commands across 13 domains (source of truth: `museoncli schema`).
+118 commands across 13 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -211,6 +211,7 @@ The tables below are generated — edit code, then run
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
 | `agentic-campaign +plan-propose` | write | yes | — | direct | Propose a complete draft plan or an active-plan adjustment for operator review. |
+| `agentic-campaign +proposal-get` | read | — | — | direct | Read an adjustment proposal and its latest revision guidance. |
 | `agentic-campaign +campaign-rename` | write | yes | — | direct | Rename an Agentic Creative Campaign. |
 | `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
 | `agentic-campaign +get` | read | — | — | direct | Get an Agentic Creative Campaign detail by campaign id. |

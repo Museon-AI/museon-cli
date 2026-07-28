@@ -132,6 +132,36 @@ The command creates an `调整记录` for review; it never confirms it. Tell the
 operator what will be added, stopped, and boosted, then direct them to review
 the visuals and confirm on the page.
 
+### Revision iteration
+
+When a revision task arrives, read the latest unresolved operator feedback
+before changing the proposal:
+
+```bash
+museoncli agentic-campaign +proposal-get \
+  --plan-id 33333333-3333-4333-8333-333333333333 \
+  --proposal-id 77777777-7777-4777-8777-777777777777
+```
+
+Apply the compiled `feedback_summary` consistently across the proposed supply
+assets. Only dedicated assets created for this proposal may be modified in
+place. If feedback applies to a shared asset, copy it into a new variant and
+point the revised element list to that new variant; never mutate the shared
+asset.
+
+Submit the complete replacement element list as the next `第N稿`:
+
+```bash
+museoncli agentic-campaign +plan-propose \
+  --plan-id 33333333-3333-4333-8333-333333333333 \
+  --proposal-id 77777777-7777-4777-8777-777777777777 \
+  --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
+  --note "Applied the latest compiled review feedback across the replacement supply"
+```
+
+The operator may continue annotating or confirm from the review desk. Never
+pressure or prompt the operator to confirm.
+
 When speaking to operators, use only this interface vocabulary:
 `人设方案`, `第N稿`, `调整记录`, `定稿启用`, `新方向开测`, `Winner加推`,
 `停投`, and `内容组成`. Do not expose engineering terms such as candidate,

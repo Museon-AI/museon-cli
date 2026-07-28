@@ -71,6 +71,7 @@ def _build_plan_id_arguments(args: argparse.Namespace) -> dict[str, Any]:
 def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
     parser.add_argument("--candidate-id")
+    parser.add_argument("--proposal-id")
     parser.add_argument("--note")
     parser.add_argument("--name")
     parser.add_argument("--persona-json")
@@ -79,6 +80,15 @@ def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--retire-element-ids")
     parser.add_argument("--boost-elements-json")
     parser.add_argument("--dry-run", action="store_true")
+
+
+def _add_proposal_get_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--proposal-id", required=True)
+
+
+def _build_proposal_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {"plan_id": args.plan_id, "proposal_id": args.proposal_id}
 
 
 def _candidate_json(value: str, *, field: str, expected_type: type) -> Any:
@@ -115,6 +125,43 @@ def _revision_changes(
 
 
 def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    if args.proposal_id is not None:
+        if args.name is not None or args.persona_json is not None:
+            raise ValueError(
+                "--name and --persona-json are not valid when revising an adjustment proposal."
+            )
+        if args.candidate_id is not None:
+            raise ValueError("--candidate-id is not valid when revising an adjustment proposal.")
+        if any(
+            value is not None
+            for value in (
+                args.add_elements_json,
+                args.retire_element_ids,
+                args.boost_elements_json,
+            )
+        ):
+            raise ValueError(
+                "adjustment change options are not valid when revising an adjustment proposal."
+            )
+        if args.elements_json is None:
+            raise ValueError("adjustment proposal revision requires --elements-json.")
+        elements = _candidate_json(
+            args.elements_json,
+            field="elements",
+            expected_type=list,
+        )
+        if not elements:
+            raise ValueError("adjustment proposal revision requires at least one element.")
+        return compact_params(
+            {
+                "plan_id": args.plan_id,
+                "proposal_id": args.proposal_id,
+                "elements": elements,
+                "note": args.note,
+                "dry_run": args.dry_run,
+            }
+        )
+
     solution_supplied = any(
         value is not None for value in (args.name, args.persona_json, args.elements_json)
     )
@@ -144,6 +191,7 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
         {
             "plan_id": args.plan_id,
             "candidate_id": args.candidate_id,
+            "proposal_id": args.proposal_id,
             "note": args.note,
             "dry_run": args.dry_run,
         }
@@ -312,7 +360,9 @@ def specs() -> list[CommandSpec]:
                 "description": (
                     "For a draft plan, submit a complete solution (name, persona_payload, and "
                     "elements), optionally revising a candidate with candidate_id. For an active "
-                    "plan, submit at least one adjustment in changes; candidate_id is not allowed."
+                    "plan, submit at least one adjustment in changes. To revise an active-plan "
+                    "proposal after operator feedback, provide proposal_id and replacement "
+                    "elements only. Candidate and proposal ids are scenario-specific."
                 ),
                 "properties": {
                     "plan_id": _uuid_property("Agentic Persona Plan id"),
@@ -320,6 +370,11 @@ def specs() -> list[CommandSpec]:
                         "type": ["string", "null"],
                         "format": "uuid",
                         "description": "Draft-plan candidate id to revise",
+                    },
+                    "proposal_id": {
+                        "type": ["string", "null"],
+                        "format": "uuid",
+                        "description": "Active-plan adjustment proposal id to revise",
                     },
                     "name": {"type": "string", "minLength": 1, "maxLength": 200},
                     "persona_payload": _persona_payload_schema(),
@@ -364,7 +419,12 @@ def specs() -> list[CommandSpec]:
                                 },
                             },
                         ],
-                        "not": {"required": ["changes"]},
+                        "not": {
+                            "anyOf": [
+                                {"required": ["changes"]},
+                                {"required": ["proposal_id"]},
+                            ]
+                        },
                     },
                     {
                         "title": "Active plan adjustment",
@@ -374,6 +434,20 @@ def specs() -> list[CommandSpec]:
                                 {"required": ["name"]},
                                 {"required": ["persona_payload"]},
                                 {"required": ["elements"]},
+                                {"required": ["proposal_id"]},
+                            ]
+                        },
+                    },
+                    {
+                        "title": "Adjustment proposal revision",
+                        "required": ["proposal_id", "elements"],
+                        "properties": {"proposal_id": {"type": "string", "format": "uuid"}},
+                        "not": {
+                            "anyOf": [
+                                {"required": ["candidate_id"]},
+                                {"required": ["name"]},
+                                {"required": ["persona_payload"]},
+                                {"required": ["changes"]},
                             ]
                         },
                     },
@@ -394,6 +468,28 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_plan_propose_arguments,
             build_arguments=_build_plan_propose_arguments,
             supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+proposal-get",
+            summary="Read an adjustment proposal and its latest revision guidance.",
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_proposal_get",
+            input_schema=_plan_schema(
+                {"proposal_id": _uuid_property("Adjustment proposal id")},
+                required=["proposal_id"],
+            ),
+            output_schema=_direct_output_schema(
+                "Proposal status, revision round, changes, current elements, feedback, and review reminder."
+            ),
+            examples=[
+                "museoncli agentic-campaign +proposal-get "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--proposal-id 77777777-7777-4777-8777-777777777777"
+            ],
+            add_arguments=_add_proposal_get_arguments,
+            build_arguments=_build_proposal_get_arguments,
         ),
         CommandSpec(
             domain=domain,
@@ -705,10 +801,62 @@ def _proposal_output(response: Any, *, changes: dict[str, Any]) -> dict[str, Any
     }
 
 
+def _proposal_elements(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [
+        {
+            "format_id": item.get("format_id"),
+            "topic_id": item.get("topic_id"),
+            "cta_target_id": item.get("cta_target_id"),
+        }
+        for item in value
+        if isinstance(item, dict)
+    ]
+
+
+async def _execute_proposal_get(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    proposal_id = ctx.arguments.get("proposal_id")
+    response = await ctx.api_data_v2(
+        ctx.cfg,
+        "GET",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"revision-proposals/{proposal_id}"
+        ),
+        params={"workspace_id": ctx.workspace_id},
+    )
+    proposal = _payload_data(response)
+    if not isinstance(proposal, dict):
+        raise RuntimeError("revision proposal response was not an object")
+    changes = proposal.get("changes")
+    if not isinstance(changes, dict):
+        changes = {}
+    feedback_summary = proposal.get("feedback_summary")
+    return {
+        "status": proposal.get("status"),
+        "revision_round": proposal.get("revision_round"),
+        "change_summary": {
+            "new_directions": len(changes.get("add_elements") or []),
+            "directions_to_stop": len(changes.get("retire_element_ids") or []),
+            "winner_boosts": len(changes.get("boost_elements") or []),
+        },
+        "elements": _proposal_elements(proposal.get("elements")),
+        **(
+            {"feedback_summary": feedback_summary}
+            if isinstance(feedback_summary, str) and feedback_summary
+            else {}
+        ),
+        "next_step": "请在 Museon 审阅台查看这一稿；运营可继续标注意见或确认。",
+    }
+
+
 async def _execute_plan_propose(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     status = plan.get("status")
     candidate_id = ctx.arguments.get("candidate_id")
+    proposal_id = ctx.arguments.get("proposal_id")
     raw_changes = ctx.arguments.get("changes")
     has_solution = any(
         ctx.arguments.get(key) is not None for key in ("name", "persona_payload", "elements")
@@ -718,6 +866,8 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
         raise ValueError("一次提案只能是一种:整套方案 或 调整")
 
     if status == "draft":
+        if proposal_id:
+            raise ValueError("--proposal-id requires an active plan.")
         if has_adjustment:
             raise ValueError("draft plan only accepts a complete plan proposal.")
         name, persona_payload, elements = _complete_plan_arguments(ctx)
@@ -761,6 +911,42 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
         )
     if candidate_id:
         raise ValueError("--candidate-id is only valid for a draft plan.")
+    if proposal_id:
+        if (
+            ctx.arguments.get("name") is not None
+            or ctx.arguments.get("persona_payload") is not None
+        ):
+            raise ValueError("name and persona are not valid when revising an adjustment proposal.")
+        if raw_changes is not None:
+            raise ValueError(
+                "adjustment changes are not valid when revising an adjustment proposal."
+            )
+        elements = ctx.arguments.get("elements")
+        if not isinstance(elements, list) or not elements:
+            raise ValueError("adjustment proposal revision requires at least one element.")
+        response = await ctx.api_data_v2(
+            ctx.cfg,
+            "POST",
+            (
+                f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+                f"revision-proposals/{proposal_id}:submit-revision"
+            ),
+            json_body={
+                "workspace_id": ctx.workspace_id,
+                "elements": elements,
+                "note": ctx.arguments.get("note"),
+            },
+        )
+        payload = _payload_data(response)
+        if not isinstance(payload, dict):
+            raise RuntimeError("revision submission response was not an object")
+        revision_round = payload.get("round")
+        return {
+            "revision_round": revision_round,
+            "new_element_count": len(payload.get("elements") or []),
+            "preview_task_count": payload.get("dispatched_task_count"),
+            "next_step": f"第 {revision_round} 稿已提交；运营将在审阅台看到新一稿。",
+        }
     if has_solution:
         raise ValueError("active plan only accepts an adjustment proposal.")
     raw_changes = ctx.arguments.get("changes")
@@ -875,6 +1061,9 @@ EXECUTORS = {
     ),
     "agentic-campaign.plan-propose": redacted_direct_enveloped(
         _execute_plan_propose, redact_api_errors=True
+    ),
+    "agentic-campaign.proposal-get": redacted_direct_enveloped(
+        _execute_proposal_get, redact_api_errors=True
     ),
     "agentic-campaign.plan-tags": redacted_direct_enveloped(
         _execute_plan_tags, redact_api_errors=True
