@@ -2712,6 +2712,9 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "research.web-research",
         "research.social-media-search",
         "research.community-search",
+        "research.creative-search-ads",
+        "research.creative-search-ads-get",
+        "research.creative-search-ads-results",
         "research.visual-analyze",
     ]
     assert [item["name"] for item in result["data"]["commands"]["content-analysis"]] == [

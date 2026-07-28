@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-130 commands across 14 domains (source of truth: `museoncli schema`).
+133 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -29,6 +29,9 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `research +web-research` | read | — | — | direct | Research public web evidence from a query or URL, including page text and official-site visual assets. |
 | `research +social-media-search` | read | — | — | direct | Search social-native evidence across TikTok, Instagram, YouTube, and XHS using a stable platform and intent contract. |
 | `research +community-search` | read | — | — | direct | Search community evidence across X, Reddit, and LinkedIn using a stable platform and intent contract. |
+| `research +creative-search-ads` | write | yes | — | async_run | Start a durable Creative Search Ads task across Meta and TikTok ad libraries. This is Ads-only and never falls back to organic social search. |
+| `research +creative-search-ads-get` | read | — | — | direct | Read one Creative Search Ads task, including terminal aggregate statistics and sanitized partial-failure details. |
+| `research +creative-search-ads-results` | read | — | — | direct | List filtered, deduplicated Creative Search Ads result cards for one task. Results are available while the task is still running. |
 | `research +visual-analyze` | read | — | — | direct | Analyze one or more image/video URLs with a business prompt. If a TikTok or signed CDN URL cannot be prepared, import it as Museon media first and retry with the returned stable media URL. |
 
 ### content-analysis

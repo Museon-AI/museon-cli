@@ -13,10 +13,12 @@ from typing import Any
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import (
     _add_common_adapter_arguments,
+    _async_output_schema,
     _direct_output_schema,
     _json_list,
     _load_structured_args,
     _reject_server_controlled_fields,
+    _uuid_id_schema,
 )
 
 
@@ -94,6 +96,23 @@ COMMUNITY_INTENT_CHOICES = [
     "company_posts",
     "people_search",
     "posts",
+]
+
+
+CREATIVE_SEARCH_ADS_PLATFORM_CHOICES = ["meta_ads", "tiktok_ads"]
+
+
+CREATIVE_SEARCH_ADS_MEDIA_TYPE_CHOICES = ["video", "photo"]
+
+
+CREATIVE_SEARCH_ADS_TIME_RANGE_CHOICES = ["all", "7d", "30d", "90d"]
+
+
+CREATIVE_SEARCH_ADS_SORT_CHOICES = [
+    "published_at",
+    "first_seen_at",
+    "last_seen_at",
+    "created_at",
 ]
 
 
@@ -311,6 +330,174 @@ def _build_community_search_arguments(args: argparse.Namespace) -> dict[str, Any
         if not str(payload.get(key) or "").strip():
             raise ValueError(f"research +community-search requires --{key.replace('_', '-')}.")
     return payload
+
+
+def _add_creative_search_ads_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--keyword", dest="keywords", action="append")
+    parser.add_argument(
+        "--ad-platform",
+        dest="ad_platforms",
+        action="append",
+        choices=kebab_choices(CREATIVE_SEARCH_ADS_PLATFORM_CHOICES),
+    )
+    parser.add_argument(
+        "--media-type",
+        dest="media_types",
+        action="append",
+        choices=CREATIVE_SEARCH_ADS_MEDIA_TYPE_CHOICES,
+    )
+    parser.add_argument(
+        "--limit",
+        type=_int_range_arg(flag="--limit", minimum=1, maximum=100),
+    )
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_creative_search_ads_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    _reject_server_controlled_fields(
+        payload,
+        fields={"provider", "provider_name", "source_type"},
+        context="research +creative-search-ads",
+    )
+    if args.keywords:
+        payload["keywords"] = list(args.keywords)
+    if args.ad_platforms:
+        payload["ad_platforms"] = list(args.ad_platforms)
+    if args.media_types:
+        payload["media_types"] = list(args.media_types)
+    if args.limit is not None:
+        payload["limit_per_platform"] = args.limit
+
+    payload["keywords"] = _normalized_string_list(
+        payload.get("keywords"),
+        field="keywords",
+        minimum=1,
+        maximum=10,
+    )
+    payload["ad_platforms"] = _normalized_choice_list(
+        payload.get("ad_platforms"),
+        field="ad_platforms",
+        choices=CREATIVE_SEARCH_ADS_PLATFORM_CHOICES,
+        default=CREATIVE_SEARCH_ADS_PLATFORM_CHOICES,
+    )
+    payload["media_types"] = _normalized_choice_list(
+        payload.get("media_types"),
+        field="media_types",
+        choices=CREATIVE_SEARCH_ADS_MEDIA_TYPE_CHOICES,
+        default=["video"],
+    )
+    if "limit_per_platform" not in payload:
+        payload["limit_per_platform"] = 20
+    _validate_int_range(
+        payload,
+        key="limit_per_platform",
+        flag="--limit",
+        minimum=1,
+        maximum=100,
+    )
+    return payload
+
+
+def _add_creative_search_ads_get_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--id", dest="task_id", required=True)
+
+
+def _build_creative_search_ads_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    payload["task_id"] = args.task_id
+    return payload
+
+
+def _add_creative_search_ads_results_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--id", dest="task_id", required=True)
+    parser.add_argument(
+        "--ad-platform",
+        choices=kebab_choices(CREATIVE_SEARCH_ADS_PLATFORM_CHOICES),
+    )
+    parser.add_argument(
+        "--time-range",
+        choices=CREATIVE_SEARCH_ADS_TIME_RANGE_CHOICES,
+        default="all",
+    )
+    parser.add_argument("--page", type=int, default=1)
+    parser.add_argument("--page-size", type=int, default=20)
+    parser.add_argument(
+        "--sort-by",
+        choices=kebab_choices(CREATIVE_SEARCH_ADS_SORT_CHOICES),
+        default="published-at",
+    )
+
+
+def _build_creative_search_ads_results_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    payload.update(
+        {
+            "task_id": args.task_id,
+            "platform": dekebab(args.ad_platform),
+            "time_range": args.time_range,
+            "page": args.page,
+            "page_size": args.page_size,
+            "sort_by": dekebab(args.sort_by),
+        }
+    )
+    if payload["page"] < 1:
+        raise ValueError("--page must be at least 1.")
+    _validate_int_range(
+        payload,
+        key="page_size",
+        flag="--page-size",
+        minimum=1,
+        maximum=100,
+    )
+    return {key: value for key, value in payload.items() if value is not None}
+
+
+def _normalized_string_list(
+    value: Any,
+    *,
+    field: str,
+    minimum: int,
+    maximum: int,
+) -> list[str]:
+    if not isinstance(value, list):
+        raise ValueError(f"research +creative-search-ads requires --keyword ({field}).")
+    if any(not isinstance(item, str) for item in value):
+        raise ValueError(f"{field} values must be strings.")
+    normalized = [item.strip() for item in value if item.strip()]
+    if len(normalized) < minimum:
+        raise ValueError(f"{field} requires at least {minimum} value.")
+    if len(normalized) > maximum:
+        raise ValueError(f"{field} accepts at most {maximum} values.")
+    if any(len(item) > 200 for item in normalized):
+        raise ValueError(f"{field} values must be at most 200 characters.")
+    if len(normalized) != len(set(normalized)):
+        raise ValueError(f"{field} values must be unique.")
+    return normalized
+
+
+def _normalized_choice_list(
+    value: Any,
+    *,
+    field: str,
+    choices: list[str],
+    default: list[str],
+) -> list[str]:
+    raw = default if value is None else value
+    if not isinstance(raw, list):
+        raise ValueError(f"{field} must be an array.")
+    normalized = [dekebab(str(item)) for item in raw]
+    invalid = [item for item in normalized if item not in choices]
+    if invalid:
+        raise ValueError(f"{field} contains unsupported values: {', '.join(invalid)}.")
+    if not normalized:
+        raise ValueError(f"{field} requires at least one value.")
+    if len(normalized) != len(set(normalized)):
+        raise ValueError(f"{field} values must be unique.")
+    return normalized
 
 
 def _add_visual_analyze_arguments(parser: argparse.ArgumentParser) -> None:
@@ -556,6 +743,94 @@ def _community_search_input_schema() -> dict[str, Any]:
     }
 
 
+def _creative_search_ads_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "keywords": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 10,
+                "uniqueItems": True,
+                "items": {"type": "string", "minLength": 1, "maxLength": 200},
+                "description": "One to ten Ads search keywords.",
+            },
+            "ad_platforms": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 2,
+                "uniqueItems": True,
+                "items": {
+                    "type": "string",
+                    "enum": kebab_choices(CREATIVE_SEARCH_ADS_PLATFORM_CHOICES),
+                },
+                "default": kebab_choices(CREATIVE_SEARCH_ADS_PLATFORM_CHOICES),
+                "description": "Ad libraries to search.",
+            },
+            "media_types": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 2,
+                "uniqueItems": True,
+                "items": {
+                    "type": "string",
+                    "enum": CREATIVE_SEARCH_ADS_MEDIA_TYPE_CHOICES,
+                },
+                "default": ["video"],
+            },
+            "limit_per_platform": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20,
+                "description": "Maximum results per keyword and ad library.",
+            },
+        },
+        "required": ["keywords"],
+    }
+
+
+def _creative_search_ads_get_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "task_id": _uuid_id_schema("Creative Search Ads task UUID."),
+        },
+        "required": ["task_id"],
+    }
+
+
+def _creative_search_ads_results_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "task_id": _uuid_id_schema("Creative Search Ads task UUID."),
+            "platform": {
+                "type": ["string", "null"],
+                "enum": [*kebab_choices(CREATIVE_SEARCH_ADS_PLATFORM_CHOICES), None],
+            },
+            "time_range": {
+                "type": "string",
+                "enum": CREATIVE_SEARCH_ADS_TIME_RANGE_CHOICES,
+                "default": "all",
+            },
+            "page": {"type": "integer", "minimum": 1, "default": 1},
+            "page_size": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20,
+            },
+            "sort_by": {
+                "type": "string",
+                "enum": kebab_choices(CREATIVE_SEARCH_ADS_SORT_CHOICES),
+                "default": "published-at",
+            },
+        },
+        "required": ["task_id"],
+    }
+
+
 def _visual_analyze_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -703,6 +978,78 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
+            shortcut="+creative-search-ads",
+            summary=(
+                "Start a durable Creative Search Ads task across Meta and TikTok ad "
+                "libraries. This is Ads-only and never falls back to organic social search."
+            ),
+            risk_level="write",
+            execution="async_run",
+            adapter_tool_name="creative_search_ads",
+            input_schema=_creative_search_ads_input_schema(),
+            output_schema=_async_output_schema(
+                "Accepted Creative Search Ads task with a run ID, status command, "
+                "and recommended wakeup delay."
+            ),
+            examples=[
+                (
+                    "museoncli research +creative-search-ads --keyword 'eco soap' "
+                    "--ad-platform meta-ads --ad-platform tiktok-ads --media-type video"
+                ),
+                (
+                    "museoncli research +creative-search-ads --keyword 'summer dress' "
+                    "--media-type photo --limit 20 --dry-run"
+                ),
+            ],
+            add_arguments=_add_creative_search_ads_arguments,
+            build_arguments=_build_creative_search_ads_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
+            shortcut="+creative-search-ads-get",
+            summary=(
+                "Read one Creative Search Ads task, including terminal aggregate "
+                "statistics and sanitized partial-failure details."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="creative_search_ads_get",
+            input_schema=_creative_search_ads_get_input_schema(),
+            output_schema=_async_output_schema(
+                "Creative Search Ads task status and terminal aggregate result."
+            ),
+            examples=[
+                "museoncli research +creative-search-ads-get --id <task_id>",
+            ],
+            add_arguments=_add_creative_search_ads_get_arguments,
+            build_arguments=_build_creative_search_ads_get_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
+            shortcut="+creative-search-ads-results",
+            summary=(
+                "List filtered, deduplicated Creative Search Ads result cards for "
+                "one task. Results are available while the task is still running."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="creative_search_ads_results",
+            input_schema=_creative_search_ads_results_input_schema(),
+            output_schema=_direct_output_schema(
+                "Paginated Creative Search Ads result cards returned by Museon API."
+            ),
+            examples=[
+                (
+                    "museoncli research +creative-search-ads-results --id <task_id> "
+                    "--ad-platform meta-ads --page 1 --page-size 20"
+                ),
+            ],
+            add_arguments=_add_creative_search_ads_results_arguments,
+            build_arguments=_build_creative_search_ads_results_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
             shortcut="+visual-analyze",
             summary=(
                 "Analyze one or more image/video URLs with a business prompt. "
@@ -763,4 +1110,56 @@ async def _execute_research(ctx: CommandContext) -> Any:
     )
 
 
-EXECUTORS = {schema: direct_enveloped(_execute_research) for schema in _RESEARCH_PATHS}
+async def _execute_creative_search_ads(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/research/creative-search-ads",
+            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+        )
+    )
+
+
+async def _execute_creative_search_ads_get(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    task_id = ctx.arguments["task_id"]
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "GET",
+            f"/agent-cli/research/creative-search-ads/{task_id}",
+            params={"workspace_id": ctx.workspace_id},
+        )
+    )
+
+
+async def _execute_creative_search_ads_results(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    task_id = ctx.arguments["task_id"]
+    params = {
+        "workspace_id": ctx.workspace_id,
+        **{key: value for key, value in ctx.arguments.items() if key != "task_id"},
+    }
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "GET",
+            f"/agent-cli/research/creative-search-ads/{task_id}/results",
+            params=params,
+        )
+    )
+
+
+EXECUTORS = {
+    **{schema: direct_enveloped(_execute_research) for schema in _RESEARCH_PATHS},
+    "research.creative-search-ads": direct_enveloped(_execute_creative_search_ads),
+    "research.creative-search-ads-get": direct_enveloped(_execute_creative_search_ads_get),
+    "research.creative-search-ads-results": direct_enveloped(
+        _execute_creative_search_ads_results
+    ),
+}

@@ -3549,6 +3549,81 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "research.creative-search-ads",
+          "domain": "research",
+          "execution": "async_run",
+          "name": "research.creative-search-ads",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+creative-search-ads",
+          "stability": "stable",
+          "summary": "Start a durable Creative Search Ads task across Meta and TikTok ad libraries. This is Ads-only and never falls back to organic social search.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "research.creative-search-ads-get",
+          "domain": "research",
+          "execution": "direct",
+          "name": "research.creative-search-ads-get",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+creative-search-ads-get",
+          "stability": "stable",
+          "summary": "Read one Creative Search Ads task, including terminal aggregate statistics and sanitized partial-failure details.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "research.creative-search-ads-results",
+          "domain": "research",
+          "execution": "direct",
+          "name": "research.creative-search-ads-results",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+creative-search-ads-results",
+          "stability": "stable",
+          "summary": "List filtered, deduplicated Creative Search Ads result cards for one task. Results are available while the task is still running.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "research.visual-analyze",
           "domain": "research",
           "execution": "direct",
@@ -19010,6 +19085,418 @@
       "shortcut": "+community-search",
       "stability": "stable",
       "summary": "Search community evidence across X, Reddit, and LinkedIn using a stable platform and intent contract.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "research.creative-search-ads": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.creative-search-ads",
+      "domain": "research",
+      "examples": [
+        "museoncli research +creative-search-ads --keyword 'eco soap' --ad-platform meta-ads --ad-platform tiktok-ads --media-type video",
+        "museoncli research +creative-search-ads --keyword 'summer dress' --media-type photo --limit 20 --dry-run"
+      ],
+      "execution": "async_run",
+      "input_schema": {
+        "properties": {
+          "ad_platforms": {
+            "default": [
+              "meta-ads",
+              "tiktok-ads"
+            ],
+            "description": "Ad libraries to search.",
+            "items": {
+              "enum": [
+                "meta-ads",
+                "tiktok-ads"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "keywords": {
+            "description": "One to ten Ads search keywords.",
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "limit_per_platform": {
+            "default": 20,
+            "description": "Maximum results per keyword and ad library.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "media_types": {
+            "default": [
+              "video"
+            ],
+            "items": {
+              "enum": [
+                "video",
+                "photo"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "keywords"
+        ],
+        "type": "object"
+      },
+      "name": "research.creative-search-ads",
+      "output_schema": {
+        "description": "Accepted Creative Search Ads task with a run ID, status command, and recommended wakeup delay.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "watch_command": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ],
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+creative-search-ads",
+      "stability": "stable",
+      "summary": "Start a durable Creative Search Ads task across Meta and TikTok ad libraries. This is Ads-only and never falls back to organic social search.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "research.creative-search-ads-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.creative-search-ads-get",
+      "domain": "research",
+      "examples": [
+        "museoncli research +creative-search-ads-get --id <task_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "task_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Creative Search Ads task UUID.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "type": "object"
+      },
+      "name": "research.creative-search-ads-get",
+      "output_schema": {
+        "description": "Creative Search Ads task status and terminal aggregate result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "watch_command": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ],
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+creative-search-ads-get",
+      "stability": "stable",
+      "summary": "Read one Creative Search Ads task, including terminal aggregate statistics and sanitized partial-failure details.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "research.creative-search-ads-results": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.creative-search-ads-results",
+      "domain": "research",
+      "examples": [
+        "museoncli research +creative-search-ads-results --id <task_id> --ad-platform meta-ads --page 1 --page-size 20"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "platform": {
+            "enum": [
+              "meta-ads",
+              "tiktok-ads",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort_by": {
+            "default": "published-at",
+            "enum": [
+              "published-at",
+              "first-seen-at",
+              "last-seen-at",
+              "created-at"
+            ],
+            "type": "string"
+          },
+          "task_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Creative Search Ads task UUID.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "time_range": {
+            "default": "all",
+            "enum": [
+              "all",
+              "7d",
+              "30d",
+              "90d"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "type": "object"
+      },
+      "name": "research.creative-search-ads-results",
+      "output_schema": {
+        "description": "Paginated Creative Search Ads result cards returned by Museon API.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+creative-search-ads-results",
+      "stability": "stable",
+      "summary": "List filtered, deduplicated Creative Search Ads result cards for one task. Results are available while the task is still running.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
