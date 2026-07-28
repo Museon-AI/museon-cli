@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-121 commands across 13 domains (source of truth: `museoncli schema`).
+117 commands across 13 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -210,16 +210,12 @@ The tables below are generated — edit code, then run
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `agentic-campaign +candidate-submit` | write | yes | — | direct | Submit one Persona Plan candidate and its first version. |
-| `agentic-campaign +candidate-revise` | write | yes | — | direct | Submit a new version to a Persona Plan candidate's current head. |
-| `agentic-campaign +plan-revise` | write | yes | — | direct | Create an adjustment proposal for operator review. |
+| `agentic-campaign +plan-propose` | write | yes | — | direct | Propose a complete draft plan or an active-plan adjustment for operator review. |
 | `agentic-campaign +campaign-rename` | write | yes | — | direct | Rename an Agentic Creative Campaign. |
 | `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
 | `agentic-campaign +get` | read | — | — | direct | Get an Agentic Creative Campaign detail by campaign id. |
 | `agentic-campaign +plan-list` | read | — | — | direct | List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-get` | read | — | — | direct | Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted. |
-| `agentic-campaign +plan-set-persona` | write | yes | — | direct | Set a Persona Plan's persona, using its current version for concurrency control. |
-| `agentic-campaign +plan-strategy-decide` | write | yes | — | direct | Fan out a strategy decision to the latest awaiting-review run in a Persona Plan. |
 | `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +plan-attribution` | read | — | — | direct | Aggregate attribution across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +issues-pull` | write | yes | — | direct | Pull and lease Account Operation Issues from one required Agentic Creative Campaign. The campaign selects candidates; the runtime conversation identity is used only for lease and message context. Claims omit account_operation_id. |

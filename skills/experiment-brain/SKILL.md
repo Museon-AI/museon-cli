@@ -76,31 +76,34 @@ Read holdings as the operator-facing experiment state:
 | `Winner` | Worth repeating and eligible for more budget | Recommend `Winner加推` with evidence |
 | `已停投` | No longer receiving new test budget | Preserve the learning and explain why it stopped |
 
-Submit one new `人设方案` at a time. A failed proposal must not block another:
+## 6. Proposals — the only way you change a plan
+
+Mel always proposes; the operator reviews the visuals and confirms on the
+review page. Never select, merge, finalize, enable, boost, or stop a direction
+on the operator's behalf.
+
+### Scenario 1: propose a complete plan during preparation
+
+Submit complete `人设方案` alternatives while the plan is in preparation. A
+failed proposal must not block another, so multiple coherent alternatives may
+coexist. To submit a `第N稿` for an existing proposal, use `--candidate-id`;
+the server uses its current head as the parent.
 
 ```bash
-museoncli agentic-campaign +candidate-submit \
-  --plan-id 33333333-3333-4333-8333-333333333333 \
-  --name "DIY problem solver" \
-  --persona-payload-json '{"name":"Mia","description":"Practical maker","visual_prompt":"Warm workshop portrait","reference_media_ids":[]}' \
-  --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]'
-```
-
-Submit a new `第N稿` for an existing proposal. The server automatically uses
-its current head as the parent:
-
-```bash
-museoncli agentic-campaign +candidate-revise \
+museoncli agentic-campaign +plan-propose \
   --plan-id 33333333-3333-4333-8333-333333333333 \
   --candidate-id 77777777-7777-4777-8777-777777777777 \
-  --persona-payload-json '{"name":"Mia","description":"Practical maker","visual_prompt":"Bright workshop portrait","reference_media_ids":[]}' \
-  --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555"}]' \
+  --persona-json '{"name":"Mia","description":"Practical maker","visual_prompt":"Bright workshop portrait","reference_media_ids":[]}' \
+  --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
   --note "Tighten the visual direction"
 ```
 
-## 6. Adjustment proposals
+Omit `--candidate-id` to submit a new alternative.
 
-Use the experiment scoreboard before proposing a live-plan adjustment:
+### Scenario 2: propose an evidence-based adjustment during operation
+
+Use the experiment scoreboard before proposing an operating-plan adjustment,
+and use `--note` to state the evidence:
 
 - Add a new direction when the current holdings leave a meaningful hypothesis
   untested. Define it as one format × topic × optional CTA combination.
@@ -111,11 +114,13 @@ Use the experiment scoreboard before proposing a live-plan adjustment:
   proposed allocation explicitly as `account count × days` so the operator can
   judge the added commitment.
 
-Create one adjustment proposal containing any combination of additions,
-retirements, and Winner boosts:
+Require enough comparable observations before retiring a direction; never stop
+one because of a single poor result or an undersized sample. Boost only a
+`Winner` with sufficient, repeatable evidence. Create one adjustment proposal
+containing any combination of additions, retirements, and Winner boosts:
 
 ```bash
-museoncli agentic-campaign +plan-revise \
+museoncli agentic-campaign +plan-propose \
   --plan-id 33333333-3333-4333-8333-333333333333 \
   --add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
   --retire-element-ids 77777777-7777-4777-8777-777777777777 \
@@ -126,10 +131,6 @@ museoncli agentic-campaign +plan-revise \
 The command creates an `调整记录` for review; it never confirms it. Tell the
 operator what will be added, stopped, and boosted, then direct them to review
 the visuals and confirm on the page.
-
-Mel always produces proposals only. Applying a proposal requires the operator
-to review its visuals and confirm it on the page. Never select, merge, finalize,
-enable, boost, or stop a direction on the operator's behalf.
 
 When speaking to operators, use only this interface vocabulary:
 `人设方案`, `第N稿`, `调整记录`, `定稿启用`, `新方向开测`, `Winner加推`,

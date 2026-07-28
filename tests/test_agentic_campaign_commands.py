@@ -70,10 +70,18 @@ def empty_campaign_page(*, page: int, total: int) -> dict[str, Any]:
     }
 
 
-def campaign_detail(plan_id: str) -> dict[str, Any]:
+def campaign_detail(plan_id: str, *, status: str = "draft") -> dict[str, Any]:
     return {
         "campaign": {"id": "22222222-2222-4222-8222-222222222222"},
-        "agentic_persona_plans": [{"id": plan_id, "name": "DIY", "version": 7, "persona_id": None}],
+        "agentic_persona_plans": [
+            {
+                "id": plan_id,
+                "name": "DIY",
+                "version": 7,
+                "persona_id": None,
+                "status": status,
+            }
+        ],
         "op_units": [
             {
                 "id": "secret-op-id",
@@ -85,98 +93,70 @@ def campaign_detail(plan_id: str) -> dict[str, Any]:
     }
 
 
-@pytest.mark.parametrize(
-    ("shortcut", "candidate_args", "expected_suffix", "expected_body"),
-    [
-        (
-            "+candidate-submit",
-            ["--name", "DIY problem solver"],
-            "/candidates:submit",
-            {"name": "DIY problem solver"},
+def _complete_plan_cli_args() -> list[str]:
+    return [
+        "--name",
+        "DIY problem solver",
+        "--persona-json",
+        json.dumps(
+            {
+                "name": "Mia",
+                "description": "Practical maker",
+                "visual_prompt": "Warm workshop portrait",
+                "reference_media_ids": ["88888888-8888-4888-8888-888888888888"],
+            }
         ),
-        (
-            "+candidate-revise",
+        "--elements-json",
+        json.dumps(
             [
-                "--candidate-id",
-                "77777777-7777-4777-8777-777777777777",
-                "--note",
-                "Brighter visual direction",
-            ],
-            "/candidates/77777777-7777-4777-8777-777777777777:revise",
-            {"note": "Brighter visual direction"},
+                {
+                    "format_id": "44444444-4444-4444-8444-444444444444",
+                    "topic_id": "55555555-5555-4555-8555-555555555555",
+                    "cta_target_id": "66666666-6666-4666-8666-666666666666",
+                }
+            ]
         ),
-    ],
-)
-def test_candidate_commands_dispatch_to_live_api_contract(
-    monkeypatch,
-    shortcut: str,
-    candidate_args: list[str],
-    expected_suffix: str,
-    expected_body: dict[str, Any],
-) -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    persona_payload = {
-        "name": "Mia",
-        "description": "Practical maker",
-        "visual_prompt": "Warm workshop portrait",
-        "reference_media_ids": ["88888888-8888-4888-8888-888888888888"],
-    }
-    elements = [
-        {
-            "format_id": "44444444-4444-4444-8444-444444444444",
-            "topic_id": "55555555-5555-4555-8555-555555555555",
-            "cta_target_id": "66666666-6666-4666-8666-666666666666",
-        }
     ]
+
+
+@pytest.mark.parametrize("candidate_id", [None, "77777777-7777-4777-8777-777777777777"])
+def test_plan_propose_dispatches_draft_submit_or_revise(candidate_id: str | None) -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
     capture = Capture(
         campaign_list(plan_id),
         campaign_detail(plan_id),
-        {"candidate": {"id": "candidate-1"}, "operation_id": "secret-operation-id"},
+        {"candidate": {"id": "candidate-1"}},
     )
-    monkeypatch.setattr(main_module, "api_data_v2", capture)
-    cfg = Config()
-    cfg.workspace.id = "11111111-1111-4111-8111-111111111111"
-    args = parse(
-        [
-            "agentic-campaign",
-            shortcut,
-            "--plan-id",
-            plan_id,
-            *candidate_args,
-            "--persona-payload-json",
-            json.dumps(persona_payload),
-            "--elements-json",
-            json.dumps(elements),
-        ]
+    argv = ["agentic-campaign", "+plan-propose", "--plan-id", plan_id]
+    complete_args = _complete_plan_cli_args()
+    if candidate_id:
+        argv.extend(["--candidate-id", candidate_id, "--note", "Brighter visual direction"])
+        complete_args = complete_args[2:]
+    args = parse([*argv, *complete_args])
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    result = asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
     )
-
-    result = asyncio.run(main_module.dispatch_domain_command(args, cfg))
-
     call = capture.calls[-1]
-    assert call["method"] == "POST"
+    expected_suffix = f"/candidates/{candidate_id}:revise" if candidate_id else "/candidates:submit"
     assert call["path"].endswith(expected_suffix)
-    assert call["json_body"] == {
-        "workspace_id": "11111111-1111-4111-8111-111111111111",
-        "persona_payload": persona_payload,
-        "elements": elements,
-        **expected_body,
+    assert call["json_body"]["persona_payload"]["name"] == "Mia"
+    assert call["json_body"]["elements"][0]["format_id"].startswith("4444")
+    assert ("name" in call["json_body"]) is (candidate_id is None)
+    assert result == {
+        "candidate_id": "candidate-1",
+        "change_summary": {
+            "complete_plan": True,
+            **({"name": "DIY problem solver"} if candidate_id is None else {}),
+            "directions": 1,
+        },
+        "next_step": "Please review the proposal in Museon and confirm it there.",
     }
-    assert "secret-operation-id" not in repr(result)
 
 
-def test_candidate_contract_matches_submit_and_revise_note_boundary() -> None:
-    submit = get_command_spec("agentic-campaign.candidate-submit")
-    revise = get_command_spec("agentic-campaign.candidate-revise")
-
-    assert "note" not in submit.input_schema["properties"]
-    assert revise.input_schema["properties"]["note"]["maxLength"] == 2000
-    assert submit.input_schema["properties"]["plan_id"]["format"] == "uuid"
-    assert submit.input_schema["properties"]["elements"]["items"]["properties"]["format_id"][
-        "examples"
-    ] == ["33333333-3333-4333-8333-333333333333"]
-
-
-def test_plan_revise_sends_exact_revision_proposal_changes() -> None:
+def test_plan_propose_dispatches_active_adjustment() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     add_elements = [
         {
@@ -195,13 +175,13 @@ def test_plan_revise_sends_exact_revision_proposal_changes() -> None:
     retire_element_ids = ["88888888-8888-4888-8888-888888888888"]
     capture = Capture(
         campaign_list(plan_id),
-        campaign_detail(plan_id),
+        campaign_detail(plan_id, status="active"),
         {"proposal": {"id": "proposal-1"}},
     )
     args = parse(
         [
             "agentic-campaign",
-            "+plan-revise",
+            "+plan-propose",
             "--plan-id",
             plan_id,
             "--add-elements-json",
@@ -214,11 +194,11 @@ def test_plan_revise_sends_exact_revision_proposal_changes() -> None:
             "Expand the winner",
         ]
     )
-    arguments = agentic_campaign._build_plan_revise_arguments(args)
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
 
     result = asyncio.run(
-        agentic_campaign._execute_plan_revise(
-            context("agentic-campaign.plan-revise", arguments, capture)
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
         )
     )
 
@@ -246,21 +226,85 @@ def test_plan_revise_sends_exact_revision_proposal_changes() -> None:
             "directions_to_stop": 1,
             "winner_boosts": 1,
         },
-        "next_step": "Please review the adjustment in Museon and confirm it there.",
+        "next_step": "Please review the proposal in Museon and confirm it there.",
     }
 
 
-def test_plan_revise_requires_at_least_one_change() -> None:
+def test_plan_propose_schema_has_two_content_shapes_and_dry_run() -> None:
+    spec = get_command_spec("agentic-campaign.plan-propose")
     args = parse(
         [
             "agentic-campaign",
-            "+plan-revise",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            *_complete_plan_cli_args(),
+            "--dry-run",
+        ]
+    )
+    assert len(spec.input_schema["oneOf"]) == 2
+    assert spec.supports_dry_run is True
+    assert args.dry_run is True
+
+
+def test_plan_propose_requires_one_complete_content_shape() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
         ]
     )
-    with pytest.raises(ValueError, match="requires at least one"):
-        agentic_campaign._build_plan_revise_arguments(args)
+    with pytest.raises(ValueError, match="requires either a complete plan or an adjustment"):
+        agentic_campaign._build_plan_propose_arguments(args)
+
+
+def test_plan_propose_rejects_mixed_content() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            *_complete_plan_cli_args(),
+            "--retire-element-ids",
+            "77777777-7777-4777-8777-777777777777",
+        ]
+    )
+    with pytest.raises(ValueError, match="一次提案只能是一种:整套方案 或 调整"):
+        agentic_campaign._build_plan_propose_arguments(args)
+
+
+@pytest.mark.parametrize("status", [None, "archived"])
+def test_plan_propose_rejects_missing_or_unknown_status(status: str | None) -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    detail = campaign_detail(plan_id)
+    plan = detail["agentic_persona_plans"][0]
+    if status is None:
+        plan.pop("status")
+    else:
+        plan["status"] = status
+    capture = Capture(campaign_list(plan_id), detail)
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            plan_id,
+            *_complete_plan_cli_args(),
+        ]
+    )
+    with pytest.raises(ValueError, match="plan status must be draft or active"):
+        asyncio.run(
+            agentic_campaign._execute_plan_propose(
+                context(
+                    "agentic-campaign.plan-propose",
+                    agentic_campaign._build_plan_propose_arguments(args),
+                    capture,
+                )
+            )
+        )
 
 
 def test_campaign_rename_gets_version_and_only_patches_name() -> None:
@@ -376,66 +420,6 @@ def test_plan_locator_total_boundary_does_not_fetch_extra_page() -> None:
     assert len(capture.calls) == 1
 
 
-def test_plan_set_persona_uses_current_plan_version() -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"campaign": {}})
-    asyncio.run(
-        agentic_campaign._execute_plan_set_persona(
-            context(
-                "agentic-campaign.plan-set-persona",
-                {
-                    "plan_id": plan_id,
-                    "persona_id": "44444444-4444-4444-8444-444444444444",
-                },
-                capture,
-            )
-        )
-    )
-    call = capture.calls[-1]
-    assert call["path"].endswith(f"/persona-plans/{plan_id}:set-persona")
-    assert call["json_body"] == {
-        "workspace_id": "11111111-1111-4111-8111-111111111111",
-        "expected_version": 7,
-        "persona_id": "44444444-4444-4444-8444-444444444444",
-    }
-
-
-@pytest.mark.parametrize(
-    ("shortcut", "extra_args", "expected_suffix"),
-    [
-        (
-            "+plan-strategy-decide",
-            [],
-            ":strategy-decide",
-        ),
-    ],
-)
-def test_fan_out_no_dry_run_reaches_server_payload(
-    monkeypatch,
-    shortcut: str,
-    extra_args: list[str],
-    expected_suffix: str,
-) -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"results": []})
-    monkeypatch.setattr(main_module, "api_data_v2", capture)
-    cfg = Config()
-    cfg.workspace.id = "11111111-1111-4111-8111-111111111111"
-    args = parse(
-        [
-            "agentic-campaign",
-            shortcut,
-            "--plan-id",
-            plan_id,
-            *extra_args,
-            "--no-dry-run",
-        ]
-    )
-    asyncio.run(main_module.dispatch_domain_command(args, cfg))
-    assert capture.calls[-1]["path"].endswith(expected_suffix)
-    assert capture.calls[-1]["json_body"]["dry_run"] is False
-
-
 def test_issues_pull_uses_full_v2_url_and_complete_payload(monkeypatch) -> None:
     sent: dict[str, Any] = {}
 
@@ -521,18 +505,6 @@ def test_issues_pull_requires_campaign_id_in_cli_and_contract() -> None:
             "agentic-campaign.get",
             {"campaign_id": "22222222-2222-4222-8222-222222222222"},
             [{"op_units": [{"id": "secret-operation-id", "pool_account_id": "pool-1"}]}],
-        ),
-        (
-            "agentic-campaign.plan-set-persona",
-            {
-                "plan_id": "33333333-3333-4333-8333-333333333333",
-                "persona_id": "44444444-4444-4444-8444-444444444444",
-            },
-            [
-                campaign_list("33333333-3333-4333-8333-333333333333"),
-                campaign_detail("33333333-3333-4333-8333-333333333333"),
-                {"op_units": [{"id": "secret-operation-id"}]},
-            ],
         ),
     ],
 )
