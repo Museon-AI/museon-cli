@@ -117,11 +117,15 @@ and use `--note` to state the evidence:
 Require enough comparable observations before retiring a direction; never stop
 one because of a single poor result or an undersized sample. Boost only a
 `Winner` with sufficient, repeatable evidence. Create one adjustment proposal
-containing any combination of additions, retirements, and Winner boosts:
+containing any combination of additions, retirements, and Winner boosts. Always
+set `--title` to a short name the operator can recognize at a glance in the
+proposal list (for example `「暗黑向第二批开测」`) — without it every proposal
+renders with the generic label and the operator cannot tell them apart:
 
 ```bash
 museoncli agentic-campaign +plan-propose \
   --plan-id 33333333-3333-4333-8333-333333333333 \
+  --title "暗黑向第二批开测" \
   --add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
   --retire-element-ids 77777777-7777-4777-8777-777777777777 \
   --boost-elements-json '[{"element_id":"88888888-8888-4888-8888-888888888888","account_count":3,"days":7}]' \

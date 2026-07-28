@@ -210,7 +210,7 @@ The tables below are generated — edit code, then run
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `agentic-campaign +plan-propose` | write | yes | — | direct | Propose a complete draft plan or an active-plan adjustment for operator review. |
+| `agentic-campaign +plan-propose` | write | yes | — | direct | Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. |
 | `agentic-campaign +proposal-get` | read | — | — | direct | Read an adjustment proposal and its latest revision guidance. |
 | `agentic-campaign +campaign-rename` | write | yes | — | direct | Rename an Agentic Creative Campaign. |
 | `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
