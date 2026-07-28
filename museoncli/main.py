@@ -866,11 +866,7 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
     validate_uuid_arguments(arguments)
     workspace_id = workspace_id_arg_or_selected(args, cfg)
     server_validated_dry_run = getattr(args, "dry_run", False) and (
-        (spec.schema_name == "asset.create" and arguments.get("type") == "brand_product")
-        or spec.schema_name
-        in {
-            "agentic-campaign.plan-strategy-decide",
-        }
+        spec.schema_name == "asset.create" and arguments.get("type") == "brand_product"
     )
     if getattr(args, "dry_run", False) and not server_validated_dry_run:
         if spec.schema_name.startswith("skills."):
