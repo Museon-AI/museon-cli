@@ -527,7 +527,7 @@
           "risk_level": "write",
           "shortcut": "+plan-propose",
           "stability": "stable",
-          "summary": "Propose a complete draft plan or an active-plan adjustment for operator review.",
+          "summary": "Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -9791,11 +9791,12 @@
       "capability_key": "agentic-campaign.plan-propose",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --name 'DIY problem solver' --persona-json '{\"name\":\"Mia\",\"description\":\"Practical maker\",\"visual_prompt\":\"Warm workshop portrait\",\"reference_media_ids\":[]}' --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'"
+        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --name 'DIY problem solver' --persona-json '{\"name\":\"Mia\",\"description\":\"Practical maker\",\"visual_prompt\":\"Warm workshop portrait\",\"reference_media_ids\":[]}' --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
+        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --title 'Dark-tone second test batch' --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --note 'Untested hypothesis on the dark visual direction'"
       ],
       "execution": "direct",
       "input_schema": {
-        "description": "For a draft plan, submit a complete solution (name, persona_payload, and elements), optionally revising a candidate with candidate_id. For an active plan, submit at least one adjustment in changes. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Candidate and proposal ids are scenario-specific.",
+        "description": "For a draft plan, submit a complete solution (name, persona_payload, and elements), optionally revising a candidate with candidate_id. For an active plan, submit at least one adjustment in changes, optionally with a title so the operator can recognize the proposal at a glance. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Candidate and proposal ids are scenario-specific.",
         "oneOf": [
           {
             "anyOf": [
@@ -9826,6 +9827,11 @@
                 {
                   "required": [
                     "proposal_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "title"
                   ]
                 }
               ]
@@ -9887,6 +9893,11 @@
                 {
                   "required": [
                     "changes"
+                  ]
+                },
+                {
+                  "required": [
+                    "title"
                   ]
                 }
               ]
@@ -10173,6 +10184,14 @@
               "string",
               "null"
             ]
+          },
+          "title": {
+            "description": "Short operator-facing name for an active-plan adjustment proposal",
+            "maxLength": 80,
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -10239,7 +10258,7 @@
       "risk_level": "write",
       "shortcut": "+plan-propose",
       "stability": "stable",
-      "summary": "Propose a complete draft plan or an active-plan adjustment for operator review.",
+      "summary": "Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

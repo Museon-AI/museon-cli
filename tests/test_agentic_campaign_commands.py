@@ -210,6 +210,7 @@ def test_plan_propose_dispatches_active_adjustment() -> None:
         ),
         "json_body": {
             "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "title": None,
             "note": "Expand the winner",
             "changes": {
                 "add_elements": add_elements,
@@ -228,6 +229,84 @@ def test_plan_propose_dispatches_active_adjustment() -> None:
         },
         "next_step": "Please review the proposal in Museon and confirm it there.",
     }
+
+
+def test_plan_propose_active_adjustment_threads_title() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    add_elements = [
+        {
+            "format_id": "44444444-4444-4444-8444-444444444444",
+            "topic_id": "55555555-5555-4555-8555-555555555555",
+        }
+    ]
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"proposal": {"id": "proposal-1"}},
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            plan_id,
+            "--add-elements-json",
+            json.dumps(add_elements),
+            "--title",
+            "暗黑向第二批开测",
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+
+    asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
+    )
+
+    assert capture.calls[-1]["json_body"]["title"] == "暗黑向第二批开测"
+
+
+def test_plan_propose_rejects_title_when_revising_proposal() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--title",
+            "not allowed here",
+            "--elements-json",
+            json.dumps(
+                [
+                    {
+                        "format_id": "44444444-4444-4444-8444-444444444444",
+                        "topic_id": "55555555-5555-4555-8555-555555555555",
+                    }
+                ]
+            ),
+        ]
+    )
+    with pytest.raises(ValueError, match="--title is not valid when revising"):
+        agentic_campaign._build_plan_propose_arguments(args)
+
+
+def test_plan_propose_rejects_title_for_draft_plan() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--title",
+            "not allowed here",
+            *_complete_plan_cli_args(),
+        ]
+    )
+    with pytest.raises(ValueError, match="--title is only valid for an active-plan adjustment"):
+        agentic_campaign._build_plan_propose_arguments(args)
 
 
 def test_proposal_get_returns_operator_revision_context() -> None:

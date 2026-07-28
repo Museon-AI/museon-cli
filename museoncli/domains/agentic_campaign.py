@@ -74,6 +74,7 @@ def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--proposal-id")
     parser.add_argument("--note")
     parser.add_argument("--name")
+    parser.add_argument("--title")
     parser.add_argument("--persona-json")
     parser.add_argument("--elements-json")
     parser.add_argument("--add-elements-json")
@@ -130,6 +131,8 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError(
                 "--name and --persona-json are not valid when revising an adjustment proposal."
             )
+        if args.title is not None:
+            raise ValueError("--title is not valid when revising an adjustment proposal.")
         if args.candidate_id is not None:
             raise ValueError("--candidate-id is not valid when revising an adjustment proposal.")
         if any(
@@ -179,6 +182,11 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError(
             "agentic-campaign +plan-propose requires either a complete plan or an adjustment."
         )
+    if args.title is not None and not adjustment_supplied:
+        raise ValueError(
+            "--title is only valid for an active-plan adjustment proposal; "
+            "a draft plan proposal already uses --name."
+        )
     if solution_supplied and not all(
         value is not None for value in (args.persona_json, args.elements_json)
     ):
@@ -226,6 +234,8 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             retire_element_ids=args.retire_element_ids,
             boost_elements=_revision_json_list(args.boost_elements_json, field="boost-elements"),
         )
+        if args.title is not None:
+            payload["title"] = args.title
     return payload
 
 
@@ -351,7 +361,11 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=domain,
             shortcut="+plan-propose",
-            summary="Propose a complete draft plan or an active-plan adjustment for operator review.",
+            summary=(
+                "Propose a complete draft plan or an active-plan adjustment for operator "
+                "review. For an active-plan adjustment, set --title to a short name the "
+                "operator can recognize at a glance in the proposal list."
+            ),
             risk_level="write",
             execution="direct",
             adapter_tool_name="agentic_campaign_plan_propose",
@@ -360,9 +374,10 @@ def specs() -> list[CommandSpec]:
                 "description": (
                     "For a draft plan, submit a complete solution (name, persona_payload, and "
                     "elements), optionally revising a candidate with candidate_id. For an active "
-                    "plan, submit at least one adjustment in changes. To revise an active-plan "
-                    "proposal after operator feedback, provide proposal_id and replacement "
-                    "elements only. Candidate and proposal ids are scenario-specific."
+                    "plan, submit at least one adjustment in changes, optionally with a title so "
+                    "the operator can recognize the proposal at a glance. To revise an "
+                    "active-plan proposal after operator feedback, provide proposal_id and "
+                    "replacement elements only. Candidate and proposal ids are scenario-specific."
                 ),
                 "properties": {
                     "plan_id": _uuid_property("Agentic Persona Plan id"),
@@ -377,6 +392,13 @@ def specs() -> list[CommandSpec]:
                         "description": "Active-plan adjustment proposal id to revise",
                     },
                     "name": {"type": "string", "minLength": 1, "maxLength": 200},
+                    "title": {
+                        "type": ["string", "null"],
+                        "maxLength": 80,
+                        "description": (
+                            "Short operator-facing name for an active-plan adjustment proposal"
+                        ),
+                    },
                     "persona_payload": _persona_payload_schema(),
                     "elements": _candidate_elements_schema(),
                     "changes": {
@@ -423,6 +445,7 @@ def specs() -> list[CommandSpec]:
                             "anyOf": [
                                 {"required": ["changes"]},
                                 {"required": ["proposal_id"]},
+                                {"required": ["title"]},
                             ]
                         },
                     },
@@ -448,6 +471,7 @@ def specs() -> list[CommandSpec]:
                                 {"required": ["name"]},
                                 {"required": ["persona_payload"]},
                                 {"required": ["changes"]},
+                                {"required": ["title"]},
                             ]
                         },
                     },
@@ -463,7 +487,13 @@ def specs() -> list[CommandSpec]:
                 """--persona-json '{"name":"Mia","description":"Practical maker","""
                 """"visual_prompt":"Warm workshop portrait","reference_media_ids":[]}' """
                 """--elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
-                """"topic_id":"55555555-5555-4555-8555-555555555555"}]'"""
+                """"topic_id":"55555555-5555-4555-8555-555555555555"}]'""",
+                "museoncli agentic-campaign +plan-propose "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--title 'Dark-tone second test batch' "
+                """--add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
+                """"topic_id":"55555555-5555-4555-8555-555555555555"}]' """
+                "--note 'Untested hypothesis on the dark visual direction'"
             ],
             add_arguments=_add_plan_propose_arguments,
             build_arguments=_build_plan_propose_arguments,
@@ -966,6 +996,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
         ),
         json_body={
             "workspace_id": ctx.workspace_id,
+            "title": ctx.arguments.get("title"),
             "note": ctx.arguments.get("note"),
             "changes": changes,
         },
