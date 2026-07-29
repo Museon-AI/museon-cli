@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-129 commands across 14 domains (source of truth: `museoncli schema`).
+130 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -213,6 +213,7 @@ The tables below are generated — edit code, then run
 | `agentic-campaign +plan-propose` | write | yes | — | direct | Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. |
 | `agentic-campaign +proposal-get` | read | — | — | direct | Read an adjustment proposal and its latest revision guidance. |
 | `agentic-campaign +proposal-persona-draft` | write | yes | — | direct | Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews. |
+| `agentic-campaign +proposal-withdraw` | write | yes | — | direct | Withdraw your own pending-review draft proposal by archiving it permanently. Archived proposals cannot be restored; selected or already archived candidates cannot be withdrawn and are rejected by the server. |
 | `agentic-campaign +campaign-create` | write | yes | — | direct | Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward. |
 | `agentic-campaign +campaign-update` | write | yes | `--yes` | direct | Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config. |
 | `agentic-campaign +plan-update` | write | yes | — | direct | Update plan tokens for the next generation while a campaign is active or paused, or update name/budget only during setup. |
