@@ -153,6 +153,31 @@ place. If feedback applies to a shared asset, copy it into a new variant and
 point the revised element list to that new variant; never mutate the shared
 asset.
 
+**Persona is a plan-shared asset — never edit it directly.** When feedback is
+about persona identity or appearance (name, description, visual reference),
+first call `+proposal-persona-draft` to create or reuse this proposal's own
+draft persona:
+
+```bash
+museoncli agentic-campaign +proposal-persona-draft \
+  --plan-id 33333333-3333-4333-8333-333333333333 \
+  --proposal-id 77777777-7777-4777-8777-777777777777
+```
+
+Edit only the returned draft persona, then regenerate this proposal's
+previews. It is idempotent across a proposal: calling it again returns the
+same draft instead of creating a duplicate.
+
+**Verify before retiring or shrinking a direction.** Before proposing to
+retire or reduce an element, confirm its current state and performance with a
+tool call and cite the evidence in `--note`: the asset id and the exact
+queried text or numbers it came from. Never retire, shrink, or otherwise touch
+an element the operator did not name.
+
+**Summarize as a diff against the previous draft.** When reporting a revision
+back to the operator, list what this `第N稿` adds and removes compared with
+the previous `第N稿` — the delta, not just the new state.
+
 Submit the complete replacement element list as the next `第N稿`:
 
 ```bash
@@ -170,3 +195,19 @@ When speaking to operators, use only this interface vocabulary:
 `人设方案`, `第N稿`, `调整记录`, `定稿启用`, `新方向开测`, `Winner加推`,
 `停投`, and `内容组成`. Do not expose engineering terms such as candidate,
 branch, commit, head, merge, payload, element row, or version table.
+
+## 7. Campaign creation and archiving
+
+Creating and archiving a campaign are workspace-level actions with lasting
+consequences. Never take either unprompted.
+
+- **Before creating**, state the full intent to the operator and get their
+  confirmation: project name, total account budget, planned persona (plan)
+  count, and each plan's name and budget. Only call `+campaign-create` (and
+  `+plan-create` for each plan) after the operator confirms.
+- **After creating**, report the project link back to the operator so they
+  can open it directly.
+- **Before archiving**, get the operator's explicit confirmation.
+  `+campaign-archive` cascades to stop account operations for every member of
+  every plan in the campaign; make sure the operator understands this before
+  they confirm.
