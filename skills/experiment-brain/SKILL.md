@@ -100,6 +100,12 @@ museoncli agentic-campaign +plan-propose \
 
 Omit `--candidate-id` to submit a new alternative.
 
+When the persona already exists as a workspace persona asset, pass
+`--persona-id <id>` instead of `--persona-json` (mutually exclusive). The
+server snapshots the asset's name, description, and look-reference media at
+submit time — a copy, not a live link; tags and marketing profile do not
+carry over.
+
 ### Scenario 2: propose an evidence-based adjustment during operation
 
 Use the experiment scoreboard before proposing an operating-plan adjustment,
@@ -147,16 +153,24 @@ museoncli agentic-campaign +proposal-get \
   --proposal-id 77777777-7777-4777-8777-777777777777
 ```
 
+To read the operator's page annotations on a proposal at any time, call
+`+proposal-get`: its `annotations` section lists each round's compiled
+feedback text and resolution state. Annotations live on the proposal — never
+look for them on persona or asset fields.
+
 Apply the compiled `feedback_summary` consistently across the proposed supply
 assets. Only dedicated assets created for this proposal may be modified in
 place. If feedback applies to a shared asset, copy it into a new variant and
 point the revised element list to that new variant; never mutate the shared
 asset.
 
-**Persona is a plan-shared asset — never edit it directly.** When feedback is
-about persona identity or appearance (name, description, visual reference),
-first call `+proposal-persona-draft` to create or reuse this proposal's own
-draft persona:
+**Persona is a plan-shared asset — never edit it directly.** `asset +update`
+against a plan-held persona is rejected by the server (409) no matter who
+asks: operator-instructed rewrites, "replace with persona X" requests, and
+annotation feedback all go through the same draft flow. Whenever ANY change
+to a plan's persona identity or appearance (name, description, visual
+reference) is needed, first call `+proposal-persona-draft` to create or reuse
+this proposal's own draft persona:
 
 ```bash
 museoncli agentic-campaign +proposal-persona-draft \
