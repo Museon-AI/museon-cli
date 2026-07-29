@@ -594,6 +594,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.proposal-withdraw",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-withdraw",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+proposal-withdraw",
+          "stability": "stable",
+          "summary": "Withdraw your own pending-review draft proposal by archiving it permanently. Archived proposals cannot be restored; selected or already archived candidates cannot be withdrawn and are rejected by the server.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.campaign-create",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -5706,7 +5731,7 @@
       "product"
     ]
   },
-  "contract_revision": "0.3.87",
+  "contract_revision": "0.3.88",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -11788,6 +11813,117 @@
       "shortcut": "+proposal-persona-draft",
       "stability": "stable",
       "summary": "Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.proposal-withdraw": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-withdraw",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +proposal-withdraw --plan-id 33333333-3333-4333-8333-333333333333 --candidate-id 77777777-7777-4777-8777-777777777777"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "candidate_id": {
+            "description": "Draft proposal candidate id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id",
+          "candidate_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-withdraw",
+      "output_schema": {
+        "description": "Archived draft proposal candidate.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+proposal-withdraw",
+      "stability": "stable",
+      "summary": "Withdraw your own pending-review draft proposal by archiving it permanently. Archived proposals cannot be restored; selected or already archived candidates cannot be withdrawn and are rejected by the server.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

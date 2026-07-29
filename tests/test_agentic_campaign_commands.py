@@ -9,7 +9,7 @@ import pytest
 import httpx
 
 from museoncli import main as main_module
-from museoncli.config import Config
+from museoncli.config import Config, WorkspaceState
 from museoncli.domains import agentic_campaign, command_executor, get_command_spec
 from museoncli.execution import CommandContext
 from museoncli.main import ApiRequestError, build_parser
@@ -117,6 +117,91 @@ def _complete_plan_cli_args() -> list[str]:
             ]
         ),
     ]
+
+
+def test_proposal_withdraw_builds_arguments_and_maps_to_archive() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    candidate_id = "77777777-7777-4777-8777-777777777777"
+    args = parse(
+        [
+            "agentic-campaign",
+            "+proposal-withdraw",
+            "--plan-id",
+            plan_id,
+            "--candidate-id",
+            candidate_id,
+        ]
+    )
+    arguments = agentic_campaign._build_proposal_withdraw_arguments(args)
+    assert arguments == {
+        "plan_id": plan_id,
+        "candidate_id": candidate_id,
+        "dry_run": False,
+    }
+    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"id": candidate_id})
+    asyncio.run(
+        agentic_campaign._execute_proposal_withdraw(
+            context("agentic-campaign.proposal-withdraw", arguments, capture)
+        )
+    )
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/candidates/{candidate_id}:archive"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+        },
+        "params": None,
+    }
+    spec = get_command_spec("agentic-campaign.proposal-withdraw")
+    assert spec.risk_level == "write"
+    assert spec.requires_confirmation is False
+    assert spec.supports_dry_run is True
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        [
+            "agentic-campaign",
+            "+proposal-withdraw",
+            "--candidate-id",
+            "77777777-7777-4777-8777-777777777777",
+        ],
+        [
+            "agentic-campaign",
+            "+proposal-withdraw",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+        ],
+    ],
+)
+def test_proposal_withdraw_requires_ids(argv: list[str]) -> None:
+    with pytest.raises(SystemExit):
+        parse(argv)
+
+
+def test_proposal_withdraw_dry_run_is_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fail_api(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("dry-run must not call the API")
+
+    monkeypatch.setattr(main_module, "api_data_v2", fail_api)
+    args = parse(
+        [
+            "agentic-campaign",
+            "+proposal-withdraw",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--candidate-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--dry-run",
+        ]
+    )
+    cfg = Config(workspace=WorkspaceState(id="11111111-1111-4111-8111-111111111111"))
+    result = asyncio.run(main_module.dispatch_domain_command(args, cfg))
+    assert result["data"]["dry_run"] is True
 
 
 def test_campaign_create_builds_extended_fields_and_field_config() -> None:

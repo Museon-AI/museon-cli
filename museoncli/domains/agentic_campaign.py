@@ -259,6 +259,20 @@ def _build_proposal_persona_draft_arguments(args: argparse.Namespace) -> dict[st
     return {"plan_id": args.plan_id, "proposal_id": args.proposal_id, "dry_run": args.dry_run}
 
 
+def _add_proposal_withdraw_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--candidate-id", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_proposal_withdraw_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "plan_id": args.plan_id,
+        "candidate_id": args.candidate_id,
+        "dry_run": args.dry_run,
+    }
+
+
 def _add_campaign_create_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--name", required=True)
     parser.add_argument("--total-account-budget", type=int, default=0)
@@ -788,6 +802,34 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_proposal_persona_draft_arguments,
             build_arguments=_build_proposal_persona_draft_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+proposal-withdraw",
+            summary=(
+                "Withdraw your own pending-review draft proposal by archiving it permanently. "
+                "Archived proposals cannot be restored; selected or already archived candidates "
+                "cannot be withdrawn and are rejected by the server."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_proposal_withdraw",
+            input_schema=_plan_schema(
+                {
+                    "candidate_id": _uuid_property("Draft proposal candidate id"),
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["candidate_id"],
+            ),
+            output_schema=_direct_output_schema("Archived draft proposal candidate."),
+            examples=[
+                "museoncli agentic-campaign +proposal-withdraw "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--candidate-id 77777777-7777-4777-8777-777777777777"
+            ],
+            add_arguments=_add_proposal_withdraw_arguments,
+            build_arguments=_build_proposal_withdraw_arguments,
             supports_dry_run=True,
         ),
         CommandSpec(
@@ -1567,6 +1609,20 @@ async def _execute_proposal_persona_draft(ctx: CommandContext) -> Any:
     }
 
 
+async def _execute_proposal_withdraw(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    candidate_id = ctx.arguments.get("candidate_id")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"candidates/{candidate_id}:archive"
+        ),
+        json_body={"workspace_id": ctx.workspace_id},
+    )
+
+
 async def _execute_campaign_create(ctx: CommandContext) -> Any:
     return await ctx.api_data_v2(
         ctx.cfg,
@@ -1790,6 +1846,9 @@ EXECUTORS = {
     ),
     "agentic-campaign.proposal-persona-draft": redacted_direct_enveloped(
         _execute_proposal_persona_draft, redact_api_errors=True
+    ),
+    "agentic-campaign.proposal-withdraw": redacted_direct_enveloped(
+        _execute_proposal_withdraw, redact_api_errors=True
     ),
     "agentic-campaign.plan-tags": redacted_direct_enveloped(
         _execute_plan_tags, redact_api_errors=True
