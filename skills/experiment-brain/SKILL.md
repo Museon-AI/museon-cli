@@ -178,6 +178,12 @@ museoncli agentic-campaign +proposal-persona-draft \
   --proposal-id 77777777-7777-4777-8777-777777777777
 ```
 
+When the operator names an existing persona to source from (for example
+"replace with persona X"), pass `--from-persona-id <id>` to seed the draft
+directly instead of hand-copying fields: it copies the source persona's
+description and look references into the draft — a copy, not a live link —
+and re-running with this flag overwrites the draft's current content.
+
 Edit only the returned draft persona, then regenerate this proposal's
 previews. It is idempotent across a proposal: calling it again returns the
 same draft instead of creating a duplicate.

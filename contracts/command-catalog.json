@@ -577,7 +577,7 @@
           "risk_level": "write",
           "shortcut": "+proposal-persona-draft",
           "stability": "stable",
-          "summary": "Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews.",
+          "summary": "Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews. Optionally seed the draft from an existing workspace persona asset with source_persona_id (copy, not a live link; re-seeding overwrites the draft's current content).",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -11826,7 +11826,8 @@
       "capability_key": "agentic-campaign.proposal-persona-draft",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +proposal-persona-draft --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777"
+        "museoncli agentic-campaign +proposal-persona-draft --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777",
+        "museoncli agentic-campaign +proposal-persona-draft --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --from-persona-id 99999999-9999-4999-8999-999999999999"
       ],
       "execution": "direct",
       "input_schema": {
@@ -11845,6 +11846,14 @@
           },
           "proposal_id": {
             "description": "Adjustment proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "source_persona_id": {
+            "description": "Optional workspace persona asset to seed the draft's description and look references from (copy, not a live link). Re-seeding overwrites the draft's current content.",
             "examples": [
               "33333333-3333-4333-8333-333333333333"
             ],
@@ -11917,7 +11926,7 @@
       "risk_level": "write",
       "shortcut": "+proposal-persona-draft",
       "stability": "stable",
-      "summary": "Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews.",
+      "summary": "Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews. Optionally seed the draft from an existing workspace persona asset with source_persona_id (copy, not a live link; re-seeding overwrites the draft's current content).",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
