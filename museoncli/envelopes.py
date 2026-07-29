@@ -634,8 +634,7 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
         if isinstance(watch_command, str) and watch_command:
             if isinstance(wakeup_delay, int) and wakeup_delay > 0:
                 return [
-                    f"Schedule a wakeup in {wakeup_delay} seconds, then poll with: "
-                    f"{watch_command}"
+                    f"Schedule a wakeup in {wakeup_delay} seconds, then poll with: {watch_command}"
                 ]
             return [f"Poll with: {watch_command}"]
         return ["Poll the returned task id with research +creative-search-ads-get."]

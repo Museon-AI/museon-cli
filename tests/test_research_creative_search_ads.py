@@ -284,9 +284,7 @@ def test_dispatch_creative_search_ads_returns_async_run(
         "id": TASK_ID,
         "type": "creative_search_ads",
         "status": "pending",
-        "watch_command": (
-            f"museoncli research +creative-search-ads-get --id {TASK_ID}"
-        ),
+        "watch_command": (f"museoncli research +creative-search-ads-get --id {TASK_ID}"),
         "recommended_wakeup_delay_seconds": 20,
     }
     assert result["next_steps"] == [
@@ -343,9 +341,7 @@ def test_dispatch_creative_search_ads_get_stops_polling_when_terminal(
     monkeypatch.setattr(main_module, "api_data", fake_api_data)
 
     result = asyncio.run(
-        main_module.dispatch(
-            _parse(["research", "+creative-search-ads-get", "--id", TASK_ID])
-        )
+        main_module.dispatch(_parse(["research", "+creative-search-ads-get", "--id", TASK_ID]))
     )
 
     assert result is not None

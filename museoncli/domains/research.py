@@ -366,9 +366,7 @@ def _build_creative_search_ads_arguments(args: argparse.Namespace) -> dict[str, 
         context="research +creative-search-ads",
     )
     raw_idempotency_key = (
-        args.idempotency_key
-        if args.idempotency_key is not None
-        else payload.get("idempotency_key")
+        args.idempotency_key if args.idempotency_key is not None else payload.get("idempotency_key")
     )
     if not isinstance(raw_idempotency_key, str):
         raise ValueError("--idempotency-key must be a string.")
@@ -1186,7 +1184,5 @@ EXECUTORS = {
     **{schema: direct_enveloped(_execute_research) for schema in _RESEARCH_PATHS},
     "research.creative-search-ads": direct_enveloped(_execute_creative_search_ads),
     "research.creative-search-ads-get": direct_enveloped(_execute_creative_search_ads_get),
-    "research.creative-search-ads-results": direct_enveloped(
-        _execute_creative_search_ads_results
-    ),
+    "research.creative-search-ads-results": direct_enveloped(_execute_creative_search_ads_results),
 }
