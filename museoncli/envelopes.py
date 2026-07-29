@@ -10,6 +10,7 @@ from museoncli.config import DEFAULT_SITE_URL
 
 
 GENERATION_RECOMMENDED_WAKEUP_DELAY_SECONDS = 300
+CREATIVE_SEARCH_ADS_RECOMMENDED_WAKEUP_DELAY_SECONDS = 20
 
 
 def domain_command_dry_run_envelope(
@@ -74,6 +75,11 @@ def direct_api_envelope(
         run = _generation_run_from_data(data)
     elif command_name == "content-analysis.run":
         run = _content_analysis_run_from_data(data)
+    elif command_name in {
+        "research.creative-search-ads",
+        "research.creative-search-ads-get",
+    }:
+        run = _creative_search_ads_run_from_data(data)
     elif command_name in {
         "social-account.profile-edit-submit",
         "social-account.profile-edit-batch-submit",
@@ -437,6 +443,26 @@ def _content_analysis_run_from_data(data: Any) -> dict[str, Any] | None:
     }
 
 
+def _creative_search_ads_run_from_data(data: Any) -> dict[str, Any] | None:
+    if not isinstance(data, dict):
+        return None
+    task_id = data.get("id")
+    if not task_id:
+        return None
+    status = str(data.get("status") or "")
+    run: dict[str, Any] = {
+        "id": task_id,
+        "type": "creative_search_ads",
+        "status": status or None,
+        "watch_command": f"museoncli research +creative-search-ads-get --id {task_id}",
+    }
+    if status.lower() not in {"completed", "failed", "cancelled", "canceled"}:
+        run["recommended_wakeup_delay_seconds"] = (
+            CREATIVE_SEARCH_ADS_RECOMMENDED_WAKEUP_DELAY_SECONDS
+        )
+    return run
+
+
 def _profile_edit_run_from_data(data: Any) -> dict[str, Any] | None:
     if not isinstance(data, dict):
         return None
@@ -599,6 +625,19 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
         if isinstance(watch_command, str) and watch_command:
             return [f"Poll with: {watch_command}"]
         return ["Poll the returned run id with content-analysis +get."]
+    if run.get("type") == "creative_search_ads":
+        status_value = str(run.get("status") or "").lower()
+        if status_value in {"completed", "failed", "cancelled", "canceled"}:
+            return []
+        watch_command = run.get("watch_command")
+        wakeup_delay = run.get("recommended_wakeup_delay_seconds")
+        if isinstance(watch_command, str) and watch_command:
+            if isinstance(wakeup_delay, int) and wakeup_delay > 0:
+                return [
+                    f"Schedule a wakeup in {wakeup_delay} seconds, then poll with: {watch_command}"
+                ]
+            return [f"Poll with: {watch_command}"]
+        return ["Poll the returned task id with research +creative-search-ads-get."]
     if run.get("type") == "account_publish_schedule_plan":
         watch_command = run.get("watch_command")
         wakeup_delay = run.get("recommended_wakeup_delay_seconds")
