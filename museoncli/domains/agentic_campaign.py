@@ -264,26 +264,132 @@ def _add_campaign_create_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--total-account-budget", type=int, default=0)
     parser.add_argument("--planned-persona-count", type=int, default=None)
     parser.add_argument("--product-id", default=None)
+    parser.add_argument("--cta-definition", default=None)
     parser.add_argument("--config-json", default=None)
+    parser.add_argument("--required-hashtags", default=None)
+    parser.add_argument("--required-mentions", default=None)
+    parser.add_argument("--preferred-publish-windows-json", default=None)
+    parser.add_argument("--bind-notification-conversation", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
 
 
-def _build_campaign_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    config = (
-        _candidate_json(args.config_json, field="config", expected_type=dict)
-        if args.config_json is not None
-        else None
+def _field_config(args: argparse.Namespace) -> dict[str, Any] | None:
+    values = (
+        args.required_hashtags,
+        args.required_mentions,
+        args.preferred_publish_windows_json,
     )
+    if args.config_json is not None and any(value is not None for value in values):
+        raise ValueError(
+            "--config-json is mutually exclusive with --required-hashtags, "
+            "--required-mentions, and --preferred-publish-windows-json."
+        )
+    if args.config_json is not None:
+        return _candidate_json(args.config_json, field="config", expected_type=dict)
+    config: dict[str, Any] = {}
+    if args.required_hashtags is not None:
+        config["required_hashtags"] = _csv(args.required_hashtags)
+    if args.required_mentions is not None:
+        config["required_mentions"] = _csv(args.required_mentions)
+    if args.preferred_publish_windows_json is not None:
+        config["preferred_publish_windows"] = _candidate_json(
+            args.preferred_publish_windows_json,
+            field="preferred-publish-windows",
+            expected_type=list,
+        )
+    return config or None
+
+
+def _build_campaign_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    config = _field_config(args)
     return compact_params(
         {
             "name": args.name,
             "total_account_budget": args.total_account_budget,
             "planned_persona_count": args.planned_persona_count,
             "product_id": args.product_id,
+            "cta_definition": args.cta_definition,
+            "bind_notification_conversation": args.bind_notification_conversation,
             "config": config,
             "dry_run": args.dry_run,
         }
     )
+
+
+def _add_campaign_update_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--name")
+    parser.add_argument("--total-account-budget", type=int)
+    parser.add_argument("--planned-persona-count", type=int)
+    parser.add_argument("--cta-definition")
+    parser.add_argument("--product-id")
+    parser.add_argument("--config-json")
+    parser.add_argument("--required-hashtags")
+    parser.add_argument("--required-mentions")
+    parser.add_argument("--preferred-publish-windows-json")
+    parser.add_argument("--bind-notification-conversation", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--yes", action="store_true")
+
+
+def _build_campaign_update_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    config = _field_config(args)
+    mutable = compact_params(
+        {
+            "name": args.name,
+            "total_account_budget": args.total_account_budget,
+            "planned_persona_count": args.planned_persona_count,
+            "cta_definition": args.cta_definition,
+            "product_id": args.product_id,
+            "config": config,
+            "bind_notification_conversation": (
+                True if args.bind_notification_conversation else None
+            ),
+        }
+    )
+    if not mutable:
+        raise ValueError("agentic-campaign +campaign-update requires at least one mutable flag.")
+    if "name" in mutable and len(mutable) != 1:
+        raise ValueError("--name is mutually exclusive with all other mutable flags.")
+    return {
+        "campaign_id": args.campaign_id,
+        **mutable,
+        "dry_run": args.dry_run,
+    }
+
+
+def _add_plan_update_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--name")
+    parser.add_argument("--account-budget", type=int)
+    parser.add_argument("--required-hashtags")
+    parser.add_argument("--required-mentions")
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_plan_update_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    mutable = compact_params(
+        {
+            "name": args.name,
+            "account_budget": args.account_budget,
+            "required_hashtags": (
+                _csv(args.required_hashtags) if args.required_hashtags is not None else None
+            ),
+            "required_mentions": (
+                _csv(args.required_mentions) if args.required_mentions is not None else None
+            ),
+        }
+    )
+    if not mutable:
+        raise ValueError("agentic-campaign +plan-update requires at least one mutable flag.")
+    token_fields = {"required_hashtags", "required_mentions"} & mutable.keys()
+    setup_fields = {"name", "account_budget"} & mutable.keys()
+    if token_fields and setup_fields:
+        raise ValueError(
+            "--required-hashtags and --required-mentions are mutually exclusive "
+            "with --name and --account-budget."
+        )
+    return {"plan_id": args.plan_id, **mutable, "dry_run": args.dry_run}
 
 
 def _add_plan_create_arguments(parser: argparse.ArgumentParser) -> None:
@@ -443,6 +549,19 @@ def _campaign_config_schema() -> dict[str, Any]:
                 "maxItems": 100,
                 "default": [],
             },
+            "preferred_publish_windows": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "start": {"type": "string", "pattern": "^\\d{2}:\\d{2}$"},
+                        "end": {"type": "string", "pattern": "^\\d{2}:\\d{2}$"},
+                    },
+                    "required": ["start", "end"],
+                },
+                "default": [],
+            },
         },
     }
 
@@ -585,7 +704,7 @@ def specs() -> list[CommandSpec]:
                 "--title 'Dark-tone second test batch' "
                 """--add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
                 """"topic_id":"55555555-5555-4555-8555-555555555555"}]' """
-                "--note 'Untested hypothesis on the dark visual direction'"
+                "--note 'Untested hypothesis on the dark visual direction'",
             ],
             add_arguments=_add_plan_propose_arguments,
             build_arguments=_build_plan_propose_arguments,
@@ -668,6 +787,11 @@ def specs() -> list[CommandSpec]:
                         "format": "uuid",
                         "description": "Optional product id",
                     },
+                    "cta_definition": {"type": ["string", "null"]},
+                    "bind_notification_conversation": {
+                        "type": "boolean",
+                        "default": False,
+                    },
                     "config": _campaign_config_schema(),
                     "dry_run": {"type": "boolean", "default": False},
                 },
@@ -681,6 +805,83 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_campaign_create_arguments,
             build_arguments=_build_campaign_create_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+campaign-update",
+            summary=(
+                "Patch only supplied campaign fields. Budget and config fields are setup-only; "
+                "name must be changed by itself."
+            ),
+            risk_level="write",
+            requires_confirmation=True,
+            execution="direct",
+            adapter_tool_name="agentic_campaign_campaign_update",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "name": {"type": "string", "minLength": 1, "maxLength": 160},
+                    "total_account_budget": {"type": "integer", "minimum": 0},
+                    "planned_persona_count": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10,
+                    },
+                    "cta_definition": {"type": "string"},
+                    "product_id": _uuid_property("Product id"),
+                    "config": _campaign_config_schema(),
+                    "bind_notification_conversation": {"type": "boolean"},
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id"],
+            ),
+            output_schema=_direct_output_schema("Updated campaign detail."),
+            examples=[
+                "museoncli agentic-campaign +campaign-update "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--total-account-budget 107 --yes",
+                "museoncli agentic-campaign +campaign-update "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--bind-notification-conversation --yes",
+            ],
+            add_arguments=_add_campaign_update_arguments,
+            build_arguments=_build_campaign_update_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+plan-update",
+            summary=(
+                "Update plan tokens for the next generation while a campaign is active or "
+                "paused, or update name/budget only during setup."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_plan_update",
+            input_schema=_plan_schema(
+                {
+                    "name": {"type": "string", "minLength": 1, "maxLength": 160},
+                    "account_budget": {"type": "integer", "minimum": 0},
+                    "required_hashtags": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "required_mentions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "dry_run": {"type": "boolean", "default": False},
+                }
+            ),
+            output_schema=_direct_output_schema("Updated Persona Plan detail."),
+            examples=[
+                "museoncli agentic-campaign +plan-update "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--required-hashtags '#maker,#diy'"
+            ],
+            add_arguments=_add_plan_update_arguments,
+            build_arguments=_build_plan_update_arguments,
             supports_dry_run=True,
         ),
         CommandSpec(
@@ -1340,9 +1541,73 @@ async def _execute_campaign_create(ctx: CommandContext) -> Any:
                 "total_account_budget": ctx.arguments.get("total_account_budget"),
                 "planned_persona_count": ctx.arguments.get("planned_persona_count"),
                 "product_id": ctx.arguments.get("product_id"),
+                "cta_definition": ctx.arguments.get("cta_definition"),
+                "bind_notification_conversation": ctx.arguments.get(
+                    "bind_notification_conversation"
+                ),
                 "config": ctx.arguments.get("config"),
             }
         ),
+    )
+
+
+async def _execute_campaign_update(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    expected_version = await _current_campaign_version(ctx, campaign_id)
+    body = {
+        "workspace_id": ctx.workspace_id,
+        "expected_version": expected_version,
+    }
+    body.update(
+        {
+            key: value
+            for key, value in ctx.arguments.items()
+            if key
+            in {
+                "name",
+                "total_account_budget",
+                "planned_persona_count",
+                "cta_definition",
+                "product_id",
+                "config",
+                "bind_notification_conversation",
+            }
+        }
+    )
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "PATCH",
+        f"/agentic-creative-campaigns/{campaign_id}",
+        json_body=body,
+    )
+
+
+async def _execute_plan_update(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    if plan.get("version") is None:
+        raise RuntimeError("agentic persona plan did not include its current version")
+    body = {
+        "workspace_id": ctx.workspace_id,
+        "expected_version": plan["version"],
+    }
+    body.update(
+        {
+            key: value
+            for key, value in ctx.arguments.items()
+            if key
+            in {
+                "name",
+                "account_budget",
+                "required_hashtags",
+                "required_mentions",
+            }
+        }
+    )
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "PATCH",
+        (f"/agentic-creative-campaigns/{campaign_id}/agentic-persona-plans/{plan['id']}"),
+        json_body=body,
     )
 
 
@@ -1447,6 +1712,9 @@ EXECUTORS = {
     "agentic-campaign.campaign-create": redacted_direct_enveloped(
         _execute_campaign_create, redact_api_errors=True
     ),
+    "agentic-campaign.campaign-update": redacted_direct_enveloped(
+        _execute_campaign_update, redact_api_errors=True
+    ),
     "agentic-campaign.campaign-pause": redacted_direct_enveloped(
         _execute_campaign_pause, redact_api_errors=True
     ),
@@ -1469,6 +1737,9 @@ EXECUTORS = {
     ),
     "agentic-campaign.plan-list": redacted_direct_enveloped(
         _execute_plan_list, redact_api_errors=True
+    ),
+    "agentic-campaign.plan-update": redacted_direct_enveloped(
+        _execute_plan_update, redact_api_errors=True
     ),
     "agentic-campaign.plan-propose": redacted_direct_enveloped(
         _execute_plan_propose, redact_api_errors=True

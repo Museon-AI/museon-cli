@@ -44,6 +44,7 @@ class Domain(str, Enum):
     ROUTINES = ROUTINES_DOMAIN
     ACCOUNT_OPERATION = "account-operation"
     AGENTIC_CAMPAIGN = "agentic-campaign"
+    PRODUCT = "product"
 
 
 @dataclass(frozen=True, slots=True)

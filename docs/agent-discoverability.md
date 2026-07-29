@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-124 commands across 13 domains (source of truth: `museoncli schema`).
+129 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -198,6 +198,8 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `agentic-campaign +proposal-get` | read | — | — | direct | Read an adjustment proposal and its latest revision guidance. |
 | `agentic-campaign +proposal-persona-draft` | write | yes | — | direct | Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews. |
 | `agentic-campaign +campaign-create` | write | yes | — | direct | Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward. |
+| `agentic-campaign +campaign-update` | write | yes | `--yes` | direct | Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. |
+| `agentic-campaign +plan-update` | write | yes | — | direct | Update plan tokens for the next generation while a campaign is active or paused, or update name/budget only during setup. |
 | `agentic-campaign +plan-create` | write | yes | — | direct | Create a Persona Plan under a campaign. Only allowed while the campaign is in setup (setting_up or setup_ready); the server rejects the request otherwise and the error is passed through unchanged. |
 | `agentic-campaign +campaign-activate` | write | yes | — | direct | Activate an Agentic Creative Campaign, resuming member account operations. |
 | `agentic-campaign +campaign-pause` | write | yes | — | direct | Pause an Agentic Creative Campaign, stopping member account operations. |
@@ -210,6 +212,14 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +plan-attribution` | read | — | — | direct | Aggregate attribution across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +issues-pull` | write | yes | — | direct | Pull and lease Account Operation Issues from one required Agentic Creative Campaign. The campaign selects candidates; the runtime conversation identity is used only for lease and message context. Claims omit account_operation_id. |
+
+### product
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `product +cta-target-list` | read | — | — | direct | List CTA targets for a Product. Upload assets with the asset domain first to obtain media ids; this command only references them. |
+| `product +cta-target-create` | write | yes | — | direct | Create a CTA target for a Product. Upload assets with the asset domain first to obtain media ids; this command only references them. |
+| `product +cta-target-update` | write | yes | — | direct | Patch supplied CTA target fields. Upload assets with the asset domain first to obtain media ids; this command only references them. |
 
 <!-- END GENERATED COMMANDS -->
 

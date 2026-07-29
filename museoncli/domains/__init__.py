@@ -35,6 +35,7 @@ from museoncli.domains import (
     routines,
     account_operation,
     agentic_campaign,
+    product,
 )
 
 
@@ -53,6 +54,7 @@ _DOMAIN_MODULES = (
     routines,
     account_operation,
     agentic_campaign,
+    product,
 )
 
 
