@@ -759,6 +759,85 @@ def test_proposal_get_returns_operator_revision_context() -> None:
     assert "internal-element-id" not in repr(result)
 
 
+def test_proposal_persona_draft_requires_plan_and_calls_v2_endpoint() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    draft_id = "99999999-9999-4999-8999-999999999999"
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {
+            "id": draft_id,
+            "workspace_id": "internal-workspace-id",
+            "created_by": "internal-user-id",
+            "name": "Mia revision",
+            "description": "Brighter visual identity",
+            "tags": ["maker"],
+            "marketing_profile": {"audience": "DIY creators"},
+        },
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+proposal-persona-draft",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+        ]
+    )
+    arguments = agentic_campaign._build_proposal_persona_draft_arguments(args)
+    assert arguments == {
+        "plan_id": plan_id,
+        "proposal_id": proposal_id,
+        "dry_run": False,
+    }
+
+    result = asyncio.run(
+        agentic_campaign._execute_proposal_persona_draft(
+            context(
+                "agentic-campaign.proposal-persona-draft",
+                arguments,
+                capture,
+            )
+        )
+    )
+
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/"
+            f"{proposal_id}:create-persona-draft"
+        ),
+        "json_body": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+        "params": None,
+    }
+    assert result == {
+        "draft_persona_id": draft_id,
+        "name": "Mia revision",
+        "description": "Brighter visual identity",
+        "next_step": (
+            "Edit only this proposal-owned draft persona (never the shared plan persona), "
+            "then regenerate this proposal's previews."
+        ),
+    }
+    assert "internal-workspace-id" not in repr(result)
+    assert "internal-user-id" not in repr(result)
+
+
+def test_proposal_persona_draft_requires_plan_id() -> None:
+    with pytest.raises(SystemExit):
+        parse(
+            [
+                "agentic-campaign",
+                "+proposal-persona-draft",
+                "--proposal-id",
+                "77777777-7777-4777-8777-777777777777",
+            ]
+        )
+
+
 def test_plan_propose_submits_active_proposal_revision() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     proposal_id = "77777777-7777-4777-8777-777777777777"
