@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-118 commands across 13 domains (source of truth: `museoncli schema`).
+124 commands across 13 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -196,6 +196,12 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 |---|---|---|---|---|---|
 | `agentic-campaign +plan-propose` | write | yes | — | direct | Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. |
 | `agentic-campaign +proposal-get` | read | — | — | direct | Read an adjustment proposal and its latest revision guidance. |
+| `agentic-campaign +proposal-persona-draft` | write | yes | — | direct | Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews. |
+| `agentic-campaign +campaign-create` | write | yes | — | direct | Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward. |
+| `agentic-campaign +plan-create` | write | yes | — | direct | Create a Persona Plan under a campaign. Only allowed while the campaign is in setup (setting_up or setup_ready); the server rejects the request otherwise and the error is passed through unchanged. |
+| `agentic-campaign +campaign-activate` | write | yes | — | direct | Activate an Agentic Creative Campaign, resuming member account operations. |
+| `agentic-campaign +campaign-pause` | write | yes | — | direct | Pause an Agentic Creative Campaign, stopping member account operations. |
+| `agentic-campaign +campaign-archive` | destructive | yes | `--yes` | direct | Archive an Agentic Creative Campaign. This cascades to stop account operations for every member of every plan in the campaign; the operator must explicitly confirm before running with --yes. |
 | `agentic-campaign +campaign-rename` | write | yes | — | direct | Rename an Agentic Creative Campaign. |
 | `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
 | `agentic-campaign +get` | read | — | — | direct | Get an Agentic Creative Campaign detail by campaign id. |
