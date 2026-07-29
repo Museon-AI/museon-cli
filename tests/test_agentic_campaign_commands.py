@@ -199,7 +199,7 @@ def test_campaign_create_requires_name() -> None:
         parse(["agentic-campaign", "+campaign-create"])
 
 
-def test_campaign_update_builds_clear_config_and_patches_current_version() -> None:
+def test_campaign_update_builds_field_level_config_patch_and_current_version() -> None:
     campaign_id = "22222222-2222-4222-8222-222222222222"
     args = parse(
         [
@@ -209,6 +209,8 @@ def test_campaign_update_builds_clear_config_and_patches_current_version() -> No
             campaign_id,
             "--required-hashtags",
             "",
+            "--required-mentions",
+            "@museon",
             "--preferred-publish-windows-json",
             "[]",
         ]
@@ -216,12 +218,12 @@ def test_campaign_update_builds_clear_config_and_patches_current_version() -> No
     arguments = agentic_campaign._build_campaign_update_arguments(args)
     assert arguments == {
         "campaign_id": campaign_id,
-        "config": {
-            "required_hashtags": [],
-            "preferred_publish_windows": [],
-        },
+        "required_hashtags": [],
+        "required_mentions": ["@museon"],
+        "preferred_publish_windows": [],
         "dry_run": False,
     }
+    assert "config" not in arguments
     capture = Capture({"campaign": {"id": campaign_id, "version": 9}}, {"id": campaign_id})
     asyncio.run(
         agentic_campaign._execute_campaign_update(
@@ -241,14 +243,45 @@ def test_campaign_update_builds_clear_config_and_patches_current_version() -> No
             "json_body": {
                 "workspace_id": "11111111-1111-4111-8111-111111111111",
                 "expected_version": 9,
-                "config": {
-                    "required_hashtags": [],
-                    "preferred_publish_windows": [],
-                },
+                "required_hashtags": [],
+                "required_mentions": ["@museon"],
+                "preferred_publish_windows": [],
             },
             "params": None,
         },
     ]
+    assert "config" not in capture.calls[-1]["json_body"]
+
+
+def test_campaign_update_config_json_replaces_full_config() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    args = parse(
+        [
+            "agentic-campaign",
+            "+campaign-update",
+            "--campaign-id",
+            campaign_id,
+            "--config-json",
+            '{"required_hashtags":["#only"]}',
+        ]
+    )
+    arguments = agentic_campaign._build_campaign_update_arguments(args)
+    assert arguments == {
+        "campaign_id": campaign_id,
+        "config": {"required_hashtags": ["#only"]},
+        "dry_run": False,
+    }
+    capture = Capture({"campaign": {"id": campaign_id, "version": 9}}, {})
+    asyncio.run(
+        agentic_campaign._execute_campaign_update(
+            context("agentic-campaign.campaign-update", arguments, capture)
+        )
+    )
+    assert capture.calls[-1]["json_body"] == {
+        "workspace_id": "11111111-1111-4111-8111-111111111111",
+        "expected_version": 9,
+        "config": {"required_hashtags": ["#only"]},
+    }
 
 
 def test_campaign_update_builds_notification_binding_without_conversation_id() -> None:

@@ -627,7 +627,7 @@
           "risk_level": "write",
           "shortcut": "+campaign-update",
           "stability": "stable",
-          "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself.",
+          "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -10033,6 +10033,28 @@
             "minimum": 1,
             "type": "integer"
           },
+          "preferred_publish_windows": {
+            "default": [],
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "end": {
+                  "pattern": "^\\d{2}:\\d{2}$",
+                  "type": "string"
+                },
+                "start": {
+                  "pattern": "^\\d{2}:\\d{2}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "start",
+                "end"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "product_id": {
             "description": "Product id",
             "examples": [
@@ -10040,6 +10062,22 @@
             ],
             "format": "uuid",
             "type": "string"
+          },
+          "required_hashtags": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "required_mentions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
           },
           "total_account_budget": {
             "minimum": 0,
@@ -10110,7 +10148,7 @@
       "risk_level": "write",
       "shortcut": "+campaign-update",
       "stability": "stable",
-      "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself.",
+      "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

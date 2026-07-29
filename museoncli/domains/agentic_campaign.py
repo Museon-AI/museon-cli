@@ -333,7 +333,16 @@ def _add_campaign_update_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_campaign_update_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    config = _field_config(args)
+    field_config_values = (
+        args.required_hashtags,
+        args.required_mentions,
+        args.preferred_publish_windows_json,
+    )
+    if args.config_json is not None and any(value is not None for value in field_config_values):
+        raise ValueError(
+            "--config-json is mutually exclusive with --required-hashtags, "
+            "--required-mentions, and --preferred-publish-windows-json."
+        )
     mutable = compact_params(
         {
             "name": args.name,
@@ -341,7 +350,26 @@ def _build_campaign_update_arguments(args: argparse.Namespace) -> dict[str, Any]
             "planned_persona_count": args.planned_persona_count,
             "cta_definition": args.cta_definition,
             "product_id": args.product_id,
-            "config": config,
+            "config": (
+                _candidate_json(args.config_json, field="config", expected_type=dict)
+                if args.config_json is not None
+                else None
+            ),
+            "required_hashtags": (
+                _csv(args.required_hashtags) if args.required_hashtags is not None else None
+            ),
+            "required_mentions": (
+                _csv(args.required_mentions) if args.required_mentions is not None else None
+            ),
+            "preferred_publish_windows": (
+                _candidate_json(
+                    args.preferred_publish_windows_json,
+                    field="preferred-publish-windows",
+                    expected_type=list,
+                )
+                if args.preferred_publish_windows_json is not None
+                else None
+            ),
             "bind_notification_conversation": (
                 True if args.bind_notification_conversation else None
             ),
@@ -812,7 +840,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+campaign-update",
             summary=(
                 "Patch only supplied campaign fields. Budget and config fields are setup-only; "
-                "name must be changed by itself."
+                "name must be changed by itself. Field-level hashtag, mention, and publish-window "
+                "options merge into existing config, while --config-json replaces the full config."
             ),
             risk_level="write",
             requires_confirmation=True,
@@ -831,6 +860,15 @@ def specs() -> list[CommandSpec]:
                     "cta_definition": {"type": "string"},
                     "product_id": _uuid_property("Product id"),
                     "config": _campaign_config_schema(),
+                    "required_hashtags": _campaign_config_schema()["properties"][
+                        "required_hashtags"
+                    ],
+                    "required_mentions": _campaign_config_schema()["properties"][
+                        "required_mentions"
+                    ],
+                    "preferred_publish_windows": _campaign_config_schema()["properties"][
+                        "preferred_publish_windows"
+                    ],
                     "bind_notification_conversation": {"type": "boolean"},
                     "dry_run": {"type": "boolean", "default": False},
                 },
@@ -1570,6 +1608,9 @@ async def _execute_campaign_update(ctx: CommandContext) -> Any:
                 "cta_definition",
                 "product_id",
                 "config",
+                "required_hashtags",
+                "required_mentions",
+                "preferred_publish_windows",
                 "bind_notification_conversation",
             }
         }
