@@ -76,6 +76,16 @@ def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--name")
     parser.add_argument("--title")
     parser.add_argument("--persona-json")
+    parser.add_argument(
+        "--persona-id",
+        help=(
+            "Reference an existing persona instead of inline --persona-json. The server "
+            "snapshots the referenced persona's name, description, and visual reference "
+            "into this proposal at submission time (copied, not bound -- later edits to "
+            "the source persona do not affect this proposal; tags and marketing_profile "
+            "are not copied). Mutually exclusive with --persona-json; provide exactly one."
+        ),
+    )
     parser.add_argument("--elements-json")
     parser.add_argument("--add-elements-json")
     parser.add_argument("--retire-element-ids")
@@ -131,6 +141,10 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError(
                 "--name and --persona-json are not valid when revising an adjustment proposal."
             )
+        if args.persona_id is not None:
+            raise ValueError(
+                "--persona-id is not valid when revising an adjustment proposal."
+            )
         if args.title is not None:
             raise ValueError("--title is not valid when revising an adjustment proposal.")
         if args.candidate_id is not None:
@@ -165,8 +179,13 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
 
+    if args.persona_json is not None and args.persona_id is not None:
+        raise ValueError(
+            "--persona-json and --persona-id are mutually exclusive; provide exactly one."
+        )
     solution_supplied = any(
-        value is not None for value in (args.name, args.persona_json, args.elements_json)
+        value is not None
+        for value in (args.name, args.persona_json, args.persona_id, args.elements_json)
     )
     adjustment_supplied = any(
         value is not None
@@ -187,13 +206,14 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             "--title is only valid for an active-plan adjustment proposal; "
             "a draft plan proposal already uses --name."
         )
-    if solution_supplied and not all(
-        value is not None for value in (args.persona_json, args.elements_json)
-    ):
-        raise ValueError(
-            "complete plan proposal requires --persona-json and --elements-json; "
-            "--name is also required when submitting a new candidate."
-        )
+    if solution_supplied:
+        persona_supplied = args.persona_json is not None or args.persona_id is not None
+        if not persona_supplied or args.elements_json is None:
+            raise ValueError(
+                "complete plan proposal requires --elements-json and exactly one of "
+                "--persona-json or --persona-id; --name is also required when submitting "
+                "a new candidate."
+            )
 
     payload: dict[str, Any] = compact_params(
         {
@@ -205,18 +225,21 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
         }
     )
     if solution_supplied:
+        persona_field: dict[str, Any] = (
+            {"persona_id": args.persona_id}
+            if args.persona_id is not None
+            else {
+                "persona_payload": _candidate_json(
+                    args.persona_json,
+                    field="persona",
+                    expected_type=dict,
+                )
+            }
+        )
         payload.update(
             {
                 "name": args.name,
-                "persona_payload": (
-                    _candidate_json(
-                        args.persona_json,
-                        field="persona",
-                        expected_type=dict,
-                    )
-                    if args.persona_json is not None
-                    else None
-                ),
+                **persona_field,
                 "elements": (
                     _candidate_json(
                         args.elements_json,
@@ -625,11 +648,15 @@ def specs() -> list[CommandSpec]:
             input_schema={
                 "type": "object",
                 "description": (
-                    "For a draft plan, submit a complete solution (name, persona_payload, and "
-                    "elements), optionally revising a candidate with candidate_id. For an active "
-                    "plan, submit at least one adjustment in changes, optionally with a title so "
-                    "the operator can recognize the proposal at a glance. To revise an "
-                    "active-plan proposal after operator feedback, provide proposal_id and "
+                    "For a draft plan, submit a complete solution (name, elements, and exactly "
+                    "one of persona_payload or persona_id), optionally revising a candidate "
+                    "with candidate_id. persona_id references an existing persona; the server "
+                    "snapshots its name, description, and visual reference into the proposal at "
+                    "submission time (copied, not bound -- later edits to the source persona do "
+                    "not affect this proposal; tags and marketing_profile are not copied). For "
+                    "an active plan, submit at least one adjustment in changes, optionally with "
+                    "a title so the operator can recognize the proposal at a glance. To revise "
+                    "an active-plan proposal after operator feedback, provide proposal_id and "
                     "replacement elements only. Candidate and proposal ids are scenario-specific."
                 ),
                 "properties": {
@@ -653,6 +680,17 @@ def specs() -> list[CommandSpec]:
                         ),
                     },
                     "persona_payload": _persona_payload_schema(),
+                    "persona_id": {
+                        "type": ["string", "null"],
+                        "format": "uuid",
+                        "description": (
+                            "Existing persona id to snapshot into this proposal at submission "
+                            "(name, description, and visual reference are copied, not bound -- "
+                            "later edits to the source persona do not affect this proposal; "
+                            "tags and marketing_profile are not copied). Mutually exclusive "
+                            "with persona_payload; provide exactly one."
+                        ),
+                    },
                     "elements": _candidate_elements_schema(),
                     "changes": {
                         "type": "object",
@@ -684,7 +722,11 @@ def specs() -> list[CommandSpec]:
                 "oneOf": [
                     {
                         "title": "Complete plan proposal",
-                        "required": ["persona_payload", "elements"],
+                        "required": ["elements"],
+                        "oneOf": [
+                            {"required": ["persona_payload"], "not": {"required": ["persona_id"]}},
+                            {"required": ["persona_id"], "not": {"required": ["persona_payload"]}},
+                        ],
                         "anyOf": [
                             {"required": ["name"]},
                             {
@@ -743,6 +785,12 @@ def specs() -> list[CommandSpec]:
                 """"topic_id":"55555555-5555-4555-8555-555555555555"}]'""",
                 "museoncli agentic-campaign +plan-propose "
                 "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--name 'Reuse the workshop persona' "
+                "--persona-id 99999999-9999-4999-8999-999999999999 "
+                """--elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
+                """"topic_id":"55555555-5555-4555-8555-555555555555"}]'""",
+                "museoncli agentic-campaign +plan-propose "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
                 "--title 'Dark-tone second test batch' "
                 """--add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
                 """"topic_id":"55555555-5555-4555-8555-555555555555"}]' """
@@ -755,7 +803,10 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=domain,
             shortcut="+proposal-get",
-            summary="Read an adjustment proposal and its latest revision guidance.",
+            summary=(
+                "Read an adjustment proposal, its latest revision guidance, and the "
+                "full round-by-round annotation history (annotations)."
+            ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="agentic_campaign_proposal_get",
@@ -764,7 +815,10 @@ def specs() -> list[CommandSpec]:
                 required=["proposal_id"],
             ),
             output_schema=_direct_output_schema(
-                "Proposal status, revision round, changes, current elements, feedback, and review reminder."
+                "Proposal status, revision round, changes, current elements, latest feedback "
+                "summary, the annotations section (per-round compiled_summary/round/resolved, "
+                "newest round first, or the string \"暂无标注意见\" when there is no feedback "
+                "yet), and a review reminder."
             ),
             examples=[
                 "museoncli agentic-campaign +proposal-get "
@@ -1360,15 +1414,27 @@ async def _execute_plan_get(ctx: CommandContext) -> Any:
 
 def _complete_plan_arguments(
     ctx: CommandContext,
-) -> tuple[str | None, dict[str, Any], list[Any]]:
+) -> tuple[str | None, dict[str, Any] | None, str | None, list[Any]]:
     name = ctx.arguments.get("name")
     persona_payload = ctx.arguments.get("persona_payload")
+    persona_id = ctx.arguments.get("persona_id")
     elements = ctx.arguments.get("elements")
-    if not isinstance(persona_payload, dict) or not isinstance(elements, list):
-        raise ValueError("draft plan proposal requires --persona-json and --elements-json.")
-    if not elements:
-        raise ValueError("draft plan proposal requires at least one element.")
-    return str(name) if name else None, persona_payload, elements
+    if (persona_payload is None) == (persona_id is None):
+        raise ValueError(
+            "draft plan proposal requires exactly one of --persona-json or --persona-id."
+        )
+    if persona_payload is not None and not isinstance(persona_payload, dict):
+        raise ValueError("draft plan proposal requires --persona-json to be a JSON object.")
+    if not isinstance(elements, list) or not elements:
+        raise ValueError(
+            "draft plan proposal requires --elements-json with at least one element."
+        )
+    return (
+        str(name) if name else None,
+        persona_payload if isinstance(persona_payload, dict) else None,
+        str(persona_id) if persona_id is not None else None,
+        elements,
+    )
 
 
 def _proposal_output(response: Any, *, changes: dict[str, Any]) -> dict[str, Any]:
@@ -1399,6 +1465,28 @@ def _proposal_elements(value: Any) -> list[dict[str, Any]]:
     ]
 
 
+def _annotations(items: Any) -> Any:
+    """Render the "标注意见" section: newest round first, or a placeholder string."""
+
+    rounds = [item for item in items if isinstance(item, dict)] if isinstance(items, list) else []
+    if not rounds:
+        return "暂无标注意见"
+    rounds.sort(key=lambda item: item.get("round") or 0, reverse=True)
+    rendered = []
+    for item in rounds:
+        summary = item.get("compiled_summary")
+        rendered.append(
+            {
+                "round": item.get("round"),
+                "resolved": item.get("resolved_at") is not None,
+                "compiled_summary": (
+                    summary if isinstance(summary, str) and summary else "该轮无可渲染文本"
+                ),
+            }
+        )
+    return rendered
+
+
 async def _execute_proposal_get(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     proposal_id = ctx.arguments.get("proposal_id")
@@ -1418,6 +1506,19 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
     if not isinstance(changes, dict):
         changes = {}
     feedback_summary = proposal.get("feedback_summary")
+    feedback_response = await ctx.api_data_v2(
+        ctx.cfg,
+        "GET",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"revision-proposals/{proposal_id}/feedback"
+        ),
+        params={"workspace_id": ctx.workspace_id},
+    )
+    feedback_payload = _payload_data(feedback_response)
+    feedback_items = (
+        feedback_payload.get("items") if isinstance(feedback_payload, dict) else None
+    )
     return {
         "status": proposal.get("status"),
         "revision_round": proposal.get("revision_round"),
@@ -1432,6 +1533,7 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
             if isinstance(feedback_summary, str) and feedback_summary
             else {}
         ),
+        "annotations": _annotations(feedback_items),
         "next_step": "请在 Museon 审阅台查看这一稿；运营可继续标注意见或确认。",
     }
 
@@ -1443,7 +1545,8 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
     proposal_id = ctx.arguments.get("proposal_id")
     raw_changes = ctx.arguments.get("changes")
     has_solution = any(
-        ctx.arguments.get(key) is not None for key in ("name", "persona_payload", "elements")
+        ctx.arguments.get(key) is not None
+        for key in ("name", "persona_payload", "persona_id", "elements")
     )
     has_adjustment = raw_changes is not None
     if has_solution and has_adjustment:
@@ -1454,7 +1557,12 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             raise ValueError("--proposal-id requires an active plan.")
         if has_adjustment:
             raise ValueError("draft plan only accepts a complete plan proposal.")
-        name, persona_payload, elements = _complete_plan_arguments(ctx)
+        name, persona_payload, persona_id, elements = _complete_plan_arguments(ctx)
+        persona_field: dict[str, Any] = (
+            {"persona_id": persona_id}
+            if persona_id is not None
+            else {"persona_payload": persona_payload}
+        )
         if candidate_id:
             path = (
                 f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
@@ -1462,7 +1570,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             )
             body = {
                 "workspace_id": ctx.workspace_id,
-                "persona_payload": persona_payload,
+                **persona_field,
                 "elements": elements,
                 "note": ctx.arguments.get("note"),
             }
@@ -1476,7 +1584,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             body = {
                 "workspace_id": ctx.workspace_id,
                 "name": name,
-                "persona_payload": persona_payload,
+                **persona_field,
                 "elements": elements,
             }
         response = await ctx.api_data_v2(ctx.cfg, "POST", path, json_body=body)

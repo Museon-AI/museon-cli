@@ -552,7 +552,7 @@
           "risk_level": "read",
           "shortcut": "+proposal-get",
           "stability": "stable",
-          "summary": "Read an adjustment proposal and its latest revision guidance.",
+          "summary": "Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations).",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -10982,11 +10982,12 @@
       "domain": "agentic-campaign",
       "examples": [
         "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --name 'DIY problem solver' --persona-json '{\"name\":\"Mia\",\"description\":\"Practical maker\",\"visual_prompt\":\"Warm workshop portrait\",\"reference_media_ids\":[]}' --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
+        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --name 'Reuse the workshop persona' --persona-id 99999999-9999-4999-8999-999999999999 --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
         "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --title 'Dark-tone second test batch' --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --note 'Untested hypothesis on the dark visual direction'"
       ],
       "execution": "direct",
       "input_schema": {
-        "description": "For a draft plan, submit a complete solution (name, persona_payload, and elements), optionally revising a candidate with candidate_id. For an active plan, submit at least one adjustment in changes, optionally with a title so the operator can recognize the proposal at a glance. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Candidate and proposal ids are scenario-specific.",
+        "description": "For a draft plan, submit a complete solution (name, elements, and exactly one of persona_payload or persona_id), optionally revising a candidate with candidate_id. persona_id references an existing persona; the server snapshots its name, description, and visual reference into the proposal at submission time (copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). For an active plan, submit at least one adjustment in changes, optionally with a title so the operator can recognize the proposal at a glance. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Candidate and proposal ids are scenario-specific.",
         "oneOf": [
           {
             "anyOf": [
@@ -11026,8 +11027,29 @@
                 }
               ]
             },
+            "oneOf": [
+              {
+                "not": {
+                  "required": [
+                    "persona_id"
+                  ]
+                },
+                "required": [
+                  "persona_payload"
+                ]
+              },
+              {
+                "not": {
+                  "required": [
+                    "persona_payload"
+                  ]
+                },
+                "required": [
+                  "persona_id"
+                ]
+              }
+            ],
             "required": [
-              "persona_payload",
               "elements"
             ],
             "title": "Complete plan proposal"
@@ -11286,6 +11308,14 @@
           },
           "note": {
             "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "persona_id": {
+            "description": "Existing persona id to snapshot into this proposal at submission (name, description, and visual reference are copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). Mutually exclusive with persona_payload; provide exactly one.",
+            "format": "uuid",
             "type": [
               "string",
               "null"
@@ -11719,7 +11749,7 @@
       },
       "name": "agentic-campaign.proposal-get",
       "output_schema": {
-        "description": "Proposal status, revision round, changes, current elements, feedback, and review reminder.",
+        "description": "Proposal status, revision round, changes, current elements, latest feedback summary, the annotations section (per-round compiled_summary/round/resolved, newest round first, or the string \"暂无标注意见\" when there is no feedback yet), and a review reminder.",
         "properties": {
           "command": {
             "type": "string"
@@ -11776,7 +11806,7 @@
       "risk_level": "read",
       "shortcut": "+proposal-get",
       "stability": "stable",
-      "summary": "Read an adjustment proposal and its latest revision guidance.",
+      "summary": "Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations).",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
