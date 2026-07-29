@@ -275,11 +275,28 @@ def _build_campaign_rename_arguments(args: argparse.Namespace) -> dict[str, Any]
 def _add_proposal_persona_draft_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
     parser.add_argument("--proposal-id", required=True)
+    parser.add_argument(
+        "--from-persona-id",
+        default=None,
+        help=(
+            "Seed the draft's description and look references from this workspace "
+            "persona asset (copy, not a live link; name/tags/marketing profile stay "
+            "with the plan persona). Re-running with this flag OVERWRITES the "
+            "draft's current content."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
 
 
 def _build_proposal_persona_draft_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {"plan_id": args.plan_id, "proposal_id": args.proposal_id, "dry_run": args.dry_run}
+    arguments: dict[str, Any] = {
+        "plan_id": args.plan_id,
+        "proposal_id": args.proposal_id,
+        "dry_run": args.dry_run,
+    }
+    if args.from_persona_id is not None:
+        arguments["source_persona_id"] = args.from_persona_id
+    return arguments
 
 
 def _add_proposal_withdraw_arguments(parser: argparse.ArgumentParser) -> None:
@@ -834,7 +851,9 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Create or reuse the proposal-owned persona draft before editing persona "
                 "identity or appearance; edit the returned draft persona, then regenerate "
-                "this proposal's previews."
+                "this proposal's previews. Optionally seed the draft from an existing "
+                "workspace persona asset with source_persona_id (copy, not a live link; "
+                "re-seeding overwrites the draft's current content)."
             ),
             risk_level="write",
             execution="direct",
@@ -842,6 +861,11 @@ def specs() -> list[CommandSpec]:
             input_schema=_plan_schema(
                 {
                     "proposal_id": _uuid_property("Adjustment proposal id"),
+                    "source_persona_id": _uuid_property(
+                        "Optional workspace persona asset to seed the draft's "
+                        "description and look references from (copy, not a live "
+                        "link). Re-seeding overwrites the draft's current content."
+                    ),
                     "dry_run": {"type": "boolean", "default": False},
                 },
                 required=["proposal_id"],
@@ -852,7 +876,11 @@ def specs() -> list[CommandSpec]:
             examples=[
                 "museoncli agentic-campaign +proposal-persona-draft "
                 "--plan-id 33333333-3333-4333-8333-333333333333 "
-                "--proposal-id 77777777-7777-4777-8777-777777777777"
+                "--proposal-id 77777777-7777-4777-8777-777777777777",
+                "museoncli agentic-campaign +proposal-persona-draft "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--proposal-id 77777777-7777-4777-8777-777777777777 "
+                "--from-persona-id 99999999-9999-4999-8999-999999999999",
             ],
             add_arguments=_add_proposal_persona_draft_arguments,
             build_arguments=_build_proposal_persona_draft_arguments,
@@ -1701,7 +1729,14 @@ async def _execute_proposal_persona_draft(ctx: CommandContext) -> Any:
             f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
             f"revision-proposals/{proposal_id}:create-persona-draft"
         ),
-        json_body={"workspace_id": ctx.workspace_id},
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            **(
+                {"source_persona_id": ctx.arguments["source_persona_id"]}
+                if ctx.arguments.get("source_persona_id")
+                else {}
+            ),
+        },
     )
     draft = _payload_data(response)
     if not isinstance(draft, dict):

@@ -1016,6 +1016,69 @@ def test_proposal_persona_draft_requires_plan_and_calls_v2_endpoint() -> None:
     assert "internal-user-id" not in repr(result)
 
 
+def test_proposal_persona_draft_seeds_from_persona_id() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    persona_id = "99999999-9999-4999-8999-999999999999"
+    draft_id = "88888888-8888-4888-8888-888888888888"
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {
+            "id": draft_id,
+            "workspace_id": "internal-workspace-id",
+            "created_by": "internal-user-id",
+            "name": "Mia revision",
+            "description": "Seeded from the workspace persona",
+        },
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+proposal-persona-draft",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+            "--from-persona-id",
+            persona_id,
+        ]
+    )
+    arguments = agentic_campaign._build_proposal_persona_draft_arguments(args)
+    assert arguments == {
+        "plan_id": plan_id,
+        "proposal_id": proposal_id,
+        "dry_run": False,
+        "source_persona_id": persona_id,
+    }
+
+    result = asyncio.run(
+        agentic_campaign._execute_proposal_persona_draft(
+            context(
+                "agentic-campaign.proposal-persona-draft",
+                arguments,
+                capture,
+            )
+        )
+    )
+
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/"
+            f"{proposal_id}:create-persona-draft"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "source_persona_id": persona_id,
+        },
+        "params": None,
+    }
+    assert result["draft_persona_id"] == draft_id
+    assert result["description"] == "Seeded from the workspace persona"
+
+
 def test_proposal_persona_draft_requires_plan_id() -> None:
     with pytest.raises(SystemExit):
         parse(
