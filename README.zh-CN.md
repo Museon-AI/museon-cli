@@ -89,7 +89,7 @@ CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.90/museoncli-0.3.90-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.3.91/museoncli-0.3.91-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skill 和浏览器授权：
