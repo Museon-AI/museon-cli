@@ -198,7 +198,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
 | `agentic-campaign +plan-propose` | write | yes | — | direct | Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. |
-| `agentic-campaign +proposal-get` | read | — | — | direct | Read an adjustment proposal and its latest revision guidance. |
+| `agentic-campaign +proposal-get` | read | — | — | direct | Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations). |
 | `agentic-campaign +proposal-persona-draft` | write | yes | — | direct | Create or reuse the proposal-owned persona draft before editing persona identity or appearance; edit the returned draft persona, then regenerate this proposal's previews. |
 | `agentic-campaign +proposal-withdraw` | write | yes | — | direct | Withdraw your own pending-review draft proposal by archiving it permanently. Archived proposals cannot be restored; selected or already archived candidates cannot be withdrawn and are rejected by the server. |
 | `agentic-campaign +campaign-create` | write | yes | — | direct | Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward. |

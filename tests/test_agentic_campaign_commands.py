@@ -536,6 +536,139 @@ def test_plan_propose_dispatches_draft_submit_or_revise(candidate_id: str | None
     }
 
 
+@pytest.mark.parametrize("candidate_id", [None, "77777777-7777-4777-8777-777777777777"])
+def test_plan_propose_dispatches_draft_submit_or_revise_with_persona_id(
+    candidate_id: str | None,
+) -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    persona_id = "99999999-9999-4999-8999-999999999999"
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id),
+        {"candidate": {"id": "candidate-1"}},
+    )
+    argv = [
+        "agentic-campaign",
+        "+plan-propose",
+        "--plan-id",
+        plan_id,
+        "--persona-id",
+        persona_id,
+        "--elements-json",
+        json.dumps(
+            [
+                {
+                    "format_id": "44444444-4444-4444-8444-444444444444",
+                    "topic_id": "55555555-5555-4555-8555-555555555555",
+                }
+            ]
+        ),
+    ]
+    if candidate_id:
+        argv.extend(["--candidate-id", candidate_id])
+    else:
+        argv.extend(["--name", "DIY problem solver"])
+    args = parse(argv)
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    assert arguments["persona_id"] == persona_id
+    assert "persona_payload" not in arguments
+    result = asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
+    )
+    call = capture.calls[-1]
+    expected_suffix = f"/candidates/{candidate_id}:revise" if candidate_id else "/candidates:submit"
+    assert call["path"].endswith(expected_suffix)
+    assert call["json_body"]["persona_id"] == persona_id
+    assert "persona_payload" not in call["json_body"]
+    assert result["candidate_id"] == "candidate-1"
+
+
+def test_plan_propose_rejects_persona_json_and_persona_id_together() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--name",
+            "DIY problem solver",
+            "--persona-json",
+            json.dumps(
+                {
+                    "name": "Mia",
+                    "description": "Practical maker",
+                    "visual_prompt": "Portrait",
+                }
+            ),
+            "--persona-id",
+            "99999999-9999-4999-8999-999999999999",
+            "--elements-json",
+            json.dumps(
+                [
+                    {
+                        "format_id": "44444444-4444-4444-8444-444444444444",
+                        "topic_id": "55555555-5555-4555-8555-555555555555",
+                    }
+                ]
+            ),
+        ]
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        agentic_campaign._build_plan_propose_arguments(args)
+
+
+def test_plan_propose_rejects_neither_persona_json_nor_persona_id() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--name",
+            "DIY problem solver",
+            "--elements-json",
+            json.dumps(
+                [
+                    {
+                        "format_id": "44444444-4444-4444-8444-444444444444",
+                        "topic_id": "55555555-5555-4555-8555-555555555555",
+                    }
+                ]
+            ),
+        ]
+    )
+    with pytest.raises(ValueError, match="exactly one of"):
+        agentic_campaign._build_plan_propose_arguments(args)
+
+
+def test_plan_propose_rejects_persona_id_when_revising_proposal() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--persona-id",
+            "99999999-9999-4999-8999-999999999999",
+            "--elements-json",
+            json.dumps(
+                [
+                    {
+                        "format_id": "44444444-4444-4444-8444-444444444444",
+                        "topic_id": "55555555-5555-4555-8555-555555555555",
+                    }
+                ]
+            ),
+        ]
+    )
+    with pytest.raises(ValueError, match="--persona-id is not valid"):
+        agentic_campaign._build_plan_propose_arguments(args)
+
+
 def test_plan_propose_dispatches_active_adjustment() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     add_elements = [
@@ -718,6 +851,22 @@ def test_proposal_get_returns_operator_revision_context() -> None:
             ],
             "feedback_summary": feedback_summary,
         },
+        {
+            "items": [
+                {
+                    "id": "feedback-1",
+                    "round": 1,
+                    "compiled_summary": "方向A · 帖子1 · 第1页",
+                    "resolved_at": "2026-07-20T00:00:00Z",
+                },
+                {
+                    "id": "feedback-2",
+                    "round": 2,
+                    "compiled_summary": None,
+                    "resolved_at": None,
+                },
+            ]
+        },
     )
     result = asyncio.run(
         agentic_campaign._execute_proposal_get(
@@ -729,11 +878,20 @@ def test_proposal_get_returns_operator_revision_context() -> None:
         )
     )
 
-    assert capture.calls[-1] == {
+    assert capture.calls[-2] == {
         "method": "GET",
         "path": (
             "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
             f"persona-plans/{plan_id}/revision-proposals/{proposal_id}"
+        ),
+        "json_body": None,
+        "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+    }
+    assert capture.calls[-1] == {
+        "method": "GET",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}/feedback"
         ),
         "json_body": None,
         "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
@@ -754,9 +912,41 @@ def test_proposal_get_returns_operator_revision_context() -> None:
             }
         ],
         "feedback_summary": feedback_summary,
+        "annotations": [
+            {"round": 2, "resolved": False, "compiled_summary": "该轮无可渲染文本"},
+            {"round": 1, "resolved": True, "compiled_summary": "方向A · 帖子1 · 第1页"},
+        ],
         "next_step": "请在 Museon 审阅台查看这一稿；运营可继续标注意见或确认。",
     }
     assert "internal-element-id" not in repr(result)
+    assert "feedback-1" not in repr(result)
+
+
+def test_proposal_get_annotations_placeholder_when_no_feedback() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {
+            "id": proposal_id,
+            "status": "awaiting_review",
+            "revision_round": 1,
+            "changes": {},
+            "elements": [],
+        },
+        {"items": []},
+    )
+    result = asyncio.run(
+        agentic_campaign._execute_proposal_get(
+            context(
+                "agentic-campaign.proposal-get",
+                {"plan_id": plan_id, "proposal_id": proposal_id},
+                capture,
+            )
+        )
+    )
+    assert result["annotations"] == "暂无标注意见"
 
 
 def test_proposal_persona_draft_requires_plan_and_calls_v2_endpoint() -> None:
