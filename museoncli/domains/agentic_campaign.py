@@ -249,6 +249,77 @@ def _build_campaign_rename_arguments(args: argparse.Namespace) -> dict[str, Any]
     return {"campaign_id": args.campaign_id, "name": args.name, "dry_run": args.dry_run}
 
 
+def _add_proposal_persona_draft_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--proposal-id", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_proposal_persona_draft_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {"plan_id": args.plan_id, "proposal_id": args.proposal_id, "dry_run": args.dry_run}
+
+
+def _add_campaign_create_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--name", required=True)
+    parser.add_argument("--total-account-budget", type=int, default=0)
+    parser.add_argument("--planned-persona-count", type=int, default=None)
+    parser.add_argument("--product-id", default=None)
+    parser.add_argument("--config-json", default=None)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_campaign_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    config = (
+        _candidate_json(args.config_json, field="config", expected_type=dict)
+        if args.config_json is not None
+        else None
+    )
+    return compact_params(
+        {
+            "name": args.name,
+            "total_account_budget": args.total_account_budget,
+            "planned_persona_count": args.planned_persona_count,
+            "product_id": args.product_id,
+            "config": config,
+            "dry_run": args.dry_run,
+        }
+    )
+
+
+def _add_plan_create_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--name", required=True)
+    parser.add_argument("--account-budget", type=int, required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_plan_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "campaign_id": args.campaign_id,
+        "name": args.name,
+        "account_budget": args.account_budget,
+        "dry_run": args.dry_run,
+    }
+
+
+def _add_campaign_lifecycle_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_campaign_lifecycle_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {"campaign_id": args.campaign_id, "dry_run": args.dry_run}
+
+
+def _add_campaign_archive_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_campaign_lifecycle_arguments(parser)
+    parser.add_argument("--yes", action="store_true")
+
+
+def _build_campaign_archive_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {"campaign_id": args.campaign_id, "dry_run": args.dry_run}
+
+
 def _add_issues_pull_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--campaign-id", required=True)
     parser.add_argument("--limit", type=int, required=True)
@@ -353,6 +424,27 @@ def _revision_add_elements_schema() -> dict[str, Any]:
     schema = _candidate_elements_schema()
     schema.pop("minItems")
     return schema
+
+
+def _campaign_config_schema() -> dict[str, Any]:
+    return {
+        "type": ["object", "null"],
+        "additionalProperties": False,
+        "properties": {
+            "required_hashtags": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 100,
+                "default": [],
+            },
+            "required_mentions": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 100,
+                "default": [],
+            },
+        },
+    }
 
 
 def specs() -> list[CommandSpec]:
@@ -520,6 +612,187 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_proposal_get_arguments,
             build_arguments=_build_proposal_get_arguments,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+proposal-persona-draft",
+            summary=(
+                "Create or reuse the proposal-owned persona draft before editing persona "
+                "identity or appearance; edit the returned draft persona, then regenerate "
+                "this proposal's previews."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_proposal_persona_draft",
+            input_schema=_plan_schema(
+                {
+                    "proposal_id": _uuid_property("Adjustment proposal id"),
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["proposal_id"],
+            ),
+            output_schema=_direct_output_schema(
+                "Proposal-owned draft persona id, name, and next-step guidance."
+            ),
+            examples=[
+                "museoncli agentic-campaign +proposal-persona-draft "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--proposal-id 77777777-7777-4777-8777-777777777777"
+            ],
+            add_arguments=_add_proposal_persona_draft_arguments,
+            build_arguments=_build_proposal_persona_draft_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+campaign-create",
+            summary=(
+                "Create an Agentic Creative Campaign in the selected workspace. Confirm the "
+                "intent (name, total budget, planned persona count) with the operator before "
+                "creating, and report the campaign link back afterward."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_campaign_create",
+            input_schema=_schema(
+                {
+                    "name": {"type": "string", "minLength": 1, "maxLength": 160},
+                    "total_account_budget": {"type": "integer", "minimum": 0, "default": 0},
+                    "planned_persona_count": {
+                        "type": ["integer", "null"],
+                        "minimum": 1,
+                        "maximum": 10,
+                    },
+                    "product_id": {
+                        "type": ["string", "null"],
+                        "format": "uuid",
+                        "description": "Optional product id",
+                    },
+                    "config": _campaign_config_schema(),
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["name"],
+            ),
+            output_schema=_direct_output_schema("Created campaign detail."),
+            examples=[
+                "museoncli agentic-campaign +campaign-create "
+                "--name 'Summer maker campaign' --total-account-budget 20 "
+                "--planned-persona-count 3"
+            ],
+            add_arguments=_add_campaign_create_arguments,
+            build_arguments=_build_campaign_create_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+plan-create",
+            summary=(
+                "Create a Persona Plan under a campaign. Only allowed while the campaign is "
+                "in setup (setting_up or setup_ready); the server rejects the request "
+                "otherwise and the error is passed through unchanged."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_plan_create",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "name": {"type": "string", "minLength": 1, "maxLength": 160},
+                    "account_budget": {"type": "integer", "minimum": 0},
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id", "name", "account_budget"],
+            ),
+            output_schema=_direct_output_schema("Campaign detail including the new plan."),
+            examples=[
+                "museoncli agentic-campaign +plan-create "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--name 'DIY makers' --account-budget 5"
+            ],
+            add_arguments=_add_plan_create_arguments,
+            build_arguments=_build_plan_create_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+campaign-activate",
+            summary="Activate an Agentic Creative Campaign, resuming member account operations.",
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_campaign_activate",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id"],
+            ),
+            output_schema=_direct_output_schema(
+                "Transitioned campaign detail and the operation batch result."
+            ),
+            examples=[
+                "museoncli agentic-campaign +campaign-activate "
+                "--campaign-id 22222222-2222-4222-8222-222222222222"
+            ],
+            add_arguments=_add_campaign_lifecycle_arguments,
+            build_arguments=_build_campaign_lifecycle_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+campaign-pause",
+            summary="Pause an Agentic Creative Campaign, stopping member account operations.",
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_campaign_pause",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id"],
+            ),
+            output_schema=_direct_output_schema(
+                "Transitioned campaign detail and the operation batch result."
+            ),
+            examples=[
+                "museoncli agentic-campaign +campaign-pause "
+                "--campaign-id 22222222-2222-4222-8222-222222222222"
+            ],
+            add_arguments=_add_campaign_lifecycle_arguments,
+            build_arguments=_build_campaign_lifecycle_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+campaign-archive",
+            summary=(
+                "Archive an Agentic Creative Campaign. This cascades to stop account "
+                "operations for every member of every plan in the campaign; the operator "
+                "must explicitly confirm before running with --yes."
+            ),
+            risk_level="destructive",
+            requires_confirmation=True,
+            execution="direct",
+            adapter_tool_name="agentic_campaign_campaign_archive",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id"],
+            ),
+            output_schema=_direct_output_schema(
+                "Transitioned campaign detail and the operation batch result "
+                "(succeeded/skipped/failed counts for the stopped member operations)."
+            ),
+            examples=[
+                "museoncli agentic-campaign +campaign-archive "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 --yes"
+            ],
+            add_arguments=_add_campaign_archive_arguments,
+            build_arguments=_build_campaign_archive_arguments,
+            supports_dry_run=True,
         ),
         CommandSpec(
             domain=domain,
@@ -1029,6 +1302,98 @@ async def _execute_campaign_rename(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_proposal_persona_draft(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    proposal_id = ctx.arguments.get("proposal_id")
+    response = await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"revision-proposals/{proposal_id}:create-persona-draft"
+        ),
+        json_body={"workspace_id": ctx.workspace_id},
+    )
+    draft = _payload_data(response)
+    if not isinstance(draft, dict):
+        raise RuntimeError("persona draft response was not an object")
+    return {
+        "draft_persona_id": draft.get("id"),
+        "name": draft.get("name"),
+        "description": draft.get("description"),
+        "next_step": (
+            "Edit only this proposal-owned draft persona (never the shared plan persona), "
+            "then regenerate this proposal's previews."
+        ),
+    }
+
+
+async def _execute_campaign_create(ctx: CommandContext) -> Any:
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        "/agentic-creative-campaigns",
+        json_body=compact_params(
+            {
+                "workspace_id": ctx.workspace_id,
+                "name": ctx.arguments.get("name"),
+                "total_account_budget": ctx.arguments.get("total_account_budget"),
+                "planned_persona_count": ctx.arguments.get("planned_persona_count"),
+                "product_id": ctx.arguments.get("product_id"),
+                "config": ctx.arguments.get("config"),
+            }
+        ),
+    )
+
+
+async def _execute_plan_create(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/agentic-creative-campaigns/{campaign_id}/agentic-persona-plans",
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "name": ctx.arguments.get("name"),
+            "account_budget": ctx.arguments.get("account_budget"),
+        },
+    )
+
+
+async def _current_campaign_version(ctx: CommandContext, campaign_id: str) -> int:
+    detail = _payload_data(await _detail(ctx, campaign_id))
+    campaign = detail.get("campaign") if isinstance(detail, dict) else None
+    if not isinstance(campaign, dict) or campaign.get("version") is None:
+        raise RuntimeError("campaign detail did not include its current version")
+    return campaign["version"]
+
+
+async def _execute_campaign_lifecycle(ctx: CommandContext, *, action: str) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    expected_version = await _current_campaign_version(ctx, campaign_id)
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/agentic-creative-campaigns/{campaign_id}/{action}",
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "expected_version": expected_version,
+        },
+    )
+
+
+async def _execute_campaign_activate(ctx: CommandContext) -> Any:
+    return await _execute_campaign_lifecycle(ctx, action="activate")
+
+
+async def _execute_campaign_pause(ctx: CommandContext) -> Any:
+    return await _execute_campaign_lifecycle(ctx, action="pause")
+
+
+async def _execute_campaign_archive(ctx: CommandContext) -> Any:
+    return await _execute_campaign_lifecycle(ctx, action="archive")
+
+
 async def _plan_get_route(ctx: CommandContext, suffix: str, params: dict[str, Any]) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     return await ctx.api_data_v2(
@@ -1073,6 +1438,18 @@ async def _execute_issues_pull(ctx: CommandContext) -> Any:
 
 
 EXECUTORS = {
+    "agentic-campaign.campaign-activate": redacted_direct_enveloped(
+        _execute_campaign_activate, redact_api_errors=True
+    ),
+    "agentic-campaign.campaign-archive": redacted_direct_enveloped(
+        _execute_campaign_archive, redact_api_errors=True
+    ),
+    "agentic-campaign.campaign-create": redacted_direct_enveloped(
+        _execute_campaign_create, redact_api_errors=True
+    ),
+    "agentic-campaign.campaign-pause": redacted_direct_enveloped(
+        _execute_campaign_pause, redact_api_errors=True
+    ),
     "agentic-campaign.campaign-rename": redacted_direct_enveloped(
         _execute_campaign_rename, redact_api_errors=True
     ),
@@ -1083,6 +1460,9 @@ EXECUTORS = {
     "agentic-campaign.list": redacted_direct_enveloped(_execute_list, redact_api_errors=True),
     "agentic-campaign.plan-attribution": redacted_direct_enveloped(
         _execute_plan_attribution, redact_api_errors=True
+    ),
+    "agentic-campaign.plan-create": redacted_direct_enveloped(
+        _execute_plan_create, redact_api_errors=True
     ),
     "agentic-campaign.plan-get": redacted_direct_enveloped(
         _execute_plan_get, redact_api_errors=True
@@ -1095,6 +1475,9 @@ EXECUTORS = {
     ),
     "agentic-campaign.proposal-get": redacted_direct_enveloped(
         _execute_proposal_get, redact_api_errors=True
+    ),
+    "agentic-campaign.proposal-persona-draft": redacted_direct_enveloped(
+        _execute_proposal_persona_draft, redact_api_errors=True
     ),
     "agentic-campaign.plan-tags": redacted_direct_enveloped(
         _execute_plan_tags, redact_api_errors=True
