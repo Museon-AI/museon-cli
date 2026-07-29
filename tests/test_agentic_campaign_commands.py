@@ -119,6 +119,301 @@ def _complete_plan_cli_args() -> list[str]:
     ]
 
 
+def test_campaign_create_builds_extended_fields_and_field_config() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+campaign-create",
+            "--name",
+            "Summer",
+            "--cta-definition",
+            "Shop the launch",
+            "--required-hashtags",
+            "#summer,#maker",
+            "--required-mentions",
+            "@museon",
+            "--preferred-publish-windows-json",
+            '[{"start":"09:00","end":"12:00"}]',
+            "--bind-notification-conversation",
+        ]
+    )
+    arguments = agentic_campaign._build_campaign_create_arguments(args)
+    assert arguments == {
+        "name": "Summer",
+        "total_account_budget": 0,
+        "cta_definition": "Shop the launch",
+        "bind_notification_conversation": True,
+        "config": {
+            "required_hashtags": ["#summer", "#maker"],
+            "required_mentions": ["@museon"],
+            "preferred_publish_windows": [{"start": "09:00", "end": "12:00"}],
+        },
+        "dry_run": False,
+    }
+    capture = Capture({})
+    asyncio.run(
+        agentic_campaign._execute_campaign_create(
+            context("agentic-campaign.campaign-create", arguments, capture)
+        )
+    )
+    assert capture.calls == [
+        {
+            "method": "POST",
+            "path": "/agentic-creative-campaigns",
+            "json_body": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+                "name": "Summer",
+                "total_account_budget": 0,
+                "cta_definition": "Shop the launch",
+                "bind_notification_conversation": True,
+                "config": {
+                    "required_hashtags": ["#summer", "#maker"],
+                    "required_mentions": ["@museon"],
+                    "preferred_publish_windows": [{"start": "09:00", "end": "12:00"}],
+                },
+            },
+            "params": None,
+        }
+    ]
+
+
+def test_campaign_create_rejects_config_json_with_field_config() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+campaign-create",
+            "--name",
+            "Summer",
+            "--config-json",
+            "{}",
+            "--required-hashtags",
+            "#summer",
+        ]
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        agentic_campaign._build_campaign_create_arguments(args)
+
+
+def test_campaign_create_requires_name() -> None:
+    with pytest.raises(SystemExit):
+        parse(["agentic-campaign", "+campaign-create"])
+
+
+def test_campaign_update_builds_field_level_config_patch_and_current_version() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    args = parse(
+        [
+            "agentic-campaign",
+            "+campaign-update",
+            "--campaign-id",
+            campaign_id,
+            "--required-hashtags",
+            "",
+            "--required-mentions",
+            "@museon",
+            "--preferred-publish-windows-json",
+            "[]",
+        ]
+    )
+    arguments = agentic_campaign._build_campaign_update_arguments(args)
+    assert arguments == {
+        "campaign_id": campaign_id,
+        "required_hashtags": [],
+        "required_mentions": ["@museon"],
+        "preferred_publish_windows": [],
+        "dry_run": False,
+    }
+    assert "config" not in arguments
+    capture = Capture({"campaign": {"id": campaign_id, "version": 9}}, {"id": campaign_id})
+    asyncio.run(
+        agentic_campaign._execute_campaign_update(
+            context("agentic-campaign.campaign-update", arguments, capture)
+        )
+    )
+    assert capture.calls == [
+        {
+            "method": "GET",
+            "path": f"/agentic-creative-campaigns/{campaign_id}",
+            "json_body": None,
+            "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+        },
+        {
+            "method": "PATCH",
+            "path": f"/agentic-creative-campaigns/{campaign_id}",
+            "json_body": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+                "expected_version": 9,
+                "required_hashtags": [],
+                "required_mentions": ["@museon"],
+                "preferred_publish_windows": [],
+            },
+            "params": None,
+        },
+    ]
+    assert "config" not in capture.calls[-1]["json_body"]
+
+
+def test_campaign_update_config_json_replaces_full_config() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    args = parse(
+        [
+            "agentic-campaign",
+            "+campaign-update",
+            "--campaign-id",
+            campaign_id,
+            "--config-json",
+            '{"required_hashtags":["#only"]}',
+        ]
+    )
+    arguments = agentic_campaign._build_campaign_update_arguments(args)
+    assert arguments == {
+        "campaign_id": campaign_id,
+        "config": {"required_hashtags": ["#only"]},
+        "dry_run": False,
+    }
+    capture = Capture({"campaign": {"id": campaign_id, "version": 9}}, {})
+    asyncio.run(
+        agentic_campaign._execute_campaign_update(
+            context("agentic-campaign.campaign-update", arguments, capture)
+        )
+    )
+    assert capture.calls[-1]["json_body"] == {
+        "workspace_id": "11111111-1111-4111-8111-111111111111",
+        "expected_version": 9,
+        "config": {"required_hashtags": ["#only"]},
+    }
+
+
+def test_campaign_update_builds_notification_binding_without_conversation_id() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+campaign-update",
+            "--campaign-id",
+            "22222222-2222-4222-8222-222222222222",
+            "--bind-notification-conversation",
+        ]
+    )
+    arguments = agentic_campaign._build_campaign_update_arguments(args)
+    assert arguments["bind_notification_conversation"] is True
+    assert "conversation_id" not in arguments
+
+
+@pytest.mark.parametrize(
+    "extra,match",
+    [
+        ([], "at least one mutable flag"),
+        (["--name", "New", "--total-account-budget", "107"], "mutually exclusive"),
+        (
+            ["--config-json", "{}", "--required-mentions", "@museon"],
+            "mutually exclusive",
+        ),
+    ],
+)
+def test_campaign_update_rejects_invalid_field_combinations(extra: list[str], match: str) -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+campaign-update",
+            "--campaign-id",
+            "22222222-2222-4222-8222-222222222222",
+            *extra,
+        ]
+    )
+    with pytest.raises(ValueError, match=match):
+        agentic_campaign._build_campaign_update_arguments(args)
+
+
+def test_campaign_update_requires_campaign_id() -> None:
+    with pytest.raises(SystemExit):
+        parse(["agentic-campaign", "+campaign-update", "--name", "New"])
+
+
+def test_campaign_update_requires_confirmation_and_accepts_yes() -> None:
+    spec = get_command_spec("agentic-campaign.campaign-update")
+    args = parse(
+        [
+            "agentic-campaign",
+            "+campaign-update",
+            "--campaign-id",
+            "22222222-2222-4222-8222-222222222222",
+            "--total-account-budget",
+            "107",
+            "--yes",
+        ]
+    )
+    assert spec.risk_level == "write"
+    assert spec.requires_confirmation is True
+    assert spec.supports_dry_run is True
+    assert args.yes is True
+
+
+def test_plan_update_locates_version_and_patches_tokens() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-update",
+            "--plan-id",
+            plan_id,
+            "--required-hashtags",
+            "#maker,#diy",
+            "--required-mentions",
+            "",
+        ]
+    )
+    arguments = agentic_campaign._build_plan_update_arguments(args)
+    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"id": plan_id})
+    asyncio.run(
+        agentic_campaign._execute_plan_update(
+            context("agentic-campaign.plan-update", arguments, capture)
+        )
+    )
+    assert capture.calls[-1] == {
+        "method": "PATCH",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"agentic-persona-plans/{plan_id}"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "expected_version": 7,
+            "required_hashtags": ["#maker", "#diy"],
+            "required_mentions": [],
+        },
+        "params": None,
+    }
+
+
+@pytest.mark.parametrize(
+    "extra,match",
+    [
+        ([], "at least one mutable flag"),
+        (
+            ["--name", "New", "--required-hashtags", "#maker"],
+            "mutually exclusive",
+        ),
+    ],
+)
+def test_plan_update_rejects_invalid_field_combinations(extra: list[str], match: str) -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-update",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            *extra,
+        ]
+    )
+    with pytest.raises(ValueError, match=match):
+        agentic_campaign._build_plan_update_arguments(args)
+
+
+def test_plan_update_requires_plan_id() -> None:
+    with pytest.raises(SystemExit):
+        parse(["agentic-campaign", "+plan-update", "--name", "New"])
+
+
 @pytest.mark.parametrize("candidate_id", [None, "77777777-7777-4777-8777-777777777777"])
 def test_plan_propose_dispatches_draft_submit_or_revise(candidate_id: str | None) -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"

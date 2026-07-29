@@ -619,6 +619,56 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.campaign-update",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.campaign-update",
+          "requires_confirmation": true,
+          "risk_level": "write",
+          "shortcut": "+campaign-update",
+          "stability": "stable",
+          "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-update",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-update",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+plan-update",
+          "stability": "stable",
+          "summary": "Update plan tokens for the next generation while a campaign is active or paused, or update name/budget only during setup.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.plan-create",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -3308,6 +3358,83 @@
           "transport": "agent_cli_api"
         }
       ],
+      "product": [
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "product.cta-target-list",
+          "domain": "product",
+          "execution": "direct",
+          "name": "product.cta-target-list",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+cta-target-list",
+          "stability": "stable",
+          "summary": "List CTA targets for a Product. Upload assets with the asset domain first to obtain media ids; this command only references them.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "product.cta-target-create",
+          "domain": "product",
+          "execution": "direct",
+          "name": "product.cta-target-create",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+cta-target-create",
+          "stability": "stable",
+          "summary": "Create a CTA target for a Product. Upload assets with the asset domain first to obtain media ids; this command only references them.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "product.cta-target-update",
+          "domain": "product",
+          "execution": "direct",
+          "name": "product.cta-target-update",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+cta-target-update",
+          "stability": "stable",
+          "summary": "Patch supplied CTA target fields. Upload assets with the asset domain first to obtain media ids; this command only references them.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        }
+      ],
       "research": [
         {
           "authorization": {
@@ -5575,10 +5702,11 @@
       "evaluator",
       "routines",
       "account-operation",
-      "agentic-campaign"
+      "agentic-campaign",
+      "product"
     ]
   },
-  "contract_revision": "0.3.86",
+  "contract_revision": "0.3.87",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -9442,9 +9570,35 @@
       "execution": "direct",
       "input_schema": {
         "properties": {
+          "bind_notification_conversation": {
+            "default": false,
+            "type": "boolean"
+          },
           "config": {
             "additionalProperties": false,
             "properties": {
+              "preferred_publish_windows": {
+                "default": [],
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "end": {
+                      "pattern": "^\\d{2}:\\d{2}$",
+                      "type": "string"
+                    },
+                    "start": {
+                      "pattern": "^\\d{2}:\\d{2}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
               "required_hashtags": {
                 "default": [],
                 "items": {
@@ -9464,6 +9618,12 @@
             },
             "type": [
               "object",
+              "null"
+            ]
+          },
+          "cta_definition": {
+            "type": [
+              "string",
               "null"
             ]
           },
@@ -9773,6 +9933,222 @@
       "shortcut": "+campaign-rename",
       "stability": "stable",
       "summary": "Rename an Agentic Creative Campaign.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.campaign-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.campaign-update",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --total-account-budget 107 --yes",
+        "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --bind-notification-conversation --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "bind_notification_conversation": {
+            "type": "boolean"
+          },
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "config": {
+            "additionalProperties": false,
+            "properties": {
+              "preferred_publish_windows": {
+                "default": [],
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "end": {
+                      "pattern": "^\\d{2}:\\d{2}$",
+                      "type": "string"
+                    },
+                    "start": {
+                      "pattern": "^\\d{2}:\\d{2}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "required_hashtags": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "required_mentions": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "cta_definition": {
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          },
+          "planned_persona_count": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "preferred_publish_windows": {
+            "default": [],
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "end": {
+                  "pattern": "^\\d{2}:\\d{2}$",
+                  "type": "string"
+                },
+                "start": {
+                  "pattern": "^\\d{2}:\\d{2}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "start",
+                "end"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "product_id": {
+            "description": "Product id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "required_hashtags": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "required_mentions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "total_account_budget": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.campaign-update",
+      "output_schema": {
+        "description": "Updated campaign detail.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "risk_level": "write",
+      "shortcut": "+campaign-update",
+      "stability": "stable",
+      "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -11072,6 +11448,129 @@
       "stability": "stable",
       "summary": "Aggregate element tags across a Persona Plan, omitting account operation ids.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-update",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +plan-update --plan-id 33333333-3333-4333-8333-333333333333 --required-hashtags '#maker,#diy'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "account_budget": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "required_hashtags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required_mentions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-update",
+      "output_schema": {
+        "description": "Updated Persona Plan detail.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+plan-update",
+      "stability": "stable",
+      "summary": "Update plan tokens for the next generation while a campaign is active or paused, or update name/budget only during setup.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "agentic-campaign.proposal-get": {
@@ -17808,6 +18307,371 @@
       "stability": "stable",
       "summary": "List media generations in the current workspace. Current type: slideshow. Each item includes a ready-made generation ref; completed generations include grid_media, slide_media, and result_preview_image_urls when result media is available.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "product.cta-target-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "product.cta-target-create",
+      "domain": "product",
+      "examples": [
+        "museoncli product +cta-target-create --product-id 22222222-2222-4222-8222-222222222222 --title 'Shop now' --content-markdown 'See the collection.'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "assets": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "media_id": {
+                  "description": "Uploaded media id",
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "sort_order": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "media_id",
+                "sort_order"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "content_markdown": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "product_id": {
+            "description": "Product id",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "title",
+          "content_markdown"
+        ],
+        "type": "object"
+      },
+      "name": "product.cta-target-create",
+      "output_schema": {
+        "description": "Created Product CTA target.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+cta-target-create",
+      "stability": "stable",
+      "summary": "Create a CTA target for a Product. Upload assets with the asset domain first to obtain media ids; this command only references them.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "product.cta-target-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "product.cta-target-list",
+      "domain": "product",
+      "examples": [
+        "museoncli product +cta-target-list --product-id 22222222-2222-4222-8222-222222222222"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "product_id": {
+            "description": "Product id",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id"
+        ],
+        "type": "object"
+      },
+      "name": "product.cta-target-list",
+      "output_schema": {
+        "description": "Product CTA targets.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+cta-target-list",
+      "stability": "stable",
+      "summary": "List CTA targets for a Product. Upload assets with the asset domain first to obtain media ids; this command only references them.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "product.cta-target-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "product.cta-target-update",
+      "domain": "product",
+      "examples": [
+        "museoncli product +cta-target-update --product-id 22222222-2222-4222-8222-222222222222 --cta-target-id 33333333-3333-4333-8333-333333333333 --asset-ids ''"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "assets": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "media_id": {
+                  "description": "Uploaded media id",
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "sort_order": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "media_id",
+                "sort_order"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "content_markdown": {
+            "maxLength": 10000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "cta_target_id": {
+            "description": "CTA target id",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "product_id": {
+            "description": "Product id",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "cta_target_id"
+        ],
+        "type": "object"
+      },
+      "name": "product.cta-target-update",
+      "output_schema": {
+        "description": "Updated Product CTA target.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+cta-target-update",
+      "stability": "stable",
+      "summary": "Patch supplied CTA target fields. Upload assets with the asset domain first to obtain media ids; this command only references them.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "research.community-search": {
