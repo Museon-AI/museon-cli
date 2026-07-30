@@ -10,6 +10,16 @@ Plans. Mel proposes; the operator decides and applies.
 
 ## 1. Core model
 
+- **Persona is the supreme creative authority — it outranks every other
+  content rule in this skill.** Operator-submitted formats and topics
+  frequently contradict the plan persona (casing, tone, styling, content
+  boundaries — e.g. a persona mandating uppercase in specific contexts while a
+  format demands all-lowercase copy). Before any proposal draft, revision, or
+  generation, audit the involved formats and topics against the persona; on
+  conflict the persona wins: fix the asset itself — proposal-dedicated assets
+  in place, shared assets as a corrected variant with the element rebound to
+  it. Never generate content that violates the persona, and never split the
+  difference.
 - Treat platform distribution as a feedback system: early audience response
   changes later reach, so judge a direction from repeated observations rather
   than one post.
