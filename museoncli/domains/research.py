@@ -108,6 +108,9 @@ CREATIVE_SEARCH_ADS_MEDIA_TYPE_CHOICES = ["video", "photo"]
 CREATIVE_SEARCH_ADS_TIME_RANGE_CHOICES = ["all", "7d", "30d", "90d"]
 
 
+CREATIVE_SEARCH_ADS_RELEVANCE_CHOICES = ["matched", "all"]
+
+
 CREATIVE_SEARCH_ADS_SORT_CHOICES = [
     "published_at",
     "first_seen_at",
@@ -445,6 +448,15 @@ def _add_creative_search_ads_results_arguments(parser: argparse.ArgumentParser) 
         choices=kebab_choices(CREATIVE_SEARCH_ADS_SORT_CHOICES),
         default="published-at",
     )
+    parser.add_argument(
+        "--relevance",
+        choices=CREATIVE_SEARCH_ADS_RELEVANCE_CHOICES,
+        default="matched",
+        help=(
+            "matched excludes fallback search candidates from analysis; "
+            "all returns every candidate with relevance metadata"
+        ),
+    )
 
 
 def _build_creative_search_ads_results_arguments(args: argparse.Namespace) -> dict[str, Any]:
@@ -457,6 +469,7 @@ def _build_creative_search_ads_results_arguments(args: argparse.Namespace) -> di
             "page": args.page,
             "page_size": args.page_size,
             "sort_by": dekebab(args.sort_by),
+            "relevance": args.relevance,
         }
     )
     if payload["page"] < 1:
@@ -849,6 +862,15 @@ def _creative_search_ads_results_input_schema() -> dict[str, Any]:
                 "enum": kebab_choices(CREATIVE_SEARCH_ADS_SORT_CHOICES),
                 "default": "published-at",
             },
+            "relevance": {
+                "type": "string",
+                "enum": CREATIVE_SEARCH_ADS_RELEVANCE_CHOICES,
+                "default": "matched",
+                "description": (
+                    "Use matched for analysis-eligible results. Use all only to inspect "
+                    "fallback search candidates, which may be unrelated."
+                ),
+            },
         },
         "required": ["task_id"],
     }
@@ -1054,15 +1076,20 @@ def specs() -> list[CommandSpec]:
             domain=Domain.RESEARCH,
             shortcut="+creative-search-ads-results",
             summary=(
-                "List filtered, deduplicated Creative Search Ads result cards for "
-                "one task. Results are available while the task is still running."
+                "List deduplicated Creative Search Ads evidence for one task. Defaults "
+                "to analysis-eligible matches and returns relevance, evidence quality, "
+                "metric extrema, and limitations. Treat results as one snapshot: cite "
+                "item IDs for numeric claims and do not infer causality, conversion "
+                "effectiveness, market growth, competition intensity, or geographic "
+                "activity without additional evidence."
             ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="creative_search_ads_results",
             input_schema=_creative_search_ads_results_input_schema(),
             output_schema=_direct_output_schema(
-                "Paginated Creative Search Ads result cards returned by Museon API."
+                "Paginated Creative Search Ads evidence with relevance metadata, "
+                "deterministic aggregates, claim limitations, and source item IDs."
             ),
             examples=[
                 (
