@@ -47,7 +47,7 @@ The tables below are generated — edit code, then run
 | `research +community-search` | read | — | — | direct | Search community evidence across X, Reddit, and LinkedIn using a stable platform and intent contract. |
 | `research +creative-search-ads` | write | yes | — | async_run | Start a durable Creative Search Ads task across Meta and TikTok ad libraries. Requires a stable idempotency key for safe retries. This is Ads-only and never falls back to organic social search. |
 | `research +creative-search-ads-get` | read | — | — | direct | Read one Creative Search Ads task, including terminal aggregate statistics and sanitized partial-failure details. |
-| `research +creative-search-ads-results` | read | — | — | direct | List filtered, deduplicated Creative Search Ads result cards for one task. Results are available while the task is still running. |
+| `research +creative-search-ads-results` | read | — | — | direct | List deduplicated Creative Search Ads evidence for one task. Defaults to analysis-eligible matches and returns relevance, evidence quality, metric extrema, and limitations. Treat results as one snapshot: cite item IDs for numeric claims and do not infer causality, conversion effectiveness, market growth, competition intensity, or geographic activity without additional evidence. |
 | `research +visual-analyze` | read | — | — | direct | Analyze one or more image/video URLs with a business prompt. If a TikTok or signed CDN URL cannot be prepared, import it as Museon media first and retry with the returned stable media URL. |
 
 ### content-analysis
