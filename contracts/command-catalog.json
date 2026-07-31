@@ -3582,7 +3582,7 @@
           "risk_level": "read",
           "shortcut": "+creative-search-ads-results",
           "stability": "stable",
-          "summary": "List filtered, deduplicated Creative Search Ads result cards for one task. Results are available while the task is still running.",
+          "summary": "List deduplicated Creative Search Ads evidence for one task. Defaults to analysis-eligible matches and returns relevance, evidence quality, metric extrema, and limitations. Treat results as one snapshot: cite item IDs for numeric claims and do not infer causality, conversion effectiveness, market growth, competition intensity, or geographic activity without additional evidence.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5781,7 +5781,7 @@
       "product"
     ]
   },
-  "contract_revision": "0.3.93",
+  "contract_revision": "0.3.94",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -19380,6 +19380,15 @@
               "null"
             ]
           },
+          "relevance": {
+            "default": "matched",
+            "description": "Use matched for analysis-eligible results. Use all only to inspect fallback search candidates, which may be unrelated.",
+            "enum": [
+              "matched",
+              "all"
+            ],
+            "type": "string"
+          },
           "sort_by": {
             "default": "published-at",
             "enum": [
@@ -19413,7 +19422,7 @@
       },
       "name": "research.creative-search-ads-results",
       "output_schema": {
-        "description": "Paginated Creative Search Ads result cards returned by Museon API.",
+        "description": "Paginated Creative Search Ads evidence with relevance metadata, deterministic aggregates, claim limitations, and source item IDs.",
         "properties": {
           "command": {
             "type": "string"
@@ -19470,7 +19479,7 @@
       "risk_level": "read",
       "shortcut": "+creative-search-ads-results",
       "stability": "stable",
-      "summary": "List filtered, deduplicated Creative Search Ads result cards for one task. Results are available while the task is still running.",
+      "summary": "List deduplicated Creative Search Ads evidence for one task. Defaults to analysis-eligible matches and returns relevance, evidence quality, metric extrema, and limitations. Treat results as one snapshot: cite item IDs for numeric claims and do not infer causality, conversion effectiveness, market growth, competition intensity, or geographic activity without additional evidence.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
