@@ -788,6 +788,34 @@ def test_plan_propose_dispatches_persona_and_retirement_in_one_adjustment() -> N
     }
 
 
+def test_plan_propose_dispatches_patch_persona_payload() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    patch_payload = {"description": "New description", "reference_media_ids": None}
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"proposal": {"id": "proposal-1"}},
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            plan_id,
+            "--patch-persona-payload",
+            json.dumps(patch_payload),
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    assert arguments["changes"]["patch_persona_payload"] == patch_payload
+    asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
+    )
+    assert capture.calls[-1]["json_body"]["changes"]["patch_persona_payload"] == patch_payload
+
+
 def test_plan_propose_active_adjustment_threads_title() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     add_elements = [
@@ -1102,6 +1130,8 @@ def test_plan_propose_schema_has_three_content_shapes_and_dry_run() -> None:
     )
     assert len(spec.input_schema["oneOf"]) == 3
     assert spec.supports_dry_run is True
+    changes_schema = spec.input_schema["properties"]["changes"]
+    assert "patch_persona_payload" in changes_schema["properties"]
     assert args.dry_run is True
 
     proposal_get = get_command_spec("agentic-campaign.proposal-get")

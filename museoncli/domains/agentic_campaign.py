@@ -75,7 +75,9 @@ def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--note")
     parser.add_argument("--name")
     parser.add_argument("--title")
-    parser.add_argument("--persona-json")
+    parser.add_argument("--persona-payload", dest="persona_payload")
+    parser.add_argument("--persona-json", dest="persona_payload", help=argparse.SUPPRESS)
+    parser.add_argument("--patch-persona-payload")
     parser.add_argument(
         "--persona-id",
         help=(
@@ -122,6 +124,7 @@ def _revision_changes(
     retire_element_ids: Any,
     boost_elements: Any,
     persona: dict[str, Any] | None = None,
+    patch_persona_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     changes = {
         "add_elements": list(add_elements or []),
@@ -130,17 +133,20 @@ def _revision_changes(
     }
     if persona is not None:
         changes["persona"] = persona
+    if patch_persona_payload is not None:
+        changes["patch_persona_payload"] = patch_persona_payload
     if not any(changes.values()):
         raise ValueError(
             "agentic-campaign +plan-propose requires at least one of "
-            "--add-elements-json, --retire-element-ids, or --boost-elements-json."
+            "--persona-payload, --patch-persona-payload, --add-elements-json, "
+            "--retire-element-ids, or --boost-elements-json."
         )
     return changes
 
 
 def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
     if args.proposal_id is not None:
-        if args.name is not None or args.persona_json is not None:
+        if args.name is not None or args.persona_payload is not None or args.patch_persona_payload is not None:
             raise ValueError(
                 "--name and --persona-json are not valid when revising an adjustment proposal."
             )
@@ -182,9 +188,13 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
 
-    if args.persona_json is not None and args.persona_id is not None:
+    if args.persona_payload is not None and args.persona_id is not None:
         raise ValueError(
             "--persona-json and --persona-id are mutually exclusive; provide exactly one."
+        )
+    if args.persona_payload is not None and args.patch_persona_payload is not None:
+        raise ValueError(
+            "--persona-payload and --patch-persona-payload are mutually exclusive."
         )
     complete_plan_supplied = args.name is not None or args.elements_json is not None
     element_adjustment_supplied = any(
@@ -196,7 +206,11 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
         )
     )
     persona_adjustment_supplied = (
-        (args.persona_json is not None or args.persona_id is not None)
+        (
+            args.persona_payload is not None
+            or args.persona_id is not None
+            or args.patch_persona_payload is not None
+        )
         and args.name is None
         and args.elements_json is None
     )
@@ -213,11 +227,11 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             "a draft plan proposal already uses --name."
         )
     if complete_plan_supplied:
-        persona_supplied = args.persona_json is not None or args.persona_id is not None
+        persona_supplied = args.persona_payload is not None or args.persona_id is not None
         if not persona_supplied or args.elements_json is None:
             raise ValueError(
                 "complete plan proposal requires --elements-json and exactly one of "
-                "--persona-json or --persona-id; --name is also required when submitting "
+                "--persona-payload or --persona-id; --name is also required when submitting "
                 "a new candidate."
             )
 
@@ -236,7 +250,7 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             if args.persona_id is not None
             else {
                 "persona_payload": _candidate_json(
-                    args.persona_json,
+                    args.persona_payload,
                     field="persona",
                     expected_type=dict,
                 )
@@ -261,10 +275,10 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
         persona: dict[str, Any] | None = None
         if args.persona_id is not None:
             persona = {"persona_id": args.persona_id}
-        elif args.persona_json is not None:
+        elif args.persona_payload is not None:
             persona = {
                 "persona_payload": _candidate_json(
-                    args.persona_json,
+                    args.persona_payload,
                     field="persona",
                     expected_type=dict,
                 )
@@ -274,6 +288,15 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             retire_element_ids=args.retire_element_ids,
             boost_elements=_revision_json_list(args.boost_elements_json, field="boost-elements"),
             persona=persona,
+            patch_persona_payload=(
+                _candidate_json(
+                    args.patch_persona_payload,
+                    field="patch-persona-payload",
+                    expected_type=dict,
+                )
+                if args.patch_persona_payload is not None
+                else None
+            ),
         )
         if args.title is not None:
             payload["title"] = args.title
@@ -709,6 +732,7 @@ def specs() -> list[CommandSpec]:
                             {"properties": {"retire_element_ids": {"minItems": 1}}},
                             {"properties": {"boost_elements": {"minItems": 1}}},
                             {"required": ["persona"]},
+                            {"required": ["patch_persona_payload"]},
                         ],
                         "properties": {
                             "add_elements": _revision_add_elements_schema(),
@@ -730,6 +754,24 @@ def specs() -> list[CommandSpec]:
                                     "persona_payload": {
                                         "type": ["object", "null"],
                                         "description": "Persona content to snapshot into the proposal.",
+                                    },
+                                },
+                            },
+                            "patch_persona_payload": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "description": (
+                                    "Partial Persona update: omitted keys are preserved; "
+                                    "explicit null clears a nullable field."
+                                ),
+                                "properties": {
+                                    "name": {"type": ["string", "null"], "maxLength": 200},
+                                    "description": {"type": ["string", "null"], "maxLength": 4000},
+                                    "tags": {"type": ["array", "null"], "items": {"type": "string"}},
+                                    "marketing_profile": {"type": ["object", "null"]},
+                                    "reference_media_ids": {
+                                        "type": ["array", "null"],
+                                        "items": {"type": "string", "format": "uuid"},
                                     },
                                 },
                             },
@@ -1640,6 +1682,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
         retire_element_ids=raw_changes.get("retire_element_ids"),
         boost_elements=raw_changes.get("boost_elements"),
         persona=raw_changes.get("persona"),
+        patch_persona_payload=raw_changes.get("patch_persona_payload"),
     )
     response = await ctx.api_data_v2(
         ctx.cfg,
@@ -1660,7 +1703,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
         "directions_to_stop": len(changes["retire_element_ids"]),
         "winner_boosts": len(changes["boost_elements"]),
     }
-    if changes.get("persona"):
+    if changes.get("persona") or changes.get("patch_persona_payload"):
         change_summary["persona_change"] = True
     return _proposal_output(response, changes=change_summary)
 
