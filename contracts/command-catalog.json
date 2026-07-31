@@ -577,7 +577,7 @@
           "risk_level": "write",
           "shortcut": "+proposal-withdraw",
           "stability": "stable",
-          "summary": "Withdraw your own pending-review draft proposal by archiving it permanently. Archived proposals cannot be restored; selected or already archived candidates cannot be withdrawn and are rejected by the server.",
+          "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected +plan-propose: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with +plan-propose --proposal-id. Never resend the rejected payload unchanged.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -11874,19 +11874,11 @@
       "capability_key": "agentic-campaign.proposal-withdraw",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +proposal-withdraw --plan-id 33333333-3333-4333-8333-333333333333 --candidate-id 77777777-7777-4777-8777-777777777777"
+        "museoncli agentic-campaign +proposal-withdraw --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777"
       ],
       "execution": "direct",
       "input_schema": {
         "properties": {
-          "candidate_id": {
-            "description": "Draft proposal candidate id",
-            "examples": [
-              "33333333-3333-4333-8333-333333333333"
-            ],
-            "format": "uuid",
-            "type": "string"
-          },
           "dry_run": {
             "default": false,
             "type": "boolean"
@@ -11898,17 +11890,25 @@
             ],
             "format": "uuid",
             "type": "string"
+          },
+          "proposal_id": {
+            "description": "Open adjustment proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
           }
         },
         "required": [
           "plan_id",
-          "candidate_id"
+          "proposal_id"
         ],
         "type": "object"
       },
       "name": "agentic-campaign.proposal-withdraw",
       "output_schema": {
-        "description": "Archived draft proposal candidate.",
+        "description": "Withdrawn adjustment proposal.",
         "properties": {
           "command": {
             "type": "string"
@@ -11965,7 +11965,7 @@
       "risk_level": "write",
       "shortcut": "+proposal-withdraw",
       "stability": "stable",
-      "summary": "Withdraw your own pending-review draft proposal by archiving it permanently. Archived proposals cannot be restored; selected or already archived candidates cannot be withdrawn and are rejected by the server.",
+      "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected +plan-propose: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with +plan-propose --proposal-id. Never resend the rejected payload unchanged.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
