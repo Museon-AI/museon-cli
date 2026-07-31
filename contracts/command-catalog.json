@@ -11139,6 +11139,11 @@
                 "required": [
                   "persona"
                 ]
+              },
+              {
+                "required": [
+                  "patch_persona_payload"
+                ]
               }
             ],
             "properties": {
@@ -11214,6 +11219,52 @@
                 },
                 "maxItems": 100,
                 "type": "array"
+              },
+              "patch_persona_payload": {
+                "additionalProperties": false,
+                "description": "Partial Persona update: omitted keys are preserved; explicit null clears a nullable field.",
+                "properties": {
+                  "description": {
+                    "maxLength": 4000,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "marketing_profile": {
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "name": {
+                    "maxLength": 200,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "reference_media_ids": {
+                    "items": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  },
+                  "tags": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
               },
               "persona": {
                 "additionalProperties": false,
