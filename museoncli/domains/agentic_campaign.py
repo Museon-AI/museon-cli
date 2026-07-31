@@ -685,7 +685,10 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Propose a complete draft plan or an active-plan adjustment for operator "
                 "review. For an active-plan adjustment, set --title to a short name the "
-                "operator can recognize at a glance in the proposal list."
+                "operator can recognize at a glance in the proposal list. Several adjustment "
+                "proposals may stay open on one plan at the same time and each is confirmed "
+                "on its own, but a submission that collides with an open proposal, or that "
+                "exceeds the open-proposal limit, is rejected and names the blocking proposal."
             ),
             risk_level="write",
             execution="direct",
@@ -703,7 +706,22 @@ def specs() -> list[CommandSpec]:
                     "persona, add_elements, retire_element_ids, and boost_elements in any "
                     "combination, optionally with a title. To revise "
                     "an active-plan proposal after operator feedback, provide proposal_id and "
-                    "replacement elements only. Candidate and proposal ids are scenario-specific."
+                    "replacement elements only. Candidate and proposal ids are scenario-specific. "
+                    "Several adjustment proposals may stay open on the same plan at once, and "
+                    "confirming one never invalidates the others, so an open proposal stays "
+                    "confirmable however old its base is. In exchange, open proposals must not "
+                    "overlap: submission is rejected with 409 proposal_element_conflict "
+                    "(blocking_proposal_id, element_ids) when the new proposal touches a plan "
+                    "element another open proposal already claims, 409 proposal_persona_conflict "
+                    "(blocking_proposal_id) when it carries a persona change while another open "
+                    "proposal already does, and 409 proposal_open_limit_reached (limit, "
+                    "open_proposal_ids) when the plan already has the maximum number of open "
+                    "proposals. Retrying the same payload always fails again: withdraw the "
+                    "blocking proposal with +proposal-withdraw --proposal-id "
+                    "<blocking_proposal_id> and submit again, or revise the named proposal in "
+                    "place with +plan-propose --proposal-id. +plan-get reports what is already "
+                    "claimed in open_proposal_claims and how many slots are left in "
+                    "proposal_capacity."
                 ),
                 "properties": {
                     "plan_id": _uuid_property("Agentic Persona Plan id"),
