@@ -121,12 +121,15 @@ def _revision_changes(
     add_elements: Any,
     retire_element_ids: Any,
     boost_elements: Any,
-) -> dict[str, list[Any]]:
+    persona: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     changes = {
         "add_elements": list(add_elements or []),
         "retire_element_ids": _csv(retire_element_ids),
         "boost_elements": list(boost_elements or []),
     }
+    if persona is not None:
+        changes["persona"] = persona
     if not any(changes.values()):
         raise ValueError(
             "agentic-campaign +plan-propose requires at least one of "
@@ -183,11 +186,8 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError(
             "--persona-json and --persona-id are mutually exclusive; provide exactly one."
         )
-    solution_supplied = any(
-        value is not None
-        for value in (args.name, args.persona_json, args.persona_id, args.elements_json)
-    )
-    adjustment_supplied = any(
+    complete_plan_supplied = args.name is not None or args.elements_json is not None
+    element_adjustment_supplied = any(
         value is not None
         for value in (
             args.add_elements_json,
@@ -195,9 +195,15 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             args.boost_elements_json,
         )
     )
-    if solution_supplied and adjustment_supplied:
+    persona_adjustment_supplied = (
+        (args.persona_json is not None or args.persona_id is not None)
+        and args.name is None
+        and args.elements_json is None
+    )
+    adjustment_supplied = element_adjustment_supplied or persona_adjustment_supplied
+    if complete_plan_supplied and element_adjustment_supplied:
         raise ValueError("一次提案只能是一种:整套方案 或 调整")
-    if not solution_supplied and not adjustment_supplied:
+    if not complete_plan_supplied and not adjustment_supplied:
         raise ValueError(
             "agentic-campaign +plan-propose requires either a complete plan or an adjustment."
         )
@@ -206,7 +212,7 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             "--title is only valid for an active-plan adjustment proposal; "
             "a draft plan proposal already uses --name."
         )
-    if solution_supplied:
+    if complete_plan_supplied:
         persona_supplied = args.persona_json is not None or args.persona_id is not None
         if not persona_supplied or args.elements_json is None:
             raise ValueError(
@@ -224,7 +230,7 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             "dry_run": args.dry_run,
         }
     )
-    if solution_supplied:
+    if complete_plan_supplied:
         persona_field: dict[str, Any] = (
             {"persona_id": args.persona_id}
             if args.persona_id is not None
@@ -252,10 +258,22 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
     elif adjustment_supplied:
+        persona: dict[str, Any] | None = None
+        if args.persona_id is not None:
+            persona = {"persona_id": args.persona_id}
+        elif args.persona_json is not None:
+            persona = {
+                "persona_payload": _candidate_json(
+                    args.persona_json,
+                    field="persona",
+                    expected_type=dict,
+                )
+            }
         payload["changes"] = _revision_changes(
             add_elements=_revision_json_list(args.add_elements_json, field="add-elements"),
             retire_element_ids=args.retire_element_ids,
             boost_elements=_revision_json_list(args.boost_elements_json, field="boost-elements"),
+            persona=persona,
         )
         if args.title is not None:
             payload["title"] = args.title
@@ -270,33 +288,6 @@ def _add_campaign_rename_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _build_campaign_rename_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {"campaign_id": args.campaign_id, "name": args.name, "dry_run": args.dry_run}
-
-
-def _add_proposal_persona_draft_arguments(parser: argparse.ArgumentParser) -> None:
-    _add_plan_id_arguments(parser)
-    parser.add_argument("--proposal-id", required=True)
-    parser.add_argument(
-        "--from-persona-id",
-        default=None,
-        help=(
-            "Seed the draft's description and look references from this workspace "
-            "persona asset (copy, not a live link; name/tags/marketing profile stay "
-            "with the plan persona). Re-running with this flag OVERWRITES the "
-            "draft's current content."
-        ),
-    )
-    parser.add_argument("--dry-run", action="store_true")
-
-
-def _build_proposal_persona_draft_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    arguments: dict[str, Any] = {
-        "plan_id": args.plan_id,
-        "proposal_id": args.proposal_id,
-        "dry_run": args.dry_run,
-    }
-    if args.from_persona_id is not None:
-        arguments["source_persona_id"] = args.from_persona_id
-    return arguments
 
 
 def _add_proposal_withdraw_arguments(parser: argparse.ArgumentParser) -> None:
@@ -671,8 +662,9 @@ def specs() -> list[CommandSpec]:
                     "snapshots its name, description, and visual reference into the proposal at "
                     "submission time (copied, not bound -- later edits to the source persona do "
                     "not affect this proposal; tags and marketing_profile are not copied). For "
-                    "an active plan, submit at least one adjustment in changes, optionally with "
-                    "a title so the operator can recognize the proposal at a glance. To revise "
+                    "an active plan, submit one unified revision in changes; changes may include "
+                    "persona, add_elements, retire_element_ids, and boost_elements in any "
+                    "combination, optionally with a title. To revise "
                     "an active-plan proposal after operator feedback, provide proposal_id and "
                     "replacement elements only. Candidate and proposal ids are scenario-specific."
                 ),
@@ -716,6 +708,7 @@ def specs() -> list[CommandSpec]:
                             {"properties": {"add_elements": {"minItems": 1}}},
                             {"properties": {"retire_element_ids": {"minItems": 1}}},
                             {"properties": {"boost_elements": {"minItems": 1}}},
+                            {"required": ["persona"]},
                         ],
                         "properties": {
                             "add_elements": _revision_add_elements_schema(),
@@ -725,12 +718,23 @@ def specs() -> list[CommandSpec]:
                                 "items": _uuid_property("Experiment direction id"),
                             },
                             "boost_elements": _revision_boosts_schema(),
+                            "persona": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "persona_id": {
+                                        "type": ["string", "null"],
+                                        "format": "uuid",
+                                        "description": "Workspace Persona to snapshot into the proposal.",
+                                    },
+                                    "persona_payload": {
+                                        "type": ["object", "null"],
+                                        "description": "Persona content to snapshot into the proposal.",
+                                    },
+                                },
+                            },
                         },
-                        "required": [
-                            "add_elements",
-                            "retire_element_ids",
-                            "boost_elements",
-                        ],
+                        "required": [],
                     },
                     "note": {"type": ["string", "null"], "maxLength": 2000},
                     "dry_run": {"type": "boolean", "default": False},
@@ -844,47 +848,6 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_proposal_get_arguments,
             build_arguments=_build_proposal_get_arguments,
-        ),
-        CommandSpec(
-            domain=domain,
-            shortcut="+proposal-persona-draft",
-            summary=(
-                "Create or reuse the proposal-owned persona draft before editing persona "
-                "identity or appearance; edit the returned draft persona, then regenerate "
-                "this proposal's previews. Optionally seed the draft from an existing "
-                "workspace persona asset with source_persona_id (copy, not a live link; "
-                "re-seeding overwrites the draft's current content)."
-            ),
-            risk_level="write",
-            execution="direct",
-            adapter_tool_name="agentic_campaign_proposal_persona_draft",
-            input_schema=_plan_schema(
-                {
-                    "proposal_id": _uuid_property("Adjustment proposal id"),
-                    "source_persona_id": _uuid_property(
-                        "Optional workspace persona asset to seed the draft's "
-                        "description and look references from (copy, not a live "
-                        "link). Re-seeding overwrites the draft's current content."
-                    ),
-                    "dry_run": {"type": "boolean", "default": False},
-                },
-                required=["proposal_id"],
-            ),
-            output_schema=_direct_output_schema(
-                "Proposal-owned draft persona id, name, and next-step guidance."
-            ),
-            examples=[
-                "museoncli agentic-campaign +proposal-persona-draft "
-                "--plan-id 33333333-3333-4333-8333-333333333333 "
-                "--proposal-id 77777777-7777-4777-8777-777777777777",
-                "museoncli agentic-campaign +proposal-persona-draft "
-                "--plan-id 33333333-3333-4333-8333-333333333333 "
-                "--proposal-id 77777777-7777-4777-8777-777777777777 "
-                "--from-persona-id 99999999-9999-4999-8999-999999999999",
-            ],
-            add_arguments=_add_proposal_persona_draft_arguments,
-            build_arguments=_build_proposal_persona_draft_arguments,
-            supports_dry_run=True,
         ),
         CommandSpec(
             domain=domain,
@@ -1676,6 +1639,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
         add_elements=raw_changes.get("add_elements"),
         retire_element_ids=raw_changes.get("retire_element_ids"),
         boost_elements=raw_changes.get("boost_elements"),
+        persona=raw_changes.get("persona"),
     )
     response = await ctx.api_data_v2(
         ctx.cfg,
@@ -1691,14 +1655,14 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             "changes": changes,
         },
     )
-    return _proposal_output(
-        response,
-        changes={
-            "new_directions": len(changes["add_elements"]),
-            "directions_to_stop": len(changes["retire_element_ids"]),
-            "winner_boosts": len(changes["boost_elements"]),
-        },
-    )
+    change_summary = {
+        "new_directions": len(changes["add_elements"]),
+        "directions_to_stop": len(changes["retire_element_ids"]),
+        "winner_boosts": len(changes["boost_elements"]),
+    }
+    if changes.get("persona"):
+        change_summary["persona_change"] = True
+    return _proposal_output(response, changes=change_summary)
 
 
 async def _execute_campaign_rename(ctx: CommandContext) -> Any:
@@ -1717,39 +1681,6 @@ async def _execute_campaign_rename(ctx: CommandContext) -> Any:
             "name": ctx.arguments.get("name"),
         },
     )
-
-
-async def _execute_proposal_persona_draft(ctx: CommandContext) -> Any:
-    campaign_id, plan, _ = await _locate_plan(ctx)
-    proposal_id = ctx.arguments.get("proposal_id")
-    response = await ctx.api_data_v2(
-        ctx.cfg,
-        "POST",
-        (
-            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
-            f"revision-proposals/{proposal_id}:create-persona-draft"
-        ),
-        json_body={
-            "workspace_id": ctx.workspace_id,
-            **(
-                {"source_persona_id": ctx.arguments["source_persona_id"]}
-                if ctx.arguments.get("source_persona_id")
-                else {}
-            ),
-        },
-    )
-    draft = _payload_data(response)
-    if not isinstance(draft, dict):
-        raise RuntimeError("persona draft response was not an object")
-    return {
-        "draft_persona_id": draft.get("id"),
-        "name": draft.get("name"),
-        "description": draft.get("description"),
-        "next_step": (
-            "Edit only this proposal-owned draft persona (never the shared plan persona), "
-            "then regenerate this proposal's previews."
-        ),
-    }
 
 
 async def _execute_proposal_withdraw(ctx: CommandContext) -> Any:
@@ -1986,9 +1917,6 @@ EXECUTORS = {
     ),
     "agentic-campaign.proposal-get": redacted_direct_enveloped(
         _execute_proposal_get, redact_api_errors=True
-    ),
-    "agentic-campaign.proposal-persona-draft": redacted_direct_enveloped(
-        _execute_proposal_persona_draft, redact_api_errors=True
     ),
     "agentic-campaign.proposal-withdraw": redacted_direct_enveloped(
         _execute_proposal_withdraw, redact_api_errors=True

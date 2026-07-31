@@ -744,6 +744,50 @@ def test_plan_propose_dispatches_active_adjustment() -> None:
     }
 
 
+def test_plan_propose_dispatches_persona_and_retirement_in_one_adjustment() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    persona_id = "99999999-9999-4999-8999-999999999999"
+    retired_id = "88888888-8888-4888-8888-888888888888"
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"proposal": {"id": "proposal-1"}},
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            plan_id,
+            "--persona-id",
+            persona_id,
+            "--retire-element-ids",
+            retired_id,
+            "--title",
+            "Persona and retirement update",
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    assert arguments["changes"] == {
+        "add_elements": [],
+        "retire_element_ids": [retired_id],
+        "boost_elements": [],
+        "persona": {"persona_id": persona_id},
+    }
+    result = asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
+    )
+    assert capture.calls[-1]["json_body"]["changes"] == arguments["changes"]
+    assert result["change_summary"] == {
+        "new_directions": 0,
+        "directions_to_stop": 1,
+        "winner_boosts": 0,
+        "persona_change": True,
+    }
+
+
 def test_plan_propose_active_adjustment_threads_title() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     add_elements = [
@@ -947,148 +991,6 @@ def test_proposal_get_annotations_placeholder_when_no_feedback() -> None:
         )
     )
     assert result["annotations"] == "暂无标注意见"
-
-
-def test_proposal_persona_draft_requires_plan_and_calls_v2_endpoint() -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    draft_id = "99999999-9999-4999-8999-999999999999"
-    capture = Capture(
-        campaign_list(plan_id),
-        campaign_detail(plan_id, status="active"),
-        {
-            "id": draft_id,
-            "workspace_id": "internal-workspace-id",
-            "created_by": "internal-user-id",
-            "name": "Mia revision",
-            "description": "Brighter visual identity",
-            "tags": ["maker"],
-            "marketing_profile": {"audience": "DIY creators"},
-        },
-    )
-    args = parse(
-        [
-            "agentic-campaign",
-            "+proposal-persona-draft",
-            "--plan-id",
-            plan_id,
-            "--proposal-id",
-            proposal_id,
-        ]
-    )
-    arguments = agentic_campaign._build_proposal_persona_draft_arguments(args)
-    assert arguments == {
-        "plan_id": plan_id,
-        "proposal_id": proposal_id,
-        "dry_run": False,
-    }
-
-    result = asyncio.run(
-        agentic_campaign._execute_proposal_persona_draft(
-            context(
-                "agentic-campaign.proposal-persona-draft",
-                arguments,
-                capture,
-            )
-        )
-    )
-
-    assert capture.calls[-1] == {
-        "method": "POST",
-        "path": (
-            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-            f"persona-plans/{plan_id}/revision-proposals/"
-            f"{proposal_id}:create-persona-draft"
-        ),
-        "json_body": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
-        "params": None,
-    }
-    assert result == {
-        "draft_persona_id": draft_id,
-        "name": "Mia revision",
-        "description": "Brighter visual identity",
-        "next_step": (
-            "Edit only this proposal-owned draft persona (never the shared plan persona), "
-            "then regenerate this proposal's previews."
-        ),
-    }
-    assert "internal-workspace-id" not in repr(result)
-    assert "internal-user-id" not in repr(result)
-
-
-def test_proposal_persona_draft_seeds_from_persona_id() -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    persona_id = "99999999-9999-4999-8999-999999999999"
-    draft_id = "88888888-8888-4888-8888-888888888888"
-    capture = Capture(
-        campaign_list(plan_id),
-        campaign_detail(plan_id, status="active"),
-        {
-            "id": draft_id,
-            "workspace_id": "internal-workspace-id",
-            "created_by": "internal-user-id",
-            "name": "Mia revision",
-            "description": "Seeded from the workspace persona",
-        },
-    )
-    args = parse(
-        [
-            "agentic-campaign",
-            "+proposal-persona-draft",
-            "--plan-id",
-            plan_id,
-            "--proposal-id",
-            proposal_id,
-            "--from-persona-id",
-            persona_id,
-        ]
-    )
-    arguments = agentic_campaign._build_proposal_persona_draft_arguments(args)
-    assert arguments == {
-        "plan_id": plan_id,
-        "proposal_id": proposal_id,
-        "dry_run": False,
-        "source_persona_id": persona_id,
-    }
-
-    result = asyncio.run(
-        agentic_campaign._execute_proposal_persona_draft(
-            context(
-                "agentic-campaign.proposal-persona-draft",
-                arguments,
-                capture,
-            )
-        )
-    )
-
-    assert capture.calls[-1] == {
-        "method": "POST",
-        "path": (
-            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-            f"persona-plans/{plan_id}/revision-proposals/"
-            f"{proposal_id}:create-persona-draft"
-        ),
-        "json_body": {
-            "workspace_id": "11111111-1111-4111-8111-111111111111",
-            "source_persona_id": persona_id,
-        },
-        "params": None,
-    }
-    assert result["draft_persona_id"] == draft_id
-    assert result["description"] == "Seeded from the workspace persona"
-
-
-def test_proposal_persona_draft_requires_plan_id() -> None:
-    with pytest.raises(SystemExit):
-        parse(
-            [
-                "agentic-campaign",
-                "+proposal-persona-draft",
-                "--proposal-id",
-                "77777777-7777-4777-8777-777777777777",
-            ]
-        )
 
 
 def test_plan_propose_submits_active_proposal_revision() -> None:
