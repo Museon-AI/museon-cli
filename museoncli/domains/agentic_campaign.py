@@ -315,13 +315,27 @@ def _build_campaign_rename_arguments(args: argparse.Namespace) -> dict[str, Any]
 
 def _add_proposal_withdraw_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
-    parser.add_argument("--candidate-id", required=True)
+    target = parser.add_mutually_exclusive_group(required=True)
+    target.add_argument(
+        "--proposal-id",
+        default=None,
+        help="Open revision proposal to withdraw on an active plan.",
+    )
+    target.add_argument(
+        "--candidate-id",
+        default=None,
+        help=(
+            "Deprecated: archives a draft-plan candidate instead of withdrawing a "
+            "proposal. Use --proposal-id."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
 
 
 def _build_proposal_withdraw_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "plan_id": args.plan_id,
+        "proposal_id": args.proposal_id,
         "candidate_id": args.candidate_id,
         "dry_run": args.dry_run,
     }
@@ -671,7 +685,10 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Propose a complete draft plan or an active-plan adjustment for operator "
                 "review. For an active-plan adjustment, set --title to a short name the "
-                "operator can recognize at a glance in the proposal list."
+                "operator can recognize at a glance in the proposal list. Several adjustment "
+                "proposals may stay open on one plan at the same time and each is confirmed "
+                "on its own, but a submission that collides with an open proposal, or that "
+                "exceeds the open-proposal limit, is rejected and names the blocking proposal."
             ),
             risk_level="write",
             execution="direct",
@@ -689,7 +706,22 @@ def specs() -> list[CommandSpec]:
                     "persona, add_elements, retire_element_ids, and boost_elements in any "
                     "combination, optionally with a title. To revise "
                     "an active-plan proposal after operator feedback, provide proposal_id and "
-                    "replacement elements only. Candidate and proposal ids are scenario-specific."
+                    "replacement elements only. Candidate and proposal ids are scenario-specific. "
+                    "Several adjustment proposals may stay open on the same plan at once, and "
+                    "confirming one never invalidates the others, so an open proposal stays "
+                    "confirmable however old its base is. In exchange, open proposals must not "
+                    "overlap: submission is rejected with 409 proposal_element_conflict "
+                    "(blocking_proposal_id, element_ids) when the new proposal touches a plan "
+                    "element another open proposal already claims, 409 proposal_persona_conflict "
+                    "(blocking_proposal_id) when it carries a persona change while another open "
+                    "proposal already does, and 409 proposal_open_limit_reached (limit, "
+                    "open_proposal_ids) when the plan already has the maximum number of open "
+                    "proposals. Retrying the same payload always fails again: withdraw the "
+                    "blocking proposal with +proposal-withdraw --proposal-id "
+                    "<blocking_proposal_id> and submit again, or revise the named proposal in "
+                    "place with +plan-propose --proposal-id. +plan-get reports what is already "
+                    "claimed in open_proposal_claims and how many slots are left in "
+                    "proposal_capacity."
                 ),
                 "properties": {
                     "plan_id": _uuid_property("Agentic Persona Plan id"),
@@ -895,25 +927,31 @@ def specs() -> list[CommandSpec]:
             domain=domain,
             shortcut="+proposal-withdraw",
             summary=(
-                "Withdraw your own pending-review draft proposal by archiving it permanently. "
-                "Archived proposals cannot be restored; selected or already archived candidates "
-                "cannot be withdrawn and are rejected by the server."
+                "Withdraw one open adjustment proposal on this plan, permanently releasing "
+                "the plan elements and the persona change it holds. Withdrawal cannot be "
+                "undone, and a proposal the operator already confirmed cannot be withdrawn. "
+                "This is one of the two ways out of a rejected +plan-propose: when the server "
+                "answers 409 proposal_element_conflict, proposal_persona_conflict or "
+                "proposal_open_limit_reached it names the blocking_proposal_id, so either "
+                "withdraw that proposal here and submit again, or revise the named proposal "
+                "in place with +plan-propose --proposal-id. Never resend the rejected payload "
+                "unchanged."
             ),
             risk_level="write",
             execution="direct",
             adapter_tool_name="agentic_campaign_proposal_withdraw",
             input_schema=_plan_schema(
                 {
-                    "candidate_id": _uuid_property("Draft proposal candidate id"),
+                    "proposal_id": _uuid_property("Open adjustment proposal id"),
                     "dry_run": {"type": "boolean", "default": False},
                 },
-                required=["candidate_id"],
+                required=["proposal_id"],
             ),
-            output_schema=_direct_output_schema("Archived draft proposal candidate."),
+            output_schema=_direct_output_schema("Withdrawn adjustment proposal."),
             examples=[
                 "museoncli agentic-campaign +proposal-withdraw "
                 "--plan-id 33333333-3333-4333-8333-333333333333 "
-                "--candidate-id 77777777-7777-4777-8777-777777777777"
+                "--proposal-id 77777777-7777-4777-8777-777777777777"
             ],
             add_arguments=_add_proposal_withdraw_arguments,
             build_arguments=_build_proposal_withdraw_arguments,
@@ -1728,14 +1766,26 @@ async def _execute_campaign_rename(ctx: CommandContext) -> Any:
 
 async def _execute_proposal_withdraw(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
+    proposal_id = ctx.arguments.get("proposal_id")
     candidate_id = ctx.arguments.get("candidate_id")
+    if proposal_id and candidate_id:
+        raise ValueError("pass either --proposal-id or --candidate-id, not both.")
+    if proposal_id:
+        path = (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"revision-proposals/{proposal_id}:dismiss"
+        )
+    elif candidate_id:
+        path = (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"candidates/{candidate_id}:archive"
+        )
+    else:
+        raise ValueError("--proposal-id is required.")
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",
-        (
-            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
-            f"candidates/{candidate_id}:archive"
-        ),
+        path,
         json_body={"workspace_id": ctx.workspace_id},
     )
 

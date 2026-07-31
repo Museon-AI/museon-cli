@@ -190,6 +190,47 @@ def test_creative_search_ads_results_rejects_invalid_pagination(
         command_payload(args)
 
 
+def test_creative_search_ads_results_defaults_to_analysis_eligible_matches() -> None:
+    args = _parse(
+        [
+            "research",
+            "+creative-search-ads-results",
+            "--id",
+            TASK_ID,
+        ]
+    )
+
+    payload = command_payload(args)
+    schema = schema_payload("research.creative-search-ads-results")
+
+    assert payload["relevance"] == "matched"
+    assert schema["input_schema"]["properties"]["relevance"] == {
+        "type": "string",
+        "enum": ["matched", "all"],
+        "default": "matched",
+        "description": (
+            "Use matched for analysis-eligible results. Use all only to inspect "
+            "fallback search candidates, which may be unrelated."
+        ),
+    }
+    assert "do not infer causality" in schema["summary"]
+    assert "source item IDs" in schema["output_schema"]["description"]
+
+    all_candidates = command_payload(
+        _parse(
+            [
+                "research",
+                "+creative-search-ads-results",
+                "--id",
+                TASK_ID,
+                "--relevance",
+                "all",
+            ]
+        )
+    )
+    assert all_candidates["relevance"] == "all"
+
+
 def test_creative_search_ads_schema_is_discoverable_and_provider_neutral() -> None:
     schema = schema_payload("research.creative-search-ads")
 
@@ -422,6 +463,7 @@ def test_dispatch_creative_search_ads_results_uses_pagination_query(
                 "page": 2,
                 "page_size": 10,
                 "sort_by": "first_seen_at",
+                "relevance": "matched",
             },
         }
     ]

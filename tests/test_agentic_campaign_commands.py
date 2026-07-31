@@ -119,7 +119,55 @@ def _complete_plan_cli_args() -> list[str]:
     ]
 
 
-def test_proposal_withdraw_builds_arguments_and_maps_to_archive() -> None:
+def test_proposal_withdraw_dismisses_the_named_revision_proposal() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    args = parse(
+        [
+            "agentic-campaign",
+            "+proposal-withdraw",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+        ]
+    )
+    arguments = agentic_campaign._build_proposal_withdraw_arguments(args)
+    assert arguments == {
+        "plan_id": plan_id,
+        "proposal_id": proposal_id,
+        "candidate_id": None,
+        "dry_run": False,
+    }
+    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"id": proposal_id})
+    asyncio.run(
+        agentic_campaign._execute_proposal_withdraw(
+            context("agentic-campaign.proposal-withdraw", arguments, capture)
+        )
+    )
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:dismiss"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+        },
+        "params": None,
+    }
+    spec = get_command_spec("agentic-campaign.proposal-withdraw")
+    assert spec.risk_level == "write"
+    assert spec.requires_confirmation is False
+    assert spec.supports_dry_run is True
+    assert spec.input_schema["required"] == ["plan_id", "proposal_id"]
+    assert "candidate_id" not in spec.input_schema["properties"]
+
+
+def test_proposal_withdraw_still_archives_a_candidate_for_the_deprecated_flag() -> None:
+    """The published schema now teaches --proposal-id, but a sandbox running on a
+    cached catalog can still be mid-flight with --candidate-id. Dropping the flag
+    in the same release that renames it would break those callers."""
     plan_id = "33333333-3333-4333-8333-333333333333"
     candidate_id = "77777777-7777-4777-8777-777777777777"
     args = parse(
@@ -133,32 +181,17 @@ def test_proposal_withdraw_builds_arguments_and_maps_to_archive() -> None:
         ]
     )
     arguments = agentic_campaign._build_proposal_withdraw_arguments(args)
-    assert arguments == {
-        "plan_id": plan_id,
-        "candidate_id": candidate_id,
-        "dry_run": False,
-    }
+    assert arguments["proposal_id"] is None
     capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"id": candidate_id})
     asyncio.run(
         agentic_campaign._execute_proposal_withdraw(
             context("agentic-campaign.proposal-withdraw", arguments, capture)
         )
     )
-    assert capture.calls[-1] == {
-        "method": "POST",
-        "path": (
-            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-            f"persona-plans/{plan_id}/candidates/{candidate_id}:archive"
-        ),
-        "json_body": {
-            "workspace_id": "11111111-1111-4111-8111-111111111111",
-        },
-        "params": None,
-    }
-    spec = get_command_spec("agentic-campaign.proposal-withdraw")
-    assert spec.risk_level == "write"
-    assert spec.requires_confirmation is False
-    assert spec.supports_dry_run is True
+    assert capture.calls[-1]["path"] == (
+        "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+        f"persona-plans/{plan_id}/candidates/{candidate_id}:archive"
+    )
 
 
 @pytest.mark.parametrize(
@@ -167,7 +200,7 @@ def test_proposal_withdraw_builds_arguments_and_maps_to_archive() -> None:
         [
             "agentic-campaign",
             "+proposal-withdraw",
-            "--candidate-id",
+            "--proposal-id",
             "77777777-7777-4777-8777-777777777777",
         ],
         [
@@ -176,9 +209,19 @@ def test_proposal_withdraw_builds_arguments_and_maps_to_archive() -> None:
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
         ],
+        [
+            "agentic-campaign",
+            "+proposal-withdraw",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--candidate-id",
+            "88888888-8888-4888-8888-888888888888",
+        ],
     ],
 )
-def test_proposal_withdraw_requires_ids(argv: list[str]) -> None:
+def test_proposal_withdraw_requires_exactly_one_target_id(argv: list[str]) -> None:
     with pytest.raises(SystemExit):
         parse(argv)
 

@@ -527,7 +527,7 @@
           "risk_level": "write",
           "shortcut": "+plan-propose",
           "stability": "stable",
-          "summary": "Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list.",
+          "summary": "Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -577,7 +577,7 @@
           "risk_level": "write",
           "shortcut": "+proposal-withdraw",
           "stability": "stable",
-          "summary": "Withdraw your own pending-review draft proposal by archiving it permanently. Archived proposals cannot be restored; selected or already archived candidates cannot be withdrawn and are rejected by the server.",
+          "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected +plan-propose: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with +plan-propose --proposal-id. Never resend the rejected payload unchanged.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -3582,7 +3582,7 @@
           "risk_level": "read",
           "shortcut": "+creative-search-ads-results",
           "stability": "stable",
-          "summary": "List filtered, deduplicated Creative Search Ads result cards for one task. Results are available while the task is still running.",
+          "summary": "List deduplicated Creative Search Ads evidence for one task. Defaults to analysis-eligible matches and returns relevance, evidence quality, metric extrema, and limitations. Treat results as one snapshot: cite item IDs for numeric claims and do not infer causality, conversion effectiveness, market growth, competition intensity, or geographic activity without additional evidence.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5781,7 +5781,7 @@
       "product"
     ]
   },
-  "contract_revision": "0.3.93",
+  "contract_revision": "0.3.95",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -10962,7 +10962,7 @@
       ],
       "execution": "direct",
       "input_schema": {
-        "description": "For a draft plan, submit a complete solution (name, elements, and exactly one of persona_payload or persona_id), optionally revising a candidate with candidate_id. persona_id references an existing persona; the server snapshots its name, description, and visual reference into the proposal at submission time (copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). For an active plan, submit one unified revision in changes; changes may include persona, add_elements, retire_element_ids, and boost_elements in any combination, optionally with a title. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Candidate and proposal ids are scenario-specific.",
+        "description": "For a draft plan, submit a complete solution (name, elements, and exactly one of persona_payload or persona_id), optionally revising a candidate with candidate_id. persona_id references an existing persona; the server snapshots its name, description, and visual reference into the proposal at submission time (copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). For an active plan, submit one unified revision in changes; changes may include persona, add_elements, retire_element_ids, and boost_elements in any combination, optionally with a title. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Candidate and proposal ids are scenario-specific. Several adjustment proposals may stay open on the same plan at once, and confirming one never invalidates the others, so an open proposal stays confirmable however old its base is. In exchange, open proposals must not overlap: submission is rejected with 409 proposal_element_conflict (blocking_proposal_id, element_ids) when the new proposal touches a plan element another open proposal already claims, 409 proposal_persona_conflict (blocking_proposal_id) when it carries a persona change while another open proposal already does, and 409 proposal_open_limit_reached (limit, open_proposal_ids) when the plan already has the maximum number of open proposals. Retrying the same payload always fails again: withdraw the blocking proposal with +proposal-withdraw --proposal-id <blocking_proposal_id> and submit again, or revise the named proposal in place with +plan-propose --proposal-id. +plan-get reports what is already claimed in open_proposal_claims and how many slots are left in proposal_capacity.",
         "oneOf": [
           {
             "anyOf": [
@@ -11526,7 +11526,7 @@
       "risk_level": "write",
       "shortcut": "+plan-propose",
       "stability": "stable",
-      "summary": "Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list.",
+      "summary": "Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -11874,19 +11874,11 @@
       "capability_key": "agentic-campaign.proposal-withdraw",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +proposal-withdraw --plan-id 33333333-3333-4333-8333-333333333333 --candidate-id 77777777-7777-4777-8777-777777777777"
+        "museoncli agentic-campaign +proposal-withdraw --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777"
       ],
       "execution": "direct",
       "input_schema": {
         "properties": {
-          "candidate_id": {
-            "description": "Draft proposal candidate id",
-            "examples": [
-              "33333333-3333-4333-8333-333333333333"
-            ],
-            "format": "uuid",
-            "type": "string"
-          },
           "dry_run": {
             "default": false,
             "type": "boolean"
@@ -11898,17 +11890,25 @@
             ],
             "format": "uuid",
             "type": "string"
+          },
+          "proposal_id": {
+            "description": "Open adjustment proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
           }
         },
         "required": [
           "plan_id",
-          "candidate_id"
+          "proposal_id"
         ],
         "type": "object"
       },
       "name": "agentic-campaign.proposal-withdraw",
       "output_schema": {
-        "description": "Archived draft proposal candidate.",
+        "description": "Withdrawn adjustment proposal.",
         "properties": {
           "command": {
             "type": "string"
@@ -11965,7 +11965,7 @@
       "risk_level": "write",
       "shortcut": "+proposal-withdraw",
       "stability": "stable",
-      "summary": "Withdraw your own pending-review draft proposal by archiving it permanently. Archived proposals cannot be restored; selected or already archived candidates cannot be withdrawn and are rejected by the server.",
+      "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected +plan-propose: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with +plan-propose --proposal-id. Never resend the rejected payload unchanged.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -19380,6 +19380,15 @@
               "null"
             ]
           },
+          "relevance": {
+            "default": "matched",
+            "description": "Use matched for analysis-eligible results. Use all only to inspect fallback search candidates, which may be unrelated.",
+            "enum": [
+              "matched",
+              "all"
+            ],
+            "type": "string"
+          },
           "sort_by": {
             "default": "published-at",
             "enum": [
@@ -19413,7 +19422,7 @@
       },
       "name": "research.creative-search-ads-results",
       "output_schema": {
-        "description": "Paginated Creative Search Ads result cards returned by Museon API.",
+        "description": "Paginated Creative Search Ads evidence with relevance metadata, deterministic aggregates, claim limitations, and source item IDs.",
         "properties": {
           "command": {
             "type": "string"
@@ -19470,7 +19479,7 @@
       "risk_level": "read",
       "shortcut": "+creative-search-ads-results",
       "stability": "stable",
-      "summary": "List filtered, deduplicated Creative Search Ads result cards for one task. Results are available while the task is still running.",
+      "summary": "List deduplicated Creative Search Ads evidence for one task. Defaults to analysis-eligible matches and returns relevance, evidence quality, metric extrema, and limitations. Treat results as one snapshot: cite item IDs for numeric claims and do not infer causality, conversion effectiveness, market growth, competition intensity, or geographic activity without additional evidence.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
