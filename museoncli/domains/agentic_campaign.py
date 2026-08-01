@@ -1711,12 +1711,9 @@ def _complete_plan_arguments(
 
 def _proposal_output(response: Any, *, changes: dict[str, Any]) -> dict[str, Any]:
     payload = _payload_data(response)
-    candidate = payload.get("candidate") if isinstance(payload, dict) else None
-    candidate_id = candidate.get("id") if isinstance(candidate, dict) else None
     proposal = payload.get("proposal") if isinstance(payload, dict) else None
     proposal_id = proposal.get("id") if isinstance(proposal, dict) else None
     return {
-        **({"candidate_id": candidate_id} if candidate is not None else {}),
         **({"proposal_id": proposal_id} if proposal is not None else {}),
         "change_summary": changes,
         "next_step": "Please review the proposal in Museon and confirm it there.",
@@ -1938,17 +1935,24 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             if persona_id is not None
             else {"persona_payload": persona_payload}
         )
-        path = (
-            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
-            f"{plan['id']}/candidates:submit"
-        )
         body = {
             "workspace_id": ctx.workspace_id,
-            "name": name,
-            **persona_field,
-            "elements": elements,
+            "title": name,
+            "note": ctx.arguments.get("note"),
+            "changes": {
+                "add_elements": elements,
+                "persona": persona_field,
+            },
         }
-        response = await ctx.api_data_v2(ctx.cfg, "POST", path, json_body=body)
+        response = await ctx.api_data_v2(
+            ctx.cfg,
+            "POST",
+            (
+                f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
+                f"{plan['id']}/revision-proposals"
+            ),
+            json_body=body,
+        )
         return _proposal_output(
             response,
             changes={
