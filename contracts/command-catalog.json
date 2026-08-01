@@ -10970,6 +10970,11 @@
                 "required": [
                   "name"
                 ]
+              },
+              {
+                "required": [
+                  "proposal_id"
+                ]
               }
             ],
             "not": {
@@ -10977,11 +10982,6 @@
                 {
                   "required": [
                     "changes"
-                  ]
-                },
-                {
-                  "required": [
-                    "proposal_id"
                   ]
                 },
                 {
@@ -11069,6 +11069,11 @@
                 {
                   "required": [
                     "title"
+                  ]
+                },
+                {
+                  "required": [
+                    "persona_id"
                   ]
                 }
               ]

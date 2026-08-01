@@ -1148,6 +1148,65 @@ def test_plan_propose_revision_rejects_name_and_persona(forbidden_option: str) -
         agentic_campaign._build_plan_propose_arguments(args)
 
 
+def _branch_requirement_satisfied(rule: dict[str, Any], payload: dict[str, Any]) -> bool:
+    """Minimal evaluator for the required/oneOf/anyOf/not combinators plan-propose's
+    oneOf branches are built from. Enough to check which branch(es) a call shape
+    satisfies without pulling in a jsonschema dependency for this one narrow check --
+    the branches never nest anything richer than these four keywords."""
+    if "required" in rule and not all(key in payload for key in rule["required"]):
+        return False
+    if "oneOf" in rule:
+        matches = sum(1 for sub in rule["oneOf"] if _branch_requirement_satisfied(sub, payload))
+        if matches != 1:
+            return False
+    if "anyOf" in rule:
+        if not any(_branch_requirement_satisfied(sub, payload) for sub in rule["anyOf"]):
+            return False
+    if "not" in rule:
+        if _branch_requirement_satisfied(rule["not"], payload):
+            return False
+    return True
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [
+        pytest.param(
+            {"name": "n", "elements": [1], "persona_payload": {}}, id="new-persona-payload"
+        ),
+        pytest.param({"name": "n", "elements": [1], "persona_id": "p"}, id="new-persona-id"),
+        pytest.param(
+            {"proposal_id": "p", "elements": [1], "persona_payload": {}},
+            id="revise-with-persona-payload",
+        ),
+        pytest.param(
+            {"proposal_id": "p", "elements": [1], "persona_id": "p"},
+            id="revise-with-persona-id",
+        ),
+        pytest.param({"changes": {}}, id="active-plan-adjustment"),
+        pytest.param(
+            {"proposal_id": "p", "elements": [1]}, id="proposal-revision-elements-only"
+        ),
+    ],
+)
+def test_plan_propose_oneof_call_shapes_match_exactly_one_branch(shape: dict[str, Any]) -> None:
+    """Each legal plan-propose call shape must satisfy exactly one oneOf branch.
+
+    Regression coverage for the fold that renamed candidate_id to proposal_id: the
+    revise-with-persona shapes are reachable only through branch 0's `anyOf`
+    (name or proposal_id), and without excluding persona_id from branch 2's `not`,
+    the revise-with-persona-id shape quietly satisfied both branch 0 and branch 2,
+    which `oneOf` rejects. A test asserting only "this shape validates" would not
+    have caught that -- it has to count matching branches.
+    """
+    spec = get_command_spec("agentic-campaign.plan-propose")
+    branches = spec.input_schema["oneOf"]
+    matches = [
+        branch["title"] for branch in branches if _branch_requirement_satisfied(branch, shape)
+    ]
+    assert len(matches) == 1, f"{shape} matched {matches}, want exactly one branch"
+
+
 def test_plan_propose_schema_has_three_content_shapes_and_dry_run() -> None:
     spec = get_command_spec("agentic-campaign.plan-propose")
     args = parse(
