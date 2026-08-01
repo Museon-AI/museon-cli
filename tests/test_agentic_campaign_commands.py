@@ -675,7 +675,15 @@ def test_plan_propose_rejects_neither_persona_json_nor_persona_id() -> None:
         agentic_campaign._build_plan_propose_arguments(args)
 
 
-def test_plan_propose_rejects_persona_id_when_revising_proposal() -> None:
+_REVISION_ELEMENTS = [
+    {
+        "format_id": "44444444-4444-4444-8444-444444444444",
+        "topic_id": "55555555-5555-4555-8555-555555555555",
+    }
+]
+
+
+def test_plan_propose_revision_builds_arguments_with_persona_id() -> None:
     args = parse(
         [
             "agentic-campaign",
@@ -687,17 +695,100 @@ def test_plan_propose_rejects_persona_id_when_revising_proposal() -> None:
             "--persona-id",
             "99999999-9999-4999-8999-999999999999",
             "--elements-json",
-            json.dumps(
-                [
-                    {
-                        "format_id": "44444444-4444-4444-8444-444444444444",
-                        "topic_id": "55555555-5555-4555-8555-555555555555",
-                    }
-                ]
-            ),
+            json.dumps(_REVISION_ELEMENTS),
         ]
     )
-    with pytest.raises(ValueError, match="--persona-id is not valid"):
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    assert arguments == {
+        "plan_id": "33333333-3333-4333-8333-333333333333",
+        "proposal_id": "77777777-7777-4777-8777-777777777777",
+        "elements": _REVISION_ELEMENTS,
+        "persona_id": "99999999-9999-4999-8999-999999999999",
+        "dry_run": False,
+    }
+
+
+def test_plan_propose_revision_builds_arguments_with_persona_payload() -> None:
+    persona_payload = {"name": "Mia", "description": "Practical maker", "visual_prompt": "Portrait"}
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--persona-json",
+            json.dumps(persona_payload),
+            "--elements-json",
+            json.dumps(_REVISION_ELEMENTS),
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    assert arguments == {
+        "plan_id": "33333333-3333-4333-8333-333333333333",
+        "proposal_id": "77777777-7777-4777-8777-777777777777",
+        "elements": _REVISION_ELEMENTS,
+        "persona_payload": persona_payload,
+        "dry_run": False,
+    }
+
+
+def test_plan_propose_revision_builds_arguments_without_persona() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--elements-json",
+            json.dumps(_REVISION_ELEMENTS),
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    assert "persona_id" not in arguments
+    assert "persona_payload" not in arguments
+
+
+def test_plan_propose_revision_rejects_persona_payload_and_persona_id_together() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--persona-id",
+            "99999999-9999-4999-8999-999999999999",
+            "--persona-json",
+            json.dumps({"name": "Mia", "description": "d", "visual_prompt": "v"}),
+            "--elements-json",
+            json.dumps(_REVISION_ELEMENTS),
+        ]
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        agentic_campaign._build_plan_propose_arguments(args)
+
+
+def test_plan_propose_revision_rejects_patch_persona_payload() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--patch-persona-payload",
+            json.dumps({"name": "New name"}),
+            "--elements-json",
+            json.dumps(_REVISION_ELEMENTS),
+        ]
+    )
+    with pytest.raises(ValueError, match="--patch-persona-payload is not valid"):
         agentic_campaign._build_plan_propose_arguments(args)
 
 
@@ -1110,19 +1201,171 @@ def test_plan_propose_submits_active_proposal_revision() -> None:
     }
 
 
-@pytest.mark.parametrize("forbidden_option", ["--name", "--persona-json"])
-def test_plan_propose_revision_rejects_name_and_persona(forbidden_option: str) -> None:
-    value = (
-        "not applicable"
-        if forbidden_option == "--name"
-        else json.dumps(
-            {
-                "name": "Mia",
-                "description": "Practical maker",
-                "visual_prompt": "Portrait",
-            }
+def test_plan_propose_submits_draft_stage_proposal_revision_with_persona_payload() -> None:
+    """Restores what --candidate-id used to do (deleted in error by museoncli v0.3.96,
+    then renamed by mistake in the same release): revise a proposal on a still-draft
+    plan with a full persona replacement inline. The backend's persona field on
+    :submit-revision is the same nested shape plan-propose already uses elsewhere --
+    exactly one of persona_id or persona_payload."""
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    persona_payload = {
+        "name": "Mia",
+        "description": "Practical maker",
+        "visual_prompt": "Warm workshop portrait",
+    }
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="draft"),
+        {"elements": [{"id": "new-element"}], "round": 2, "dispatched_task_count": 1},
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+            "--persona-json",
+            json.dumps(persona_payload),
+            "--elements-json",
+            json.dumps(_REVISION_ELEMENTS),
+            "--note",
+            "Brighter visual direction",
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    result = asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
         )
     )
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:submit-revision"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "elements": _REVISION_ELEMENTS,
+            "note": "Brighter visual direction",
+            "persona": {"persona_payload": persona_payload},
+        },
+        "params": None,
+    }
+    assert result["revision_round"] == 2
+
+
+def test_plan_propose_submits_draft_stage_proposal_revision_with_persona_id() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    persona_id = "99999999-9999-4999-8999-999999999999"
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="draft"),
+        {"elements": [{"id": "new-element"}], "round": 2, "dispatched_task_count": 1},
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+            "--persona-id",
+            persona_id,
+            "--elements-json",
+            json.dumps(_REVISION_ELEMENTS),
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    result = asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
+    )
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:submit-revision"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "elements": _REVISION_ELEMENTS,
+            "note": None,
+            "persona": {"persona_id": persona_id},
+        },
+        "params": None,
+    }
+    assert result["revision_round"] == 2
+
+
+def test_plan_propose_submits_draft_stage_proposal_revision_without_persona() -> None:
+    """A revision with no persona flag at all must produce a body with no persona
+    field -- the omission means "keep the persona the proposal already carries", and
+    existing elements-only callers (draft or active) must be unchanged by this fix."""
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="draft"),
+        {"elements": [{"id": "new-element"}], "round": 2, "dispatched_task_count": 1},
+    )
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+            "--elements-json",
+            json.dumps(_REVISION_ELEMENTS),
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
+    )
+    body = capture.calls[-1]["json_body"]
+    assert "persona" not in body
+    assert body["elements"] == _REVISION_ELEMENTS
+
+
+def test_execute_plan_propose_rejects_patch_persona_payload_defensively() -> None:
+    """The executor re-checks patch_persona_payload independently of the argument
+    builder, matching this codebase's existing dual-validation convention (see the
+    same pattern for name/changes above it in _execute_plan_propose): a caller that
+    builds ctx.arguments directly, bypassing the CLI's own flag parsing, must not be
+    able to sneak a patch payload past the builder's rejection and have it silently
+    sent as a full persona replacement."""
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id, status="draft"))
+    arguments = {
+        "plan_id": plan_id,
+        "proposal_id": proposal_id,
+        "elements": _REVISION_ELEMENTS,
+        "patch_persona_payload": {"name": "New name"},
+    }
+    with pytest.raises(ValueError, match="patch_persona_payload is not valid"):
+        asyncio.run(
+            agentic_campaign._execute_plan_propose(
+                context("agentic-campaign.plan-propose", arguments, capture)
+            )
+        )
+
+
+def test_plan_propose_revision_rejects_name() -> None:
+    """--name still names a *new* proposal, so it stays rejected on a revision -- unlike
+    --persona-json/--persona-id, which the backend's persona field on :submit-revision now
+    accepts (see test_plan_propose_revision_builds_arguments_with_persona_*)."""
     args = parse(
         [
             "agentic-campaign",
@@ -1140,11 +1383,11 @@ def test_plan_propose_revision_rejects_name_and_persona(forbidden_option: str) -
                     }
                 ]
             ),
-            forbidden_option,
-            value,
+            "--name",
+            "not applicable",
         ]
     )
-    with pytest.raises(ValueError, match="--name and --persona-json are not valid"):
+    with pytest.raises(ValueError, match="--name is not valid"):
         agentic_campaign._build_plan_propose_arguments(args)
 
 

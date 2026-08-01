@@ -145,16 +145,20 @@ def _revision_changes(
 
 def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
     if args.proposal_id is not None:
-        if args.name is not None or args.persona_payload is not None or args.patch_persona_payload is not None:
-            raise ValueError(
-                "--name and --persona-json are not valid when revising an adjustment proposal."
-            )
-        if args.persona_id is not None:
-            raise ValueError(
-                "--persona-id is not valid when revising an adjustment proposal."
-            )
+        if args.name is not None:
+            raise ValueError("--name is not valid when revising an adjustment proposal.")
         if args.title is not None:
             raise ValueError("--title is not valid when revising an adjustment proposal.")
+        if args.patch_persona_payload is not None:
+            raise ValueError(
+                "--patch-persona-payload is not valid when revising an adjustment proposal; "
+                "the server only accepts a full persona replacement here (--persona-json or "
+                "--persona-id), never a partial patch."
+            )
+        if args.persona_payload is not None and args.persona_id is not None:
+            raise ValueError(
+                "--persona-json and --persona-id are mutually exclusive; provide exactly one."
+            )
         if any(
             value is not None
             for value in (
@@ -175,11 +179,23 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
         )
         if not elements:
             raise ValueError("adjustment proposal revision requires at least one element.")
+        persona_field: dict[str, Any] = {}
+        if args.persona_id is not None:
+            persona_field = {"persona_id": args.persona_id}
+        elif args.persona_payload is not None:
+            persona_field = {
+                "persona_payload": _candidate_json(
+                    args.persona_payload,
+                    field="persona",
+                    expected_type=dict,
+                )
+            }
         return compact_params(
             {
                 "plan_id": args.plan_id,
                 "proposal_id": args.proposal_id,
                 "elements": elements,
+                **persona_field,
                 "note": args.note,
                 "dry_run": args.dry_run,
             }
@@ -1597,7 +1613,6 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
 async def _execute_plan_propose(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     status = plan.get("status")
-    candidate_id = ctx.arguments.get("candidate_id")
     proposal_id = ctx.arguments.get("proposal_id")
     raw_changes = ctx.arguments.get("changes")
     has_solution = any(
@@ -1608,70 +1623,37 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
     if has_solution and has_adjustment:
         raise ValueError("一次提案只能是一种:整套方案 或 调整")
 
-    if status == "draft":
-        if proposal_id:
-            raise ValueError("--proposal-id requires an active plan.")
-        if has_adjustment:
-            raise ValueError("draft plan only accepts a complete plan proposal.")
-        name, persona_payload, persona_id, elements = _complete_plan_arguments(ctx)
-        persona_field: dict[str, Any] = (
-            {"persona_id": persona_id}
-            if persona_id is not None
-            else {"persona_payload": persona_payload}
-        )
-        if candidate_id:
-            path = (
-                f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
-                f"candidates/{candidate_id}:revise"
-            )
-            body = {
-                "workspace_id": ctx.workspace_id,
-                **persona_field,
-                "elements": elements,
-                "note": ctx.arguments.get("note"),
-            }
-        else:
-            if not name:
-                raise ValueError("new draft plan proposal requires --name.")
-            path = (
-                f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
-                f"{plan['id']}/candidates:submit"
-            )
-            body = {
-                "workspace_id": ctx.workspace_id,
-                "name": name,
-                **persona_field,
-                "elements": elements,
-            }
-        response = await ctx.api_data_v2(ctx.cfg, "POST", path, json_body=body)
-        return _proposal_output(
-            response,
-            changes={
-                "complete_plan": True,
-                **({"name": name} if name else {}),
-                "directions": len(elements),
-            },
-        )
-
-    if status != "active":
-        raise ValueError(
-            f"plan status must be draft or active to accept a proposal; got {status!r}."
-        )
-    if candidate_id:
-        raise ValueError("--candidate-id is only valid for a draft plan.")
     if proposal_id:
-        if (
-            ctx.arguments.get("name") is not None
-            or ctx.arguments.get("persona_payload") is not None
-        ):
-            raise ValueError("name and persona are not valid when revising an adjustment proposal.")
+        # Revise an existing proposal -- draft-stage or active-plan, the same operation
+        # either way. persona is optional: omitting it keeps the persona the proposal
+        # already carries; patch semantics are out of scope here (the server only takes
+        # a full persona replacement on this endpoint), so a patch payload is rejected
+        # rather than silently sent as a full replacement.
+        if ctx.arguments.get("name") is not None:
+            raise ValueError("name is not valid when revising an adjustment proposal.")
         if raw_changes is not None:
             raise ValueError(
                 "adjustment changes are not valid when revising an adjustment proposal."
             )
+        if ctx.arguments.get("patch_persona_payload") is not None:
+            raise ValueError(
+                "patch_persona_payload is not valid when revising an adjustment proposal; "
+                "the server only accepts a full persona replacement here."
+            )
         elements = ctx.arguments.get("elements")
         if not isinstance(elements, list) or not elements:
             raise ValueError("adjustment proposal revision requires at least one element.")
+        persona_id = ctx.arguments.get("persona_id")
+        persona_payload = ctx.arguments.get("persona_payload")
+        body: dict[str, Any] = {
+            "workspace_id": ctx.workspace_id,
+            "elements": elements,
+            "note": ctx.arguments.get("note"),
+        }
+        if persona_id is not None:
+            body["persona"] = {"persona_id": persona_id}
+        elif persona_payload is not None:
+            body["persona"] = {"persona_payload": persona_payload}
         response = await ctx.api_data_v2(
             ctx.cfg,
             "POST",
@@ -1679,11 +1661,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
                 f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
                 f"revision-proposals/{proposal_id}:submit-revision"
             ),
-            json_body={
-                "workspace_id": ctx.workspace_id,
-                "elements": elements,
-                "note": ctx.arguments.get("note"),
-            },
+            json_body=body,
         )
         payload = _payload_data(response)
         if not isinstance(payload, dict):
@@ -1695,6 +1673,42 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             "preview_task_count": payload.get("dispatched_task_count"),
             "next_step": f"第 {revision_round} 稿已提交；运营将在审阅台看到新一稿。",
         }
+
+    if status == "draft":
+        if has_adjustment:
+            raise ValueError("draft plan only accepts a complete plan proposal.")
+        name, persona_payload, persona_id, elements = _complete_plan_arguments(ctx)
+        if not name:
+            raise ValueError("new draft plan proposal requires --name.")
+        persona_field: dict[str, Any] = (
+            {"persona_id": persona_id}
+            if persona_id is not None
+            else {"persona_payload": persona_payload}
+        )
+        path = (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
+            f"{plan['id']}/candidates:submit"
+        )
+        body = {
+            "workspace_id": ctx.workspace_id,
+            "name": name,
+            **persona_field,
+            "elements": elements,
+        }
+        response = await ctx.api_data_v2(ctx.cfg, "POST", path, json_body=body)
+        return _proposal_output(
+            response,
+            changes={
+                "complete_plan": True,
+                "name": name,
+                "directions": len(elements),
+            },
+        )
+
+    if status != "active":
+        raise ValueError(
+            f"plan status must be draft or active to accept a proposal; got {status!r}."
+        )
     if has_solution:
         raise ValueError("active plan only accepts an adjustment proposal.")
     raw_changes = ctx.arguments.get("changes")
