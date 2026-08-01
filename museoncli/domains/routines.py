@@ -299,7 +299,7 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
-                    "mode": {"type": "string", "enum": ["ad_hoc"]},
+                    "mode": {"type": "string", "enum": ["ad-hoc"]},
                     "status": {
                         "type": "string",
                         "enum": ["draft", "active", "disabled", "archived"],
@@ -313,7 +313,7 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
             "output_schema": _direct_output_schema("Routine list returned by Museon API."),
             "examples": [
                 "museoncli routines +list",
-                "museoncli routines +list --mode ad_hoc --page-size 20",
+                "museoncli routines +list --mode ad-hoc --page-size 20",
                 "museoncli routines +list --status active --search daily",
             ],
         },

@@ -953,7 +953,7 @@ def _social_account_list_input_schema() -> dict[str, Any]:
             },
             "allocation_type": {
                 "type": ["string", "null"],
-                "enum": ["campaign", "account_publish", "unallocated", None],
+                "enum": ["all", "campaign", "account-publish", "unallocated", None],
             },
             "allocation_status": {"type": ["string", "null"]},
             "oauth_status": {
@@ -1656,8 +1656,8 @@ def _social_account_performance_get_input_schema() -> dict[str, Any]:
             "account_id": _uuid_id_schema("Pool account UUID."),
             "period": {
                 "type": "string",
-                "enum": ["last_7d", "last_30d", "last_60d"],
-                "default": "last_30d",
+                "enum": ["last-7d", "last-30d", "last-60d"],
+                "default": "last-30d",
             },
             "cursor": {
                 "type": ["string", "null"],
@@ -1699,7 +1699,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 "museoncli social-account +list --platform tiktok --plan-status with-plan",
-                "museoncli social-account +list --search creator --allocation-type account_publish",
+                "museoncli social-account +list --search creator --allocation-type account-publish",
                 (
                     "museoncli social-account +list --platform tiktok "
                     "--search-term @handle_a --search-term @handle_b"

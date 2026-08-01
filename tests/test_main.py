@@ -3025,7 +3025,7 @@ def test_schema_returns_routines_list_standard_pagination_contract() -> None:
     props = result["data"]["input_schema"]["properties"]
     assert "offset" not in props
     assert "limit" not in props
-    assert props["mode"] == {"type": "string", "enum": ["ad_hoc"]}
+    assert props["mode"] == {"type": "string", "enum": ["ad-hoc"]}
     assert props["status"] == {
         "type": "string",
         "enum": ["draft", "active", "disabled", "archived"],
@@ -3039,7 +3039,7 @@ def test_schema_returns_routines_list_standard_pagination_contract() -> None:
         "default": 20,
     }
     assert "Lifecycle writes are only allowed on routines you own" in result["data"]["summary"]
-    assert "museoncli routines +list --mode ad_hoc --page-size 20" in result["data"]["examples"]
+    assert "museoncli routines +list --mode ad-hoc --page-size 20" in result["data"]["examples"]
 
 
 def test_dispatch_routines_list_uses_standard_pagination(

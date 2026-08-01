@@ -640,10 +640,10 @@ def _social_media_search_input_schema() -> dict[str, Any]:
                 "description": (
                     "Search query, creator handle, profile/channel URL, hashtag/ch_id, "
                     "post URL/id, or aweme_id depending on platform and intent. For "
-                    "Instagram creator_posts, handles/profile URLs read an account "
+                    "Instagram creator-posts, handles/profile URLs read an account "
                     "timeline; multi-word plain text runs keyword posts search. "
-                    "For XHS keyword_search, pass a note search keyword; for XHS post, "
-                    "pass a note id or share URL; for XHS profile/creator_posts, pass a "
+                    "For XHS keyword-search, pass a note search keyword; for XHS post, "
+                    "pass a note id or share URL; for XHS profile/creator-posts, pass a "
                     "user id or profile share URL."
                 ),
             },
@@ -673,11 +673,11 @@ def _social_media_search_input_schema() -> dict[str, Any]:
                 "enum": SEARCH_CONTENT_TYPE_CHOICES,
                 "default": "any",
                 "description": (
-                    "Content hint. For TikTok keyword_search, image routes to "
-                    "keyword_photos; any/video routes to keyword_videos. For Instagram "
-                    "creator_posts/reels, image filters to all-static carousel image "
+                    "Content hint. For TikTok keyword-search, image routes to "
+                    "keyword-photos; any/video routes to keyword-videos. For Instagram "
+                    "creator-posts/reels, image filters to all-static carousel image "
                     "posts and video filters to posts with video media."
-                    " For XHS keyword_search, image routes to normal notes, video routes to "
+                    " For XHS keyword-search, image routes to normal notes, video routes to "
                     "video notes, and live routes to live notes."
                 ),
             },
@@ -687,11 +687,11 @@ def _social_media_search_input_schema() -> dict[str, Any]:
                     "Optional pagination cursor from evidence.pagination. Pass a simple token "
                     "directly, or pass the whole pagination object as JSON when it contains "
                     "multiple fields such as cursor + search_id. Supported for TikTok "
-                    "creator_search/creator_posts/keyword_search/keyword_videos/keyword_photos/"
-                    "hashtag_search/hashtag_videos/comments/music_posts, Instagram creator_posts/"
-                    "reels/keyword_search/keyword_reels/hashtag_search/hashtag_reels/"
-                    "music_search/music_posts, YouTube keyword_search, XHS keyword_search, "
-                    "and XHS creator_posts."
+                    "creator-search/creator-posts/keyword-search/keyword-videos/keyword-photos/"
+                    "hashtag-search/hashtag-videos/comments/music-posts, Instagram creator-posts/"
+                    "reels/keyword-search/keyword-reels/hashtag-search/hashtag-reels/"
+                    "music-search/music-posts, YouTube keyword-search, XHS keyword-search, "
+                    "and XHS creator-posts."
                 ),
             },
         },
@@ -712,9 +712,9 @@ def _community_search_input_schema() -> dict[str, Any]:
                 "type": "string",
                 "enum": kebab_choices(COMMUNITY_INTENT_CHOICES),
                 "description": (
-                    "Domain search intent. Use keyword_search for discovery, "
-                    "profile/company_profile for entity hydration, "
-                    "creator_posts/community_posts/company_posts for timelines, "
+                    "Domain search intent. Use keyword-search for discovery, "
+                    "profile/company-profile for entity hydration, "
+                    "creator-posts/community-posts/company-posts for timelines, "
                     "post for one item, comments for discussion, and trending for topical discovery."
                 ),
             },
@@ -929,11 +929,11 @@ def specs() -> list[CommandSpec]:
             examples=[
                 (
                     "museoncli research +web-research --query 'Museon AI' "
-                    "--include search_results --limit 5"
+                    "--include search-results --limit 5"
                 ),
                 (
                     "museoncli research +web-research --url https://example.com "
-                    "--include page_text --include site_visual_assets"
+                    "--include page-text --include site-visual-assets"
                 ),
             ],
             add_arguments=_add_web_research_arguments,
@@ -956,11 +956,11 @@ def specs() -> list[CommandSpec]:
             examples=[
                 (
                     "museoncli research +social-media-search --platform tiktok "
-                    "--intent keyword_search --query 'skincare routine' --content-type video"
+                    "--intent keyword-search --query 'skincare routine' --content-type video"
                 ),
                 (
                     "museoncli research +social-media-search --platform tiktok "
-                    "--intent hashtag_videos --query '#skincare' --limit 10"
+                    "--intent hashtag-videos --query '#skincare' --limit 10"
                 ),
                 (
                     "museoncli research +social-media-search --platform instagram "
@@ -968,11 +968,11 @@ def specs() -> list[CommandSpec]:
                 ),
                 (
                     "museoncli research +social-media-search --platform youtube "
-                    "--intent keyword_search --query 'AI video ads'"
+                    "--intent keyword-search --query 'AI video ads'"
                 ),
                 (
                     "museoncli research +social-media-search --platform xhs "
-                    "--intent keyword_search --query 'coffee shop decor' --content-type image"
+                    "--intent keyword-search --query 'coffee shop decor' --content-type image"
                 ),
                 (
                     "museoncli research +social-media-search --platform xhs "
@@ -980,7 +980,7 @@ def specs() -> list[CommandSpec]:
                 ),
                 (
                     "museoncli research +social-media-search --platform xhs "
-                    "--intent creator_posts --query '<user_id>' --limit 10"
+                    "--intent creator-posts --query '<user_id>' --limit 10"
                 ),
             ],
             add_arguments=_add_social_media_search_arguments,
@@ -1003,19 +1003,19 @@ def specs() -> list[CommandSpec]:
             examples=[
                 (
                     "museoncli research +community-search --platform reddit "
-                    "--intent keyword_search --query 'AI video agent' --search-type post --limit 5"
+                    "--intent keyword-search --query 'AI video agent' --search-type post --limit 5"
                 ),
                 (
                     "museoncli research +community-search --platform x "
-                    "--intent keyword_search --query 'AI video agent'"
+                    "--intent keyword-search --query 'AI video agent'"
                 ),
                 (
                     "museoncli research +community-search --platform linkedin "
-                    "--intent company_profile --query openai"
+                    "--intent company-profile --query openai"
                 ),
                 (
                     "museoncli research +community-search --platform linkedin "
-                    "--intent keyword_search --query 'AI automation' --limit 5"
+                    "--intent keyword-search --query 'AI automation' --limit 5"
                 ),
             ],
             add_arguments=_add_community_search_arguments,
