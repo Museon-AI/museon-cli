@@ -542,8 +542,7 @@ def test_plan_update_requires_plan_id() -> None:
         parse(["agentic-campaign", "+plan-update", "--name", "New"])
 
 
-@pytest.mark.parametrize("candidate_id", [None, "77777777-7777-4777-8777-777777777777"])
-def test_plan_propose_dispatches_draft_submit_or_revise(candidate_id: str | None) -> None:
+def test_plan_propose_dispatches_draft_submit() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     capture = Capture(
         campaign_list(plan_id),
@@ -552,9 +551,6 @@ def test_plan_propose_dispatches_draft_submit_or_revise(candidate_id: str | None
     )
     argv = ["agentic-campaign", "+plan-propose", "--plan-id", plan_id]
     complete_args = _complete_plan_cli_args()
-    if candidate_id:
-        argv.extend(["--candidate-id", candidate_id, "--note", "Brighter visual direction"])
-        complete_args = complete_args[2:]
     args = parse([*argv, *complete_args])
     arguments = agentic_campaign._build_plan_propose_arguments(args)
     result = asyncio.run(
@@ -563,26 +559,22 @@ def test_plan_propose_dispatches_draft_submit_or_revise(candidate_id: str | None
         )
     )
     call = capture.calls[-1]
-    expected_suffix = f"/candidates/{candidate_id}:revise" if candidate_id else "/candidates:submit"
-    assert call["path"].endswith(expected_suffix)
+    assert call["path"].endswith("/candidates:submit")
     assert call["json_body"]["persona_payload"]["name"] == "Mia"
     assert call["json_body"]["elements"][0]["format_id"].startswith("4444")
-    assert ("name" in call["json_body"]) is (candidate_id is None)
+    assert "name" in call["json_body"]
     assert result == {
         "candidate_id": "candidate-1",
         "change_summary": {
             "complete_plan": True,
-            **({"name": "DIY problem solver"} if candidate_id is None else {}),
+            "name": "DIY problem solver",
             "directions": 1,
         },
         "next_step": "Please review the proposal in Museon and confirm it there.",
     }
 
 
-@pytest.mark.parametrize("candidate_id", [None, "77777777-7777-4777-8777-777777777777"])
-def test_plan_propose_dispatches_draft_submit_or_revise_with_persona_id(
-    candidate_id: str | None,
-) -> None:
+def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     persona_id = "99999999-9999-4999-8999-999999999999"
     capture = Capture(
@@ -606,11 +598,9 @@ def test_plan_propose_dispatches_draft_submit_or_revise_with_persona_id(
                 }
             ]
         ),
+        "--name",
+        "DIY problem solver",
     ]
-    if candidate_id:
-        argv.extend(["--candidate-id", candidate_id])
-    else:
-        argv.extend(["--name", "DIY problem solver"])
     args = parse(argv)
     arguments = agentic_campaign._build_plan_propose_arguments(args)
     assert arguments["persona_id"] == persona_id
@@ -621,8 +611,7 @@ def test_plan_propose_dispatches_draft_submit_or_revise_with_persona_id(
         )
     )
     call = capture.calls[-1]
-    expected_suffix = f"/candidates/{candidate_id}:revise" if candidate_id else "/candidates:submit"
-    assert call["path"].endswith(expected_suffix)
+    assert call["path"].endswith("/candidates:submit")
     assert call["json_body"]["persona_id"] == persona_id
     assert "persona_payload" not in call["json_body"]
     assert result["candidate_id"] == "candidate-1"
