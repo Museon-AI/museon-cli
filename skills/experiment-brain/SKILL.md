@@ -92,23 +92,29 @@ Mel always proposes; the operator reviews the visuals and confirms on the
 review page. Never select, merge, finalize, enable, boost, or stop a direction
 on the operator's behalf.
 
-### Scenario 1: propose a complete plan during preparation
+### Action 1: create a complete proposal during preparation
 
 Submit complete `人设方案` alternatives while the plan is in preparation. A
 failed proposal must not block another, so multiple coherent alternatives may
-coexist. To submit a `第N稿` for an existing proposal, use `--candidate-id`;
-the server uses its current head as the parent.
+coexist. A new proposal requires `--name`, `--elements-json`, and exactly one
+of `--persona-json` or `--persona-id`.
+
+To revise an existing open proposal as its next `第N稿`, use `--proposal-id`
+with the complete replacement `--elements-json` and, only when changing its
+persona, either `--persona-json` or `--persona-id`:
 
 ```bash
 museoncli agentic-campaign +plan-propose \
   --plan-id 33333333-3333-4333-8333-333333333333 \
-  --candidate-id 77777777-7777-4777-8777-777777777777 \
+  --proposal-id 77777777-7777-4777-8777-777777777777 \
   --persona-json '{"name":"Mia","description":"Practical maker","visual_prompt":"Bright workshop portrait","reference_media_ids":[]}' \
   --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
   --note "Tighten the visual direction"
 ```
 
-Omit `--candidate-id` to submit a new alternative.
+Omit `--proposal-id` to create a new proposal, and include its required
+`--name`. When revising with `--proposal-id`, omitting both persona options
+preserves that proposal's current persona; it does not clear the persona.
 
 When the persona already exists as a workspace persona asset, pass
 `--persona-id <id>` instead of `--persona-json` (mutually exclusive). The
@@ -116,7 +122,7 @@ server snapshots the asset's name, description, and look-reference media at
 submit time — a copy, not a live link; tags and marketing profile do not
 carry over.
 
-### Scenario 2: propose an evidence-based adjustment during operation
+### Action 2: adjust a running plan from evidence
 
 Use the experiment scoreboard before proposing an operating-plan adjustment,
 and use `--note` to state the evidence:
@@ -152,7 +158,7 @@ The command creates an `调整记录` for review; it never confirms it. Tell the
 operator what will be added, stopped, and boosted, then direct them to review
 the visuals and confirm on the page.
 
-### Revision iteration
+### Action 3: revise an open proposal
 
 When a revision task arrives, read the latest unresolved operator feedback
 before changing the proposal:
@@ -217,6 +223,10 @@ museoncli agentic-campaign +plan-propose \
   --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
   --note "Applied the latest compiled review feedback across the replacement supply"
 ```
+
+This form intentionally omits persona options, so the proposal keeps its
+current persona. Add exactly one of `--persona-json` or `--persona-id` only
+when the next `第N稿` replaces that persona.
 
 The operator may continue annotating or confirm from the review desk. Never
 pressure or prompt the operator to confirm.
