@@ -11296,21 +11296,30 @@
                   "add_elements": {
                     "minItems": 1
                   }
-                }
+                },
+                "required": [
+                  "add_elements"
+                ]
               },
               {
                 "properties": {
                   "retire_element_ids": {
                     "minItems": 1
                   }
-                }
+                },
+                "required": [
+                  "retire_element_ids"
+                ]
               },
               {
                 "properties": {
                   "boost_elements": {
                     "minItems": 1
                   }
-                }
+                },
+                "required": [
+                  "boost_elements"
+                ]
               },
               {
                 "required": [
