@@ -308,6 +308,169 @@ def test_proposal_withdraw_dry_run_is_local(monkeypatch: pytest.MonkeyPatch) -> 
     assert result["data"]["dry_run"] is True
 
 
+def test_proposal_resource_actions_and_legacy_aliases_resolve_to_one_contract() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    nested = parse(
+        [
+            "agentic-campaign",
+            "proposal",
+            "+get",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+        ]
+    )
+    legacy = parse(
+        [
+            "agentic-campaign",
+            "+proposal-get",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+        ]
+    )
+    assert nested.domain_command == legacy.domain_command == "agentic-campaign.proposal-get"
+
+
+def test_proposal_create_and_revise_build_named_atomic_changes() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    active = parse(
+        [
+            "agentic-campaign",
+            "proposal",
+            "+create",
+            "--plan-id",
+            plan_id,
+            "--add-elements-json",
+            '[{"format_id":"44444444-4444-4444-8444-444444444444",'
+            '"topic_id":"55555555-5555-4555-8555-555555555555"}]',
+            "--replace-persona-id",
+            "99999999-9999-4999-8999-999999999999",
+        ]
+    )
+    active_arguments = agentic_campaign._build_proposal_create_arguments(active)
+    assert active_arguments["changes"] == {
+        "add_elements": [
+            {
+                "format_id": "44444444-4444-4444-8444-444444444444",
+                "topic_id": "55555555-5555-4555-8555-555555555555",
+            }
+        ],
+        "persona": {"persona_id": "99999999-9999-4999-8999-999999999999"},
+    }
+
+    revised = parse(
+        [
+            "agentic-campaign",
+            "proposal",
+            "+revise",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+            "--retire-element-ids",
+            '["88888888-8888-4888-8888-888888888888"]',
+            "--boost-elements-json",
+            '[{"element_id":"99999999-9999-4999-8999-999999999999",'
+            '"account_count":2,"days":7}]',
+            "--persona-patch-json",
+            '{"description":"More direct"}',
+        ]
+    )
+    revised_arguments = agentic_campaign._build_proposal_revise_arguments(revised)
+    assert revised_arguments["changes"] == {
+        "retire_element_ids": ["88888888-8888-4888-8888-888888888888"],
+        "boost_elements": [
+            {
+                "element_id": "99999999-9999-4999-8999-999999999999",
+                "account_count": 2,
+                "days": 7,
+            }
+        ],
+        "patch_persona_payload": {"description": "More direct"},
+    }
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"elements": [{"id": "new-element"}], "round": 3, "dispatched_task_count": 1},
+    )
+    asyncio.run(
+        agentic_campaign._execute_proposal_revise(
+            context("agentic-campaign.proposal-revise", revised_arguments, capture)
+        )
+    )
+    assert capture.calls[-1]["json_body"] == {
+        "workspace_id": "11111111-1111-4111-8111-111111111111",
+        "changes": revised_arguments["changes"],
+        "note": None,
+    }
+
+
+def test_proposal_persona_operations_are_mutually_exclusive() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "proposal",
+            "+revise",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--proposal-id",
+            "77777777-7777-4777-8777-777777777777",
+            "--replace-persona-id",
+            "99999999-9999-4999-8999-999999999999",
+            "--persona-patch-json",
+            '{"description":"More direct"}',
+        ]
+    )
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        agentic_campaign._build_proposal_revise_arguments(args)
+
+
+def test_plan_members_reconcile_derives_versions_and_minimum_campaign_budget() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    arguments = agentic_campaign._build_plan_members_reconcile_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "plan",
+                "+members-reconcile",
+                "--plan-id",
+                plan_id,
+                "--account-ids",
+                '["44444444-4444-4444-8444-444444444444",'
+                '"55555555-5555-4555-8555-555555555555"]',
+            ]
+        )
+    )
+    detail = campaign_detail(plan_id, status="active")
+    detail["campaign"].update({"version": 4, "total_account_budget": 1})
+    detail["agentic_persona_plans"][0]["account_budget"] = 1
+    detail["agentic_persona_plans"].append(
+        {"id": "plan-2", "version": 2, "account_budget": 3, "status": "active"}
+    )
+    capture = Capture(campaign_list(plan_id), detail, {"version": 8})
+    asyncio.run(
+        agentic_campaign._execute_plan_members_reconcile(
+            context("agentic-campaign.plan-members-reconcile", arguments, capture)
+        )
+    )
+    assert capture.calls[-1]["json_body"] == {
+        "workspace_id": "11111111-1111-4111-8111-111111111111",
+        "expected_campaign_version": 4,
+        "expected_plan_version": 7,
+        "account_budget": 2,
+        "target_account_ids": [
+            "44444444-4444-4444-8444-444444444444",
+            "55555555-5555-4555-8555-555555555555",
+        ],
+        "target_campaign_total_budget": 5,
+    }
+
+
 def test_campaign_create_builds_extended_fields_and_field_config() -> None:
     args = parse(
         [

@@ -65,6 +65,10 @@ def command_specs() -> list[CommandSpec]:
     return specs
 
 
+def discoverable_command_specs() -> list[CommandSpec]:
+    return [spec for spec in command_specs() if spec.discoverable]
+
+
 def command_executors() -> "dict[str, Any]":
     merged: dict[str, Any] = {}
     for module in _DOMAIN_MODULES:
@@ -106,16 +110,39 @@ def add_domain_command_parsers(
             continue
         domain_parser = subparsers.add_parser(domain)
         shortcut_subparsers = domain_parser.add_subparsers(dest="shortcut", required=True)
-        for spec in specs:
+
+        def add_command_parser(
+            parser: argparse._SubParsersAction[argparse.ArgumentParser],
+            spec: CommandSpec,
+            shortcut: str,
+            *,
+            hidden: bool = False,
+        ) -> None:
             examples = "\n".join(f"  {example}" for example in spec.examples)
-            shortcut_parser = shortcut_subparsers.add_parser(
-                spec.shortcut,
+            shortcut_parser = parser.add_parser(
+                shortcut,
+                help=argparse.SUPPRESS if hidden else None,
                 description=spec.summary,
                 epilog=f"Examples:\n{examples}" if examples else None,
                 formatter_class=argparse.RawDescriptionHelpFormatter,
             )
             spec.add_arguments(shortcut_parser)
             shortcut_parser.set_defaults(domain_command=spec.schema_name)
+
+        resource_specs: dict[str, list[CommandSpec]] = {}
+        for spec in specs:
+            if spec.resource is None:
+                add_command_parser(shortcut_subparsers, spec, spec.shortcut)
+                continue
+            resource_specs.setdefault(spec.resource, []).append(spec)
+            for legacy_shortcut in spec.legacy_shortcuts:
+                add_command_parser(shortcut_subparsers, spec, legacy_shortcut, hidden=True)
+
+        for resource, grouped_specs in resource_specs.items():
+            resource_parser = shortcut_subparsers.add_parser(resource)
+            action_subparsers = resource_parser.add_subparsers(dest="resource_action", required=True)
+            for spec in grouped_specs:
+                add_command_parser(action_subparsers, spec, spec.shortcut)
 
 
 def schema_payload(schema_name: str | None = None) -> dict[str, Any]:
@@ -125,10 +152,11 @@ def schema_payload(schema_name: str | None = None) -> dict[str, Any]:
         if domain_specs is not None:
             return _domain_schema_payload(normalized, domain_specs)
         return _spec_schema_payload(get_command_spec(schema_name))
-    commands = {
-        domain: [_spec_summary_payload(spec) for spec in specs]
-        for domain, specs in specs_by_domain().items()
-    }
+    commands = {}
+    for domain, specs in specs_by_domain().items():
+        visible = [spec for spec in specs if spec.discoverable]
+        if visible:
+            commands[domain] = [_spec_summary_payload(spec) for spec in visible]
     return {
         "domains": fixed_domain_values(),
         "commands": commands,
@@ -138,7 +166,7 @@ def schema_payload(schema_name: str | None = None) -> dict[str, Any]:
 def _domain_schema_payload(domain: str, specs: list[CommandSpec]) -> dict[str, Any]:
     return {
         "domain": domain,
-        "commands": [_spec_summary_payload(spec) for spec in specs],
+        "commands": [_spec_summary_payload(spec) for spec in specs if spec.discoverable],
     }
 
 
@@ -161,6 +189,7 @@ __all__ = [
     "add_domain_command_parsers",
     "command_payload",
     "command_specs",
+    "discoverable_command_specs",
     "fixed_domain_values",
     "get_command_spec",
     "schema_payload",

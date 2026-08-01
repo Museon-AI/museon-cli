@@ -96,6 +96,52 @@ def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--dry-run", action="store_true")
 
 
+def _add_proposal_create_arguments(parser: argparse.ArgumentParser) -> None:
+    """Primary Proposal command surface; legacy +plan-propose remains separate."""
+
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--note")
+    parser.add_argument("--name")
+    parser.add_argument("--title")
+    parser.add_argument("--persona-json")
+    parser.add_argument("--persona-id")
+    parser.add_argument("--elements-json")
+    parser.add_argument("--add-elements-json")
+    parser.add_argument("--retire-element-ids")
+    parser.add_argument("--boost-elements-json")
+    parser.add_argument("--replace-persona-json")
+    parser.add_argument("--replace-persona-id")
+    parser.add_argument("--persona-patch-json")
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _add_proposal_revise_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--proposal-id", required=True)
+    parser.add_argument("--note")
+    parser.add_argument("--elements-json")
+    parser.add_argument("--add-elements-json")
+    parser.add_argument("--retire-element-ids")
+    parser.add_argument("--boost-elements-json")
+    parser.add_argument("--replace-persona-json")
+    parser.add_argument("--replace-persona-id")
+    parser.add_argument("--persona-patch-json")
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _add_proposal_list_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--page", type=int, default=1)
+    parser.add_argument("--page-size", type=int, default=20)
+    parser.add_argument("--include-draft-stage", action="store_true")
+
+
+def _add_plan_members_reconcile_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--account-ids", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
 def _add_proposal_get_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
     parser.add_argument("--proposal-id", required=True)
@@ -193,6 +239,172 @@ def _revision_json_list(value: str | None, *, field: str) -> list[Any]:
     if value is None:
         return []
     return _candidate_json(value, field=field, expected_type=list)
+
+
+def _retire_element_ids(value: str | None) -> list[str] | None:
+    if value is None:
+        return None
+    stripped = value.strip()
+    if stripped.startswith("["):
+        parsed = _candidate_json(stripped, field="retire-element-ids", expected_type=list)
+        if not all(isinstance(item, str) and item.strip() for item in parsed):
+            raise ValueError("retire-element-ids must be a JSON array of ids")
+        return [item.strip() for item in parsed]
+    return _csv(value)
+
+
+def _proposal_persona_operation(args: argparse.Namespace) -> dict[str, Any]:
+    sources = [
+        ("replace-persona-id", args.replace_persona_id),
+        ("replace-persona-json", args.replace_persona_json),
+        ("persona-patch-json", args.persona_patch_json),
+    ]
+    supplied = [(name, value) for name, value in sources if value is not None]
+    if len(supplied) > 1:
+        raise ValueError(
+            "--replace-persona-id, --replace-persona-json, and --persona-patch-json "
+            "are mutually exclusive."
+        )
+    if not supplied:
+        return {}
+    name, value = supplied[0]
+    if name == "replace-persona-id":
+        return {"persona": {"persona_id": value}}
+    if name == "replace-persona-json":
+        return {
+            "persona": {
+                "persona_payload": _candidate_json(value, field="replace-persona", expected_type=dict)
+            }
+        }
+    return {
+        "patch_persona_payload": _candidate_json(
+            value, field="persona-patch", expected_type=dict
+        )
+    }
+
+
+def _build_proposal_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    complete_persona_sources = [
+        value for value in (args.persona_id, args.persona_json) if value is not None
+    ]
+    if len(complete_persona_sources) > 1:
+        raise ValueError("--persona-id and --persona-json are mutually exclusive.")
+    persona_operation = _proposal_persona_operation(args)
+    complete_supplied = args.name is not None or args.elements_json is not None
+    atomic_supplied = any(
+        value is not None
+        for value in (
+            args.add_elements_json,
+            args.retire_element_ids,
+            args.boost_elements_json,
+        )
+    ) or bool(persona_operation)
+    if complete_supplied and atomic_supplied:
+        raise ValueError("a Proposal is either a complete draft solution or atomic active changes")
+    if complete_supplied:
+        if args.name is None or args.elements_json is None or not complete_persona_sources:
+            raise ValueError(
+                "a complete draft Proposal requires --name, --elements-json, and exactly one "
+                "of --persona-id or --persona-json"
+            )
+        if args.title is not None:
+            raise ValueError("--title is only valid for an active-plan Proposal")
+        persona = (
+            {"persona_id": args.persona_id}
+            if args.persona_id is not None
+            else {"persona_payload": _candidate_json(args.persona_json, field="persona", expected_type=dict)}
+        )
+        return {
+            "plan_id": args.plan_id,
+            "name": args.name,
+            **persona,
+            "elements": _candidate_json(args.elements_json, field="elements", expected_type=list),
+            "note": args.note,
+            "dry_run": args.dry_run,
+        }
+    if not atomic_supplied:
+        raise ValueError("an active-plan Proposal requires at least one atomic change")
+    changes = compact_params(
+        {
+            "add_elements": (
+                _revision_json_list(args.add_elements_json, field="add-elements")
+                if args.add_elements_json is not None
+                else None
+            ),
+            "retire_element_ids": _retire_element_ids(args.retire_element_ids),
+            "boost_elements": (
+                _revision_json_list(args.boost_elements_json, field="boost-elements")
+                if args.boost_elements_json is not None
+                else None
+            ),
+            **persona_operation,
+        }
+    )
+    return compact_params(
+        {
+            "plan_id": args.plan_id,
+            "title": args.title,
+            "changes": changes,
+            "note": args.note,
+            "dry_run": args.dry_run,
+        }
+    )
+
+
+def _build_proposal_revise_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    if args.elements_json is not None and args.add_elements_json is not None:
+        raise ValueError("--elements-json and --add-elements-json are mutually exclusive.")
+    persona_operation = _proposal_persona_operation(args)
+    changes = compact_params(
+        {
+            "add_elements": (
+                _revision_json_list(
+                    args.elements_json if args.elements_json is not None else args.add_elements_json,
+                    field="elements" if args.elements_json is not None else "add-elements",
+                )
+                if args.elements_json is not None or args.add_elements_json is not None
+                else None
+            ),
+            "retire_element_ids": _retire_element_ids(args.retire_element_ids),
+            "boost_elements": (
+                _revision_json_list(args.boost_elements_json, field="boost-elements")
+                if args.boost_elements_json is not None
+                else None
+            ),
+            **persona_operation,
+        }
+    )
+    if not changes:
+        raise ValueError("a Proposal revision requires at least one named change")
+    return {
+        "plan_id": args.plan_id,
+        "proposal_id": args.proposal_id,
+        "changes": changes,
+        "note": args.note,
+        "dry_run": args.dry_run,
+    }
+
+
+def _build_proposal_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    if args.page < 1 or args.page_size < 1:
+        raise ValueError("--page and --page-size must be positive")
+    return {
+        "plan_id": args.plan_id,
+        "page": args.page,
+        "page_size": args.page_size,
+        "include_draft_stage": args.include_draft_stage,
+    }
+
+
+def _build_plan_members_reconcile_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    account_ids = _candidate_json(args.account_ids, field="account-ids", expected_type=list)
+    if not all(isinstance(item, str) and item.strip() for item in account_ids):
+        raise ValueError("account-ids must be a JSON array of account ids")
+    return {
+        "plan_id": args.plan_id,
+        "target_account_ids": list(dict.fromkeys(item.strip() for item in account_ids)),
+        "dry_run": args.dry_run,
+    }
 
 
 def _revision_changes(
@@ -720,6 +932,59 @@ def _revision_add_elements_schema() -> dict[str, Any]:
     return schema
 
 
+def _proposal_create_input_schema() -> dict[str, Any]:
+    schema = _plan_schema(
+        {
+            "name": {"type": "string", "minLength": 1, "maxLength": 80},
+            "title": {"type": "string", "minLength": 1, "maxLength": 80},
+            "persona_id": _uuid_property("Persona for a complete draft Proposal"),
+            "persona_payload": _persona_payload_schema(),
+            "elements": _candidate_elements_schema(),
+            "changes": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": False,
+                "properties": {
+                    "add_elements": _revision_add_elements_schema(),
+                    "retire_element_ids": {
+                        "type": "array",
+                        "items": _uuid_property("Active Plan element id"),
+                    },
+                    "boost_elements": _revision_boosts_schema(),
+                    "persona": {"type": "object"},
+                    "patch_persona_payload": {"type": "object"},
+                },
+            },
+            "note": {"type": ["string", "null"], "maxLength": 2000},
+            "dry_run": {"type": "boolean", "default": False},
+        }
+    )
+    schema["oneOf"] = [
+        {
+            "title": "Complete Draft Plan Proposal",
+            "required": ["name", "elements"],
+            "oneOf": [
+                {"required": ["persona_id"], "not": {"required": ["persona_payload"]}},
+                {"required": ["persona_payload"], "not": {"required": ["persona_id"]}},
+            ],
+            "not": {"anyOf": [{"required": ["title"]}, {"required": ["changes"]}]},
+        },
+        {
+            "title": "Atomic Active Plan Proposal",
+            "required": ["changes"],
+            "not": {
+                "anyOf": [
+                    {"required": ["name"]},
+                    {"required": ["persona_id"]},
+                    {"required": ["persona_payload"]},
+                    {"required": ["elements"]},
+                ]
+            },
+        },
+    ]
+    return schema
+
+
 def _campaign_config_schema() -> dict[str, Any]:
     return {
         "type": ["object", "null"],
@@ -874,6 +1139,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=domain,
             shortcut="+plan-propose",
+            discoverable=False,
             summary=(
                 "Create a complete plan proposal, adjust a running plan, or revise an open "
                 "proposal for operator review. For a running-plan adjustment, set --title to "
@@ -1100,7 +1366,146 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=domain,
-            shortcut="+proposal-get",
+            shortcut="+members-reconcile",
+            resource="plan",
+            summary=(
+                "Atomically reconcile a Plan's managed accounts and matching Plan budget. "
+                "The CLI reads current versions, raises Campaign total budget only when required, "
+                "and submits the member/budget change as one compare-and-swap operation."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_plan_members_reconcile",
+            input_schema=_plan_schema(
+                {
+                    "target_account_ids": {
+                        "type": "array",
+                        "maxItems": 500,
+                        "items": _uuid_property("Managed social account id"),
+                    },
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["target_account_ids"],
+            ),
+            output_schema=_direct_output_schema(
+                "Reconciled member list, Plan budget, Campaign total budget, and new versions."
+            ),
+            examples=[
+                "museoncli agentic-campaign plan +members-reconcile "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--account-ids '[\"44444444-4444-4444-8444-444444444444\","
+                "\"55555555-5555-4555-8555-555555555555\"]'",
+            ],
+            add_arguments=_add_plan_members_reconcile_arguments,
+            build_arguments=_build_plan_members_reconcile_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+create",
+            resource="proposal",
+            summary=(
+                "Create one operator-review Proposal. Draft Plans require a complete Persona "
+                "and element selection; active Plans accept named atomic changes."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_proposal_create",
+            input_schema=_proposal_create_input_schema(),
+            output_schema=_direct_output_schema(
+                "Proposal id, change summary, and operator review reminder."
+            ),
+            examples=[
+                "museoncli agentic-campaign proposal +create "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--name 'DIY problem solver' --persona-id 99999999-9999-4999-8999-999999999999 "
+                "--elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\","
+                "\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
+                "museoncli agentic-campaign proposal +create "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--title 'Dark-tone second test batch' "
+                "--add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\","
+                "\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
+            ],
+            add_arguments=_add_proposal_create_arguments,
+            build_arguments=_build_proposal_create_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+list",
+            resource="proposal",
+            summary="List a Plan's To review and Reviewed Proposals.",
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_proposal_list",
+            input_schema=_plan_schema(
+                {
+                    "page": {"type": "integer", "minimum": 1, "default": 1},
+                    "page_size": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20},
+                    "include_draft_stage": {"type": "boolean", "default": False},
+                }
+            ),
+            output_schema=_direct_output_schema("Paginated revision Proposal list."),
+            examples=[
+                "museoncli agentic-campaign proposal +list "
+                "--plan-id 33333333-3333-4333-8333-333333333333"
+            ],
+            add_arguments=_add_proposal_list_arguments,
+            build_arguments=_build_proposal_list_arguments,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+revise",
+            resource="proposal",
+            summary=(
+                "Revise an open Proposal after operator feedback. Each supplied atomic field "
+                "replaces that field's current proposed value; omit fields to preserve them."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_proposal_revise",
+            input_schema=_plan_schema(
+                {
+                    "proposal_id": _uuid_property("Open Proposal id"),
+                    "changes": {
+                        "type": "object",
+                        "minProperties": 1,
+                        "additionalProperties": False,
+                        "properties": {
+                            "add_elements": _revision_add_elements_schema(),
+                            "retire_element_ids": {
+                                "type": "array",
+                                "items": _uuid_property("Active Plan element id"),
+                            },
+                            "boost_elements": _revision_boosts_schema(),
+                            "persona": {"type": "object"},
+                            "patch_persona_payload": {"type": "object"},
+                        },
+                    },
+                    "note": {"type": ["string", "null"], "maxLength": 2000},
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["proposal_id", "changes"],
+            ),
+            output_schema=_direct_output_schema("Next Proposal revision round."),
+            examples=[
+                "museoncli agentic-campaign proposal +revise "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--proposal-id 77777777-7777-4777-8777-777777777777 "
+                "--retire-element-ids '[\"88888888-8888-4888-8888-888888888888\"]' "
+                "--boost-elements-json '[{\"element_id\":\"99999999-9999-4999-8999-999999999999\","
+                "\"account_count\":2,\"days\":7}]'",
+            ],
+            add_arguments=_add_proposal_revise_arguments,
+            build_arguments=_build_proposal_revise_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+get",
+            resource="proposal",
+            legacy_shortcuts=("+proposal-get",),
             summary=(
                 "Read an adjustment proposal, its latest revision guidance, and the "
                 "full round-by-round annotation history (annotations)."
@@ -1119,7 +1524,7 @@ def specs() -> list[CommandSpec]:
                 "yet), and a review reminder."
             ),
             examples=[
-                "museoncli agentic-campaign +proposal-get "
+                "museoncli agentic-campaign proposal +get "
                 "--plan-id 33333333-3333-4333-8333-333333333333 "
                 "--proposal-id 77777777-7777-4777-8777-777777777777"
             ],
@@ -1128,16 +1533,18 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=domain,
-            shortcut="+proposal-withdraw",
+            shortcut="+withdraw",
+            resource="proposal",
+            legacy_shortcuts=("+proposal-withdraw",),
             summary=(
                 "Withdraw one open adjustment proposal on this plan, permanently releasing "
                 "the plan elements and the persona change it holds. Withdrawal cannot be "
                 "undone, and a proposal the operator already confirmed cannot be withdrawn. "
-                "This is one of the two ways out of a rejected +plan-propose: when the server "
+                "This is one of the two ways out of a rejected Proposal: when the server "
                 "answers 409 proposal_element_conflict, proposal_persona_conflict or "
                 "proposal_open_limit_reached it names the blocking_proposal_id, so either "
                 "withdraw that proposal here and submit again, or revise the named proposal "
-                "in place with +plan-propose --proposal-id. Never resend the rejected payload "
+                "in place with proposal +revise --proposal-id. Never resend the rejected payload "
                 "unchanged."
             ),
             risk_level="write",
@@ -1152,7 +1559,7 @@ def specs() -> list[CommandSpec]:
             ),
             output_schema=_direct_output_schema("Withdrawn adjustment proposal."),
             examples=[
-                "museoncli agentic-campaign +proposal-withdraw "
+                "museoncli agentic-campaign proposal +withdraw "
                 "--plan-id 33333333-3333-4333-8333-333333333333 "
                 "--proposal-id 77777777-7777-4777-8777-777777777777"
             ],
@@ -1807,6 +2214,24 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
     }
 
 
+async def _execute_proposal_list(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "GET",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            "revision-proposals"
+        ),
+        params={
+            "workspace_id": ctx.workspace_id,
+            "page": ctx.arguments["page"],
+            "page_size": ctx.arguments["page_size"],
+            "include_draft_stage": ctx.arguments["include_draft_stage"],
+        },
+    )
+
+
 async def _execute_schedule_rollout_preflight(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     proposal_id = ctx.arguments.get("proposal_id")
@@ -2002,6 +2427,77 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
     if changes.get("persona") or changes.get("patch_persona_payload"):
         change_summary["persona_change"] = True
     return _proposal_output(response, changes=change_summary)
+
+
+async def _execute_proposal_create(ctx: CommandContext) -> Any:
+    return await _execute_plan_propose(ctx)
+
+
+async def _execute_proposal_revise(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    proposal_id = str(ctx.arguments["proposal_id"])
+    response = await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"revision-proposals/{proposal_id}:submit-revision"
+        ),
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "changes": ctx.arguments["changes"],
+            "note": ctx.arguments.get("note"),
+        },
+    )
+    payload = _payload_data(response)
+    if not isinstance(payload, dict):
+        raise RuntimeError("revision submission response was not an object")
+    revision_round = payload.get("round")
+    return {
+        "revision_round": revision_round,
+        "new_element_count": len(payload.get("elements") or []),
+        "preview_task_count": payload.get("dispatched_task_count"),
+        "next_step": f"第 {revision_round} 稿已提交；运营将在审阅台看到新一稿。",
+    }
+
+
+async def _execute_plan_members_reconcile(ctx: CommandContext) -> Any:
+    campaign_id, plan, detail = await _locate_plan(ctx)
+    campaign = detail.get("campaign") if isinstance(detail, dict) else None
+    plans = detail.get("agentic_persona_plans") if isinstance(detail, dict) else None
+    if not isinstance(campaign, dict) or campaign.get("version") is None:
+        raise RuntimeError("campaign detail did not include its current version")
+    if plan.get("version") is None:
+        raise RuntimeError("plan detail did not include its current version")
+    if not isinstance(plans, list):
+        raise RuntimeError("campaign detail did not include Persona Plans")
+    account_ids = list(ctx.arguments["target_account_ids"])
+    allocated_budget = sum(
+        int(item.get("account_budget") or 0)
+        for item in plans
+        if isinstance(item, dict)
+    )
+    current_plan_budget = int(plan.get("account_budget") or 0)
+    required_total_budget = max(
+        int(campaign.get("total_account_budget") or 0),
+        allocated_budget - current_plan_budget + len(account_ids),
+    )
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}:"
+            "reconcile-members"
+        ),
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "expected_campaign_version": campaign["version"],
+            "expected_plan_version": plan["version"],
+            "account_budget": len(account_ids),
+            "target_account_ids": account_ids,
+            "target_campaign_total_budget": required_total_budget,
+        },
+    )
 
 
 async def _execute_campaign_rename(ctx: CommandContext) -> Any:
@@ -2259,6 +2755,18 @@ EXECUTORS = {
     ),
     "agentic-campaign.plan-propose": redacted_direct_enveloped(
         _execute_plan_propose, redact_api_errors=True
+    ),
+    "agentic-campaign.plan-members-reconcile": redacted_direct_enveloped(
+        _execute_plan_members_reconcile, redact_api_errors=True
+    ),
+    "agentic-campaign.proposal-create": redacted_direct_enveloped(
+        _execute_proposal_create, redact_api_errors=True
+    ),
+    "agentic-campaign.proposal-list": redacted_direct_enveloped(
+        _execute_proposal_list, redact_api_errors=True
+    ),
+    "agentic-campaign.proposal-revise": redacted_direct_enveloped(
+        _execute_proposal_revise, redact_api_errors=True
     ),
     "agentic-campaign.proposal-get": redacted_direct_enveloped(
         _execute_proposal_get, redact_api_errors=True

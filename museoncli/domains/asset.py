@@ -1332,8 +1332,9 @@ def specs() -> list[CommandSpec]:
                 "Deleting a persona that a live persona plan is holding is rejected with "
                 "409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking "
                 "plan. Retrying the same delete unchanged always fails again: retire that "
-                "plan, or reassign its persona in place with +plan-propose --plan-id "
-                "<plan_id> and a persona change in changes, then delete again."
+                "plan, or submit a replacement with agentic-campaign proposal +create "
+                "--plan-id <plan_id> --replace-persona-id <persona_id>, complete its review, "
+                "then delete again."
             ),
             risk_level="destructive",
             requires_confirmation=True,
