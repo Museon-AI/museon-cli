@@ -68,7 +68,7 @@ The tables below are generated — edit code, then run
 | `asset +options` | read | — | — | direct | List canonical values and labels for an asset field. Product category supports optional intent search, so a term such as education, edtech, or 教育 returns the relevant learning categories without trial writes. |
 | `asset +create` | write | yes | — | direct | Create one reusable product, persona, topic, format, or media asset. Product requires name, category, and description; discover canonical categories with asset +options and use --dry-run for authoritative server validation without writing. |
 | `asset +update` | write | yes | — | direct | Update one reusable product, persona, topic, format, or media asset. |
-| `asset +delete` | destructive | yes | `--yes` | direct | Delete one reusable product, persona, topic, format, or media asset. |
+| `asset +delete` | destructive | yes | `--yes` | direct | Delete one reusable product, persona, topic, format, or media asset. Deleting a persona that a live persona plan is holding is rejected with 409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking plan. Retrying the same delete unchanged always fails again: retire that plan, or reassign its persona in place with +plan-propose --plan-id <plan_id> and a persona change in changes, then delete again. |
 
 ### artifacts
 

@@ -70,7 +70,6 @@ def _build_plan_id_arguments(args: argparse.Namespace) -> dict[str, Any]:
 
 def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
-    parser.add_argument("--candidate-id")
     parser.add_argument("--proposal-id")
     parser.add_argument("--note")
     parser.add_argument("--name")
@@ -156,8 +155,6 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             )
         if args.title is not None:
             raise ValueError("--title is not valid when revising an adjustment proposal.")
-        if args.candidate_id is not None:
-            raise ValueError("--candidate-id is not valid when revising an adjustment proposal.")
         if any(
             value is not None
             for value in (
@@ -238,7 +235,6 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
     payload: dict[str, Any] = compact_params(
         {
             "plan_id": args.plan_id,
-            "candidate_id": args.candidate_id,
             "proposal_id": args.proposal_id,
             "note": args.note,
             "dry_run": args.dry_run,
@@ -697,8 +693,8 @@ def specs() -> list[CommandSpec]:
                 "type": "object",
                 "description": (
                     "For a draft plan, submit a complete solution (name, elements, and exactly "
-                    "one of persona_payload or persona_id), optionally revising a candidate "
-                    "with candidate_id. persona_id references an existing persona; the server "
+                    "one of persona_payload or persona_id). persona_id references an existing "
+                    "persona; the server "
                     "snapshots its name, description, and visual reference into the proposal at "
                     "submission time (copied, not bound -- later edits to the source persona do "
                     "not affect this proposal; tags and marketing_profile are not copied). For "
@@ -706,7 +702,7 @@ def specs() -> list[CommandSpec]:
                     "persona, add_elements, retire_element_ids, and boost_elements in any "
                     "combination, optionally with a title. To revise "
                     "an active-plan proposal after operator feedback, provide proposal_id and "
-                    "replacement elements only. Candidate and proposal ids are scenario-specific. "
+                    "replacement elements only. "
                     "Several adjustment proposals may stay open on the same plan at once, and "
                     "confirming one never invalidates the others, so an open proposal stays "
                     "confirmable however old its base is. In exchange, open proposals must not "
@@ -725,11 +721,6 @@ def specs() -> list[CommandSpec]:
                 ),
                 "properties": {
                     "plan_id": _uuid_property("Agentic Persona Plan id"),
-                    "candidate_id": {
-                        "type": ["string", "null"],
-                        "format": "uuid",
-                        "description": "Draft-plan candidate id to revise",
-                    },
                     "proposal_id": {
                         "type": ["string", "null"],
                         "format": "uuid",
@@ -824,12 +815,6 @@ def specs() -> list[CommandSpec]:
                         ],
                         "anyOf": [
                             {"required": ["name"]},
-                            {
-                                "required": ["candidate_id"],
-                                "properties": {
-                                    "candidate_id": {"type": "string", "format": "uuid"}
-                                },
-                            },
                         ],
                         "not": {
                             "anyOf": [
@@ -857,7 +842,6 @@ def specs() -> list[CommandSpec]:
                         "properties": {"proposal_id": {"type": "string", "format": "uuid"}},
                         "not": {
                             "anyOf": [
-                                {"required": ["candidate_id"]},
                                 {"required": ["name"]},
                                 {"required": ["persona_payload"]},
                                 {"required": ["changes"]},
@@ -868,7 +852,7 @@ def specs() -> list[CommandSpec]:
                 ],
             },
             output_schema=_direct_output_schema(
-                "Candidate or adjustment proposal id, change summary, and operator review reminder."
+                "Proposal id, change summary, and operator review reminder."
             ),
             examples=[
                 "museoncli agentic-campaign +plan-propose "

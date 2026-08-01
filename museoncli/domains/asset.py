@@ -1327,7 +1327,14 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.ASSET,
             shortcut="+delete",
-            summary="Delete one reusable product, persona, topic, format, or media asset.",
+            summary=(
+                "Delete one reusable product, persona, topic, format, or media asset. "
+                "Deleting a persona that a live persona plan is holding is rejected with "
+                "409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking "
+                "plan. Retrying the same delete unchanged always fails again: retire that "
+                "plan, or reassign its persona in place with +plan-propose --plan-id "
+                "<plan_id> and a persona change in changes, then delete again."
+            ),
             risk_level="destructive",
             requires_confirmation=True,
             execution="direct",

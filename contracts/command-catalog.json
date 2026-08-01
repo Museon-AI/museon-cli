@@ -1847,7 +1847,7 @@
           "risk_level": "destructive",
           "shortcut": "+delete",
           "stability": "stable",
-          "summary": "Delete one reusable product, persona, topic, format, or media asset.",
+          "summary": "Delete one reusable product, persona, topic, format, or media asset. Deleting a persona that a live persona plan is holding is rejected with 409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking plan. Retrying the same delete unchanged always fails again: retire that plan, or reassign its persona in place with +plan-propose --plan-id <plan_id> and a persona change in changes, then delete again.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -10962,24 +10962,13 @@
       ],
       "execution": "direct",
       "input_schema": {
-        "description": "For a draft plan, submit a complete solution (name, elements, and exactly one of persona_payload or persona_id), optionally revising a candidate with candidate_id. persona_id references an existing persona; the server snapshots its name, description, and visual reference into the proposal at submission time (copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). For an active plan, submit one unified revision in changes; changes may include persona, add_elements, retire_element_ids, and boost_elements in any combination, optionally with a title. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Candidate and proposal ids are scenario-specific. Several adjustment proposals may stay open on the same plan at once, and confirming one never invalidates the others, so an open proposal stays confirmable however old its base is. In exchange, open proposals must not overlap: submission is rejected with 409 proposal_element_conflict (blocking_proposal_id, element_ids) when the new proposal touches a plan element another open proposal already claims, 409 proposal_persona_conflict (blocking_proposal_id) when it carries a persona change while another open proposal already does, and 409 proposal_open_limit_reached (limit, open_proposal_ids) when the plan already has the maximum number of open proposals. Retrying the same payload always fails again: withdraw the blocking proposal with +proposal-withdraw --proposal-id <blocking_proposal_id> and submit again, or revise the named proposal in place with +plan-propose --proposal-id. +plan-get reports what is already claimed in open_proposal_claims and how many slots are left in proposal_capacity.",
+        "description": "For a draft plan, submit a complete solution (name, elements, and exactly one of persona_payload or persona_id). persona_id references an existing persona; the server snapshots its name, description, and visual reference into the proposal at submission time (copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). For an active plan, submit one unified revision in changes; changes may include persona, add_elements, retire_element_ids, and boost_elements in any combination, optionally with a title. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Several adjustment proposals may stay open on the same plan at once, and confirming one never invalidates the others, so an open proposal stays confirmable however old its base is. In exchange, open proposals must not overlap: submission is rejected with 409 proposal_element_conflict (blocking_proposal_id, element_ids) when the new proposal touches a plan element another open proposal already claims, 409 proposal_persona_conflict (blocking_proposal_id) when it carries a persona change while another open proposal already does, and 409 proposal_open_limit_reached (limit, open_proposal_ids) when the plan already has the maximum number of open proposals. Retrying the same payload always fails again: withdraw the blocking proposal with +proposal-withdraw --proposal-id <blocking_proposal_id> and submit again, or revise the named proposal in place with +plan-propose --proposal-id. +plan-get reports what is already claimed in open_proposal_claims and how many slots are left in proposal_capacity.",
         "oneOf": [
           {
             "anyOf": [
               {
                 "required": [
                   "name"
-                ]
-              },
-              {
-                "properties": {
-                  "candidate_id": {
-                    "format": "uuid",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "candidate_id"
                 ]
               }
             ],
@@ -11064,11 +11053,6 @@
               "anyOf": [
                 {
                   "required": [
-                    "candidate_id"
-                  ]
-                },
-                {
-                  "required": [
                     "name"
                   ]
                 },
@@ -11103,14 +11087,6 @@
           }
         ],
         "properties": {
-          "candidate_id": {
-            "description": "Draft-plan candidate id to revise",
-            "format": "uuid",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "changes": {
             "additionalProperties": false,
             "anyOf": [
@@ -11469,7 +11445,7 @@
       },
       "name": "agentic-campaign.plan-propose",
       "output_schema": {
-        "description": "Candidate or adjustment proposal id, change summary, and operator review reminder.",
+        "description": "Proposal id, change summary, and operator review reminder.",
         "properties": {
           "command": {
             "type": "string"
@@ -12988,7 +12964,7 @@
       "risk_level": "destructive",
       "shortcut": "+delete",
       "stability": "stable",
-      "summary": "Delete one reusable product, persona, topic, format, or media asset.",
+      "summary": "Delete one reusable product, persona, topic, format, or media asset. Deleting a persona that a live persona plan is holding is rejected with 409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking plan. Retrying the same delete unchanged always fails again: retire that plan, or reassign its persona in place with +plan-propose --plan-id <plan_id> and a persona change in changes, then delete again.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
