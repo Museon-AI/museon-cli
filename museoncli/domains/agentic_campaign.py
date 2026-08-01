@@ -84,7 +84,9 @@ def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
             "snapshots the referenced persona's name, description, and visual reference "
             "into this proposal at submission time (copied, not bound -- later edits to "
             "the source persona do not affect this proposal; tags and marketing_profile "
-            "are not copied). Mutually exclusive with --persona-json; provide exactly one."
+            "are not copied). Mutually exclusive with --persona-json. Creating a proposal "
+            "requires exactly one persona option; revising may omit both to preserve the "
+            "proposal's current persona."
         ),
     )
     parser.add_argument("--elements-json")
@@ -695,8 +697,9 @@ def specs() -> list[CommandSpec]:
             domain=domain,
             shortcut="+plan-propose",
             summary=(
-                "Propose a complete draft plan or an active-plan adjustment for operator "
-                "review. For an active-plan adjustment, set --title to a short name the "
+                "Create a complete plan proposal, adjust a running plan, or revise an open "
+                "proposal for operator review. For a running-plan adjustment, set --title to "
+                "a short name the "
                 "operator can recognize at a glance in the proposal list. Several adjustment "
                 "proposals may stay open on one plan at the same time and each is confirmed "
                 "on its own, but a submission that collides with an open proposal, or that "
@@ -708,17 +711,20 @@ def specs() -> list[CommandSpec]:
             input_schema={
                 "type": "object",
                 "description": (
-                    "For a draft plan, submit a complete solution (name, elements, and exactly "
+                    "Choose exactly one action. To create a proposal, submit a complete solution "
+                    "(name, elements, and exactly "
                     "one of persona_payload or persona_id). persona_id references an existing "
                     "persona; the server "
                     "snapshots its name, description, and visual reference into the proposal at "
                     "submission time (copied, not bound -- later edits to the source persona do "
                     "not affect this proposal; tags and marketing_profile are not copied). For "
-                    "an active plan, submit one unified revision in changes; changes may include "
+                    "a running plan, submit one unified adjustment in changes; changes may include "
                     "persona, add_elements, retire_element_ids, and boost_elements in any "
-                    "combination, optionally with a title. To revise "
-                    "an active-plan proposal after operator feedback, provide proposal_id and "
-                    "replacement elements only. "
+                    "combination, optionally with a title. To revise an open proposal after "
+                    "operator feedback, provide proposal_id and replacement elements, with an "
+                    "optional full persona replacement via persona_payload or persona_id. When "
+                    "persona_payload and persona_id are both omitted during revision, the "
+                    "proposal's current persona is preserved; it is not cleared. "
                     "Several adjustment proposals may stay open on the same plan at once, and "
                     "confirming one never invalidates the others, so an open proposal stays "
                     "confirmable however old its base is. In exchange, open proposals must not "
@@ -740,7 +746,7 @@ def specs() -> list[CommandSpec]:
                     "proposal_id": {
                         "type": ["string", "null"],
                         "format": "uuid",
-                        "description": "Active-plan adjustment proposal id to revise",
+                        "description": "Open proposal id to revise",
                     },
                     "name": {"type": "string", "minLength": 1, "maxLength": 200},
                     "title": {
@@ -759,7 +765,8 @@ def specs() -> list[CommandSpec]:
                             "(name, description, and visual reference are copied, not bound -- "
                             "later edits to the source persona do not affect this proposal; "
                             "tags and marketing_profile are not copied). Mutually exclusive "
-                            "with persona_payload; provide exactly one."
+                            "with persona_payload. Creating a proposal requires exactly one; "
+                            "revising may omit both to preserve the proposal's current persona."
                         ),
                     },
                     "elements": _candidate_elements_schema(),
@@ -823,46 +830,45 @@ def specs() -> list[CommandSpec]:
                 "required": ["plan_id"],
                 "oneOf": [
                     {
-                        "title": "Complete plan proposal",
-                        "required": ["elements"],
+                        "title": "Create a proposal",
+                        "required": ["name", "elements"],
                         "oneOf": [
                             {"required": ["persona_payload"], "not": {"required": ["persona_id"]}},
                             {"required": ["persona_id"], "not": {"required": ["persona_payload"]}},
                         ],
-                        "anyOf": [
-                            {"required": ["name"]},
-                            {"required": ["proposal_id"]},
-                        ],
                         "not": {
                             "anyOf": [
+                                {"required": ["proposal_id"]},
                                 {"required": ["changes"]},
                                 {"required": ["title"]},
                             ]
                         },
                     },
                     {
-                        "title": "Active plan adjustment",
+                        "title": "Adjust a running plan",
                         "required": ["changes"],
                         "not": {
                             "anyOf": [
                                 {"required": ["name"]},
                                 {"required": ["persona_payload"]},
+                                {"required": ["persona_id"]},
                                 {"required": ["elements"]},
                                 {"required": ["proposal_id"]},
                             ]
                         },
                     },
                     {
-                        "title": "Adjustment proposal revision",
+                        "title": "Revise an open proposal",
                         "required": ["proposal_id", "elements"],
                         "properties": {"proposal_id": {"type": "string", "format": "uuid"}},
                         "not": {
                             "anyOf": [
                                 {"required": ["name"]},
-                                {"required": ["persona_payload"]},
                                 {"required": ["changes"]},
                                 {"required": ["title"]},
-                                {"required": ["persona_id"]},
+                                {
+                                    "required": ["persona_payload", "persona_id"],
+                                },
                             ]
                         },
                     },
@@ -891,6 +897,12 @@ def specs() -> list[CommandSpec]:
                 """--add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
                 """"topic_id":"55555555-5555-4555-8555-555555555555"}]' """
                 "--note 'Untested hypothesis on the dark visual direction'",
+                "museoncli agentic-campaign +plan-propose "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--proposal-id 77777777-7777-4777-8777-777777777777 "
+                """--elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
+                """"topic_id":"55555555-5555-4555-8555-555555555555"}]' """
+                "--note 'Applied the latest review feedback; omitted persona is preserved'",
             ],
             add_arguments=_add_plan_propose_arguments,
             build_arguments=_build_plan_propose_arguments,

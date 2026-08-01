@@ -527,7 +527,7 @@
           "risk_level": "write",
           "shortcut": "+plan-propose",
           "stability": "stable",
-          "summary": "Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal.",
+          "summary": "Create a complete plan proposal, adjust a running plan, or revise an open proposal for operator review. For a running-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -10958,27 +10958,21 @@
       "examples": [
         "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --name 'DIY problem solver' --persona-json '{\"name\":\"Mia\",\"description\":\"Practical maker\",\"visual_prompt\":\"Warm workshop portrait\",\"reference_media_ids\":[]}' --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
         "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --name 'Reuse the workshop persona' --persona-id 99999999-9999-4999-8999-999999999999 --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
-        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --title 'Dark-tone second test batch' --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --note 'Untested hypothesis on the dark visual direction'"
+        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --title 'Dark-tone second test batch' --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --note 'Untested hypothesis on the dark visual direction'",
+        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --note 'Applied the latest review feedback; omitted persona is preserved'"
       ],
       "execution": "direct",
       "input_schema": {
-        "description": "For a draft plan, submit a complete solution (name, elements, and exactly one of persona_payload or persona_id). persona_id references an existing persona; the server snapshots its name, description, and visual reference into the proposal at submission time (copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). For an active plan, submit one unified revision in changes; changes may include persona, add_elements, retire_element_ids, and boost_elements in any combination, optionally with a title. To revise an active-plan proposal after operator feedback, provide proposal_id and replacement elements only. Several adjustment proposals may stay open on the same plan at once, and confirming one never invalidates the others, so an open proposal stays confirmable however old its base is. In exchange, open proposals must not overlap: submission is rejected with 409 proposal_element_conflict (blocking_proposal_id, element_ids) when the new proposal touches a plan element another open proposal already claims, 409 proposal_persona_conflict (blocking_proposal_id) when it carries a persona change while another open proposal already does, and 409 proposal_open_limit_reached (limit, open_proposal_ids) when the plan already has the maximum number of open proposals. Retrying the same payload always fails again: withdraw the blocking proposal with +proposal-withdraw --proposal-id <blocking_proposal_id> and submit again, or revise the named proposal in place with +plan-propose --proposal-id. +plan-get reports what is already claimed in open_proposal_claims and how many slots are left in proposal_capacity.",
+        "description": "Choose exactly one action. To create a proposal, submit a complete solution (name, elements, and exactly one of persona_payload or persona_id). persona_id references an existing persona; the server snapshots its name, description, and visual reference into the proposal at submission time (copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). For a running plan, submit one unified adjustment in changes; changes may include persona, add_elements, retire_element_ids, and boost_elements in any combination, optionally with a title. To revise an open proposal after operator feedback, provide proposal_id and replacement elements, with an optional full persona replacement via persona_payload or persona_id. When persona_payload and persona_id are both omitted during revision, the proposal's current persona is preserved; it is not cleared. Several adjustment proposals may stay open on the same plan at once, and confirming one never invalidates the others, so an open proposal stays confirmable however old its base is. In exchange, open proposals must not overlap: submission is rejected with 409 proposal_element_conflict (blocking_proposal_id, element_ids) when the new proposal touches a plan element another open proposal already claims, 409 proposal_persona_conflict (blocking_proposal_id) when it carries a persona change while another open proposal already does, and 409 proposal_open_limit_reached (limit, open_proposal_ids) when the plan already has the maximum number of open proposals. Retrying the same payload always fails again: withdraw the blocking proposal with +proposal-withdraw --proposal-id <blocking_proposal_id> and submit again, or revise the named proposal in place with +plan-propose --proposal-id. +plan-get reports what is already claimed in open_proposal_claims and how many slots are left in proposal_capacity.",
         "oneOf": [
           {
-            "anyOf": [
-              {
-                "required": [
-                  "name"
-                ]
-              },
-              {
-                "required": [
-                  "proposal_id"
-                ]
-              }
-            ],
             "not": {
               "anyOf": [
+                {
+                  "required": [
+                    "proposal_id"
+                  ]
+                },
                 {
                   "required": [
                     "changes"
@@ -11014,9 +11008,10 @@
               }
             ],
             "required": [
+              "name",
               "elements"
             ],
-            "title": "Complete plan proposal"
+            "title": "Create a proposal"
           },
           {
             "not": {
@@ -11029,6 +11024,11 @@
                 {
                   "required": [
                     "persona_payload"
+                  ]
+                },
+                {
+                  "required": [
+                    "persona_id"
                   ]
                 },
                 {
@@ -11046,7 +11046,7 @@
             "required": [
               "changes"
             ],
-            "title": "Active plan adjustment"
+            "title": "Adjust a running plan"
           },
           {
             "not": {
@@ -11054,11 +11054,6 @@
                 {
                   "required": [
                     "name"
-                  ]
-                },
-                {
-                  "required": [
-                    "persona_payload"
                   ]
                 },
                 {
@@ -11073,6 +11068,7 @@
                 },
                 {
                   "required": [
+                    "persona_payload",
                     "persona_id"
                   ]
                 }
@@ -11088,7 +11084,7 @@
               "proposal_id",
               "elements"
             ],
-            "title": "Adjustment proposal revision"
+            "title": "Revise an open proposal"
           }
         ],
         "properties": {
@@ -11343,7 +11339,7 @@
             ]
           },
           "persona_id": {
-            "description": "Existing persona id to snapshot into this proposal at submission (name, description, and visual reference are copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). Mutually exclusive with persona_payload; provide exactly one.",
+            "description": "Existing persona id to snapshot into this proposal at submission (name, description, and visual reference are copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). Mutually exclusive with persona_payload. Creating a proposal requires exactly one; revising may omit both to preserve the proposal's current persona.",
             "format": "uuid",
             "type": [
               "string",
@@ -11427,7 +11423,7 @@
             "type": "string"
           },
           "proposal_id": {
-            "description": "Active-plan adjustment proposal id to revise",
+            "description": "Open proposal id to revise",
             "format": "uuid",
             "type": [
               "string",
@@ -11507,7 +11503,7 @@
       "risk_level": "write",
       "shortcut": "+plan-propose",
       "stability": "stable",
-      "summary": "Propose a complete draft plan or an active-plan adjustment for operator review. For an active-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal.",
+      "summary": "Create a complete plan proposal, adjust a running plan, or revise an open proposal for operator review. For a running-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

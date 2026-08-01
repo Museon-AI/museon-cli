@@ -42,6 +42,7 @@ Documentation = "https://github.com/Museon-AI/museon-cli#readme"
 
 [dependency-groups]
 dev = [
+  "jsonschema>=4.23.0",
   "pytest>=8.2.0",
   "ruff>=0.4.4",
 ]
