@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import shlex
 
 from museoncli.domains import command_specs
 
@@ -71,6 +73,74 @@ def test_enum_flag_values_are_kebab_case() -> None:
                     action.option_strings[0],
                     choice,
                 )
+
+
+def _choice_actions(spec):
+    return {
+        option: action
+        for action in _parser_for(spec)._actions
+        if action.option_strings and action.choices
+        for option in action.option_strings
+    }
+
+
+def _schema_descriptions(value):
+    if isinstance(value, dict):
+        description = value.get("description")
+        if isinstance(description, str):
+            yield description
+        for child in value.values():
+            yield from _schema_descriptions(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _schema_descriptions(child)
+
+
+def test_input_schema_enum_values_match_cli_choices() -> None:
+    for spec in command_specs():
+        properties = spec.input_schema.get("properties", {})
+        for option, action in _choice_actions(spec).items():
+            property_name = option.removeprefix("--").replace("-", "_")
+            property_schema = properties.get(property_name)
+            if not isinstance(property_schema, dict) or "enum" not in property_schema:
+                continue
+            schema_choices = {str(value) for value in property_schema["enum"] if value is not None}
+            assert schema_choices == {str(value) for value in action.choices}, (
+                spec.schema_name,
+                option,
+                schema_choices,
+                action.choices,
+            )
+
+
+def test_input_schema_descriptions_do_not_expose_snake_case_enum_values() -> None:
+    for spec in command_specs():
+        descriptions = "\n".join(_schema_descriptions(spec.input_schema))
+        for action in _choice_actions(spec).values():
+            for choice in action.choices:
+                internal_value = str(choice).replace("-", "_")
+                if internal_value == choice:
+                    continue
+                assert not re.search(
+                    rf"(?<![A-Za-z0-9_]){re.escape(internal_value)}(?![A-Za-z0-9_])",
+                    descriptions,
+                ), (spec.schema_name, internal_value)
+
+
+def test_examples_use_cli_enum_values() -> None:
+    for spec in command_specs():
+        choice_actions = _choice_actions(spec)
+        for example in spec.examples:
+            for segment in example.split("&&"):
+                tokens = shlex.split(segment.strip())
+                for index, token in enumerate(tokens[:-1]):
+                    option, separator, value = token.partition("=")
+                    action = choice_actions.get(option)
+                    if action is None:
+                        continue
+                    if not separator:
+                        value = tokens[index + 1]
+                    assert value in action.choices, (spec.schema_name, example, option, value)
 
 
 def test_write_commands_support_dry_run_and_destructive_gate() -> None:

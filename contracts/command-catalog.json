@@ -12715,7 +12715,7 @@
             "type": "boolean"
           },
           "payload": {
-            "description": "Type-specific asset payload. product create requires name, category, and description; website_url, tags, and assets are optional. persona uses name, description, tags, and assets. topic_direction uses title, description, and tags. topic create uses topics=[{title,narrative,topic_direction_id?,keywords?,tags?,metadata?}]. format create uses URL, uploaded media, or manual format_input payloads; source_kind supports tiktok, instagram, x, linkedin, xhs, upload, manual, and cross_post. The created format's content_form (the post form it PRODUCES, not the input medium) is inferred from the source and immutable: image post URL or uploaded images -> image_post, video -> video_post, manual format_input text or text-only posts (x/linkedin) -> text_post. Managed-account (全托管) onboarding and slideshow generation accept image_post formats only, so never build a managed-account format from manual format_input text; use an image-bearing post URL or uploaded images, then confirm content_form=image_post via asset +get before submitting; format update supports title, tags, is_public, and format_json, including markdown in format_json.md. media create uses URL import or local file upload payloads. bgm uses url, title, description, tags, and status.",
+            "description": "Type-specific asset payload. product create requires name, category, and description; website_url, tags, and assets are optional. persona uses name, description, tags, and assets. topic-direction uses title, description, and tags. topic create uses topics=[{title,narrative,topic_direction_id?,keywords?,tags?,metadata?}]. format create uses URL, uploaded media, or manual format_input payloads; source_kind supports tiktok, instagram, x, linkedin, xhs, upload, manual, and cross-post. The created format's content_form (the post form it PRODUCES, not the input medium) is inferred from the source and immutable: image post URL or uploaded images -> image_post, video -> video_post, manual format_input text or text-only posts (x/linkedin) -> text_post. Managed-account (全托管) onboarding and slideshow generation accept image_post formats only, so never build a managed-account format from manual format_input text; use an image-bearing post URL or uploaded images, then confirm content_form=image_post via asset +get before submitting; format update supports title, tags, is_public, and format_json, including markdown in format_json.md. media create uses URL import or local file upload payloads. bgm uses url, title, description, tags, and status.",
             "type": "object"
           },
           "type": {
@@ -14072,7 +14072,7 @@
             "type": "string"
           },
           "payload": {
-            "description": "Type-specific asset payload. product create requires name, category, and description; website_url, tags, and assets are optional. persona uses name, description, tags, and assets. topic_direction uses title, description, and tags. topic create uses topics=[{title,narrative,topic_direction_id?,keywords?,tags?,metadata?}]. format create uses URL, uploaded media, or manual format_input payloads; source_kind supports tiktok, instagram, x, linkedin, xhs, upload, manual, and cross_post. The created format's content_form (the post form it PRODUCES, not the input medium) is inferred from the source and immutable: image post URL or uploaded images -> image_post, video -> video_post, manual format_input text or text-only posts (x/linkedin) -> text_post. Managed-account (全托管) onboarding and slideshow generation accept image_post formats only, so never build a managed-account format from manual format_input text; use an image-bearing post URL or uploaded images, then confirm content_form=image_post via asset +get before submitting; format update supports title, tags, is_public, and format_json, including markdown in format_json.md. media create uses URL import or local file upload payloads. bgm uses url, title, description, tags, and status.",
+            "description": "Type-specific asset payload. product create requires name, category, and description; website_url, tags, and assets are optional. persona uses name, description, tags, and assets. topic-direction uses title, description, and tags. topic create uses topics=[{title,narrative,topic_direction_id?,keywords?,tags?,metadata?}]. format create uses URL, uploaded media, or manual format_input payloads; source_kind supports tiktok, instagram, x, linkedin, xhs, upload, manual, and cross-post. The created format's content_form (the post form it PRODUCES, not the input medium) is inferred from the source and immutable: image post URL or uploaded images -> image_post, video -> video_post, manual format_input text or text-only posts (x/linkedin) -> text_post. Managed-account (全托管) onboarding and slideshow generation accept image_post formats only, so never build a managed-account format from manual format_input text; use an image-bearing post URL or uploaded images, then confirm content_form=image_post via asset +get before submitting; format update supports title, tags, is_public, and format_json, including markdown in format_json.md. media create uses URL import or local file upload payloads. bgm uses url, title, description, tags, and status.",
             "type": "object"
           },
           "type": {
@@ -18868,10 +18868,10 @@
       "capability_key": "research.community-search",
       "domain": "research",
       "examples": [
-        "museoncli research +community-search --platform reddit --intent keyword_search --query 'AI video agent' --search-type post --limit 5",
-        "museoncli research +community-search --platform x --intent keyword_search --query 'AI video agent'",
-        "museoncli research +community-search --platform linkedin --intent company_profile --query openai",
-        "museoncli research +community-search --platform linkedin --intent keyword_search --query 'AI automation' --limit 5"
+        "museoncli research +community-search --platform reddit --intent keyword-search --query 'AI video agent' --search-type post --limit 5",
+        "museoncli research +community-search --platform x --intent keyword-search --query 'AI video agent'",
+        "museoncli research +community-search --platform linkedin --intent company-profile --query openai",
+        "museoncli research +community-search --platform linkedin --intent keyword-search --query 'AI automation' --limit 5"
       ],
       "execution": "direct",
       "input_schema": {
@@ -18895,7 +18895,7 @@
             ]
           },
           "intent": {
-            "description": "Domain search intent. Use keyword_search for discovery, profile/company_profile for entity hydration, creator_posts/community_posts/company_posts for timelines, post for one item, comments for discussion, and trending for topical discovery.",
+            "description": "Domain search intent. Use keyword-search for discovery, profile/company-profile for entity hydration, creator-posts/community-posts/company-posts for timelines, post for one item, comments for discussion, and trending for topical discovery.",
             "enum": [
               "keyword-search",
               "profile",
@@ -19499,13 +19499,13 @@
       "capability_key": "research.social-media-search",
       "domain": "research",
       "examples": [
-        "museoncli research +social-media-search --platform tiktok --intent keyword_search --query 'skincare routine' --content-type video",
-        "museoncli research +social-media-search --platform tiktok --intent hashtag_videos --query '#skincare' --limit 10",
+        "museoncli research +social-media-search --platform tiktok --intent keyword-search --query 'skincare routine' --content-type video",
+        "museoncli research +social-media-search --platform tiktok --intent hashtag-videos --query '#skincare' --limit 10",
         "museoncli research +social-media-search --platform instagram --intent reels --query '@creator' --limit 10",
-        "museoncli research +social-media-search --platform youtube --intent keyword_search --query 'AI video ads'",
-        "museoncli research +social-media-search --platform xhs --intent keyword_search --query 'coffee shop decor' --content-type image",
+        "museoncli research +social-media-search --platform youtube --intent keyword-search --query 'AI video ads'",
+        "museoncli research +social-media-search --platform xhs --intent keyword-search --query 'coffee shop decor' --content-type image",
         "museoncli research +social-media-search --platform xhs --intent post --query 'https://www.xiaohongshu.com/explore/<note_id>'",
-        "museoncli research +social-media-search --platform xhs --intent creator_posts --query '<user_id>' --limit 10"
+        "museoncli research +social-media-search --platform xhs --intent creator-posts --query '<user_id>' --limit 10"
       ],
       "execution": "direct",
       "input_schema": {
@@ -19518,7 +19518,7 @@
           },
           "content_type": {
             "default": "any",
-            "description": "Content hint. For TikTok keyword_search, image routes to keyword_photos; any/video routes to keyword_videos. For Instagram creator_posts/reels, image filters to all-static carousel image posts and video filters to posts with video media. For XHS keyword_search, image routes to normal notes, video routes to video notes, and live routes to live notes.",
+            "description": "Content hint. For TikTok keyword-search, image routes to keyword-photos; any/video routes to keyword-videos. For Instagram creator-posts/reels, image filters to all-static carousel image posts and video filters to posts with video media. For XHS keyword-search, image routes to normal notes, video routes to video notes, and live routes to live notes.",
             "enum": [
               "any",
               "video",
@@ -19528,7 +19528,7 @@
             "type": "string"
           },
           "cursor": {
-            "description": "Optional pagination cursor from evidence.pagination. Pass a simple token directly, or pass the whole pagination object as JSON when it contains multiple fields such as cursor + search_id. Supported for TikTok creator_search/creator_posts/keyword_search/keyword_videos/keyword_photos/hashtag_search/hashtag_videos/comments/music_posts, Instagram creator_posts/reels/keyword_search/keyword_reels/hashtag_search/hashtag_reels/music_search/music_posts, YouTube keyword_search, XHS keyword_search, and XHS creator_posts.",
+            "description": "Optional pagination cursor from evidence.pagination. Pass a simple token directly, or pass the whole pagination object as JSON when it contains multiple fields such as cursor + search_id. Supported for TikTok creator-search/creator-posts/keyword-search/keyword-videos/keyword-photos/hashtag-search/hashtag-videos/comments/music-posts, Instagram creator-posts/reels/keyword-search/keyword-reels/hashtag-search/hashtag-reels/music-search/music-posts, YouTube keyword-search, XHS keyword-search, and XHS creator-posts.",
             "type": [
               "string",
               "null"
@@ -19583,7 +19583,7 @@
             "type": "string"
           },
           "query": {
-            "description": "Search query, creator handle, profile/channel URL, hashtag/ch_id, post URL/id, or aweme_id depending on platform and intent. For Instagram creator_posts, handles/profile URLs read an account timeline; multi-word plain text runs keyword posts search. For XHS keyword_search, pass a note search keyword; for XHS post, pass a note id or share URL; for XHS profile/creator_posts, pass a user id or profile share URL.",
+            "description": "Search query, creator handle, profile/channel URL, hashtag/ch_id, post URL/id, or aweme_id depending on platform and intent. For Instagram creator-posts, handles/profile URLs read an account timeline; multi-word plain text runs keyword posts search. For XHS keyword-search, pass a note search keyword; for XHS post, pass a note id or share URL; for XHS profile/creator-posts, pass a user id or profile share URL.",
             "maxLength": 4096,
             "minLength": 1,
             "type": "string"
@@ -19864,8 +19864,8 @@
       "capability_key": "research.web-research",
       "domain": "research",
       "examples": [
-        "museoncli research +web-research --query 'Museon AI' --include search_results --limit 5",
-        "museoncli research +web-research --url https://example.com --include page_text --include site_visual_assets"
+        "museoncli research +web-research --query 'Museon AI' --include search-results --limit 5",
+        "museoncli research +web-research --url https://example.com --include page-text --include site-visual-assets"
       ],
       "execution": "direct",
       "input_schema": {
@@ -20880,7 +20880,7 @@
       "domain": "routines",
       "examples": [
         "museoncli routines +list",
-        "museoncli routines +list --mode ad_hoc --page-size 20",
+        "museoncli routines +list --mode ad-hoc --page-size 20",
         "museoncli routines +list --status active --search daily"
       ],
       "execution": "direct",
@@ -20910,7 +20910,7 @@
         "properties": {
           "mode": {
             "enum": [
-              "ad_hoc"
+              "ad-hoc"
             ],
             "type": "string"
           },
@@ -23980,7 +23980,7 @@
       "domain": "social-account",
       "examples": [
         "museoncli social-account +list --platform tiktok --plan-status with-plan",
-        "museoncli social-account +list --search creator --allocation-type account_publish",
+        "museoncli social-account +list --search creator --allocation-type account-publish",
         "museoncli social-account +list --platform tiktok --search-term @handle_a --search-term @handle_b",
         "museoncli social-account +list --platform tiktok --tag coohom --has-device"
       ],
@@ -24026,8 +24026,9 @@
           },
           "allocation_type": {
             "enum": [
+              "all",
               "campaign",
-              "account_publish",
+              "account-publish",
               "unallocated",
               null
             ],
@@ -24290,11 +24291,11 @@
             "type": "integer"
           },
           "period": {
-            "default": "last_30d",
+            "default": "last-30d",
             "enum": [
-              "last_7d",
-              "last_30d",
-              "last_60d"
+              "last-7d",
+              "last-30d",
+              "last-60d"
             ],
             "type": "string"
           }
