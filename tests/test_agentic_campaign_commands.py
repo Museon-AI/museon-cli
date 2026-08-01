@@ -515,7 +515,7 @@ def test_plan_propose_dispatches_draft_submit() -> None:
     capture = Capture(
         campaign_list(plan_id),
         campaign_detail(plan_id),
-        {"candidate": {"id": "candidate-1"}},
+        {"proposal": {"id": "proposal-1"}},
     )
     argv = ["agentic-campaign", "+plan-propose", "--plan-id", plan_id]
     complete_args = _complete_plan_cli_args()
@@ -527,12 +527,12 @@ def test_plan_propose_dispatches_draft_submit() -> None:
         )
     )
     call = capture.calls[-1]
-    assert call["path"].endswith("/candidates:submit")
-    assert call["json_body"]["persona_payload"]["name"] == "Mia"
-    assert call["json_body"]["elements"][0]["format_id"].startswith("4444")
-    assert "name" in call["json_body"]
+    assert call["path"].endswith("/revision-proposals")
+    assert call["json_body"]["changes"]["persona"]["persona_payload"]["name"] == "Mia"
+    assert call["json_body"]["changes"]["add_elements"][0]["format_id"].startswith("4444")
+    assert call["json_body"]["title"] == "DIY problem solver"
     assert result == {
-        "candidate_id": "candidate-1",
+        "proposal_id": "proposal-1",
         "change_summary": {
             "complete_plan": True,
             "name": "DIY problem solver",
@@ -548,7 +548,7 @@ def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
     capture = Capture(
         campaign_list(plan_id),
         campaign_detail(plan_id),
-        {"candidate": {"id": "candidate-1"}},
+        {"proposal": {"id": "proposal-1"}},
     )
     argv = [
         "agentic-campaign",
@@ -579,10 +579,10 @@ def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
         )
     )
     call = capture.calls[-1]
-    assert call["path"].endswith("/candidates:submit")
-    assert call["json_body"]["persona_id"] == persona_id
-    assert "persona_payload" not in call["json_body"]
-    assert result["candidate_id"] == "candidate-1"
+    assert call["path"].endswith("/revision-proposals")
+    assert call["json_body"]["changes"]["persona"]["persona_id"] == persona_id
+    assert "persona_payload" not in call["json_body"]["changes"]["persona"]
+    assert result["proposal_id"] == "proposal-1"
 
 
 def test_plan_propose_rejects_persona_json_and_persona_id_together() -> None:
