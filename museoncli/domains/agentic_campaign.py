@@ -1693,6 +1693,8 @@ def _complete_plan_arguments(
     persona_payload = ctx.arguments.get("persona_payload")
     persona_id = ctx.arguments.get("persona_id")
     elements = ctx.arguments.get("elements")
+    if name is not None and len(str(name)) > 80:
+        raise ValueError("draft plan proposal --name must be 80 characters or fewer.")
     if (persona_payload is None) == (persona_id is None):
         raise ValueError(
             "draft plan proposal requires exactly one of --persona-json or --persona-id."

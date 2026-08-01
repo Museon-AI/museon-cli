@@ -635,6 +635,51 @@ def test_plan_propose_dispatches_draft_submit() -> None:
     }
 
 
+def test_plan_propose_rejects_draft_name_over_proposal_title_limit() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--name",
+            "x" * 81,
+            "--persona-json",
+            json.dumps(
+                {
+                    "name": "Mia",
+                    "description": "Practical maker",
+                    "visual_prompt": "Warm workshop portrait",
+                }
+            ),
+            "--elements-json",
+            json.dumps(
+                [
+                    {
+                        "format_id": "44444444-4444-4444-8444-444444444444",
+                        "topic_id": "55555555-5555-4555-8555-555555555555",
+                    }
+                ]
+            ),
+        ]
+    )
+
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    with pytest.raises(ValueError, match="80 characters or fewer"):
+        asyncio.run(
+            agentic_campaign._execute_plan_propose(
+                context(
+                    "agentic-campaign.plan-propose",
+                    arguments,
+                    Capture(
+                        campaign_list("33333333-3333-4333-8333-333333333333"),
+                        campaign_detail("33333333-3333-4333-8333-333333333333"),
+                    ),
+                )
+            )
+        )
+
+
 def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     persona_id = "99999999-9999-4999-8999-999999999999"
