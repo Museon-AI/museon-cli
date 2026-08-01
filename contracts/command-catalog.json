@@ -594,15 +594,90 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
-          "capability_key": "agentic-campaign.plan-propose",
+          "capability_key": "agentic-campaign.plan-members-reconcile",
           "domain": "agentic-campaign",
           "execution": "direct",
-          "name": "agentic-campaign.plan-propose",
+          "name": "agentic-campaign.plan-members-reconcile",
           "requires_confirmation": false,
           "risk_level": "write",
-          "shortcut": "+plan-propose",
+          "shortcut": "+members-reconcile",
           "stability": "stable",
-          "summary": "Create a complete plan proposal, adjust a running plan, or revise an open proposal for operator review. For a running-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal.",
+          "summary": "Atomically reconcile a Plan's managed accounts and matching Plan budget. The CLI reads current versions, raises Campaign total budget only when required, and submits the member/budget change as one compare-and-swap operation.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.proposal-create",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-create",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Create one operator-review Proposal. Draft Plans require a complete Persona and element selection; active Plans accept named atomic changes.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.proposal-list",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-list",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a Plan's To review and Reviewed Proposals.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.proposal-revise",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-revise",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+revise",
+          "stability": "stable",
+          "summary": "Revise an open Proposal after operator feedback. Each supplied atomic field replaces that field's current proposed value; omit fields to preserve them.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -625,7 +700,7 @@
           "name": "agentic-campaign.proposal-get",
           "requires_confirmation": false,
           "risk_level": "read",
-          "shortcut": "+proposal-get",
+          "shortcut": "+get",
           "stability": "stable",
           "summary": "Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations).",
           "supports_dry_run": false,
@@ -650,9 +725,9 @@
           "name": "agentic-campaign.proposal-withdraw",
           "requires_confirmation": false,
           "risk_level": "write",
-          "shortcut": "+proposal-withdraw",
+          "shortcut": "+withdraw",
           "stability": "stable",
-          "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected +plan-propose: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with +plan-propose --proposal-id. Never resend the rejected payload unchanged.",
+          "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected Proposal: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with proposal +revise --proposal-id. Never resend the rejected payload unchanged.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -1922,7 +1997,7 @@
           "risk_level": "destructive",
           "shortcut": "+delete",
           "stability": "stable",
-          "summary": "Delete one reusable product, persona, topic, format, or media asset. Deleting a persona that a live persona plan is holding is rejected with 409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking plan. Retrying the same delete unchanged always fails again: retire that plan, or reassign its persona in place with +plan-propose --plan-id <plan_id> and a persona change in changes, then delete again.",
+          "summary": "Delete one reusable product, persona, topic, format, or media asset. Deleting a persona that a live persona plan is holding is rejected with 409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking plan. Retrying the same delete unchanged always fails again: retire that plan, or submit a replacement with agentic-campaign proposal +create --plan-id <plan_id> --replace-persona-id <persona_id>, complete its review, then delete again.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -11140,7 +11215,7 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
-    "agentic-campaign.plan-propose": {
+    "agentic-campaign.plan-members-reconcile": {
       "authorization": {
         "authentication_required": true,
         "enforcement": "museon_server",
@@ -11153,475 +11228,17 @@
         "resource_policy": "server_evaluated_workspace_and_resource_access",
         "workspace_bound": true
       },
-      "capability_key": "agentic-campaign.plan-propose",
+      "capability_key": "agentic-campaign.plan-members-reconcile",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --name 'DIY problem solver' --persona-json '{\"name\":\"Mia\",\"description\":\"Practical maker\",\"visual_prompt\":\"Warm workshop portrait\",\"reference_media_ids\":[]}' --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
-        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --name 'Reuse the workshop persona' --persona-id 99999999-9999-4999-8999-999999999999 --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
-        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --title 'Dark-tone second test batch' --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --note 'Untested hypothesis on the dark visual direction'",
-        "museoncli agentic-campaign +plan-propose --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --note 'Applied the latest review feedback; omitted persona is preserved'"
+        "museoncli agentic-campaign plan +members-reconcile --plan-id 33333333-3333-4333-8333-333333333333 --account-ids '[\"44444444-4444-4444-8444-444444444444\",\"55555555-5555-4555-8555-555555555555\"]'"
       ],
       "execution": "direct",
       "input_schema": {
-        "description": "Choose exactly one action. To create a proposal, submit a complete solution (name, elements, and exactly one of persona_payload or persona_id). persona_id references an existing persona; the server snapshots its name, description, and visual reference into the proposal at submission time (copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). For a running plan, submit one unified adjustment in changes; changes may include persona, add_elements, retire_element_ids, and boost_elements in any combination, optionally with a title. To revise an open proposal after operator feedback, provide proposal_id and replacement elements, with an optional full persona replacement via persona_payload or persona_id. When persona_payload and persona_id are both omitted during revision, the proposal's current persona is preserved; it is not cleared. Several adjustment proposals may stay open on the same plan at once, and confirming one never invalidates the others, so an open proposal stays confirmable however old its base is. In exchange, open proposals must not overlap: submission is rejected with 409 proposal_element_conflict (blocking_proposal_id, element_ids) when the new proposal touches a plan element another open proposal already claims, 409 proposal_persona_conflict (blocking_proposal_id) when it carries a persona change while another open proposal already does, and 409 proposal_open_limit_reached (limit, open_proposal_ids) when the plan already has the maximum number of open proposals. Retrying the same payload always fails again: withdraw the blocking proposal with +proposal-withdraw --proposal-id <blocking_proposal_id> and submit again, or revise the named proposal in place with +plan-propose --proposal-id. +plan-get reports what is already claimed in open_proposal_claims and how many slots are left in proposal_capacity.",
-        "oneOf": [
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "required": [
-                    "proposal_id"
-                  ]
-                },
-                {
-                  "required": [
-                    "changes"
-                  ]
-                },
-                {
-                  "required": [
-                    "title"
-                  ]
-                }
-              ]
-            },
-            "oneOf": [
-              {
-                "not": {
-                  "required": [
-                    "persona_id"
-                  ]
-                },
-                "required": [
-                  "persona_payload"
-                ]
-              },
-              {
-                "not": {
-                  "required": [
-                    "persona_payload"
-                  ]
-                },
-                "required": [
-                  "persona_id"
-                ]
-              }
-            ],
-            "required": [
-              "name",
-              "elements"
-            ],
-            "title": "Create a proposal"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "required": [
-                    "name"
-                  ]
-                },
-                {
-                  "required": [
-                    "persona_payload"
-                  ]
-                },
-                {
-                  "required": [
-                    "persona_id"
-                  ]
-                },
-                {
-                  "required": [
-                    "elements"
-                  ]
-                },
-                {
-                  "required": [
-                    "proposal_id"
-                  ]
-                }
-              ]
-            },
-            "required": [
-              "changes"
-            ],
-            "title": "Adjust a running plan"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "required": [
-                    "name"
-                  ]
-                },
-                {
-                  "required": [
-                    "changes"
-                  ]
-                },
-                {
-                  "required": [
-                    "title"
-                  ]
-                },
-                {
-                  "required": [
-                    "persona_payload",
-                    "persona_id"
-                  ]
-                }
-              ]
-            },
-            "properties": {
-              "proposal_id": {
-                "format": "uuid",
-                "type": "string"
-              }
-            },
-            "required": [
-              "proposal_id",
-              "elements"
-            ],
-            "title": "Revise an open proposal"
-          }
-        ],
         "properties": {
-          "changes": {
-            "additionalProperties": false,
-            "anyOf": [
-              {
-                "properties": {
-                  "add_elements": {
-                    "minItems": 1
-                  }
-                },
-                "required": [
-                  "add_elements"
-                ]
-              },
-              {
-                "properties": {
-                  "retire_element_ids": {
-                    "minItems": 1
-                  }
-                },
-                "required": [
-                  "retire_element_ids"
-                ]
-              },
-              {
-                "properties": {
-                  "boost_elements": {
-                    "minItems": 1
-                  }
-                },
-                "required": [
-                  "boost_elements"
-                ]
-              },
-              {
-                "required": [
-                  "persona"
-                ]
-              },
-              {
-                "required": [
-                  "patch_persona_payload"
-                ]
-              }
-            ],
-            "properties": {
-              "add_elements": {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "cta_target_id": {
-                      "description": "Optional CTA target id",
-                      "examples": [
-                        "66666666-6666-4666-8666-666666666666"
-                      ],
-                      "format": "uuid",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "format_id": {
-                      "description": "Format id",
-                      "examples": [
-                        "33333333-3333-4333-8333-333333333333"
-                      ],
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    "topic_id": {
-                      "description": "Content topic id",
-                      "examples": [
-                        "33333333-3333-4333-8333-333333333333"
-                      ],
-                      "format": "uuid",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "format_id",
-                    "topic_id"
-                  ],
-                  "type": "object"
-                },
-                "maxItems": 100,
-                "type": "array"
-              },
-              "boost_elements": {
-                "items": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "account_count": {
-                      "minimum": 1,
-                      "type": "integer"
-                    },
-                    "days": {
-                      "maximum": 14,
-                      "minimum": 1,
-                      "type": "integer"
-                    },
-                    "element_id": {
-                      "description": "Experiment direction id",
-                      "examples": [
-                        "33333333-3333-4333-8333-333333333333"
-                      ],
-                      "format": "uuid",
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "element_id",
-                    "account_count",
-                    "days"
-                  ],
-                  "type": "object"
-                },
-                "maxItems": 100,
-                "type": "array"
-              },
-              "patch_persona_payload": {
-                "additionalProperties": false,
-                "description": "Partial Persona update: omitted keys are preserved; explicit null clears a nullable field.",
-                "properties": {
-                  "description": {
-                    "maxLength": 4000,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "marketing_profile": {
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  },
-                  "name": {
-                    "maxLength": 200,
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "reference_media_ids": {
-                    "items": {
-                      "format": "uuid",
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  },
-                  "tags": {
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": [
-                      "array",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
-              },
-              "persona": {
-                "additionalProperties": false,
-                "properties": {
-                  "persona_id": {
-                    "description": "Workspace Persona to snapshot into the proposal.",
-                    "format": "uuid",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "persona_payload": {
-                    "description": "Persona content to snapshot into the proposal.",
-                    "type": [
-                      "object",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
-              },
-              "retire_element_ids": {
-                "items": {
-                  "description": "Experiment direction id",
-                  "examples": [
-                    "33333333-3333-4333-8333-333333333333"
-                  ],
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "maxItems": 100,
-                "type": "array"
-              }
-            },
-            "required": [],
-            "type": "object"
-          },
           "dry_run": {
             "default": false,
             "type": "boolean"
-          },
-          "elements": {
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "cta_target_id": {
-                  "description": "Optional CTA target id",
-                  "examples": [
-                    "66666666-6666-4666-8666-666666666666"
-                  ],
-                  "format": "uuid",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "format_id": {
-                  "description": "Format id",
-                  "examples": [
-                    "33333333-3333-4333-8333-333333333333"
-                  ],
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "topic_id": {
-                  "description": "Content topic id",
-                  "examples": [
-                    "33333333-3333-4333-8333-333333333333"
-                  ],
-                  "format": "uuid",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "format_id",
-                "topic_id"
-              ],
-              "type": "object"
-            },
-            "maxItems": 100,
-            "minItems": 1,
-            "type": "array"
-          },
-          "name": {
-            "maxLength": 200,
-            "minLength": 1,
-            "type": "string"
-          },
-          "note": {
-            "maxLength": 2000,
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "persona_id": {
-            "description": "Existing persona id to snapshot into this proposal at submission (name, description, and visual reference are copied, not bound -- later edits to the source persona do not affect this proposal; tags and marketing_profile are not copied). Mutually exclusive with persona_payload. Creating a proposal requires exactly one; revising may omit both to preserve the proposal's current persona.",
-            "format": "uuid",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "persona_payload": {
-            "additionalProperties": false,
-            "properties": {
-              "avatar_style": {
-                "maxLength": 2000,
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "bio_template": {
-                "maxLength": 2000,
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "description": {
-                "maxLength": 4000,
-                "minLength": 1,
-                "type": "string"
-              },
-              "name": {
-                "maxLength": 200,
-                "minLength": 1,
-                "type": "string"
-              },
-              "reference_media_ids": {
-                "default": [],
-                "items": {
-                  "description": "Reference media id",
-                  "examples": [
-                    "33333333-3333-4333-8333-333333333333"
-                  ],
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "required_hashtags": {
-                "default": [],
-                "items": {
-                  "type": "string"
-                },
-                "maxItems": 100,
-                "type": "array"
-              },
-              "required_mentions": {
-                "default": [],
-                "items": {
-                  "type": "string"
-                },
-                "maxItems": 100,
-                "type": "array"
-              },
-              "visual_prompt": {
-                "maxLength": 10000,
-                "minLength": 1,
-                "type": "string"
-              }
-            },
-            "required": [
-              "name",
-              "description",
-              "visual_prompt"
-            ],
-            "type": "object"
           },
           "plan_id": {
             "description": "Agentic Persona Plan id",
@@ -11631,31 +11248,28 @@
             "format": "uuid",
             "type": "string"
           },
-          "proposal_id": {
-            "description": "Open proposal id to revise",
-            "format": "uuid",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "title": {
-            "description": "Short operator-facing name for an active-plan adjustment proposal",
-            "maxLength": 80,
-            "type": [
-              "string",
-              "null"
-            ]
+          "target_account_ids": {
+            "items": {
+              "description": "Managed social account id",
+              "examples": [
+                "33333333-3333-4333-8333-333333333333"
+              ],
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 500,
+            "type": "array"
           }
         },
         "required": [
-          "plan_id"
+          "plan_id",
+          "target_account_ids"
         ],
         "type": "object"
       },
-      "name": "agentic-campaign.plan-propose",
+      "name": "agentic-campaign.plan-members-reconcile",
       "output_schema": {
-        "description": "Proposal id, change summary, and operator review reminder.",
+        "description": "Reconciled member list, Plan budget, Campaign total budget, and new versions.",
         "properties": {
           "command": {
             "type": "string"
@@ -11710,9 +11324,9 @@
       },
       "requires_confirmation": false,
       "risk_level": "write",
-      "shortcut": "+plan-propose",
+      "shortcut": "+members-reconcile",
       "stability": "stable",
-      "summary": "Create a complete plan proposal, adjust a running plan, or revise an open proposal for operator review. For a running-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal.",
+      "summary": "Atomically reconcile a Plan's managed accounts and matching Plan budget. The CLI reads current versions, raises Campaign total budget only when required, and submits the member/budget change as one compare-and-swap operation.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -11937,6 +11551,416 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "agentic-campaign.proposal-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-create",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign proposal +create --plan-id 33333333-3333-4333-8333-333333333333 --name 'DIY problem solver' --persona-id 99999999-9999-4999-8999-999999999999 --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
+        "museoncli agentic-campaign proposal +create --plan-id 33333333-3333-4333-8333-333333333333 --title 'Dark-tone second test batch' --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "oneOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "title"
+                  ]
+                },
+                {
+                  "required": [
+                    "changes"
+                  ]
+                }
+              ]
+            },
+            "oneOf": [
+              {
+                "not": {
+                  "required": [
+                    "persona_payload"
+                  ]
+                },
+                "required": [
+                  "persona_id"
+                ]
+              },
+              {
+                "not": {
+                  "required": [
+                    "persona_id"
+                  ]
+                },
+                "required": [
+                  "persona_payload"
+                ]
+              }
+            ],
+            "required": [
+              "name",
+              "elements"
+            ],
+            "title": "Complete Draft Plan Proposal"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "name"
+                  ]
+                },
+                {
+                  "required": [
+                    "persona_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "persona_payload"
+                  ]
+                },
+                {
+                  "required": [
+                    "elements"
+                  ]
+                }
+              ]
+            },
+            "required": [
+              "changes"
+            ],
+            "title": "Atomic Active Plan Proposal"
+          }
+        ],
+        "properties": {
+          "changes": {
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "add_elements": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cta_target_id": {
+                      "description": "Optional CTA target id",
+                      "examples": [
+                        "66666666-6666-4666-8666-666666666666"
+                      ],
+                      "format": "uuid",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "format_id": {
+                      "description": "Format id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "topic_id": {
+                      "description": "Content topic id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "format_id",
+                    "topic_id"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "boost_elements": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "account_count": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "days": {
+                      "maximum": 14,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "element_id": {
+                      "description": "Experiment direction id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "element_id",
+                    "account_count",
+                    "days"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "patch_persona_payload": {
+                "type": "object"
+              },
+              "persona": {
+                "type": "object"
+              },
+              "retire_element_ids": {
+                "items": {
+                  "description": "Active Plan element id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "elements": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "cta_target_id": {
+                  "description": "Optional CTA target id",
+                  "examples": [
+                    "66666666-6666-4666-8666-666666666666"
+                  ],
+                  "format": "uuid",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "format_id": {
+                  "description": "Format id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "topic_id": {
+                  "description": "Content topic id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "format_id",
+                "topic_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "persona_id": {
+            "description": "Persona for a complete draft Proposal",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "persona_payload": {
+            "additionalProperties": false,
+            "properties": {
+              "avatar_style": {
+                "maxLength": 2000,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bio_template": {
+                "maxLength": 2000,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              "name": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "reference_media_ids": {
+                "default": [],
+                "items": {
+                  "description": "Reference media id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "required_hashtags": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "required_mentions": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "visual_prompt": {
+                "maxLength": 10000,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "description",
+              "visual_prompt"
+            ],
+            "type": "object"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-create",
+      "output_schema": {
+        "description": "Proposal id, change summary, and operator review reminder.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Create one operator-review Proposal. Draft Plans require a complete Persona and element selection; active Plans accept named atomic changes.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "agentic-campaign.proposal-get": {
       "authorization": {
         "authentication_required": true,
@@ -11953,7 +11977,7 @@
       "capability_key": "agentic-campaign.proposal-get",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +proposal-get --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777"
+        "museoncli agentic-campaign proposal +get --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777"
       ],
       "execution": "direct",
       "input_schema": {
@@ -12038,10 +12062,339 @@
       },
       "requires_confirmation": false,
       "risk_level": "read",
-      "shortcut": "+proposal-get",
+      "shortcut": "+get",
       "stability": "stable",
       "summary": "Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations).",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.proposal-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-list",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign proposal +list --plan-id 33333333-3333-4333-8333-333333333333"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "include_draft_stage": {
+            "default": false,
+            "type": "boolean"
+          },
+          "page": {
+            "default": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-list",
+      "output_schema": {
+        "description": "Paginated revision Proposal list.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a Plan's To review and Reviewed Proposals.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.proposal-revise": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-revise",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign proposal +revise --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --retire-element-ids '[\"88888888-8888-4888-8888-888888888888\"]' --boost-elements-json '[{\"element_id\":\"99999999-9999-4999-8999-999999999999\",\"account_count\":2,\"days\":7}]'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "changes": {
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "add_elements": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cta_target_id": {
+                      "description": "Optional CTA target id",
+                      "examples": [
+                        "66666666-6666-4666-8666-666666666666"
+                      ],
+                      "format": "uuid",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "format_id": {
+                      "description": "Format id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "topic_id": {
+                      "description": "Content topic id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "format_id",
+                    "topic_id"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "boost_elements": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "account_count": {
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "days": {
+                      "maximum": 14,
+                      "minimum": 1,
+                      "type": "integer"
+                    },
+                    "element_id": {
+                      "description": "Experiment direction id",
+                      "examples": [
+                        "33333333-3333-4333-8333-333333333333"
+                      ],
+                      "format": "uuid",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "element_id",
+                    "account_count",
+                    "days"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "patch_persona_payload": {
+                "type": "object"
+              },
+              "persona": {
+                "type": "object"
+              },
+              "retire_element_ids": {
+                "items": {
+                  "description": "Active Plan element id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "note": {
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "description": "Open Proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id",
+          "proposal_id",
+          "changes"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-revise",
+      "output_schema": {
+        "description": "Next Proposal revision round.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+revise",
+      "stability": "stable",
+      "summary": "Revise an open Proposal after operator feedback. Each supplied atomic field replaces that field's current proposed value; omit fields to preserve them.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "agentic-campaign.proposal-withdraw": {
@@ -12060,7 +12413,7 @@
       "capability_key": "agentic-campaign.proposal-withdraw",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +proposal-withdraw --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777"
+        "museoncli agentic-campaign proposal +withdraw --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777"
       ],
       "execution": "direct",
       "input_schema": {
@@ -12149,9 +12502,9 @@
       },
       "requires_confirmation": false,
       "risk_level": "write",
-      "shortcut": "+proposal-withdraw",
+      "shortcut": "+withdraw",
       "stability": "stable",
-      "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected +plan-propose: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with +plan-propose --proposal-id. Never resend the rejected payload unchanged.",
+      "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected Proposal: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with proposal +revise --proposal-id. Never resend the rejected payload unchanged.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -13436,7 +13789,7 @@
       "risk_level": "destructive",
       "shortcut": "+delete",
       "stability": "stable",
-      "summary": "Delete one reusable product, persona, topic, format, or media asset. Deleting a persona that a live persona plan is holding is rejected with 409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking plan. Retrying the same delete unchanged always fails again: retire that plan, or reassign its persona in place with +plan-propose --plan-id <plan_id> and a persona change in changes, then delete again.",
+      "summary": "Delete one reusable product, persona, topic, format, or media asset. Deleting a persona that a live persona plan is holding is rejected with 409 persona_held_by_persona_plan (plan_id, plan_name), naming the blocking plan. Retrying the same delete unchanged always fails again: retire that plan, or submit a replacement with agentic-campaign proposal +create --plan-id <plan_id> --replace-persona-id <persona_id>, complete its review, then delete again.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

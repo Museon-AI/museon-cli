@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from museoncli.domains import command_specs, fixed_domain_values  # noqa: E402
+from museoncli.domains import discoverable_command_specs, fixed_domain_values  # noqa: E402
 
 MARKER_BEGIN = "<!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->"
 MARKER_END = "<!-- END GENERATED COMMANDS -->"
@@ -29,7 +29,7 @@ DOCS = [
 def render_tables() -> str:
     lines: list[str] = [MARKER_BEGIN, ""]
     by_domain: dict[str, list] = {}
-    for spec in command_specs():
+    for spec in discoverable_command_specs():
         by_domain.setdefault(spec.domain.value, []).append(spec)
     total = sum(len(specs) for specs in by_domain.values())
     lines.append(
@@ -48,8 +48,13 @@ def render_tables() -> str:
             dry = "yes" if spec.supports_dry_run else "—"
             confirm = "`--yes`" if spec.requires_confirmation else "—"
             summary = spec.summary.replace("|", "\\|")
+            command = (
+                f"{domain} {spec.resource} {spec.shortcut}"
+                if spec.resource
+                else f"{domain} {spec.shortcut}"
+            )
             lines.append(
-                f"| `{domain} {spec.shortcut}` | {spec.risk_level} | {dry} "
+                f"| `{command}` | {spec.risk_level} | {dry} "
                 f"| {confirm} | {spec.execution} | {summary} |"
             )
         lines.append("")

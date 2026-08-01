@@ -60,6 +60,9 @@ class CommandSpec:
     examples: list[str]
     add_arguments: Callable[[argparse.ArgumentParser], None]
     build_arguments: Callable[[argparse.Namespace], dict[str, Any]]
+    resource: str | None = None
+    legacy_shortcuts: tuple[str, ...] = ()
+    discoverable: bool = True
     adapter_type: AdapterType = "internal_tool"
     supports_dry_run: bool = False
     requires_confirmation: bool = False
@@ -73,7 +76,10 @@ class CommandSpec:
 
     @property
     def schema_name(self) -> str:
-        return f"{self.domain.value}.{self.shortcut.removeprefix('+')}"
+        action = self.shortcut.removeprefix("+")
+        if self.resource:
+            return f"{self.domain.value}.{self.resource}-{action}"
+        return f"{self.domain.value}.{action}"
 
     @property
     def capability_key(self) -> str:
