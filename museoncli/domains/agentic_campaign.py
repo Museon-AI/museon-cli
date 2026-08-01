@@ -284,9 +284,7 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             "--persona-json and --persona-id are mutually exclusive; provide exactly one."
         )
     if args.persona_payload is not None and args.patch_persona_payload is not None:
-        raise ValueError(
-            "--persona-payload and --patch-persona-payload are mutually exclusive."
-        )
+        raise ValueError("--persona-payload and --patch-persona-payload are mutually exclusive.")
     complete_plan_supplied = args.name is not None or args.elements_json is not None
     element_adjustment_supplied = any(
         value is not None
@@ -405,19 +403,10 @@ def _build_campaign_rename_arguments(args: argparse.Namespace) -> dict[str, Any]
 
 def _add_proposal_withdraw_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
-    target = parser.add_mutually_exclusive_group(required=True)
-    target.add_argument(
+    parser.add_argument(
         "--proposal-id",
-        default=None,
+        required=True,
         help="Open revision proposal to withdraw on an active plan.",
-    )
-    target.add_argument(
-        "--candidate-id",
-        default=None,
-        help=(
-            "Deprecated: archives a draft-plan candidate instead of withdrawing a "
-            "proposal. Use --proposal-id."
-        ),
     )
     parser.add_argument("--dry-run", action="store_true")
 
@@ -426,7 +415,6 @@ def _build_proposal_withdraw_arguments(args: argparse.Namespace) -> dict[str, An
     return {
         "plan_id": args.plan_id,
         "proposal_id": args.proposal_id,
-        "candidate_id": args.candidate_id,
         "dry_run": args.dry_run,
     }
 
@@ -964,9 +952,18 @@ def specs() -> list[CommandSpec]:
                         "type": "object",
                         "additionalProperties": False,
                         "anyOf": [
-                            {"properties": {"add_elements": {"minItems": 1}}},
-                            {"properties": {"retire_element_ids": {"minItems": 1}}},
-                            {"properties": {"boost_elements": {"minItems": 1}}},
+                            {
+                                "required": ["add_elements"],
+                                "properties": {"add_elements": {"minItems": 1}},
+                            },
+                            {
+                                "required": ["retire_element_ids"],
+                                "properties": {"retire_element_ids": {"minItems": 1}},
+                            },
+                            {
+                                "required": ["boost_elements"],
+                                "properties": {"boost_elements": {"minItems": 1}},
+                            },
                             {"required": ["persona"]},
                             {"required": ["patch_persona_payload"]},
                         ],
@@ -1003,7 +1000,10 @@ def specs() -> list[CommandSpec]:
                                 "properties": {
                                     "name": {"type": ["string", "null"], "maxLength": 200},
                                     "description": {"type": ["string", "null"], "maxLength": 4000},
-                                    "tags": {"type": ["array", "null"], "items": {"type": "string"}},
+                                    "tags": {
+                                        "type": ["array", "null"],
+                                        "items": {"type": "string"},
+                                    },
                                     "marketing_profile": {"type": ["object", "null"]},
                                     "reference_media_ids": {
                                         "type": ["array", "null"],
@@ -1115,7 +1115,7 @@ def specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema(
                 "Proposal status, revision round, changes, current elements, latest feedback "
                 "summary, the annotations section (per-round compiled_summary/round/resolved, "
-                "newest round first, or the string \"暂无标注意见\" when there is no feedback "
+                'newest round first, or the string "暂无标注意见" when there is no feedback '
                 "yet), and a review reminder."
             ),
             examples=[
@@ -1693,6 +1693,8 @@ def _complete_plan_arguments(
     persona_payload = ctx.arguments.get("persona_payload")
     persona_id = ctx.arguments.get("persona_id")
     elements = ctx.arguments.get("elements")
+    if name is not None and len(str(name)) > 80:
+        raise ValueError("draft plan proposal --name must be 80 characters or fewer.")
     if (persona_payload is None) == (persona_id is None):
         raise ValueError(
             "draft plan proposal requires exactly one of --persona-json or --persona-id."
@@ -1700,9 +1702,7 @@ def _complete_plan_arguments(
     if persona_payload is not None and not isinstance(persona_payload, dict):
         raise ValueError("draft plan proposal requires --persona-json to be a JSON object.")
     if not isinstance(elements, list) or not elements:
-        raise ValueError(
-            "draft plan proposal requires --elements-json with at least one element."
-        )
+        raise ValueError("draft plan proposal requires --elements-json with at least one element.")
     return (
         str(name) if name else None,
         persona_payload if isinstance(persona_payload, dict) else None,
@@ -1713,12 +1713,9 @@ def _complete_plan_arguments(
 
 def _proposal_output(response: Any, *, changes: dict[str, Any]) -> dict[str, Any]:
     payload = _payload_data(response)
-    candidate = payload.get("candidate") if isinstance(payload, dict) else None
-    candidate_id = candidate.get("id") if isinstance(candidate, dict) else None
     proposal = payload.get("proposal") if isinstance(payload, dict) else None
     proposal_id = proposal.get("id") if isinstance(proposal, dict) else None
     return {
-        **({"candidate_id": candidate_id} if candidate is not None else {}),
         **({"proposal_id": proposal_id} if proposal is not None else {}),
         "change_summary": changes,
         "next_step": "Please review the proposal in Museon and confirm it there.",
@@ -1790,9 +1787,7 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
         params={"workspace_id": ctx.workspace_id},
     )
     feedback_payload = _payload_data(feedback_response)
-    feedback_items = (
-        feedback_payload.get("items") if isinstance(feedback_payload, dict) else None
-    )
+    feedback_items = feedback_payload.get("items") if isinstance(feedback_payload, dict) else None
     return {
         "status": proposal.get("status"),
         "revision_round": proposal.get("revision_round"),
@@ -1942,17 +1937,24 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             if persona_id is not None
             else {"persona_payload": persona_payload}
         )
-        path = (
-            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
-            f"{plan['id']}/candidates:submit"
-        )
         body = {
             "workspace_id": ctx.workspace_id,
-            "name": name,
-            **persona_field,
-            "elements": elements,
+            "title": name,
+            "note": ctx.arguments.get("note"),
+            "changes": {
+                "add_elements": elements,
+                "persona": persona_field,
+            },
         }
-        response = await ctx.api_data_v2(ctx.cfg, "POST", path, json_body=body)
+        response = await ctx.api_data_v2(
+            ctx.cfg,
+            "POST",
+            (
+                f"/agentic-creative-campaigns/{campaign_id}/persona-plans/"
+                f"{plan['id']}/revision-proposals"
+            ),
+            json_body=body,
+        )
         return _proposal_output(
             response,
             changes={
@@ -2023,21 +2025,12 @@ async def _execute_campaign_rename(ctx: CommandContext) -> Any:
 async def _execute_proposal_withdraw(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     proposal_id = ctx.arguments.get("proposal_id")
-    candidate_id = ctx.arguments.get("candidate_id")
-    if proposal_id and candidate_id:
-        raise ValueError("pass either --proposal-id or --candidate-id, not both.")
-    if proposal_id:
-        path = (
-            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
-            f"revision-proposals/{proposal_id}:dismiss"
-        )
-    elif candidate_id:
-        path = (
-            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
-            f"candidates/{candidate_id}:archive"
-        )
-    else:
+    if not proposal_id:
         raise ValueError("--proposal-id is required.")
+    path = (
+        f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+        f"revision-proposals/{proposal_id}:dismiss"
+    )
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",

@@ -230,7 +230,6 @@ def test_proposal_withdraw_dismisses_the_named_revision_proposal() -> None:
     assert arguments == {
         "plan_id": plan_id,
         "proposal_id": proposal_id,
-        "candidate_id": None,
         "dry_run": False,
     }
     capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"id": proposal_id})
@@ -258,36 +257,6 @@ def test_proposal_withdraw_dismisses_the_named_revision_proposal() -> None:
     assert "candidate_id" not in spec.input_schema["properties"]
 
 
-def test_proposal_withdraw_still_archives_a_candidate_for_the_deprecated_flag() -> None:
-    """The published schema now teaches --proposal-id, but a sandbox running on a
-    cached catalog can still be mid-flight with --candidate-id. Dropping the flag
-    in the same release that renames it would break those callers."""
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    candidate_id = "77777777-7777-4777-8777-777777777777"
-    args = parse(
-        [
-            "agentic-campaign",
-            "+proposal-withdraw",
-            "--plan-id",
-            plan_id,
-            "--candidate-id",
-            candidate_id,
-        ]
-    )
-    arguments = agentic_campaign._build_proposal_withdraw_arguments(args)
-    assert arguments["proposal_id"] is None
-    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"id": candidate_id})
-    asyncio.run(
-        agentic_campaign._execute_proposal_withdraw(
-            context("agentic-campaign.proposal-withdraw", arguments, capture)
-        )
-    )
-    assert capture.calls[-1]["path"] == (
-        "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-        f"persona-plans/{plan_id}/candidates/{candidate_id}:archive"
-    )
-
-
 @pytest.mark.parametrize(
     "argv",
     [
@@ -308,8 +277,6 @@ def test_proposal_withdraw_still_archives_a_candidate_for_the_deprecated_flag() 
             "+proposal-withdraw",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
-            "--proposal-id",
-            "77777777-7777-4777-8777-777777777777",
             "--candidate-id",
             "88888888-8888-4888-8888-888888888888",
         ],
@@ -331,7 +298,7 @@ def test_proposal_withdraw_dry_run_is_local(monkeypatch: pytest.MonkeyPatch) -> 
             "+proposal-withdraw",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
-            "--candidate-id",
+            "--proposal-id",
             "77777777-7777-4777-8777-777777777777",
             "--dry-run",
         ]
@@ -641,7 +608,7 @@ def test_plan_propose_dispatches_draft_submit() -> None:
     capture = Capture(
         campaign_list(plan_id),
         campaign_detail(plan_id),
-        {"candidate": {"id": "candidate-1"}},
+        {"proposal": {"id": "proposal-1"}},
     )
     argv = ["agentic-campaign", "+plan-propose", "--plan-id", plan_id]
     complete_args = _complete_plan_cli_args()
@@ -653,12 +620,12 @@ def test_plan_propose_dispatches_draft_submit() -> None:
         )
     )
     call = capture.calls[-1]
-    assert call["path"].endswith("/candidates:submit")
-    assert call["json_body"]["persona_payload"]["name"] == "Mia"
-    assert call["json_body"]["elements"][0]["format_id"].startswith("4444")
-    assert "name" in call["json_body"]
+    assert call["path"].endswith("/revision-proposals")
+    assert call["json_body"]["changes"]["persona"]["persona_payload"]["name"] == "Mia"
+    assert call["json_body"]["changes"]["add_elements"][0]["format_id"].startswith("4444")
+    assert call["json_body"]["title"] == "DIY problem solver"
     assert result == {
-        "candidate_id": "candidate-1",
+        "proposal_id": "proposal-1",
         "change_summary": {
             "complete_plan": True,
             "name": "DIY problem solver",
@@ -668,13 +635,58 @@ def test_plan_propose_dispatches_draft_submit() -> None:
     }
 
 
+def test_plan_propose_rejects_draft_name_over_proposal_title_limit() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+plan-propose",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--name",
+            "x" * 81,
+            "--persona-json",
+            json.dumps(
+                {
+                    "name": "Mia",
+                    "description": "Practical maker",
+                    "visual_prompt": "Warm workshop portrait",
+                }
+            ),
+            "--elements-json",
+            json.dumps(
+                [
+                    {
+                        "format_id": "44444444-4444-4444-8444-444444444444",
+                        "topic_id": "55555555-5555-4555-8555-555555555555",
+                    }
+                ]
+            ),
+        ]
+    )
+
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    with pytest.raises(ValueError, match="80 characters or fewer"):
+        asyncio.run(
+            agentic_campaign._execute_plan_propose(
+                context(
+                    "agentic-campaign.plan-propose",
+                    arguments,
+                    Capture(
+                        campaign_list("33333333-3333-4333-8333-333333333333"),
+                        campaign_detail("33333333-3333-4333-8333-333333333333"),
+                    ),
+                )
+            )
+        )
+
+
 def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     persona_id = "99999999-9999-4999-8999-999999999999"
     capture = Capture(
         campaign_list(plan_id),
         campaign_detail(plan_id),
-        {"candidate": {"id": "candidate-1"}},
+        {"proposal": {"id": "proposal-1"}},
     )
     argv = [
         "agentic-campaign",
@@ -705,10 +717,10 @@ def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
         )
     )
     call = capture.calls[-1]
-    assert call["path"].endswith("/candidates:submit")
-    assert call["json_body"]["persona_id"] == persona_id
-    assert "persona_payload" not in call["json_body"]
-    assert result["candidate_id"] == "candidate-1"
+    assert call["path"].endswith("/revision-proposals")
+    assert call["json_body"]["changes"]["persona"]["persona_id"] == persona_id
+    assert "persona_payload" not in call["json_body"]["changes"]["persona"]
+    assert result["proposal_id"] == "proposal-1"
 
 
 def test_plan_propose_rejects_persona_json_and_persona_id_together() -> None:
@@ -1559,9 +1571,7 @@ def test_plan_propose_oneof_call_shapes_match_exactly_one_branch(
     Draft202012Validator(spec.input_schema).validate(payload)
     branches = spec.input_schema["oneOf"]
     matches = [
-        branch["title"]
-        for branch in branches
-        if Draft202012Validator(branch).is_valid(payload)
+        branch["title"] for branch in branches if Draft202012Validator(branch).is_valid(payload)
     ]
     assert matches == [expected_branch]
 
@@ -1582,6 +1592,8 @@ def test_plan_propose_schema_has_three_content_shapes_and_dry_run() -> None:
     assert spec.supports_dry_run is True
     changes_schema = spec.input_schema["properties"]["changes"]
     assert "patch_persona_payload" in changes_schema["properties"]
+    with pytest.raises(Exception):
+        Draft202012Validator(changes_schema).validate({})
     assert args.dry_run is True
 
     proposal_get = get_command_spec("agentic-campaign.proposal-get")
