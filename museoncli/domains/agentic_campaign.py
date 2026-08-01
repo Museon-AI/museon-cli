@@ -105,6 +105,82 @@ def _build_proposal_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {"plan_id": args.plan_id, "proposal_id": args.proposal_id}
 
 
+def _schedule_rollout_testing_plan(value: str | None) -> dict[str, Any]:
+    if value is None:
+        return {"strategy": "balanced_exploration", "overrides": []}
+    parsed = _candidate_json(value, field="testing-plan", expected_type=dict)
+    if set(parsed) - {"strategy", "overrides"}:
+        raise ValueError("testing-plan only accepts strategy and overrides.")
+    if parsed.get("strategy") != "balanced_exploration":
+        raise ValueError("testing-plan strategy must be balanced_exploration.")
+    overrides = parsed.get("overrides")
+    if not isinstance(overrides, list):
+        raise ValueError("testing-plan overrides must be a JSON array.")
+    return {"strategy": "balanced_exploration", "overrides": overrides}
+
+
+def _schedule_rollout_coverage(args: argparse.Namespace) -> dict[str, Any]:
+    mode = str(args.coverage).replace("-", "_")
+    days = args.days
+    if mode == "future_window" and days is None:
+        raise ValueError("--coverage future-window requires --days 1..30.")
+    if mode == "existing_future_all" and days is not None:
+        raise ValueError("--days is only valid with --coverage future-window.")
+    if days is not None and not 1 <= days <= 30:
+        raise ValueError("--days must be between 1 and 30.")
+    return {"mode": mode, "timezone": args.timezone, "days": days}
+
+
+def _add_schedule_rollout_preflight_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    parser.add_argument("--proposal-id", required=True)
+    parser.add_argument(
+        "--coverage",
+        choices=["existing-future-all", "future-window"],
+        default="existing-future-all",
+    )
+    parser.add_argument("--days", type=int)
+    parser.add_argument("--timezone", default="Asia/Shanghai")
+    parser.add_argument("--testing-plan-json", default=None)
+
+
+def _build_schedule_rollout_preflight_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "plan_id": args.plan_id,
+        "proposal_id": args.proposal_id,
+        "coverage": _schedule_rollout_coverage(args),
+        "testing_plan": _schedule_rollout_testing_plan(args.testing_plan_json),
+    }
+
+
+def _add_confirm_schedule_rollout_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_schedule_rollout_preflight_arguments(parser)
+    parser.add_argument("--idempotency-key", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_confirm_schedule_rollout_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _build_schedule_rollout_preflight_arguments(args)
+    payload["idempotency_key"] = args.idempotency_key
+    payload["dry_run"] = args.dry_run
+    return payload
+
+
+def _add_schedule_rollout_get_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_plan_id_arguments(parser)
+    selector = parser.add_mutually_exclusive_group(required=True)
+    selector.add_argument("--rollout-id")
+    selector.add_argument("--proposal-id")
+
+
+def _build_schedule_rollout_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "plan_id": args.plan_id,
+        "rollout_id": args.rollout_id,
+        "proposal_id": args.proposal_id,
+    }
+
+
 def _candidate_json(value: str, *, field: str, expected_type: type) -> Any:
     parsed = read_json_option(value=value, file_path=None, field=field)
     if not isinstance(parsed, expected_type):
@@ -693,6 +769,120 @@ def _campaign_config_schema() -> dict[str, Any]:
 def specs() -> list[CommandSpec]:
     domain = Domain.AGENTIC_CAMPAIGN
     return [
+        CommandSpec(
+            domain=domain,
+            shortcut="+schedule-rollout-preflight",
+            summary=(
+                "Read the exact proposal schedule-rollout matrix before confirmation, including "
+                "any winner boost placements. A boost reserves visible target-account slots; if "
+                "existing future slots cannot fulfil its days, rerun with --coverage future-window "
+                "--days 1..30. Future slots follow the campaign preferred publish windows."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_schedule_rollout_preflight",
+            input_schema=_plan_schema(
+                {
+                    "proposal_id": _uuid_property("Confirmed revision proposal id"),
+                    "coverage": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "mode": {"enum": ["existing_future_all", "future_window"]},
+                            "timezone": {"type": "string", "minLength": 1, "maxLength": 100},
+                            "days": {"type": ["integer", "null"], "minimum": 1, "maximum": 30},
+                        },
+                        "required": ["mode", "timezone"],
+                    },
+                    "testing_plan": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "strategy": {"const": "balanced_exploration"},
+                            "overrides": {"type": "array", "maxItems": 500},
+                        },
+                        "required": ["strategy", "overrides"],
+                    },
+                },
+                required=["proposal_id", "coverage", "testing_plan"],
+            ),
+            output_schema=_direct_output_schema(
+                "Read-only rollout preview: target slots, seed bindings, regular generation "
+                "count, failed elements, and coverage_days_required when future slots must be "
+                "created."
+            ),
+            examples=[
+                "museoncli agentic-campaign +schedule-rollout-preflight "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--proposal-id 77777777-7777-4777-8777-777777777777 --timezone Asia/Shanghai",
+                "museoncli agentic-campaign +schedule-rollout-preflight "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--proposal-id 77777777-7777-4777-8777-777777777777 "
+                "--coverage future-window --days 7 --timezone Asia/Shanghai",
+            ],
+            add_arguments=_add_schedule_rollout_preflight_arguments,
+            build_arguments=_build_schedule_rollout_preflight_arguments,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+confirm-schedule-rollout",
+            summary=(
+                "Atomically confirm a reviewed proposal's immutable schedule-rollout intent, "
+                "including its visible winner boost placements, and dispatch asynchronous execution. "
+                "Reuse the same idempotency key on retry; then poll +schedule-rollout-get."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_confirm_schedule_rollout",
+            input_schema=_plan_schema(
+                {
+                    "proposal_id": _uuid_property("Confirmed revision proposal id"),
+                    "coverage": {"type": "object"},
+                    "testing_plan": {"type": "object"},
+                    "idempotency_key": {"type": "string", "minLength": 8, "maxLength": 240},
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["proposal_id", "coverage", "testing_plan", "idempotency_key"],
+            ),
+            output_schema=_direct_output_schema(
+                "202-accepted durable rollout id and current state; use +schedule-rollout-get "
+                "until terminal."
+            ),
+            examples=[
+                "museoncli agentic-campaign +confirm-schedule-rollout "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--proposal-id 77777777-7777-4777-8777-777777777777 "
+                "--timezone Asia/Shanghai --idempotency-key rollout-20260801-001"
+            ],
+            add_arguments=_add_confirm_schedule_rollout_arguments,
+            build_arguments=_build_confirm_schedule_rollout_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+schedule-rollout-get",
+            summary="Read durable proposal schedule-rollout status by rollout id or proposal id.",
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_schedule_rollout_get",
+            input_schema=_plan_schema(
+                {
+                    "rollout_id": {"type": "string", "format": "uuid"},
+                    "proposal_id": {"type": "string", "format": "uuid"},
+                }
+            ),
+            output_schema=_direct_output_schema(
+                "Durable rollout state, immutable coverage/testing assignments, seed bindings, "
+                "and execution progress."
+            ),
+            examples=[
+                "museoncli agentic-campaign +schedule-rollout-get "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--rollout-id 88888888-8888-4888-8888-888888888888"
+            ],
+            add_arguments=_add_schedule_rollout_get_arguments,
+            build_arguments=_build_schedule_rollout_get_arguments,
+        ),
         CommandSpec(
             domain=domain,
             shortcut="+plan-propose",
@@ -1622,6 +1812,61 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
     }
 
 
+async def _execute_schedule_rollout_preflight(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    proposal_id = ctx.arguments.get("proposal_id")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"revision-proposals/{proposal_id}:schedule-rollout-preflight"
+        ),
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "coverage": ctx.arguments.get("coverage"),
+            "testing_plan": ctx.arguments.get("testing_plan"),
+        },
+    )
+
+
+async def _execute_confirm_schedule_rollout(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    proposal_id = ctx.arguments.get("proposal_id")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        (
+            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
+            f"revision-proposals/{proposal_id}:confirm-schedule-rollout"
+        ),
+        json_body={
+            "workspace_id": ctx.workspace_id,
+            "coverage": ctx.arguments.get("coverage"),
+            "testing_plan": ctx.arguments.get("testing_plan"),
+            "idempotency_key": ctx.arguments.get("idempotency_key"),
+        },
+    )
+
+
+async def _execute_schedule_rollout_get(ctx: CommandContext) -> Any:
+    campaign_id, plan, _ = await _locate_plan(ctx)
+    rollout_id = ctx.arguments.get("rollout_id")
+    proposal_id = ctx.arguments.get("proposal_id")
+    if rollout_id:
+        path = f"schedule-rollouts/{rollout_id}"
+    elif proposal_id:
+        path = f"revision-proposals/{proposal_id}/schedule-rollout"
+    else:
+        raise ValueError("one of rollout_id or proposal_id is required.")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "GET",
+        f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/{path}",
+        params={"workspace_id": ctx.workspace_id},
+    )
+
+
 async def _execute_plan_propose(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     status = plan.get("status")
@@ -1978,6 +2223,9 @@ async def _execute_issues_pull(ctx: CommandContext) -> Any:
 
 
 EXECUTORS = {
+    "agentic-campaign.confirm-schedule-rollout": redacted_direct_enveloped(
+        _execute_confirm_schedule_rollout, redact_api_errors=True
+    ),
     "agentic-campaign.campaign-activate": redacted_direct_enveloped(
         _execute_campaign_activate, redact_api_errors=True
     ),
@@ -2024,6 +2272,12 @@ EXECUTORS = {
     ),
     "agentic-campaign.proposal-withdraw": redacted_direct_enveloped(
         _execute_proposal_withdraw, redact_api_errors=True
+    ),
+    "agentic-campaign.schedule-rollout-get": redacted_direct_enveloped(
+        _execute_schedule_rollout_get, redact_api_errors=True
+    ),
+    "agentic-campaign.schedule-rollout-preflight": redacted_direct_enveloped(
+        _execute_schedule_rollout_preflight, redact_api_errors=True
     ),
     "agentic-campaign.plan-tags": redacted_direct_enveloped(
         _execute_plan_tags, redact_api_errors=True

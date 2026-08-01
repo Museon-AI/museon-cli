@@ -120,6 +120,99 @@ def _complete_plan_cli_args() -> list[str]:
     ]
 
 
+def test_schedule_rollout_preflight_uses_default_balanced_testing_plan() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    args = parse(
+        [
+            "agentic-campaign",
+            "+schedule-rollout-preflight",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+        ]
+    )
+    arguments = agentic_campaign._build_schedule_rollout_preflight_arguments(args)
+    assert arguments["coverage"] == {
+        "mode": "existing_future_all",
+        "timezone": "Asia/Shanghai",
+        "days": None,
+    }
+    assert arguments["testing_plan"] == {"strategy": "balanced_exploration", "overrides": []}
+    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id, status="active"), {"status": "ready"})
+    asyncio.run(
+        agentic_campaign._execute_schedule_rollout_preflight(
+            context("agentic-campaign.schedule-rollout-preflight", arguments, capture)
+        )
+    )
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:schedule-rollout-preflight"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "coverage": arguments["coverage"],
+            "testing_plan": arguments["testing_plan"],
+        },
+        "params": None,
+    }
+
+
+def test_confirm_schedule_rollout_and_get_by_proposal_use_durable_routes() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    args = parse(
+        [
+            "agentic-campaign",
+            "+confirm-schedule-rollout",
+            "--plan-id",
+            plan_id,
+            "--proposal-id",
+            proposal_id,
+            "--coverage",
+            "future-window",
+            "--days",
+            "7",
+            "--idempotency-key",
+            "rollout-20260801-001",
+        ]
+    )
+    arguments = agentic_campaign._build_confirm_schedule_rollout_arguments(args)
+    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id, status="active"), {"id": "rollout"})
+    asyncio.run(
+        agentic_campaign._execute_confirm_schedule_rollout(
+            context("agentic-campaign.confirm-schedule-rollout", arguments, capture)
+        )
+    )
+    assert capture.calls[-1]["path"].endswith(f"{proposal_id}:confirm-schedule-rollout")
+    assert capture.calls[-1]["json_body"]["idempotency_key"] == "rollout-20260801-001"
+
+    get_args = agentic_campaign._build_schedule_rollout_get_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "+schedule-rollout-get",
+                "--plan-id",
+                plan_id,
+                "--proposal-id",
+                proposal_id,
+            ]
+        )
+    )
+    get_capture = Capture(campaign_list(plan_id), campaign_detail(plan_id, status="active"), {"id": "rollout"})
+    asyncio.run(
+        agentic_campaign._execute_schedule_rollout_get(
+            context("agentic-campaign.schedule-rollout-get", get_args, get_capture)
+        )
+    )
+    assert get_capture.calls[-1]["path"].endswith(
+        f"revision-proposals/{proposal_id}/schedule-rollout"
+    )
+
+
 def test_proposal_withdraw_dismisses_the_named_revision_proposal() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     proposal_id = "77777777-7777-4777-8777-777777777777"

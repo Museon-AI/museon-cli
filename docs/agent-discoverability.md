@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-132 commands across 14 domains (source of truth: `museoncli schema`).
+135 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -197,6 +197,9 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
+| `agentic-campaign +schedule-rollout-preflight` | read | — | — | direct | Read the exact proposal schedule-rollout matrix before confirmation, including any winner boost placements. A boost reserves visible target-account slots; if existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows. |
+| `agentic-campaign +confirm-schedule-rollout` | write | yes | — | direct | Atomically confirm a reviewed proposal's immutable schedule-rollout intent, including its visible winner boost placements, and dispatch asynchronous execution. Reuse the same idempotency key on retry; then poll +schedule-rollout-get. |
+| `agentic-campaign +schedule-rollout-get` | read | — | — | direct | Read durable proposal schedule-rollout status by rollout id or proposal id. |
 | `agentic-campaign +plan-propose` | write | yes | — | direct | Create a complete plan proposal, adjust a running plan, or revise an open proposal for operator review. For a running-plan adjustment, set --title to a short name the operator can recognize at a glance in the proposal list. Several adjustment proposals may stay open on one plan at the same time and each is confirmed on its own, but a submission that collides with an open proposal, or that exceeds the open-proposal limit, is rejected and names the blocking proposal. |
 | `agentic-campaign +proposal-get` | read | — | — | direct | Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations). |
 | `agentic-campaign +proposal-withdraw` | write | yes | — | direct | Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected +plan-propose: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with +plan-propose --proposal-id. Never resend the rejected payload unchanged. |

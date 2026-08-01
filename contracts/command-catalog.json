@@ -519,6 +519,81 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.schedule-rollout-preflight",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.schedule-rollout-preflight",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+schedule-rollout-preflight",
+          "stability": "stable",
+          "summary": "Read the exact proposal schedule-rollout matrix before confirmation, including any winner boost placements. A boost reserves visible target-account slots; if existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.confirm-schedule-rollout",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.confirm-schedule-rollout",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+confirm-schedule-rollout",
+          "stability": "stable",
+          "summary": "Atomically confirm a reviewed proposal's immutable schedule-rollout intent, including its visible winner boost placements, and dispatch asynchronous execution. Reuse the same idempotency key on retry; then poll +schedule-rollout-get.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.schedule-rollout-get",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.schedule-rollout-get",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+schedule-rollout-get",
+          "stability": "stable",
+          "summary": "Read durable proposal schedule-rollout status by rollout id or proposal id.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.plan-propose",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -10227,6 +10302,131 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "agentic-campaign.confirm-schedule-rollout": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.confirm-schedule-rollout",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +confirm-schedule-rollout --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --timezone Asia/Shanghai --idempotency-key rollout-20260801-001"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "coverage": {
+            "type": "object"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "maxLength": 240,
+            "minLength": 8,
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "description": "Confirmed revision proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "testing_plan": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "plan_id",
+          "proposal_id",
+          "coverage",
+          "testing_plan",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.confirm-schedule-rollout",
+      "output_schema": {
+        "description": "202-accepted durable rollout id and current state; use +schedule-rollout-get until terminal.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+confirm-schedule-rollout",
+      "stability": "stable",
+      "summary": "Atomically confirm a reviewed proposal's immutable schedule-rollout intent, including its visible winner boost placements, and dispatch asynchronous execution. Reuse the same idempotency key on retry; then poll +schedule-rollout-get.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "agentic-campaign.get": {
       "authorization": {
         "authentication_required": true,
@@ -11944,6 +12144,268 @@
       "stability": "stable",
       "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected +plan-propose: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with +plan-propose --proposal-id. Never resend the rejected payload unchanged.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.schedule-rollout-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.schedule-rollout-get",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +schedule-rollout-get --plan-id 33333333-3333-4333-8333-333333333333 --rollout-id 88888888-8888-4888-8888-888888888888"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rollout_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.schedule-rollout-get",
+      "output_schema": {
+        "description": "Durable rollout state, immutable coverage/testing assignments, seed bindings, and execution progress.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+schedule-rollout-get",
+      "stability": "stable",
+      "summary": "Read durable proposal schedule-rollout status by rollout id or proposal id.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.schedule-rollout-preflight": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.schedule-rollout-preflight",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +schedule-rollout-preflight --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --timezone Asia/Shanghai",
+        "museoncli agentic-campaign +schedule-rollout-preflight --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --coverage future-window --days 7 --timezone Asia/Shanghai"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "coverage": {
+            "additionalProperties": false,
+            "properties": {
+              "days": {
+                "maximum": 30,
+                "minimum": 1,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "mode": {
+                "enum": [
+                  "existing_future_all",
+                  "future_window"
+                ]
+              },
+              "timezone": {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "mode",
+              "timezone"
+            ],
+            "type": "object"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "description": "Confirmed revision proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "testing_plan": {
+            "additionalProperties": false,
+            "properties": {
+              "overrides": {
+                "maxItems": 500,
+                "type": "array"
+              },
+              "strategy": {
+                "const": "balanced_exploration"
+              }
+            },
+            "required": [
+              "strategy",
+              "overrides"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "plan_id",
+          "proposal_id",
+          "coverage",
+          "testing_plan"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.schedule-rollout-preflight",
+      "output_schema": {
+        "description": "Read-only rollout preview: target slots, seed bindings, regular generation count, failed elements, and coverage_days_required when future slots must be created.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+schedule-rollout-preflight",
+      "stability": "stable",
+      "summary": "Read the exact proposal schedule-rollout matrix before confirmation, including any winner boost placements. A boost reserves visible target-account slots; if existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "artifacts.share": {
