@@ -815,11 +815,11 @@ def specs() -> list[CommandSpec]:
                         ],
                         "anyOf": [
                             {"required": ["name"]},
+                            {"required": ["proposal_id"]},
                         ],
                         "not": {
                             "anyOf": [
                                 {"required": ["changes"]},
-                                {"required": ["proposal_id"]},
                                 {"required": ["title"]},
                             ]
                         },
@@ -846,6 +846,7 @@ def specs() -> list[CommandSpec]:
                                 {"required": ["persona_payload"]},
                                 {"required": ["changes"]},
                                 {"required": ["title"]},
+                                {"required": ["persona_id"]},
                             ]
                         },
                     },
