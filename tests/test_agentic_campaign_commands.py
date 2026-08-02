@@ -232,8 +232,16 @@ def test_proposal_withdraw_dismisses_the_named_revision_proposal() -> None:
         "proposal_id": proposal_id,
         "dry_run": False,
     }
-    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id), {"id": proposal_id})
-    asyncio.run(
+    proposal_url = (
+        "https://www.museon.ai/zh/admin/orgs/museon-official/"
+        "workspaces/museon-official/proposals/56"
+    )
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id),
+        {"id": proposal_id, "proposal_url": proposal_url},
+    )
+    result = asyncio.run(
         agentic_campaign._execute_proposal_withdraw(
             context("agentic-campaign.proposal-withdraw", arguments, capture)
         )
@@ -249,6 +257,7 @@ def test_proposal_withdraw_dismisses_the_named_revision_proposal() -> None:
         },
         "params": None,
     }
+    assert result["proposal_url"] == proposal_url
     spec = get_command_spec("agentic-campaign.proposal-withdraw")
     assert spec.risk_level == "write"
     assert spec.requires_confirmation is False
@@ -362,6 +371,27 @@ def test_proposal_create_and_revise_build_named_atomic_changes() -> None:
         ],
         "persona": {"persona_id": "99999999-9999-4999-8999-999999999999"},
     }
+    proposal_url = (
+        "https://www.museon.ai/zh/admin/orgs/museon-official/"
+        "workspaces/museon-official/proposals/56"
+    )
+    created = asyncio.run(
+        agentic_campaign._execute_proposal_create(
+            context(
+                "agentic-campaign.proposal-create",
+                active_arguments,
+                Capture(
+                    campaign_list(plan_id),
+                    campaign_detail(plan_id, status="active"),
+                    {
+                        "proposal": {"id": "proposal-1", "proposal_number": 56},
+                        "proposal_url": proposal_url,
+                    },
+                ),
+            )
+        )
+    )
+    assert created["proposal_url"] == proposal_url
 
     revised = parse(
         [
@@ -396,9 +426,17 @@ def test_proposal_create_and_revise_build_named_atomic_changes() -> None:
     capture = Capture(
         campaign_list(plan_id),
         campaign_detail(plan_id, status="active"),
-        {"elements": [{"id": "new-element"}], "round": 3, "dispatched_task_count": 1},
+        {
+            "elements": [{"id": "new-element"}],
+            "round": 3,
+            "dispatched_task_count": 1,
+            "proposal_url": (
+                "https://www.museon.ai/zh/admin/orgs/museon-official/"
+                "workspaces/museon-official/proposals/56"
+            ),
+        },
     )
-    asyncio.run(
+    revised_output = asyncio.run(
         agentic_campaign._execute_proposal_revise(
             context("agentic-campaign.proposal-revise", revised_arguments, capture)
         )
@@ -408,6 +446,61 @@ def test_proposal_create_and_revise_build_named_atomic_changes() -> None:
         "changes": revised_arguments["changes"],
         "note": None,
     }
+    assert revised_output["proposal_url"].endswith("/proposals/56")
+
+
+def test_proposal_outputs_forward_the_server_owned_canonical_url() -> None:
+    proposal_url = (
+        "https://www.museon.ai/zh/admin/orgs/museon-official/"
+        "workspaces/museon-official/proposals/56"
+    )
+
+    created = agentic_campaign._proposal_output(
+        {
+            "proposal": {"id": "proposal-1", "proposal_number": 56},
+            "proposal_url": proposal_url,
+        },
+        changes={"new_directions": 1},
+    )
+    listed = asyncio.run(
+        agentic_campaign._execute_proposal_list(
+            context(
+                "agentic-campaign.proposal-list",
+                {
+                    "campaign_id": "22222222-2222-4222-8222-222222222222",
+                    "page": 1,
+                    "page_size": 20,
+                    "include_draft_stage": False,
+                    "status": None,
+                },
+                Capture({"items": [{"proposal_number": 56, "proposal_url": proposal_url}]}),
+            )
+        )
+    )
+    plan_listed = asyncio.run(
+        agentic_campaign._execute_proposal_list(
+            context(
+                "agentic-campaign.proposal-list",
+                {
+                    "plan_id": "33333333-3333-4333-8333-333333333333",
+                    "page": 1,
+                    "page_size": 20,
+                    "include_draft_stage": False,
+                    "status": None,
+                },
+                Capture(
+                    campaign_list("33333333-3333-4333-8333-333333333333"),
+                    campaign_detail("33333333-3333-4333-8333-333333333333", status="active"),
+                    {"items": [{"proposal_number": 56, "proposal_url": proposal_url}]},
+                ),
+            )
+        )
+    )
+
+    assert created["proposal_number"] == 56
+    assert created["proposal_url"] == proposal_url
+    assert listed["items"][0]["proposal_url"] == proposal_url
+    assert plan_listed["items"][0]["proposal_url"] == proposal_url
 
 
 def test_proposal_persona_operations_are_mutually_exclusive() -> None:
@@ -1298,6 +1391,11 @@ def test_proposal_get_returns_operator_revision_context() -> None:
         campaign_detail(plan_id, status="active"),
         {
             "id": proposal_id,
+            "proposal_number": 56,
+            "proposal_url": (
+                "https://www.museon.ai/zh/admin/orgs/museon-official/"
+                "workspaces/museon-official/proposals/56"
+            ),
             "status": "awaiting_review",
             "revision_round": 2,
             "changes": {
@@ -1361,6 +1459,11 @@ def test_proposal_get_returns_operator_revision_context() -> None:
         "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
     }
     assert result == {
+        "proposal_number": 56,
+        "proposal_url": (
+            "https://www.museon.ai/zh/admin/orgs/museon-official/"
+            "workspaces/museon-official/proposals/56"
+        ),
         "status": "awaiting_review",
         "revision_round": 2,
         "change_summary": {

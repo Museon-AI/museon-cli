@@ -12007,7 +12007,7 @@
       },
       "name": "agentic-campaign.proposal-get",
       "output_schema": {
-        "description": "Proposal status, revision round, changes, current elements, latest feedback summary, the annotations section (per-round compiled_summary/round/resolved, newest round first, or the string \"暂无标注意见\" when there is no feedback yet), and a review reminder.",
+        "description": "Proposal number, canonical proposal_url, status, revision round, changes, current elements, latest feedback summary, the annotations section (per-round compiled_summary/round/resolved, newest round first, or the string \"暂无标注意见\" when there is no feedback yet), and a review reminder. Forward proposal_url exactly as returned; never construct a link.",
         "properties": {
           "command": {
             "type": "string"
@@ -12164,7 +12164,7 @@
       },
       "name": "agentic-campaign.proposal-list",
       "output_schema": {
-        "description": "Paginated Proposal list for one Plan or Campaign.",
+        "description": "Paginated Proposal list for one Plan or Campaign. Every item includes its canonical proposal_url; forward it exactly as returned.",
         "properties": {
           "command": {
             "type": "string"
@@ -12380,7 +12380,7 @@
       },
       "name": "agentic-campaign.proposal-revise",
       "output_schema": {
-        "description": "Next Proposal revision round.",
+        "description": "Next Proposal revision round and canonical proposal_url. Forward proposal_url exactly as returned; never construct a link.",
         "properties": {
           "command": {
             "type": "string"
