@@ -130,10 +130,18 @@ def _add_proposal_revise_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_proposal_list_arguments(parser: argparse.ArgumentParser) -> None:
-    _add_plan_id_arguments(parser)
+    scope = parser.add_mutually_exclusive_group(required=True)
+    scope.add_argument("--plan-id")
+    scope.add_argument("--campaign-id")
     parser.add_argument("--page", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=20)
     parser.add_argument("--include-draft-stage", action="store_true")
+    parser.add_argument(
+        "--status",
+        action="append",
+        choices=["awaiting-review", "confirmed", "dismissed", "superseded"],
+    )
+    parser.add_argument("--awaiting-review", action="store_true")
 
 
 def _add_plan_members_reconcile_arguments(parser: argparse.ArgumentParser) -> None:
@@ -388,11 +396,16 @@ def _build_proposal_revise_arguments(args: argparse.Namespace) -> dict[str, Any]
 def _build_proposal_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
     if args.page < 1 or args.page_size < 1:
         raise ValueError("--page and --page-size must be positive")
+    statuses = list(args.status or [])
+    if args.awaiting_review and "awaiting-review" not in statuses:
+        statuses.append("awaiting-review")
     return {
         "plan_id": args.plan_id,
+        "campaign_id": args.campaign_id,
         "page": args.page,
         "page_size": args.page_size,
         "include_draft_stage": args.include_draft_stage,
+        "status": [value.replace("-", "_") for value in statuses] or None,
     }
 
 
@@ -852,6 +865,31 @@ def _plan_schema(extra: dict[str, Any] | None = None, required: list[str] | None
         {"plan_id": _uuid_property("Agentic Persona Plan id"), **(extra or {})},
         required=["plan_id", *(required or [])],
     )
+
+
+def _proposal_list_input_schema() -> dict[str, Any]:
+    schema = _schema(
+        {
+            "plan_id": _uuid_property("Agentic Persona Plan id"),
+            "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+            "page": {"type": "integer", "minimum": 1, "default": 1},
+            "page_size": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20},
+            "include_draft_stage": {"type": "boolean", "default": False},
+            "status": {
+                "type": "array",
+                "items": {
+                    "enum": ["awaiting-review", "confirmed", "dismissed", "superseded"],
+                    "type": "string",
+                },
+            },
+            "awaiting_review": {"type": "boolean", "default": False},
+        }
+    )
+    schema["oneOf"] = [
+        {"required": ["plan_id"], "not": {"required": ["campaign_id"]}},
+        {"required": ["campaign_id"], "not": {"required": ["plan_id"]}},
+    ]
+    return schema
 
 
 def _persona_payload_schema() -> dict[str, Any]:
@@ -1460,21 +1498,20 @@ def specs() -> list[CommandSpec]:
             domain=domain,
             shortcut="+list",
             resource="proposal",
-            summary="List a Plan's To review and Reviewed Proposals.",
+            summary=(
+                "List Proposals for exactly one Plan or all Plans in one Campaign. "
+                "Campaign scope returns each Proposal's Plan and Persona summary."
+            ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="agentic_campaign_proposal_list",
-            input_schema=_plan_schema(
-                {
-                    "page": {"type": "integer", "minimum": 1, "default": 1},
-                    "page_size": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20},
-                    "include_draft_stage": {"type": "boolean", "default": False},
-                }
-            ),
-            output_schema=_direct_output_schema("Paginated revision Proposal list."),
+            input_schema=_proposal_list_input_schema(),
+            output_schema=_direct_output_schema("Paginated Proposal list for one Plan or Campaign."),
             examples=[
                 "museoncli agentic-campaign proposal +list "
-                "--plan-id 33333333-3333-4333-8333-333333333333"
+                "--plan-id 33333333-3333-4333-8333-333333333333",
+                "museoncli agentic-campaign proposal +list "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 --awaiting-review",
             ],
             add_arguments=_add_proposal_list_arguments,
             build_arguments=_build_proposal_list_arguments,
@@ -2240,19 +2277,25 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
 
 
 async def _execute_proposal_list(ctx: CommandContext) -> Any:
-    campaign_id, plan, _ = await _locate_plan(ctx)
+    campaign_id = ctx.arguments.get("campaign_id")
+    if campaign_id:
+        path = f"/agentic-creative-campaigns/{campaign_id}/revision-proposals"
+    else:
+        located_campaign_id, plan, _ = await _locate_plan(ctx)
+        path = (
+            f"/agentic-creative-campaigns/{located_campaign_id}/persona-plans/{plan['id']}/"
+            "revision-proposals"
+        )
     return await ctx.api_data_v2(
         ctx.cfg,
         "GET",
-        (
-            f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
-            "revision-proposals"
-        ),
+        path,
         params={
             "workspace_id": ctx.workspace_id,
             "page": ctx.arguments["page"],
             "page_size": ctx.arguments["page_size"],
             "include_draft_stage": ctx.arguments["include_draft_stage"],
+            "status": ctx.arguments["status"],
         },
     )
 
