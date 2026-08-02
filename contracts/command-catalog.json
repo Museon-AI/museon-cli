@@ -527,7 +527,7 @@
           "risk_level": "read",
           "shortcut": "+schedule-rollout-preflight",
           "stability": "stable",
-          "summary": "Read the exact proposal schedule-rollout matrix before confirmation, including any winner boost placements. A boost reserves visible target-account slots; if existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows.",
+          "summary": "Always run this read-only command before first confirming one specified awaiting-review proposal, and rerun it whenever coverage or testing overrides change. It returns the exact schedule-rollout matrix the operator must review before applying. The proposal does not need to be the Plan's newest: independent active-Plan proposals can be confirmed in any order. Includes winner boost placements. A boost reserves visible target-account slots; if the response is coverage_days_required because existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows. A confirmed proposal can only be inspected or retried; use +schedule-rollout-get for its persisted rollout. Dismissed or superseded proposals are rejected.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -552,7 +552,7 @@
           "risk_level": "write",
           "shortcut": "+confirm-schedule-rollout",
           "stability": "stable",
-          "summary": "Atomically confirm a reviewed proposal's immutable schedule-rollout intent, including its visible winner boost placements, and dispatch asynchronous execution. Reuse the same idempotency key on retry; then poll +schedule-rollout-get.",
+          "summary": "After a ready +schedule-rollout-preflight for the same proposal, coverage, and testing plan, atomically apply one specified awaiting-review proposal (there is no separate approval command), persist its immutable schedule-rollout intent including visible winner boost placements, and dispatch asynchronous execution. The proposal need not be newest: independent active-Plan proposals can be confirmed in any order; confirming a competitive whole-plan alternative dismisses the other awaiting-review alternatives. Reuse the same idempotency key to retry a confirmed proposal's existing rollout; dismissed or superseded proposals are rejected. Poll +schedule-rollout-get after the 202 response.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -577,7 +577,7 @@
           "risk_level": "read",
           "shortcut": "+schedule-rollout-get",
           "stability": "stable",
-          "summary": "Read durable proposal schedule-rollout status by rollout id or proposal id.",
+          "summary": "Read durable schedule-rollout status by rollout id or confirmed proposal id. Use this after +confirm-schedule-rollout's 202 response to inspect immutable assignments, seed bindings, and asynchronous progress.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -10419,7 +10419,7 @@
             "type": "string"
           },
           "proposal_id": {
-            "description": "Confirmed revision proposal id",
+            "description": "Exact awaiting-review revision proposal id to apply. It need not be the newest Plan proposal. A confirmed id only retries its existing durable rollout; dismissed and superseded ids are rejected.",
             "examples": [
               "33333333-3333-4333-8333-333333333333"
             ],
@@ -10498,7 +10498,7 @@
       "risk_level": "write",
       "shortcut": "+confirm-schedule-rollout",
       "stability": "stable",
-      "summary": "Atomically confirm a reviewed proposal's immutable schedule-rollout intent, including its visible winner boost placements, and dispatch asynchronous execution. Reuse the same idempotency key on retry; then poll +schedule-rollout-get.",
+      "summary": "After a ready +schedule-rollout-preflight for the same proposal, coverage, and testing plan, atomically apply one specified awaiting-review proposal (there is no separate approval command), persist its immutable schedule-rollout intent including visible winner boost placements, and dispatch asynchronous execution. The proposal need not be newest: independent active-Plan proposals can be confirmed in any order; confirming a competitive whole-plan alternative dismisses the other awaiting-review alternatives. Reuse the same idempotency key to retry a confirmed proposal's existing rollout; dismissed or superseded proposals are rejected. Poll +schedule-rollout-get after the 202 response.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -12610,7 +12610,7 @@
       "risk_level": "read",
       "shortcut": "+schedule-rollout-get",
       "stability": "stable",
-      "summary": "Read durable proposal schedule-rollout status by rollout id or proposal id.",
+      "summary": "Read durable schedule-rollout status by rollout id or confirmed proposal id. Use this after +confirm-schedule-rollout's 202 response to inspect immutable assignments, seed bindings, and asynchronous progress.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -12674,7 +12674,7 @@
             "type": "string"
           },
           "proposal_id": {
-            "description": "Confirmed revision proposal id",
+            "description": "Exact revision proposal id. First confirmation requires awaiting_review; it need not be the newest proposal on the Plan. A confirmed proposal may be inspected, but +schedule-rollout-get reads its persisted rollout.",
             "examples": [
               "33333333-3333-4333-8333-333333333333"
             ],
@@ -12766,7 +12766,7 @@
       "risk_level": "read",
       "shortcut": "+schedule-rollout-preflight",
       "stability": "stable",
-      "summary": "Read the exact proposal schedule-rollout matrix before confirmation, including any winner boost placements. A boost reserves visible target-account slots; if existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows.",
+      "summary": "Always run this read-only command before first confirming one specified awaiting-review proposal, and rerun it whenever coverage or testing overrides change. It returns the exact schedule-rollout matrix the operator must review before applying. The proposal does not need to be the Plan's newest: independent active-Plan proposals can be confirmed in any order. Includes winner boost placements. A boost reserves visible target-account slots; if the response is coverage_days_required because existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows. A confirmed proposal can only be inspected or retried; use +schedule-rollout-get for its persisted rollout. Dismissed or superseded proposals are rejected.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

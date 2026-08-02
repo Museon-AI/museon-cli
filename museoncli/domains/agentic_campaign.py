@@ -1026,17 +1026,28 @@ def specs() -> list[CommandSpec]:
             domain=domain,
             shortcut="+schedule-rollout-preflight",
             summary=(
-                "Read the exact proposal schedule-rollout matrix before confirmation, including "
-                "any winner boost placements. A boost reserves visible target-account slots; if "
-                "existing future slots cannot fulfil its days, rerun with --coverage future-window "
-                "--days 1..30. Future slots follow the campaign preferred publish windows."
+                "Always run this read-only command before first confirming one specified "
+                "awaiting-review proposal, and rerun it whenever coverage or testing overrides "
+                "change. It returns the exact schedule-rollout matrix the operator must review "
+                "before applying. The proposal does not need to be the Plan's newest: independent "
+                "active-Plan proposals can be confirmed in any order. Includes winner boost "
+                "placements. A boost reserves visible target-account slots; if the response is "
+                "coverage_days_required because existing future slots cannot fulfil its days, rerun "
+                "with --coverage future-window --days 1..30. Future slots follow the campaign "
+                "preferred publish windows. A confirmed proposal can only be inspected or retried; "
+                "use +schedule-rollout-get for its persisted rollout. Dismissed or superseded "
+                "proposals are rejected."
             ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="agentic_campaign_schedule_rollout_preflight",
             input_schema=_plan_schema(
                 {
-                    "proposal_id": _uuid_property("Confirmed revision proposal id"),
+                    "proposal_id": _uuid_property(
+                        "Exact revision proposal id. First confirmation requires awaiting_review; "
+                        "it need not be the newest proposal on the Plan. A confirmed proposal may "
+                        "be inspected, but +schedule-rollout-get reads its persisted rollout."
+                    ),
                     "coverage": {
                         "type": "object",
                         "additionalProperties": False,
@@ -1080,16 +1091,26 @@ def specs() -> list[CommandSpec]:
             domain=domain,
             shortcut="+confirm-schedule-rollout",
             summary=(
-                "Atomically confirm a reviewed proposal's immutable schedule-rollout intent, "
-                "including its visible winner boost placements, and dispatch asynchronous execution. "
-                "Reuse the same idempotency key on retry; then poll +schedule-rollout-get."
+                "After a ready +schedule-rollout-preflight for the same proposal, coverage, and "
+                "testing plan, atomically apply one specified awaiting-review proposal (there is "
+                "no separate approval command), persist its immutable schedule-rollout intent "
+                "including visible winner boost placements, and dispatch asynchronous execution. "
+                "The proposal need not be newest: independent active-Plan proposals can be "
+                "confirmed in any order; confirming a competitive whole-plan alternative dismisses "
+                "the other awaiting-review alternatives. Reuse the same idempotency key to retry a "
+                "confirmed proposal's existing rollout; dismissed or superseded proposals are "
+                "rejected. Poll +schedule-rollout-get after the 202 response."
             ),
             risk_level="write",
             execution="direct",
             adapter_tool_name="agentic_campaign_confirm_schedule_rollout",
             input_schema=_plan_schema(
                 {
-                    "proposal_id": _uuid_property("Confirmed revision proposal id"),
+                    "proposal_id": _uuid_property(
+                        "Exact awaiting-review revision proposal id to apply. It need not be the "
+                        "newest Plan proposal. A confirmed id only retries its existing durable rollout; "
+                        "dismissed and superseded ids are rejected."
+                    ),
                     "coverage": {"type": "object"},
                     "testing_plan": {"type": "object"},
                     "idempotency_key": {"type": "string", "minLength": 8, "maxLength": 240},
@@ -1114,7 +1135,11 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=domain,
             shortcut="+schedule-rollout-get",
-            summary="Read durable proposal schedule-rollout status by rollout id or proposal id.",
+            summary=(
+                "Read durable schedule-rollout status by rollout id or confirmed proposal id. "
+                "Use this after +confirm-schedule-rollout's 202 response to inspect immutable "
+                "assignments, seed bindings, and asynchronous progress."
+            ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="agentic_campaign_schedule_rollout_get",
