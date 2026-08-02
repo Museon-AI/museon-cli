@@ -29,8 +29,6 @@ Shell 命令的 Agent：
 ```text
 请严格按照这份引导，为当前 Agent 配置 Museon CLI：
 https://www.museon.ai/cli/install.md
-完成 CLI 和 Skill 安装，带我完成浏览器授权，确认当前工作区，并在 Museon
-真正可用时告诉我。配置期间不要修改任何社媒内容、账号或排期。
 ```
 
 这是推荐的安装方式。你不需要自己克隆仓库、研究 CLI 参数或手动配置凭证。
@@ -98,13 +96,14 @@ uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.4.
 museoncli setup --agent codex
 museoncli auth start
 museoncli auth finish --wait
+museoncli skills +list
 museoncli whoami
 ```
 
 Claude Code 和 Cursor 分别使用 `--agent claude-code`、`--agent cursor`；
 `--agent auto` 会优先识别当前运行的 Agent；没有运行环境标记时，只会在唯一一个
 已有的 Agent 目录中安装。如果检测到多个目录，请明确选择一个 Agent，或使用
-`--agent all`。安装 Skill 后需要重启 Agent。`auth finish --wait` 默认等待授权最多
+`--agent all`。安装 Skill 后需要重启 Agent。完成授权后，`skills +list` 会列出当前工作区可用的业务 Skill。`auth finish --wait` 默认等待授权最多
 五分钟，可以通过 `--timeout` 调整。CLI 可以使用 `museoncli`，也可以使用更短的
 别名 `museon`。
 

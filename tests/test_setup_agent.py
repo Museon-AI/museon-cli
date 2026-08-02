@@ -22,6 +22,7 @@ def test_setup_agent_installs_and_verifies_codex_skill(
     assert destination.joinpath("SKILL.md").is_file()
     assert destination.joinpath("agents", "openai.yaml").is_file()
     assert first["agents"][0]["digest"] == second["agents"][0]["digest"]
+    assert any("museoncli skills +list" in step for step in first["next_steps"])
 
 
 def test_setup_agent_auto_uses_detected_host(

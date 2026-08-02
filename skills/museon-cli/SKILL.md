@@ -25,9 +25,10 @@ exists and the user asked to install Museon or complete a Museon task:
    package source.
 3. Verify the result with `museoncli version`. Do not claim installation
    succeeded until that command works.
-4. Continue the original task. If the user asked to sign in, start the browser
-   authorization flow described in
-   [safety-and-auth.md](references/safety-and-auth.md).
+4. After authentication, run `museoncli skills +list` once and use the returned
+   list to discover the workspace's Business Skills. Continue the original task.
+   If the user asked to sign in, start the browser authorization flow described
+   in [safety-and-auth.md](references/safety-and-auth.md).
 
 ## Operating contract
 
