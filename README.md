@@ -30,9 +30,6 @@ that can install Skills and run shell commands:
 ```text
 Set up Museon CLI for this agent by following this onboarding guide exactly:
 https://www.museon.ai/cli/install.md
-Complete the CLI and Skill installation, guide me through browser authorization,
-verify the active workspace, and tell me when Museon is ready. Do not perform
-any social-media changes during setup.
 ```
 
 That is the recommended installation path. You do not need to clone the
@@ -123,13 +120,15 @@ Then continue with setup and browser authorization:
 museoncli setup --agent codex
 museoncli auth start
 museoncli auth finish --wait
+museoncli skills +list
 museoncli whoami
 ```
 
 Use `--agent claude-code` or `--agent cursor` for those hosts; `--agent auto`
 uses the active host marker, or a single existing supported Agent home. If
 several Agent homes exist, choose one explicitly or use `--agent all`. Restart
-the Agent after installing the Skill. `auth finish --wait` waits for approval
+the Agent after installing the Skill. After authentication, `skills +list`
+shows the Business Skills available in the current workspace. `auth finish --wait` waits for approval
 for up to five minutes by default; use `--timeout` to change that limit. The
 shorter `museon` command is an alias for `museoncli`.
 

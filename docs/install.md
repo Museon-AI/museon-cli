@@ -114,7 +114,19 @@ used.
 The authorization must happen in the same environment where the Agent will run
 Museon CLI. Do not ask the user to authenticate a different installation.
 
-## 4. Confirm the active workspace
+## 4. Discover Business Skills
+
+After authentication, list the strategy and operations playbooks available in
+the current workspace:
+
+```bash
+museoncli skills +list
+```
+
+Read directly relevant entries with `museoncli skills +get --name <name>` before
+strategy, research, audit, review, onboarding, or operating-plan work.
+
+## 5. Confirm the active workspace
 
 Read the authenticated identity and current workspace:
 
