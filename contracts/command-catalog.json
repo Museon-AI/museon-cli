@@ -652,7 +652,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List a Plan's To review and Reviewed Proposals.",
+          "summary": "List Proposals for exactly one Plan or all Plans in one Campaign. Campaign scope returns each Proposal's Plan and Persona summary.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -12084,11 +12084,46 @@
       "capability_key": "agentic-campaign.proposal-list",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign proposal +list --plan-id 33333333-3333-4333-8333-333333333333"
+        "museoncli agentic-campaign proposal +list --plan-id 33333333-3333-4333-8333-333333333333",
+        "museoncli agentic-campaign proposal +list --campaign-id 22222222-2222-4222-8222-222222222222 --awaiting-review"
       ],
       "execution": "direct",
       "input_schema": {
+        "oneOf": [
+          {
+            "not": {
+              "required": [
+                "campaign_id"
+              ]
+            },
+            "required": [
+              "plan_id"
+            ]
+          },
+          {
+            "not": {
+              "required": [
+                "plan_id"
+              ]
+            },
+            "required": [
+              "campaign_id"
+            ]
+          }
+        ],
         "properties": {
+          "awaiting_review": {
+            "default": false,
+            "type": "boolean"
+          },
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
           "include_draft_stage": {
             "default": false,
             "type": "boolean"
@@ -12111,16 +12146,25 @@
             ],
             "format": "uuid",
             "type": "string"
+          },
+          "status": {
+            "items": {
+              "enum": [
+                "awaiting-review",
+                "confirmed",
+                "dismissed",
+                "superseded"
+              ],
+              "type": "string"
+            },
+            "type": "array"
           }
         },
-        "required": [
-          "plan_id"
-        ],
         "type": "object"
       },
       "name": "agentic-campaign.proposal-list",
       "output_schema": {
-        "description": "Paginated revision Proposal list.",
+        "description": "Paginated Proposal list for one Plan or Campaign.",
         "properties": {
           "command": {
             "type": "string"
@@ -12177,7 +12221,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List a Plan's To review and Reviewed Proposals.",
+      "summary": "List Proposals for exactly one Plan or all Plans in one Campaign. Campaign scope returns each Proposal's Plan and Persona summary.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
