@@ -1394,7 +1394,8 @@ def specs() -> list[CommandSpec]:
                 ],
             },
             output_schema=_direct_output_schema(
-                "Proposal id, change summary, and operator review reminder."
+                "Proposal id, proposal number, canonical proposal_url, change summary, and operator "
+                "review reminder. Forward proposal_url exactly as returned; never construct a link."
             ),
             examples=[
                 "museoncli agentic-campaign +plan-propose "
@@ -1506,7 +1507,10 @@ def specs() -> list[CommandSpec]:
             execution="direct",
             adapter_tool_name="agentic_campaign_proposal_list",
             input_schema=_proposal_list_input_schema(),
-            output_schema=_direct_output_schema("Paginated Proposal list for one Plan or Campaign."),
+            output_schema=_direct_output_schema(
+                "Paginated Proposal list for one Plan or Campaign. Every item includes its "
+                "canonical proposal_url; forward it exactly as returned."
+            ),
             examples=[
                 "museoncli agentic-campaign proposal +list "
                 "--plan-id 33333333-3333-4333-8333-333333333333",
@@ -1550,7 +1554,10 @@ def specs() -> list[CommandSpec]:
                 },
                 required=["proposal_id", "changes"],
             ),
-            output_schema=_direct_output_schema("Next Proposal revision round."),
+            output_schema=_direct_output_schema(
+                "Next Proposal revision round and canonical proposal_url. Forward proposal_url exactly "
+                "as returned; never construct a link."
+            ),
             examples=[
                 "museoncli agentic-campaign proposal +revise "
                 "--plan-id 33333333-3333-4333-8333-333333333333 "
@@ -1580,10 +1587,11 @@ def specs() -> list[CommandSpec]:
                 required=["proposal_id"],
             ),
             output_schema=_direct_output_schema(
-                "Proposal status, revision round, changes, current elements, latest feedback "
-                "summary, the annotations section (per-round compiled_summary/round/resolved, "
-                'newest round first, or the string "暂无标注意见" when there is no feedback '
-                "yet), and a review reminder."
+                "Proposal number, canonical proposal_url, status, revision round, changes, current "
+                "elements, latest feedback summary, the annotations section (per-round "
+                "compiled_summary/round/resolved, newest round first, or the string "
+                '"暂无标注意见" when there is no feedback yet), and a review reminder. '
+                "Forward proposal_url exactly as returned; never construct a link."
             ),
             examples=[
                 "museoncli agentic-campaign proposal +get "
@@ -2184,8 +2192,13 @@ def _proposal_output(response: Any, *, changes: dict[str, Any]) -> dict[str, Any
     payload = _payload_data(response)
     proposal = payload.get("proposal") if isinstance(payload, dict) else None
     proposal_id = proposal.get("id") if isinstance(proposal, dict) else None
+    proposal_number = proposal.get("proposal_number") if isinstance(proposal, dict) else None
+    proposal_url = payload.get("proposal_url") if isinstance(payload, dict) else None
     return {
         **({"proposal_id": proposal_id} if proposal is not None else {}),
+        **({"proposal_number": proposal_number} if isinstance(proposal_number, int) else {}),
+        # This is the server-owned canonical route. Never derive it from ids.
+        **({"proposal_url": proposal_url} if isinstance(proposal_url, str) else {}),
         "change_summary": changes,
         "next_step": "Please review the proposal in Museon and confirm it there.",
     }
@@ -2258,6 +2271,16 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
     feedback_payload = _payload_data(feedback_response)
     feedback_items = feedback_payload.get("items") if isinstance(feedback_payload, dict) else None
     return {
+        **(
+            {"proposal_number": proposal["proposal_number"]}
+            if isinstance(proposal.get("proposal_number"), int)
+            else {}
+        ),
+        **(
+            {"proposal_url": proposal["proposal_url"]}
+            if isinstance(proposal.get("proposal_url"), str)
+            else {}
+        ),
         "status": proposal.get("status"),
         "revision_round": proposal.get("revision_round"),
         "change_summary": {
@@ -2416,6 +2439,11 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             "revision_round": revision_round,
             "new_element_count": len(payload.get("elements") or []),
             "preview_task_count": payload.get("dispatched_task_count"),
+            **(
+                {"proposal_url": payload["proposal_url"]}
+                if isinstance(payload.get("proposal_url"), str)
+                else {}
+            ),
             "next_step": f"第 {revision_round} 稿已提交；运营将在审阅台看到新一稿。",
         }
 
@@ -2525,6 +2553,11 @@ async def _execute_proposal_revise(ctx: CommandContext) -> Any:
         "revision_round": revision_round,
         "new_element_count": len(payload.get("elements") or []),
         "preview_task_count": payload.get("dispatched_task_count"),
+        **(
+            {"proposal_url": payload["proposal_url"]}
+            if isinstance(payload.get("proposal_url"), str)
+            else {}
+        ),
         "next_step": f"第 {revision_round} 稿已提交；运营将在审阅台看到新一稿。",
     }
 
