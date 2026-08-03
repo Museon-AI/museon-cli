@@ -445,6 +445,8 @@ def test_proposal_create_and_revise_build_named_atomic_changes() -> None:
         "workspace_id": "11111111-1111-4111-8111-111111111111",
         "changes": revised_arguments["changes"],
         "note": None,
+        "rationale": None,
+        "rollout_intent": None,
     }
     assert revised_output["proposal_url"].endswith("/proposals/56")
 
@@ -523,6 +525,287 @@ def test_proposal_persona_operations_are_mutually_exclusive() -> None:
         agentic_campaign._build_proposal_revise_arguments(args)
 
 
+def test_proposal_reallocate_builds_plan_and_pool_sources() -> None:
+    base = [
+        "agentic-campaign",
+        "proposal",
+        "+reallocate",
+        "--campaign-id",
+        "22222222-2222-4222-8222-222222222222",
+        "--plan-id",
+        "33333333-3333-4333-8333-333333333333",
+        "--count",
+        "2",
+    ]
+    from_plan = agentic_campaign._build_proposal_reallocate_arguments(
+        parse([*base, "--from-plan", "44444444-4444-4444-8444-444444444444"])
+    )
+    assert from_plan["changes"]["reallocate_accounts"] == {
+        "count": 2,
+        "from": {"plan_id": "44444444-4444-4444-8444-444444444444"},
+    }
+    from_pool = agentic_campaign._build_proposal_reallocate_arguments(
+        parse([*base, "--from-pool"])
+    )
+    assert from_pool["changes"]["reallocate_accounts"] == {
+        "count": 2,
+        "from": {"pool": True},
+    }
+    with pytest.raises(SystemExit):
+        parse(
+            [
+                *base,
+                "--from-plan",
+                "44444444-4444-4444-8444-444444444444",
+                "--from-pool",
+            ]
+        )
+
+
+@pytest.mark.parametrize("count", ["0", "-1"])
+def test_proposal_reallocate_rejects_non_positive_count(count: str) -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "proposal",
+            "+reallocate",
+            "--campaign-id",
+            "22222222-2222-4222-8222-222222222222",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--count",
+            count,
+            "--from-pool",
+        ]
+    )
+    with pytest.raises(ValueError, match="at least 1"):
+        agentic_campaign._build_proposal_reallocate_arguments(args)
+
+
+def test_proposal_reallocate_posts_allocation_change() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    arguments = agentic_campaign._build_proposal_reallocate_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "proposal",
+                "+reallocate",
+                "--campaign-id",
+                campaign_id,
+                "--plan-id",
+                plan_id,
+                "--count",
+                "3",
+                "--from-pool",
+                "--rationale",
+                "ramp-up-winner-plan",
+            ]
+        )
+    )
+    proposal_url = "https://www.museon.ai/proposals/57"
+    capture = Capture(
+        {
+            "proposal": {"id": "proposal-2", "proposal_number": 57},
+            "proposal_url": proposal_url,
+        }
+    )
+    result = asyncio.run(
+        agentic_campaign._execute_proposal_reallocate(
+            context("agentic-campaign.proposal-reallocate", arguments, capture)
+        )
+    )
+    assert capture.calls == [
+        {
+            "method": "POST",
+            "path": (
+                f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan_id}/"
+                "revision-proposals"
+            ),
+            "json_body": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+                "changes": arguments["changes"],
+                "rationale": "ramp-up-winner-plan",
+            },
+            "params": None,
+        }
+    ]
+    assert result["proposal_id"] == "proposal-2"
+    assert result["proposal_url"] == proposal_url
+
+
+def test_overview_builds_defaults_and_gets_workspace_page() -> None:
+    arguments = agentic_campaign._build_overview_arguments(
+        parse(["agentic-campaign", "+overview"])
+    )
+    assert arguments == {"page": 1, "page_size": 20}
+    response = {"items": [], "meta": {"page": 1, "page_size": 20, "total": 0}}
+    capture = Capture(response)
+    result = asyncio.run(
+        agentic_campaign._execute_overview(
+            context("agentic-campaign.overview", arguments, capture)
+        )
+    )
+    assert capture.calls == [
+        {
+            "method": "GET",
+            "path": "/agentic-creative-campaigns/overview",
+            "json_body": None,
+            "params": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+                "page": 1,
+                "page_size": 20,
+            },
+        }
+    ]
+    assert result == response
+
+
+def test_recap_gets_campaign_workspace_recap() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    arguments = agentic_campaign._build_campaign_id_arguments(
+        parse(["agentic-campaign", "+recap", "--id", campaign_id])
+    )
+    response = {"campaign": {"id": campaign_id}, "decision_history": []}
+    capture = Capture(response)
+    result = asyncio.run(
+        agentic_campaign._execute_recap(
+            context("agentic-campaign.recap", arguments, capture)
+        )
+    )
+    assert capture.calls == [
+        {
+            "method": "GET",
+            "path": f"/agentic-creative-campaigns/{campaign_id}/recap",
+            "json_body": None,
+            "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+        }
+    ]
+    assert result == response
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        ["--rollout-coverage-mode", "future-window"],
+        ["--rollout-coverage-mode", "existing-future-all", "--rollout-days", "7"],
+        ["--rollout-days", "7"],
+        ["--rollout-coverage-mode", "future-window", "--rollout-days", "31"],
+    ],
+)
+def test_proposal_rollout_intent_rejects_invalid_combinations(extra: list[str]) -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "proposal",
+            "+create",
+            "--plan-id",
+            "33333333-3333-4333-8333-333333333333",
+            "--add-elements-json",
+            '[{"format_id":"44444444-4444-4444-8444-444444444444"}]',
+            *extra,
+        ]
+    )
+    with pytest.raises(ValueError):
+        agentic_campaign._build_proposal_create_arguments(args)
+
+
+def test_proposal_create_and_revise_build_and_send_rollout_intent() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    rollout_args = [
+        "--rollout-coverage-mode",
+        "future-window",
+        "--rollout-days",
+        "7",
+        "--rationale",
+        "seasonal-window",
+    ]
+    draft_arguments = agentic_campaign._build_proposal_create_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "proposal",
+                "+create",
+                "--plan-id",
+                plan_id,
+                *_complete_plan_cli_args(),
+                *rollout_args,
+            ]
+        )
+    )
+    intent = {"coverage": {"mode": "future_window", "days": 7}, "version": 1}
+    assert draft_arguments["rollout_intent"] == intent
+    draft_capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="draft"),
+        {"proposal": {"id": "proposal-draft"}},
+    )
+    asyncio.run(
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", draft_arguments, draft_capture)
+        )
+    )
+    assert draft_capture.calls[-1]["json_body"]["rationale"] == "seasonal-window"
+    assert draft_capture.calls[-1]["json_body"]["rollout_intent"] == intent
+
+    active_arguments = agentic_campaign._build_proposal_create_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "proposal",
+                "+create",
+                "--plan-id",
+                plan_id,
+                "--add-elements-json",
+                '[{"format_id":"44444444-4444-4444-8444-444444444444"}]',
+                *rollout_args,
+            ]
+        )
+    )
+    active_capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"proposal": {"id": "proposal-active"}},
+    )
+    asyncio.run(
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", active_arguments, active_capture)
+        )
+    )
+    assert active_capture.calls[-1]["json_body"]["rationale"] == "seasonal-window"
+    assert active_capture.calls[-1]["json_body"]["rollout_intent"] == intent
+
+    revise_arguments = agentic_campaign._build_proposal_revise_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "proposal",
+                "+revise",
+                "--plan-id",
+                plan_id,
+                "--proposal-id",
+                "77777777-7777-4777-8777-777777777777",
+                "--retire-element-ids",
+                '["88888888-8888-4888-8888-888888888888"]',
+                *rollout_args,
+            ]
+        )
+    )
+    assert revise_arguments["rollout_intent"] == intent
+    revise_capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"round": 2, "elements": []},
+    )
+    asyncio.run(
+        agentic_campaign._execute_proposal_revise(
+            context("agentic-campaign.proposal-revise", revise_arguments, revise_capture)
+        )
+    )
+    assert revise_capture.calls[-1]["json_body"]["rationale"] == "seasonal-window"
+    assert revise_capture.calls[-1]["json_body"]["rollout_intent"] == intent
+
+
 def test_plan_members_reconcile_derives_versions_and_minimum_campaign_budget() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     arguments = agentic_campaign._build_plan_members_reconcile_arguments(
@@ -573,6 +856,12 @@ def test_campaign_create_builds_extended_fields_and_field_config() -> None:
             "Summer",
             "--cta-definition",
             "Shop the launch",
+            "--direction-brief",
+            "Win the summer launch",
+            "--success-hypothesis",
+            "Maker-led demonstrations increase conversion",
+            "--contract",
+            "Publish approved demonstrations only",
             "--required-hashtags",
             "#summer,#maker",
             "--required-mentions",
@@ -587,6 +876,9 @@ def test_campaign_create_builds_extended_fields_and_field_config() -> None:
         "name": "Summer",
         "total_account_budget": 0,
         "cta_definition": "Shop the launch",
+        "direction_brief": "Win the summer launch",
+        "success_hypothesis": "Maker-led demonstrations increase conversion",
+        "contract": "Publish approved demonstrations only",
         "bind_notification_conversation": True,
         "config": {
             "required_hashtags": ["#summer", "#maker"],
@@ -610,6 +902,9 @@ def test_campaign_create_builds_extended_fields_and_field_config() -> None:
                 "name": "Summer",
                 "total_account_budget": 0,
                 "cta_definition": "Shop the launch",
+                "direction_brief": "Win the summer launch",
+                "success_hypothesis": "Maker-led demonstrations increase conversion",
+                "contract": "Publish approved demonstrations only",
                 "bind_notification_conversation": True,
                 "config": {
                     "required_hashtags": ["#summer", "#maker"],
@@ -1210,6 +1505,8 @@ def test_plan_propose_dispatches_active_adjustment() -> None:
             "workspace_id": "11111111-1111-4111-8111-111111111111",
             "title": None,
             "note": "Expand the winner",
+            "rationale": None,
+            "rollout_intent": None,
             "changes": {
                 "add_elements": add_elements,
                 "retire_element_ids": retire_element_ids,

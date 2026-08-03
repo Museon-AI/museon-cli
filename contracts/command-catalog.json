@@ -669,6 +669,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.proposal-reallocate",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-reallocate",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+reallocate",
+          "stability": "stable",
+          "summary": "Create an allocation Proposal that moves managed accounts into this Plan, either from another Plan in the same Campaign or from the recruitable account pool. The server validates eligibility (pool sourcing requires policy.auto_recruit, the target Plan must be active, and this cannot be mixed with content changes) and returns a normal awaiting-review Proposal.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.proposal-revise",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -969,6 +994,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.overview",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.overview",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+overview",
+          "stability": "stable",
+          "summary": "Read a workspace-wide overview across every Agentic Creative Campaign: direction, latest strategy signal, latest verdict, recent signal series, and open issue/proposal counts. Use this before +recap to decide which Campaign needs closer attention.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.get",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -978,6 +1028,31 @@
           "shortcut": "+get",
           "stability": "stable",
           "summary": "Get an Agentic Creative Campaign detail by campaign id.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.recap",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.recap",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+recap",
+          "stability": "stable",
+          "summary": "Read one Campaign's full recap: the archive fields (direction_brief, success_hypothesis, contract, strategy_signal, policy), its decision history with rationale, the last weeks of strategy signals, learnings, and open issues/proposals. This is the same payload the AgentClock issue dispatch injects into Mel's prompt.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -9846,7 +9921,19 @@
               "null"
             ]
           },
+          "contract": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "cta_definition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "direction_brief": {
             "type": [
               "string",
               "null"
@@ -9872,6 +9959,12 @@
           "product_id": {
             "description": "Optional product id",
             "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "success_hypothesis": {
             "type": [
               "string",
               "null"
@@ -10805,6 +10898,104 @@
       "shortcut": "+list",
       "stability": "stable",
       "summary": "List Agentic Creative Campaign summaries in the selected workspace.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.overview": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.overview",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +overview --page 1 --page-size 20"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "agentic-campaign.overview",
+      "output_schema": {
+        "description": "Paginated Campaign overview rows (id, name, status, direction_brief, success_hypothesis, contract, strategy_signal, latest_verdict, signals, open_issue_counts, open_proposal_count) and pagination metadata.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+overview",
+      "stability": "stable",
+      "summary": "Read a workspace-wide overview across every Agentic Creative Campaign: direction, latest strategy signal, latest verdict, recent signal series, and open issue/proposal counts. Use this before +recap to decide which Campaign needs closer attention.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -11887,6 +12078,48 @@
             "format": "uuid",
             "type": "string"
           },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rollout_intent": {
+            "additionalProperties": false,
+            "properties": {
+              "coverage": {
+                "additionalProperties": false,
+                "properties": {
+                  "days": {
+                    "maximum": 30,
+                    "minimum": 1,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "mode": {
+                    "enum": [
+                      "existing_future_all",
+                      "future_window"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              },
+              "version": {
+                "const": 1
+              }
+            },
+            "required": [
+              "coverage",
+              "version"
+            ],
+            "type": "object"
+          },
           "title": {
             "maxLength": 80,
             "minLength": 1,
@@ -12225,6 +12458,166 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "agentic-campaign.proposal-reallocate": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-reallocate",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign proposal +reallocate --campaign-id 22222222-2222-4222-8222-222222222222 --plan-id 33333333-3333-4333-8333-333333333333 --count 2 --from-plan 44444444-4444-4444-8444-444444444444",
+        "museoncli agentic-campaign proposal +reallocate --campaign-id 22222222-2222-4222-8222-222222222222 --plan-id 33333333-3333-4333-8333-333333333333 --count 3 --from-pool --rationale ramp-up-winner-plan"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "changes": {
+            "additionalProperties": false,
+            "properties": {
+              "reallocate_accounts": {
+                "additionalProperties": false,
+                "properties": {
+                  "count": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "from": {
+                    "additionalProperties": false,
+                    "description": "Exactly one of plan_id or pool.",
+                    "properties": {
+                      "plan_id": {
+                        "description": "Source Persona Plan id in the same Campaign",
+                        "examples": [
+                          "33333333-3333-4333-8333-333333333333"
+                        ],
+                        "format": "uuid",
+                        "type": "string"
+                      },
+                      "pool": {
+                        "const": true
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "count",
+                  "from"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "reallocate_accounts"
+            ],
+            "type": "object"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "plan_id": {
+            "description": "Target Persona Plan id, the Proposal's anchor",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "changes"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-reallocate",
+      "output_schema": {
+        "description": "Created allocation Proposal id, number, canonical proposal_url, and change summary.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+reallocate",
+      "stability": "stable",
+      "summary": "Create an allocation Proposal that moves managed accounts into this Plan, either from another Plan in the same Campaign or from the recruitable account pool. The server validates eligibility (pool sourcing requires policy.auto_recruit, the target Plan must be active, and this cannot be mixed with content changes) and returns a normal awaiting-review Proposal.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "agentic-campaign.proposal-revise": {
       "authorization": {
         "authentication_required": true,
@@ -12369,6 +12762,48 @@
             ],
             "format": "uuid",
             "type": "string"
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rollout_intent": {
+            "additionalProperties": false,
+            "properties": {
+              "coverage": {
+                "additionalProperties": false,
+                "properties": {
+                  "days": {
+                    "maximum": 30,
+                    "minimum": 1,
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "mode": {
+                    "enum": [
+                      "existing_future_all",
+                      "future_window"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              },
+              "version": {
+                "const": 1
+              }
+            },
+            "required": [
+              "coverage",
+              "version"
+            ],
+            "type": "object"
           }
         },
         "required": [
@@ -12550,6 +12985,104 @@
       "stability": "stable",
       "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected Proposal: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with proposal +revise --proposal-id. Never resend the rejected payload unchanged.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.recap": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.recap",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +recap --id 22222222-2222-4222-8222-222222222222"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.recap",
+      "output_schema": {
+        "description": "Campaign recap: campaign archive fields, decision_history, signals, learnings, open_issues, and open_proposals.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+recap",
+      "stability": "stable",
+      "summary": "Read one Campaign's full recap: the archive fields (direction_brief, success_hypothesis, contract, strategy_signal, policy), its decision history with rationale, the last weeks of strategy signals, learnings, and open issues/proposals. This is the same payload the AgentClock issue dispatch injects into Mel's prompt.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "agentic-campaign.schedule-rollout-get": {

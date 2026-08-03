@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-138 commands across 14 domains (source of truth: `museoncli schema`).
+141 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -203,6 +203,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `agentic-campaign plan +members-reconcile` | write | yes | — | direct | Atomically reconcile a Plan's managed accounts and matching Plan budget. The CLI reads current versions, raises Campaign total budget only when required, and submits the member/budget change as one compare-and-swap operation. |
 | `agentic-campaign proposal +create` | write | yes | — | direct | Create one operator-review Proposal. Draft Plans require a complete Persona and element selection; active Plans accept named atomic changes. |
 | `agentic-campaign proposal +list` | read | — | — | direct | List Proposals for exactly one Plan or all Plans in one Campaign. Campaign scope returns each Proposal's Plan and Persona summary. |
+| `agentic-campaign proposal +reallocate` | write | yes | — | direct | Create an allocation Proposal that moves managed accounts into this Plan, either from another Plan in the same Campaign or from the recruitable account pool. The server validates eligibility (pool sourcing requires policy.auto_recruit, the target Plan must be active, and this cannot be mixed with content changes) and returns a normal awaiting-review Proposal. |
 | `agentic-campaign proposal +revise` | write | yes | — | direct | Revise an open Proposal after operator feedback. Each supplied atomic field replaces that field's current proposed value; omit fields to preserve them. |
 | `agentic-campaign proposal +get` | read | — | — | direct | Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations). |
 | `agentic-campaign proposal +withdraw` | write | yes | — | direct | Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected Proposal: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with proposal +revise --proposal-id. Never resend the rejected payload unchanged. |
@@ -215,7 +216,9 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `agentic-campaign +campaign-archive` | destructive | yes | `--yes` | direct | Archive an Agentic Creative Campaign. This cascades to stop account operations for every member of every plan in the campaign; the operator must explicitly confirm before running with --yes. |
 | `agentic-campaign +campaign-rename` | write | yes | — | direct | Rename an Agentic Creative Campaign. |
 | `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
+| `agentic-campaign +overview` | read | — | — | direct | Read a workspace-wide overview across every Agentic Creative Campaign: direction, latest strategy signal, latest verdict, recent signal series, and open issue/proposal counts. Use this before +recap to decide which Campaign needs closer attention. |
 | `agentic-campaign +get` | read | — | — | direct | Get an Agentic Creative Campaign detail by campaign id. |
+| `agentic-campaign +recap` | read | — | — | direct | Read one Campaign's full recap: the archive fields (direction_brief, success_hypothesis, contract, strategy_signal, policy), its decision history with rationale, the last weeks of strategy signals, learnings, and open issues/proposals. This is the same payload the AgentClock issue dispatch injects into Mel's prompt. |
 | `agentic-campaign +plan-list` | read | — | — | direct | List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-get` | read | — | — | direct | Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |

@@ -4,6 +4,15 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+- Added `agentic-campaign proposal +reallocate` to move managed accounts into a
+  Plan from another Plan in the same Campaign or from the recruitable pool, as a
+  reviewable allocation Proposal.
+- Added `agentic-campaign +overview` (workspace-wide Campaign summary) and
+  `+recap` (per-Campaign decision history, signals, and learnings).
+- Added `--rollout-coverage-mode`/`--rollout-days` (schedule-rollout intent
+  carried on the Proposal) and `--rationale` to `proposal +create`/`+revise`.
+- Added `--direction-brief`/`--success-hypothesis`/`--contract` to
+  `+campaign-create`.
 - Removed the private Issue pull session assertion requirement; Agentic
   Campaign Issue claims now require one campaign as the candidate boundary and
   use the runtime conversation identity only for lease and message context,
