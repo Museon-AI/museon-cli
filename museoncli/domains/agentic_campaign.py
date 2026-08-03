@@ -52,6 +52,17 @@ def _build_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def _add_overview_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--page", type=int, default=1)
+    parser.add_argument("--page-size", type=int, default=20)
+
+
+def _build_overview_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    if args.page < 1 or args.page_size < 1:
+        raise ValueError("--page and --page-size must be positive")
+    return {"page": args.page, "page_size": args.page_size}
+
+
 def _add_campaign_id_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--id", dest="campaign_id", required=True)
 
@@ -112,6 +123,13 @@ def _add_proposal_create_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--replace-persona-json")
     parser.add_argument("--replace-persona-id")
     parser.add_argument("--persona-patch-json")
+    parser.add_argument(
+        "--rollout-coverage-mode",
+        choices=["existing-future-all", "future-window"],
+        default=None,
+    )
+    parser.add_argument("--rollout-days", type=int, default=None)
+    parser.add_argument("--rationale", default=None)
     parser.add_argument("--dry-run", action="store_true")
 
 
@@ -126,6 +144,24 @@ def _add_proposal_revise_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--replace-persona-json")
     parser.add_argument("--replace-persona-id")
     parser.add_argument("--persona-patch-json")
+    parser.add_argument(
+        "--rollout-coverage-mode",
+        choices=["existing-future-all", "future-window"],
+        default=None,
+    )
+    parser.add_argument("--rollout-days", type=int, default=None)
+    parser.add_argument("--rationale", default=None)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _add_proposal_reallocate_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--plan-id", required=True)
+    parser.add_argument("--count", type=int, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--from-plan")
+    source.add_argument("--from-pool", action="store_true")
+    parser.add_argument("--rationale")
     parser.add_argument("--dry-run", action="store_true")
 
 
@@ -183,6 +219,29 @@ def _schedule_rollout_coverage(args: argparse.Namespace) -> dict[str, Any]:
     if days is not None and not 1 <= days <= 30:
         raise ValueError("--days must be between 1 and 30.")
     return {"mode": mode, "timezone": args.timezone, "days": days}
+
+
+def _proposal_rollout_intent(args: argparse.Namespace) -> dict[str, Any] | None:
+    mode_raw = getattr(args, "rollout_coverage_mode", None)
+    days = getattr(args, "rollout_days", None)
+    if mode_raw is None:
+        if days is not None:
+            raise ValueError(
+                "--rollout-days requires --rollout-coverage-mode future-window."
+            )
+        return None
+    mode = mode_raw.replace("-", "_")
+    if mode == "future_window" and days is None:
+        raise ValueError(
+            "--rollout-coverage-mode future-window requires --rollout-days 1..30."
+        )
+    if mode == "existing_future_all" and days is not None:
+        raise ValueError(
+            "--rollout-days is only valid with --rollout-coverage-mode future-window."
+        )
+    if days is not None and not 1 <= days <= 30:
+        raise ValueError("--rollout-days must be between 1 and 30.")
+    return {"coverage": {"mode": mode, "days": days}, "version": 1}
 
 
 def _add_schedule_rollout_preflight_arguments(parser: argparse.ArgumentParser) -> None:
@@ -328,6 +387,8 @@ def _build_proposal_create_arguments(args: argparse.Namespace) -> dict[str, Any]
             **persona,
             "elements": _candidate_json(args.elements_json, field="elements", expected_type=list),
             "note": args.note,
+            "rationale": args.rationale,
+            "rollout_intent": _proposal_rollout_intent(args),
             "dry_run": args.dry_run,
         }
     if not atomic_supplied:
@@ -354,6 +415,8 @@ def _build_proposal_create_arguments(args: argparse.Namespace) -> dict[str, Any]
             "title": args.title,
             "changes": changes,
             "note": args.note,
+            "rationale": args.rationale,
+            "rollout_intent": _proposal_rollout_intent(args),
             "dry_run": args.dry_run,
         }
     )
@@ -389,8 +452,32 @@ def _build_proposal_revise_arguments(args: argparse.Namespace) -> dict[str, Any]
         "proposal_id": args.proposal_id,
         "changes": changes,
         "note": args.note,
+        "rationale": args.rationale,
+        "rollout_intent": _proposal_rollout_intent(args),
         "dry_run": args.dry_run,
     }
+
+
+def _build_proposal_reallocate_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    if args.count < 1:
+        raise ValueError("--count must be at least 1.")
+    source: dict[str, Any] = (
+        {"plan_id": args.from_plan} if args.from_plan else {"pool": True}
+    )
+    return compact_params(
+        {
+            "campaign_id": args.campaign_id,
+            "plan_id": args.plan_id,
+            "changes": {
+                "reallocate_accounts": {
+                    "count": args.count,
+                    "from": source,
+                }
+            },
+            "rationale": args.rationale,
+            "dry_run": args.dry_run,
+        }
+    )
 
 
 def _build_proposal_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
@@ -650,6 +737,9 @@ def _add_campaign_create_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--planned-persona-count", type=int, default=None)
     parser.add_argument("--product-id", default=None)
     parser.add_argument("--cta-definition", default=None)
+    parser.add_argument("--direction-brief", default=None)
+    parser.add_argument("--success-hypothesis", default=None)
+    parser.add_argument("--contract", default=None)
     parser.add_argument("--config-json", default=None)
     parser.add_argument("--required-hashtags", default=None)
     parser.add_argument("--required-mentions", default=None)
@@ -694,6 +784,9 @@ def _build_campaign_create_arguments(args: argparse.Namespace) -> dict[str, Any]
             "planned_persona_count": args.planned_persona_count,
             "product_id": args.product_id,
             "cta_definition": args.cta_definition,
+            "direction_brief": args.direction_brief,
+            "success_hypothesis": args.success_hypothesis,
+            "contract": args.contract,
             "bind_notification_conversation": args.bind_notification_conversation,
             "config": config,
             "dry_run": args.dry_run,
@@ -994,6 +1087,28 @@ def _proposal_create_input_schema() -> dict[str, Any]:
                 },
             },
             "note": {"type": ["string", "null"], "maxLength": 2000},
+            "rationale": {"type": ["string", "null"]},
+            "rollout_intent": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "coverage": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "mode": {"enum": ["existing_future_all", "future_window"]},
+                            "days": {
+                                "type": ["integer", "null"],
+                                "minimum": 1,
+                                "maximum": 30,
+                            },
+                        },
+                        "required": ["mode"],
+                    },
+                    "version": {"const": 1},
+                },
+                "required": ["coverage", "version"],
+            },
             "dry_run": {"type": "boolean", "default": False},
         }
     )
@@ -1522,6 +1637,72 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=domain,
+            shortcut="+reallocate",
+            resource="proposal",
+            summary=(
+                "Create an allocation Proposal that moves managed accounts into this Plan, "
+                "either from another Plan in the same Campaign or from the recruitable "
+                "account pool. The server validates eligibility (pool sourcing requires "
+                "policy.auto_recruit, the target Plan must be active, and this cannot be "
+                "mixed with content changes) and returns a normal awaiting-review Proposal."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_proposal_reallocate",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "plan_id": _uuid_property("Target Persona Plan id, the Proposal's anchor"),
+                    "changes": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "reallocate_accounts": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "count": {"type": "integer", "minimum": 1},
+                                    "from": {
+                                        "type": "object",
+                                        "description": "Exactly one of plan_id or pool.",
+                                        "additionalProperties": False,
+                                        "properties": {
+                                            "plan_id": _uuid_property(
+                                                "Source Persona Plan id in the same Campaign"
+                                            ),
+                                            "pool": {"const": True},
+                                        },
+                                    },
+                                },
+                                "required": ["count", "from"],
+                            },
+                        },
+                        "required": ["reallocate_accounts"],
+                    },
+                    "rationale": {"type": ["string", "null"]},
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id", "plan_id", "changes"],
+            ),
+            output_schema=_direct_output_schema(
+                "Created allocation Proposal id, number, canonical proposal_url, and change summary."
+            ),
+            examples=[
+                "museoncli agentic-campaign proposal +reallocate "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--count 2 --from-plan 44444444-4444-4444-8444-444444444444",
+                "museoncli agentic-campaign proposal +reallocate "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--plan-id 33333333-3333-4333-8333-333333333333 "
+                "--count 3 --from-pool --rationale ramp-up-winner-plan",
+            ],
+            add_arguments=_add_proposal_reallocate_arguments,
+            build_arguments=_build_proposal_reallocate_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
             shortcut="+revise",
             resource="proposal",
             summary=(
@@ -1550,6 +1731,30 @@ def specs() -> list[CommandSpec]:
                         },
                     },
                     "note": {"type": ["string", "null"], "maxLength": 2000},
+                    "rationale": {"type": ["string", "null"]},
+                    "rollout_intent": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "coverage": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "mode": {
+                                        "enum": ["existing_future_all", "future_window"]
+                                    },
+                                    "days": {
+                                        "type": ["integer", "null"],
+                                        "minimum": 1,
+                                        "maximum": 30,
+                                    },
+                                },
+                                "required": ["mode"],
+                            },
+                            "version": {"const": 1},
+                        },
+                        "required": ["coverage", "version"],
+                    },
                     "dry_run": {"type": "boolean", "default": False},
                 },
                 required=["proposal_id", "changes"],
@@ -1663,6 +1868,9 @@ def specs() -> list[CommandSpec]:
                         "description": "Optional product id",
                     },
                     "cta_definition": {"type": ["string", "null"]},
+                    "direction_brief": {"type": ["string", "null"]},
+                    "success_hypothesis": {"type": ["string", "null"]},
+                    "contract": {"type": ["string", "null"]},
                     "bind_notification_conversation": {
                         "type": "boolean",
                         "default": False,
@@ -1927,6 +2135,38 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=domain,
+            shortcut="+overview",
+            summary=(
+                "Read a workspace-wide overview across every Agentic Creative Campaign: "
+                "direction, latest strategy signal, latest verdict, recent signal series, "
+                "and open issue/proposal counts. Use this before +recap to decide which "
+                "Campaign needs closer attention."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_overview",
+            input_schema=_schema(
+                {
+                    "page": {"type": "integer", "minimum": 1, "default": 1},
+                    "page_size": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100,
+                        "default": 20,
+                    },
+                }
+            ),
+            output_schema=_direct_output_schema(
+                "Paginated Campaign overview rows (id, name, status, direction_brief, "
+                "success_hypothesis, contract, strategy_signal, latest_verdict, signals, "
+                "open_issue_counts, open_proposal_count) and pagination metadata."
+            ),
+            examples=["museoncli agentic-campaign +overview --page 1 --page-size 20"],
+            add_arguments=_add_overview_arguments,
+            build_arguments=_build_overview_arguments,
+        ),
+        CommandSpec(
+            domain=domain,
             shortcut="+get",
             summary="Get an Agentic Creative Campaign detail by campaign id.",
             risk_level="read",
@@ -1938,6 +2178,34 @@ def specs() -> list[CommandSpec]:
             ),
             output_schema=_direct_output_schema("Campaign detail."),
             examples=["museoncli agentic-campaign +get --id 22222222-2222-4222-8222-222222222222"],
+            add_arguments=_add_campaign_id_arguments,
+            build_arguments=_build_campaign_id_arguments,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+recap",
+            summary=(
+                "Read one Campaign's full recap: the archive fields (direction_brief, "
+                "success_hypothesis, contract, strategy_signal, policy), its decision "
+                "history with rationale, the last weeks of strategy signals, learnings, "
+                "and open issues/proposals. This is the same payload the AgentClock issue "
+                "dispatch injects into Mel's prompt."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_recap",
+            input_schema=_schema(
+                {"campaign_id": _uuid_property("Agentic Creative Campaign id")},
+                required=["campaign_id"],
+            ),
+            output_schema=_direct_output_schema(
+                "Campaign recap: campaign archive fields, decision_history, signals, "
+                "learnings, open_issues, and open_proposals."
+            ),
+            examples=[
+                "museoncli agentic-campaign +recap "
+                "--id 22222222-2222-4222-8222-222222222222"
+            ],
             add_arguments=_add_campaign_id_arguments,
             build_arguments=_build_campaign_id_arguments,
         ),
@@ -2462,6 +2730,8 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             "workspace_id": ctx.workspace_id,
             "title": name,
             "note": ctx.arguments.get("note"),
+            "rationale": ctx.arguments.get("rationale"),
+            "rollout_intent": ctx.arguments.get("rollout_intent"),
             "changes": {
                 "add_elements": elements,
                 "persona": persona_field,
@@ -2512,6 +2782,8 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             "workspace_id": ctx.workspace_id,
             "title": ctx.arguments.get("title"),
             "note": ctx.arguments.get("note"),
+            "rationale": ctx.arguments.get("rationale"),
+            "rollout_intent": ctx.arguments.get("rollout_intent"),
             "changes": changes,
         },
     )
@@ -2529,6 +2801,27 @@ async def _execute_proposal_create(ctx: CommandContext) -> Any:
     return await _execute_plan_propose(ctx)
 
 
+async def _execute_proposal_reallocate(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments["campaign_id"])
+    plan_id = str(ctx.arguments["plan_id"])
+    changes = ctx.arguments["changes"]
+    response = await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan_id}/revision-proposals",
+        json_body=compact_params(
+            {
+                "workspace_id": ctx.workspace_id,
+                "changes": changes,
+                "rationale": ctx.arguments.get("rationale"),
+            }
+        ),
+    )
+    return _proposal_output(
+        response, changes={"reallocate_accounts": changes["reallocate_accounts"]}
+    )
+
+
 async def _execute_proposal_revise(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     proposal_id = str(ctx.arguments["proposal_id"])
@@ -2543,6 +2836,8 @@ async def _execute_proposal_revise(ctx: CommandContext) -> Any:
             "workspace_id": ctx.workspace_id,
             "changes": ctx.arguments["changes"],
             "note": ctx.arguments.get("note"),
+            "rationale": ctx.arguments.get("rationale"),
+            "rollout_intent": ctx.arguments.get("rollout_intent"),
         },
     )
     payload = _payload_data(response)
@@ -2649,12 +2944,38 @@ async def _execute_campaign_create(ctx: CommandContext) -> Any:
                 "planned_persona_count": ctx.arguments.get("planned_persona_count"),
                 "product_id": ctx.arguments.get("product_id"),
                 "cta_definition": ctx.arguments.get("cta_definition"),
+                "direction_brief": ctx.arguments.get("direction_brief"),
+                "success_hypothesis": ctx.arguments.get("success_hypothesis"),
+                "contract": ctx.arguments.get("contract"),
                 "bind_notification_conversation": ctx.arguments.get(
                     "bind_notification_conversation"
                 ),
                 "config": ctx.arguments.get("config"),
             }
         ),
+    )
+
+
+async def _execute_overview(ctx: CommandContext) -> Any:
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "GET",
+        "/agentic-creative-campaigns/overview",
+        params={
+            "workspace_id": ctx.workspace_id,
+            "page": ctx.arguments.get("page", 1),
+            "page_size": ctx.arguments.get("page_size", 20),
+        },
+    )
+
+
+async def _execute_recap(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "GET",
+        f"/agentic-creative-campaigns/{campaign_id}/recap",
+        params={"workspace_id": ctx.workspace_id},
     )
 
 
@@ -2839,6 +3160,9 @@ EXECUTORS = {
         _execute_issues_pull, redact_api_errors=True
     ),
     "agentic-campaign.list": redacted_direct_enveloped(_execute_list, redact_api_errors=True),
+    "agentic-campaign.overview": redacted_direct_enveloped(
+        _execute_overview, redact_api_errors=True
+    ),
     "agentic-campaign.plan-attribution": redacted_direct_enveloped(
         _execute_plan_attribution, redact_api_errors=True
     ),
@@ -2863,6 +3187,9 @@ EXECUTORS = {
     "agentic-campaign.proposal-create": redacted_direct_enveloped(
         _execute_proposal_create, redact_api_errors=True
     ),
+    "agentic-campaign.proposal-reallocate": redacted_direct_enveloped(
+        _execute_proposal_reallocate, redact_api_errors=True
+    ),
     "agentic-campaign.proposal-list": redacted_direct_enveloped(
         _execute_proposal_list, redact_api_errors=True
     ),
@@ -2875,6 +3202,7 @@ EXECUTORS = {
     "agentic-campaign.proposal-withdraw": redacted_direct_enveloped(
         _execute_proposal_withdraw, redact_api_errors=True
     ),
+    "agentic-campaign.recap": redacted_direct_enveloped(_execute_recap, redact_api_errors=True),
     "agentic-campaign.schedule-rollout-get": redacted_direct_enveloped(
         _execute_schedule_rollout_get, redact_api_errors=True
     ),
