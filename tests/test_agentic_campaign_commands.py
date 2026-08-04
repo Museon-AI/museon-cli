@@ -2511,7 +2511,7 @@ def test_learning_add_posts_rule_entry_to_learning_entries() -> None:
             [
                 "agentic-campaign",
                 "+learning-add",
-                "--campaign",
+                "--campaign-id",
                 campaign_id,
                 "--claim",
                 "Warm workshop portraits outperform studio shots",
@@ -2556,7 +2556,7 @@ def test_learning_add_rejects_blank_claim() -> None:
         [
             "agentic-campaign",
             "+learning-add",
-            "--campaign",
+            "--campaign-id",
             "22222222-2222-4222-8222-222222222222",
             "--claim",
             "   ",
@@ -2574,7 +2574,7 @@ def test_issue_open_posts_manual_issue_with_optional_scope() -> None:
             [
                 "agentic-campaign",
                 "+issue-open",
-                "--campaign",
+                "--campaign-id",
                 campaign_id,
                 "--kind",
                 "reset",
@@ -2619,7 +2619,7 @@ def test_issue_open_rejects_unknown_scope_keys() -> None:
         [
             "agentic-campaign",
             "+issue-open",
-            "--campaign",
+            "--campaign-id",
             "22222222-2222-4222-8222-222222222222",
             "--kind",
             "strategy",

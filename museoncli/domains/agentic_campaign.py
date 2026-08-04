@@ -958,7 +958,7 @@ def _build_issues_pull_arguments(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _add_learning_add_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--campaign", dest="campaign_id", required=True)
+    parser.add_argument("--campaign-id", required=True)
     parser.add_argument("--claim", required=True)
     parser.add_argument("--confidence", choices=["low", "medium", "high"], default=None)
     parser.add_argument(
@@ -999,7 +999,7 @@ def _build_learning_add_arguments(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _add_issue_open_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--campaign", dest="campaign_id", required=True)
+    parser.add_argument("--campaign-id", required=True)
     parser.add_argument("--kind", choices=["reset", "evolution", "strategy"], required=True)
     parser.add_argument("--note", default=None)
     parser.add_argument(
@@ -2462,11 +2462,11 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 "museoncli agentic-campaign +learning-add "
-                "--campaign 22222222-2222-4222-8222-222222222222 "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
                 "--claim 'Warm workshop portraits outperform studio shots' "
                 "--confidence medium",
                 "museoncli agentic-campaign +learning-add "
-                "--campaign 22222222-2222-4222-8222-222222222222 "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
                 "--claim 'CTA overlays reduce completion rate on short-form video' "
                 "--confidence high "
                 """--evidence-json '{"proposal_ids":["77777777-7777-4777-8777-777777777777"]}'""",
@@ -2515,10 +2515,10 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 "museoncli agentic-campaign +issue-open "
-                "--campaign 22222222-2222-4222-8222-222222222222 "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
                 "--kind strategy --note 'Persona drift observed across all plans'",
                 "museoncli agentic-campaign +issue-open "
-                "--campaign 22222222-2222-4222-8222-222222222222 "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
                 "--kind reset "
                 """--scope-json '{"plan_ids":["33333333-3333-4333-8333-333333333333"]}'""",
             ],

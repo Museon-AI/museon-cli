@@ -10759,8 +10759,8 @@
       "capability_key": "agentic-campaign.issue-open",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +issue-open --campaign 22222222-2222-4222-8222-222222222222 --kind strategy --note 'Persona drift observed across all plans'",
-        "museoncli agentic-campaign +issue-open --campaign 22222222-2222-4222-8222-222222222222 --kind reset --scope-json '{\"plan_ids\":[\"33333333-3333-4333-8333-333333333333\"]}'"
+        "museoncli agentic-campaign +issue-open --campaign-id 22222222-2222-4222-8222-222222222222 --kind strategy --note 'Persona drift observed across all plans'",
+        "museoncli agentic-campaign +issue-open --campaign-id 22222222-2222-4222-8222-222222222222 --kind reset --scope-json '{\"plan_ids\":[\"33333333-3333-4333-8333-333333333333\"]}'"
       ],
       "execution": "direct",
       "input_schema": {
@@ -11007,8 +11007,8 @@
       "capability_key": "agentic-campaign.learning-add",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +learning-add --campaign 22222222-2222-4222-8222-222222222222 --claim 'Warm workshop portraits outperform studio shots' --confidence medium",
-        "museoncli agentic-campaign +learning-add --campaign 22222222-2222-4222-8222-222222222222 --claim 'CTA overlays reduce completion rate on short-form video' --confidence high --evidence-json '{\"proposal_ids\":[\"77777777-7777-4777-8777-777777777777\"]}'"
+        "museoncli agentic-campaign +learning-add --campaign-id 22222222-2222-4222-8222-222222222222 --claim 'Warm workshop portraits outperform studio shots' --confidence medium",
+        "museoncli agentic-campaign +learning-add --campaign-id 22222222-2222-4222-8222-222222222222 --claim 'CTA overlays reduce completion rate on short-form video' --confidence high --evidence-json '{\"proposal_ids\":[\"77777777-7777-4777-8777-777777777777\"]}'"
       ],
       "execution": "direct",
       "input_schema": {
