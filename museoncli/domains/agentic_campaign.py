@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import _direct_output_schema
@@ -61,6 +63,15 @@ def _build_overview_arguments(args: argparse.Namespace) -> dict[str, Any]:
     if args.page < 1 or args.page_size < 1:
         raise ValueError("--page and --page-size must be positive")
     return {"page": args.page, "page_size": args.page_size}
+
+
+def _add_recap_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_campaign_id_arguments(parser)
+    parser.add_argument("--cells", action="store_true")
+
+
+def _build_recap_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {"campaign_id": args.campaign_id, "include_cells": args.cells}
 
 
 def _add_campaign_id_arguments(parser: argparse.ArgumentParser) -> None:
@@ -1844,7 +1855,14 @@ def specs() -> list[CommandSpec]:
             execution="direct",
             adapter_tool_name="agentic_campaign_recap",
             input_schema=_schema(
-                {"campaign_id": _uuid_property("Agentic Creative Campaign id")},
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "include_cells": {
+                        "type": "boolean",
+                        "default": False,
+                        "description": "Include testing ledger details.",
+                    },
+                },
                 required=["campaign_id"],
             ),
             output_schema=_direct_output_schema(
@@ -1853,10 +1871,12 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 "museoncli agentic-campaign +recap "
-                "--id 22222222-2222-4222-8222-222222222222"
+                "--id 22222222-2222-4222-8222-222222222222",
+                "museoncli agentic-campaign +recap "
+                "--id 22222222-2222-4222-8222-222222222222 --cells",
             ],
-            add_arguments=_add_campaign_id_arguments,
-            build_arguments=_build_campaign_id_arguments,
+            add_arguments=_add_recap_arguments,
+            build_arguments=_build_recap_arguments,
         ),
         CommandSpec(
             domain=domain,
@@ -2659,7 +2679,7 @@ async def _execute_campaign_create(ctx: CommandContext) -> Any:
 
 
 async def _execute_overview(ctx: CommandContext) -> Any:
-    return await ctx.api_data_v2(
+    response = await ctx.api_data_v2(
         ctx.cfg,
         "GET",
         "/agentic-creative-campaigns/overview",
@@ -2669,16 +2689,111 @@ async def _execute_overview(ctx: CommandContext) -> Any:
             "page_size": ctx.arguments.get("page_size", 20),
         },
     )
+    if not isinstance(response, dict) or not isinstance(response.get("items"), list):
+        return response
+    for item in response["items"]:
+        if isinstance(item, dict):
+            _render_overview_ledger(item)
+    return response
+
+
+_LEDGER_STATUS = {
+    "testing": "在测",
+    "proposed": "待入",
+    "winner": "赢家",
+    "retired": "已淘汰",
+}
+
+
+def _ledger_summary(summary: Any, *, compact: bool = False) -> str | None:
+    if not isinstance(summary, dict):
+        return None
+    parts = [
+        f"在测组合 {summary.get('testing_cells', 0)}",
+        f"容量 {summary.get('capacity_cells', 0)}",
+    ]
+    overload_ratio = summary.get("overload_ratio")
+    if overload_ratio is not None:
+        parts.append(f"超载 {overload_ratio:g}×")
+    if not compact:
+        parts.extend(
+            [
+                f"零样本 {summary.get('testing_cells_zero_sample', 0)}",
+                f"赢家 {summary.get('winner_cells', 0)}",
+            ]
+        )
+    return " · ".join(parts)
+
+
+def _render_overview_ledger(item: dict[str, Any]) -> None:
+    if "matrix" not in item:
+        return
+    matrix = item.pop("matrix")
+    if not isinstance(matrix, dict):
+        return
+    rendered = _ledger_summary(matrix.get("summary"), compact=True)
+    if rendered is not None:
+        item["台账"] = rendered
+
+
+def _short_shanghai_datetime(value: Any) -> str:
+    if not isinstance(value, str) or not value.strip():
+        return "—"
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            return "—"
+        return parsed.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y-%m-%d %H:%M")
+    except ValueError:
+        return "—"
+
+
+def _ledger_detail(cells: Any) -> list[dict[str, Any]]:
+    if not isinstance(cells, list):
+        return []
+    return [
+        {
+            "plan": cell.get("plan_name") or cell.get("plan_id") or "—",
+            "状态": _LEDGER_STATUS.get(cell.get("element_status"), "—"),
+            "format": cell.get("format_name") or cell.get("format_id") or "—",
+            "topic": cell.get("topic_title") or cell.get("topic_id") or "—",
+            "样本": cell.get("samples_total", 0),
+            "近7天": cell.get("samples_in_window", 0),
+            "中位播放": cell.get("median_views") if cell.get("median_views") is not None else "—",
+            "最高播放": cell.get("max_views") if cell.get("max_views") is not None else "—",
+            "最近发布": _short_shanghai_datetime(cell.get("last_published_at")),
+        }
+        for cell in cells
+        if isinstance(cell, dict)
+    ]
+
+
+def _render_recap_ledger(response: Any) -> Any:
+    if not isinstance(response, dict) or "matrix" not in response:
+        return response
+    matrix = response.pop("matrix")
+    if not isinstance(matrix, dict):
+        return response
+    rendered = _ledger_summary(matrix.get("summary"))
+    if rendered is not None:
+        response["测试台账"] = rendered
+    if "cells" in matrix:
+        response["组合明细"] = _ledger_detail(matrix.get("cells"))
+    return response
 
 
 async def _execute_recap(ctx: CommandContext) -> Any:
     campaign_id = str(ctx.arguments.get("campaign_id") or "")
-    return await ctx.api_data_v2(
+    response = await ctx.api_data_v2(
         ctx.cfg,
         "GET",
         f"/agentic-creative-campaigns/{campaign_id}/recap",
-        params={"workspace_id": ctx.workspace_id},
+        params={
+            "workspace_id": ctx.workspace_id,
+            "include_cells": bool(ctx.arguments.get("include_cells", False)),
+        },
     )
+    return _render_recap_ledger(response)
 
 
 async def _execute_campaign_update(ctx: CommandContext) -> Any:

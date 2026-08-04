@@ -633,12 +633,35 @@ def test_proposal_reallocate_posts_allocation_change() -> None:
     assert result["proposal_url"] == proposal_url
 
 
-def test_overview_builds_defaults_and_gets_workspace_page() -> None:
+@pytest.fixture
+def matrix_summary() -> dict[str, Any]:
+    return {
+        "accounts": 4,
+        "published_in_window": 18,
+        "capacity_cells": 6,
+        "testing_cells": 8,
+        "proposed_cells": 2,
+        "winner_cells": 3,
+        "retired_cells": 5,
+        "testing_cells_zero_sample": 2,
+        "overload_ratio": 1.33,
+    }
+
+
+def test_overview_renders_matrix_summary(matrix_summary: dict[str, Any]) -> None:
     arguments = agentic_campaign._build_overview_arguments(
         parse(["agentic-campaign", "+overview"])
     )
     assert arguments == {"page": 1, "page_size": 20}
-    response = {"items": [], "meta": {"page": 1, "page_size": 20, "total": 0}}
+    response = {
+        "items": [
+            {
+                "id": "campaign-1",
+                "matrix": {"window_days": 7, "min_samples": 3, "summary": matrix_summary},
+            }
+        ],
+        "meta": {"page": 1, "page_size": 20, "total": 1},
+    }
     capture = Capture(response)
     result = asyncio.run(
         agentic_campaign._execute_overview(
@@ -657,15 +680,39 @@ def test_overview_builds_defaults_and_gets_workspace_page() -> None:
             },
         }
     ]
+    assert result == {
+        "items": [{"id": "campaign-1", "台账": "在测组合 8 · 容量 6 · 超载 1.33×"}],
+        "meta": {"page": 1, "page_size": 20, "total": 1},
+    }
+
+
+def test_overview_silently_omits_ledger_when_matrix_is_missing() -> None:
+    arguments = agentic_campaign._build_overview_arguments(
+        parse(["agentic-campaign", "+overview"])
+    )
+    response = {
+        "items": [{"id": "campaign-1", "name": "旧服务端项目"}],
+        "meta": {"page": 1, "page_size": 20, "total": 1},
+    }
+    result = asyncio.run(
+        agentic_campaign._execute_overview(
+            context("agentic-campaign.overview", arguments, Capture(response))
+        )
+    )
     assert result == response
 
 
-def test_recap_gets_campaign_workspace_recap() -> None:
+def test_recap_renders_matrix_summary(matrix_summary: dict[str, Any]) -> None:
     campaign_id = "22222222-2222-4222-8222-222222222222"
-    arguments = agentic_campaign._build_campaign_id_arguments(
+    arguments = agentic_campaign._build_recap_arguments(
         parse(["agentic-campaign", "+recap", "--id", campaign_id])
     )
-    response = {"campaign": {"id": campaign_id}, "decision_history": []}
+    assert arguments == {"campaign_id": campaign_id, "include_cells": False}
+    response = {
+        "campaign": {"id": campaign_id},
+        "decision_history": [],
+        "matrix": {"window_days": 7, "min_samples": 3, "summary": matrix_summary},
+    }
     capture = Capture(response)
     result = asyncio.run(
         agentic_campaign._execute_recap(
@@ -677,10 +724,103 @@ def test_recap_gets_campaign_workspace_recap() -> None:
             "method": "GET",
             "path": f"/agentic-creative-campaigns/{campaign_id}/recap",
             "json_body": None,
-            "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+            "params": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+                "include_cells": False,
+            },
         }
     ]
+    assert result == {
+        "campaign": {"id": campaign_id},
+        "decision_history": [],
+        "测试台账": "在测组合 8 · 容量 6 · 超载 1.33× · 零样本 2 · 赢家 3",
+    }
+
+
+def test_recap_silently_omits_ledger_when_matrix_is_missing() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    arguments = agentic_campaign._build_recap_arguments(
+        parse(["agentic-campaign", "+recap", "--id", campaign_id])
+    )
+    response = {"campaign": {"id": campaign_id}, "decision_history": []}
+    result = asyncio.run(
+        agentic_campaign._execute_recap(
+            context("agentic-campaign.recap", arguments, Capture(response))
+        )
+    )
     assert result == response
+
+
+def test_recap_cells_requests_and_renders_combination_details(
+    matrix_summary: dict[str, Any],
+) -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    arguments = agentic_campaign._build_recap_arguments(
+        parse(["agentic-campaign", "+recap", "--id", campaign_id, "--cells"])
+    )
+    response = {
+        "campaign": {"id": campaign_id},
+        "matrix": {
+            "window_days": 7,
+            "min_samples": 3,
+            "summary": {**matrix_summary, "overload_ratio": None},
+            "cells": [
+                {
+                    "plan_id": "plan-1",
+                    "plan_name": "实用派",
+                    "element_id": "element-1",
+                    "element_status": "testing",
+                    "format_id": "format-1",
+                    "format_name": "步骤拆解",
+                    "topic_id": "topic-1",
+                    "topic_title": "冷萃咖啡",
+                    "samples_total": 5,
+                    "samples_in_window": 3,
+                    "median_views": 1200,
+                    "max_views": 4800,
+                    "last_published_at": "2026-08-04T18:30:00Z",
+                }
+            ],
+        },
+    }
+    capture = Capture(response)
+    result = asyncio.run(
+        agentic_campaign._execute_recap(
+            context("agentic-campaign.recap", arguments, capture)
+        )
+    )
+    assert arguments == {"campaign_id": campaign_id, "include_cells": True}
+    assert capture.calls[0]["params"] == {
+        "workspace_id": "11111111-1111-4111-8111-111111111111",
+        "include_cells": True,
+    }
+    assert result["测试台账"] == "在测组合 8 · 容量 6 · 零样本 2 · 赢家 3"
+    assert result["组合明细"] == [
+        {
+            "plan": "实用派",
+            "状态": "在测",
+            "format": "步骤拆解",
+            "topic": "冷萃咖啡",
+            "样本": 5,
+            "近7天": 3,
+            "中位播放": 1200,
+            "最高播放": 4800,
+            "最近发布": "2026-08-05 02:30",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("status", "label"),
+    [
+        ("testing", "在测"),
+        ("proposed", "待入"),
+        ("winner", "赢家"),
+        ("retired", "已淘汰"),
+    ],
+)
+def test_recap_cell_status_uses_operator_vocabulary(status: str, label: str) -> None:
+    assert agentic_campaign._ledger_detail([{"element_status": status}])[0]["状态"] == label
 
 
 @pytest.mark.parametrize(
