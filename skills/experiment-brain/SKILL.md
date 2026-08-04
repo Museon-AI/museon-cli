@@ -110,23 +110,24 @@ with the complete replacement `--elements-json` and, only when changing its
 persona, either `--persona-json` or `--persona-id`:
 
 ```bash
-museoncli agentic-campaign +plan-propose \
+museoncli agentic-campaign proposal +revise \
   --plan-id 33333333-3333-4333-8333-333333333333 \
   --proposal-id 77777777-7777-4777-8777-777777777777 \
-  --persona-json '{"name":"Mia","description":"Practical maker","visual_prompt":"Bright workshop portrait","reference_media_ids":[]}' \
+  --replace-persona-json '{"name":"Mia","description":"Practical maker","visual_prompt":"Bright workshop portrait","reference_media_ids":[]}' \
   --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
   --note "Tighten the visual direction"
 ```
 
-Omit `--proposal-id` to create a new proposal, and include its required
-`--name`. When revising with `--proposal-id`, omitting both persona options
-preserves that proposal's current persona; it does not clear the persona.
+Use `+create` (no `--proposal-id`) to create a new proposal instead, with its
+required `--name`. When revising with `+revise --proposal-id`, omitting both
+persona options preserves that proposal's current persona; it does not clear
+the persona.
 
 When the persona already exists as a workspace persona asset, pass
-`--persona-id <id>` instead of `--persona-json` (mutually exclusive). The
-server snapshots the asset's name, description, and look-reference media at
-submit time — a copy, not a live link; tags and marketing profile do not
-carry over.
+`--replace-persona-id <id>` instead of `--replace-persona-json` (mutually
+exclusive). The server snapshots the asset's name, description, and
+look-reference media at submit time — a copy, not a live link; tags and
+marketing profile do not carry over.
 
 ### Action 2: adjust a running plan from evidence
 
@@ -159,7 +160,7 @@ proposal list (for example `「暗黑向第二批开测」`) — without it ever
 renders with the generic label and the operator cannot tell them apart:
 
 ```bash
-museoncli agentic-campaign +plan-propose \
+museoncli agentic-campaign proposal +create \
   --plan-id 33333333-3333-4333-8333-333333333333 \
   --title "暗黑向第二批开测" \
   --add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
@@ -200,11 +201,12 @@ against a plan-held persona is rejected by the server (409) no matter who
 asks: operator-instructed rewrites, "replace with persona X" requests, and
 annotation feedback all go through the same proposal-revision flow. Whenever
 ANY change to a plan's persona identity or appearance (name, description,
-visual reference) is needed, include `--persona-json` or `--persona-id` on
-the same `+plan-propose --proposal-id` revision call used for the element
-list (see the command below) — never a separate persona-only step. When the
-operator names an existing persona to source from (for example "replace with
-persona X"), pass `--persona-id <id>` instead of hand-copying fields: the
+visual reference) is needed, include `--replace-persona-json` or
+`--replace-persona-id` on the same `proposal +revise --proposal-id` revision
+call used for the element list (see the command below) — never a separate
+persona-only step. When the operator names an existing persona to source
+from (for example "replace with persona X"), pass `--replace-persona-id
+<id>` instead of hand-copying fields: the
 server snapshots that persona's name, description, and look-reference media
 at submission time — a copy, not a live link.
 
@@ -221,7 +223,7 @@ the previous `第N稿` — the delta, not just the new state.
 Submit the complete replacement element list as the next `第N稿`:
 
 ```bash
-museoncli agentic-campaign +plan-propose \
+museoncli agentic-campaign proposal +revise \
   --plan-id 33333333-3333-4333-8333-333333333333 \
   --proposal-id 77777777-7777-4777-8777-777777777777 \
   --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
@@ -229,8 +231,8 @@ museoncli agentic-campaign +plan-propose \
 ```
 
 This form intentionally omits persona options, so the proposal keeps its
-current persona. Add exactly one of `--persona-json` or `--persona-id` only
-when the next `第N稿` replaces that persona.
+current persona. Add exactly one of `--replace-persona-json` or
+`--replace-persona-id` only when the next `第N稿` replaces that persona.
 
 The operator may continue annotating or confirm from the review desk. Never
 pressure or prompt the operator to confirm.
