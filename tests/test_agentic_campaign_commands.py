@@ -1186,6 +1186,39 @@ def test_plan_propose_dispatches_draft_submit() -> None:
     }
 
 
+def test_plan_propose_dispatches_rationale_distinct_from_note() -> None:
+    """--rationale (why the change) and --note (operational remark) are two separate
+    fields on the wire, both threaded through the legacy +plan-propose surface the same
+    way the canonical proposal +create/+revise commands already do."""
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id),
+        {"proposal": {"id": "proposal-1"}},
+    )
+    argv = ["agentic-campaign", "+plan-propose", "--plan-id", plan_id]
+    complete_args = _complete_plan_cli_args()
+    args = parse(
+        [
+            *argv,
+            *complete_args,
+            "--note",
+            "Submitting for the weekly review batch",
+            "--rationale",
+            "Winner plan has plateaued; testing a darker visual direction",
+        ]
+    )
+    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    asyncio.run(
+        agentic_campaign._execute_plan_propose(
+            context("agentic-campaign.plan-propose", arguments, capture)
+        )
+    )
+    body = capture.calls[-1]["json_body"]
+    assert body["note"] == "Submitting for the weekly review batch"
+    assert body["rationale"] == "Winner plan has plateaued; testing a darker visual direction"
+
+
 def test_plan_propose_rejects_draft_name_over_proposal_title_limit() -> None:
     args = parse(
         [
@@ -1840,6 +1873,8 @@ def test_plan_propose_submits_active_proposal_revision() -> None:
             json.dumps(elements),
             "--note",
             "Apply the compiled feedback",
+            "--rationale",
+            "Operator flagged the CTA as unclear in the last review round",
         ]
     )
     arguments = agentic_campaign._build_plan_propose_arguments(args)
@@ -1859,6 +1894,7 @@ def test_plan_propose_submits_active_proposal_revision() -> None:
             "workspace_id": "11111111-1111-4111-8111-111111111111",
             "elements": elements,
             "note": "Apply the compiled feedback",
+            "rationale": "Operator flagged the CTA as unclear in the last review round",
         },
         "params": None,
     }
@@ -1920,6 +1956,7 @@ def test_plan_propose_submits_draft_stage_proposal_revision_with_persona_payload
             "workspace_id": "11111111-1111-4111-8111-111111111111",
             "elements": _REVISION_ELEMENTS,
             "note": "Brighter visual direction",
+            "rationale": None,
             "persona": {"persona_payload": persona_payload},
         },
         "params": None,
@@ -1966,6 +2003,7 @@ def test_plan_propose_submits_draft_stage_proposal_revision_with_persona_id() ->
             "workspace_id": "11111111-1111-4111-8111-111111111111",
             "elements": _REVISION_ELEMENTS,
             "note": None,
+            "rationale": None,
             "persona": {"persona_id": persona_id},
         },
         "params": None,
@@ -2464,3 +2502,130 @@ def test_issues_pull_requires_runtime_conversation_identity() -> None:
                 )
             )
         )
+
+
+def test_learning_add_posts_rule_entry_to_learning_entries() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    arguments = agentic_campaign._build_learning_add_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "+learning-add",
+                "--campaign-id",
+                campaign_id,
+                "--claim",
+                "Warm workshop portraits outperform studio shots",
+                "--confidence",
+                "medium",
+                "--evidence-json",
+                json.dumps({"proposal_ids": ["77777777-7777-4777-8777-777777777777"]}),
+            ]
+        )
+    )
+    assert arguments == {
+        "campaign_id": campaign_id,
+        "claim": "Warm workshop portraits outperform studio shots",
+        "confidence": "medium",
+        "evidence": {"proposal_ids": ["77777777-7777-4777-8777-777777777777"]},
+        "dry_run": False,
+    }
+    capture = Capture({"id": "entry-1", "entry_type": "rule", "status": "active"})
+    result = asyncio.run(
+        agentic_campaign._execute_learning_add(
+            context("agentic-campaign.learning-add", arguments, capture)
+        )
+    )
+    assert capture.calls == [
+        {
+            "method": "POST",
+            "path": f"/agentic-creative-campaigns/{campaign_id}/learning-entries",
+            "json_body": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+                "claim": "Warm workshop portraits outperform studio shots",
+                "confidence": "medium",
+                "evidence": {"proposal_ids": ["77777777-7777-4777-8777-777777777777"]},
+            },
+            "params": None,
+        }
+    ]
+    assert result["id"] == "entry-1"
+
+
+def test_learning_add_rejects_blank_claim() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+learning-add",
+            "--campaign-id",
+            "22222222-2222-4222-8222-222222222222",
+            "--claim",
+            "   ",
+        ]
+    )
+    with pytest.raises(ValueError, match="--claim must not be empty"):
+        agentic_campaign._build_learning_add_arguments(args)
+
+
+def test_issue_open_posts_manual_issue_with_optional_scope() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    arguments = agentic_campaign._build_issue_open_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "+issue-open",
+                "--campaign-id",
+                campaign_id,
+                "--kind",
+                "reset",
+                "--note",
+                "Persona drift observed across all plans",
+                "--scope-json",
+                json.dumps({"plan_ids": [plan_id]}),
+            ]
+        )
+    )
+    assert arguments == {
+        "campaign_id": campaign_id,
+        "kind": "reset",
+        "note": "Persona drift observed across all plans",
+        "scope": {"plan_ids": [plan_id]},
+        "dry_run": False,
+    }
+    capture = Capture({"id": "issue-1", "status": "open", "source": "manual"})
+    result = asyncio.run(
+        agentic_campaign._execute_issue_open(
+            context("agentic-campaign.issue-open", arguments, capture)
+        )
+    )
+    assert capture.calls == [
+        {
+            "method": "POST",
+            "path": f"/agentic-creative-campaigns/{campaign_id}/issues",
+            "json_body": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+                "kind": "reset",
+                "note": "Persona drift observed across all plans",
+                "scope": {"plan_ids": [plan_id]},
+            },
+            "params": None,
+        }
+    ]
+    assert result["id"] == "issue-1"
+
+
+def test_issue_open_rejects_unknown_scope_keys() -> None:
+    args = parse(
+        [
+            "agentic-campaign",
+            "+issue-open",
+            "--campaign-id",
+            "22222222-2222-4222-8222-222222222222",
+            "--kind",
+            "strategy",
+            "--scope-json",
+            json.dumps({"account_ids": [], "bogus_key": True}),
+        ]
+    )
+    with pytest.raises(ValueError, match="only accepts plan_ids and account_ids"):
+        agentic_campaign._build_issue_open_arguments(args)

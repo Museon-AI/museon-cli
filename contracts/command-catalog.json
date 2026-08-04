@@ -1180,6 +1180,56 @@
           "summary": "Pull and lease Account Operation Issues from one required Agentic Creative Campaign. The campaign selects candidates; the runtime conversation identity is used only for lease and message context. Claims omit account_operation_id.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.learning-add",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.learning-add",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+learning-add",
+          "stability": "stable",
+          "summary": "Add a rule-type Learning Entry to a Campaign's evaluation memory. Distinct from the 'outcome' entries evaluation runs produce automatically, this is a human- or Mel-authored rule that future evaluation runs weigh alongside them.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.issue-open",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.issue-open",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+issue-open",
+          "stability": "stable",
+          "summary": "Manually open a Campaign Issue (reset, evolution, or strategy) outside the automated evaluation pipeline, e.g. for an operator- or Mel-initiated intervention. The issue starts in status open, source manual.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
         }
       ],
       "artifacts": [
@@ -10693,6 +10743,154 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "agentic-campaign.issue-open": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.issue-open",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +issue-open --campaign-id 22222222-2222-4222-8222-222222222222 --kind strategy --note 'Persona drift observed across all plans'",
+        "museoncli agentic-campaign +issue-open --campaign-id 22222222-2222-4222-8222-222222222222 --kind reset --scope-json '{\"plan_ids\":[\"33333333-3333-4333-8333-333333333333\"]}'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "reset",
+              "evolution",
+              "strategy"
+            ]
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scope": {
+            "additionalProperties": false,
+            "properties": {
+              "account_ids": {
+                "items": {
+                  "description": "Managed social account id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "plan_ids": {
+                "items": {
+                  "description": "Agentic Persona Plan id",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "campaign_id",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.issue-open",
+      "output_schema": {
+        "description": "Created Campaign Issue: id, kind, status (open), scope, source (manual), and timestamps.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+issue-open",
+      "stability": "stable",
+      "summary": "Manually open a Campaign Issue (reset, evolution, or strategy) outside the automated evaluation pipeline, e.g. for an operator- or Mel-initiated intervention. The issue starts in status open, source manual.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "agentic-campaign.issues-pull": {
       "authorization": {
         "authentication_required": true,
@@ -10790,6 +10988,137 @@
       "shortcut": "+issues-pull",
       "stability": "stable",
       "summary": "Pull and lease Account Operation Issues from one required Agentic Creative Campaign. The campaign selects candidates; the runtime conversation identity is used only for lease and message context. Claims omit account_operation_id.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.learning-add": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.learning-add",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +learning-add --campaign-id 22222222-2222-4222-8222-222222222222 --claim 'Warm workshop portraits outperform studio shots' --confidence medium",
+        "museoncli agentic-campaign +learning-add --campaign-id 22222222-2222-4222-8222-222222222222 --claim 'CTA overlays reduce completion rate on short-form video' --confidence high --evidence-json '{\"proposal_ids\":[\"77777777-7777-4777-8777-777777777777\"]}'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "claim": {
+            "description": "The learning statement being recorded.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "confidence": {
+            "description": "Optional confidence level for this claim.",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "evidence": {
+            "description": "Optional free-form object citing the evidence behind this claim.",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "scope": {
+            "description": "Optional free-form object narrowing what this learning applies to.",
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "campaign_id",
+          "claim"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.learning-add",
+      "output_schema": {
+        "description": "Created Learning Entry: id, entry_type (rule), claim, confidence, scope, evidence, status (active), and timestamps.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+learning-add",
+      "stability": "stable",
+      "summary": "Add a rule-type Learning Entry to a Campaign's evaluation memory. Distinct from the 'outcome' entries evaluation runs produce automatically, this is a human- or Mel-authored rule that future evaluation runs weigh alongside them.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

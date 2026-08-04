@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-141 commands across 14 domains (source of truth: `museoncli schema`).
+143 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -240,6 +240,8 @@ The tables below are generated — edit code, then run
 | `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +plan-attribution` | read | — | — | direct | Aggregate attribution across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +issues-pull` | write | yes | — | direct | Pull and lease Account Operation Issues from one required Agentic Creative Campaign. The campaign selects candidates; the runtime conversation identity is used only for lease and message context. Claims omit account_operation_id. |
+| `agentic-campaign +learning-add` | write | yes | — | direct | Add a rule-type Learning Entry to a Campaign's evaluation memory. Distinct from the 'outcome' entries evaluation runs produce automatically, this is a human- or Mel-authored rule that future evaluation runs weigh alongside them. |
+| `agentic-campaign +issue-open` | write | yes | — | direct | Manually open a Campaign Issue (reset, evolution, or strategy) outside the automated evaluation pipeline, e.g. for an operator- or Mel-initiated intervention. The issue starts in status open, source manual. |
 
 ### product
 

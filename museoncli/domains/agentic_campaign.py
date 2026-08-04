@@ -82,7 +82,20 @@ def _build_plan_id_arguments(args: argparse.Namespace) -> dict[str, Any]:
 def _add_plan_propose_arguments(parser: argparse.ArgumentParser) -> None:
     _add_plan_id_arguments(parser)
     parser.add_argument("--proposal-id")
-    parser.add_argument("--note")
+    parser.add_argument(
+        "--note",
+        help=(
+            "Operational note about this submission (e.g. context for reviewers). "
+            "Distinct from --rationale, the strategic reasoning behind the change."
+        ),
+    )
+    parser.add_argument(
+        "--rationale",
+        help=(
+            "Why this proposal is being made -- the strategic reasoning behind the "
+            "adjustment. Distinct from --note, which is an operational remark."
+        ),
+    )
     parser.add_argument("--name")
     parser.add_argument("--title")
     parser.add_argument("--persona-payload", dest="persona_payload")
@@ -587,6 +600,7 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
                 "elements": elements,
                 **persona_field,
                 "note": args.note,
+                "rationale": args.rationale,
                 "dry_run": args.dry_run,
             }
         )
@@ -641,6 +655,7 @@ def _build_plan_propose_arguments(args: argparse.Namespace) -> dict[str, Any]:
             "plan_id": args.plan_id,
             "proposal_id": args.proposal_id,
             "note": args.note,
+            "rationale": args.rationale,
             "dry_run": args.dry_run,
         }
     )
@@ -940,6 +955,82 @@ def _add_issues_pull_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _build_issues_pull_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {"campaign_id": args.campaign_id, "limit": args.limit}
+
+
+def _add_learning_add_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--claim", required=True)
+    parser.add_argument("--confidence", choices=["low", "medium", "high"], default=None)
+    parser.add_argument(
+        "--scope-json",
+        default=None,
+        help="Optional JSON object narrowing what this learning applies to.",
+    )
+    parser.add_argument(
+        "--evidence-json",
+        default=None,
+        help="Optional JSON object citing the evidence behind this learning.",
+    )
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_learning_add_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    claim = args.claim.strip() if args.claim else ""
+    if not claim:
+        raise ValueError("--claim must not be empty.")
+    return compact_params(
+        {
+            "campaign_id": args.campaign_id,
+            "claim": claim,
+            "confidence": args.confidence,
+            "scope": (
+                _candidate_json(args.scope_json, field="scope", expected_type=dict)
+                if args.scope_json is not None
+                else None
+            ),
+            "evidence": (
+                _candidate_json(args.evidence_json, field="evidence", expected_type=dict)
+                if args.evidence_json is not None
+                else None
+            ),
+            "dry_run": args.dry_run,
+        }
+    )
+
+
+def _add_issue_open_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--kind", choices=["reset", "evolution", "strategy"], required=True)
+    parser.add_argument("--note", default=None)
+    parser.add_argument(
+        "--scope-json",
+        default=None,
+        help=(
+            "Optional JSON object narrowing the issue's scope, "
+            '{"plan_ids": [...], "account_ids": [...]}.'
+        ),
+    )
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_issue_open_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    scope: dict[str, Any] | None = None
+    if args.scope_json is not None:
+        scope = _candidate_json(args.scope_json, field="scope", expected_type=dict)
+        unknown = set(scope) - {"plan_ids", "account_ids"}
+        if unknown:
+            raise ValueError(
+                f"--scope-json only accepts plan_ids and account_ids, got: {sorted(unknown)}"
+            )
+    return compact_params(
+        {
+            "campaign_id": args.campaign_id,
+            "kind": args.kind,
+            "note": args.note,
+            "scope": scope,
+            "dry_run": args.dry_run,
+        }
+    )
 
 
 def _schema(
@@ -1458,7 +1549,21 @@ def specs() -> list[CommandSpec]:
                         },
                         "required": [],
                     },
-                    "note": {"type": ["string", "null"], "maxLength": 2000},
+                    "note": {
+                        "type": ["string", "null"],
+                        "maxLength": 2000,
+                        "description": (
+                            "Operational note about this submission. Distinct from "
+                            "rationale, the strategic reasoning behind the change."
+                        ),
+                    },
+                    "rationale": {
+                        "type": ["string", "null"],
+                        "description": (
+                            "Why this proposal is being made -- the strategic reasoning "
+                            "behind the adjustment. Distinct from note, an operational remark."
+                        ),
+                    },
                     "dry_run": {"type": "boolean", "default": False},
                 },
                 "required": ["plan_id"],
@@ -1531,7 +1636,8 @@ def specs() -> list[CommandSpec]:
                 "--title 'Dark-tone second test batch' "
                 """--add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","""
                 """"topic_id":"55555555-5555-4555-8555-555555555555"}]' """
-                "--note 'Untested hypothesis on the dark visual direction'",
+                "--note 'Untested hypothesis on the dark visual direction' "
+                "--rationale 'Winner plan has plateaued; testing a darker visual direction'",
                 "museoncli agentic-campaign +plan-propose "
                 "--plan-id 33333333-3333-4333-8333-333333333333 "
                 "--proposal-id 77777777-7777-4777-8777-777777777777 "
@@ -2315,6 +2421,111 @@ def specs() -> list[CommandSpec]:
             build_arguments=_build_issues_pull_arguments,
             supports_dry_run=True,
         ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+learning-add",
+            summary=(
+                "Add a rule-type Learning Entry to a Campaign's evaluation memory. Distinct "
+                "from the 'outcome' entries evaluation runs produce automatically, this is a "
+                "human- or Mel-authored rule that future evaluation runs weigh alongside them."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_learning_add",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "claim": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "The learning statement being recorded.",
+                    },
+                    "confidence": {
+                        "enum": ["low", "medium", "high"],
+                        "description": "Optional confidence level for this claim.",
+                    },
+                    "scope": {
+                        "type": ["object", "null"],
+                        "description": "Optional free-form object narrowing what this learning applies to.",
+                    },
+                    "evidence": {
+                        "type": ["object", "null"],
+                        "description": "Optional free-form object citing the evidence behind this claim.",
+                    },
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id", "claim"],
+            ),
+            output_schema=_direct_output_schema(
+                "Created Learning Entry: id, entry_type (rule), claim, confidence, scope, "
+                "evidence, status (active), and timestamps."
+            ),
+            examples=[
+                "museoncli agentic-campaign +learning-add "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--claim 'Warm workshop portraits outperform studio shots' "
+                "--confidence medium",
+                "museoncli agentic-campaign +learning-add "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--claim 'CTA overlays reduce completion rate on short-form video' "
+                "--confidence high "
+                """--evidence-json '{"proposal_ids":["77777777-7777-4777-8777-777777777777"]}'""",
+            ],
+            add_arguments=_add_learning_add_arguments,
+            build_arguments=_build_learning_add_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+issue-open",
+            summary=(
+                "Manually open a Campaign Issue (reset, evolution, or strategy) outside the "
+                "automated evaluation pipeline, e.g. for an operator- or Mel-initiated "
+                "intervention. The issue starts in status open, source manual."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_issue_open",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "kind": {"enum": ["reset", "evolution", "strategy"]},
+                    "note": {"type": ["string", "null"]},
+                    "scope": {
+                        "type": ["object", "null"],
+                        "additionalProperties": False,
+                        "properties": {
+                            "plan_ids": {
+                                "type": "array",
+                                "items": _uuid_property("Agentic Persona Plan id"),
+                            },
+                            "account_ids": {
+                                "type": "array",
+                                "items": _uuid_property("Managed social account id"),
+                            },
+                        },
+                    },
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id", "kind"],
+            ),
+            output_schema=_direct_output_schema(
+                "Created Campaign Issue: id, kind, status (open), scope, source (manual), "
+                "and timestamps."
+            ),
+            examples=[
+                "museoncli agentic-campaign +issue-open "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--kind strategy --note 'Persona drift observed across all plans'",
+                "museoncli agentic-campaign +issue-open "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--kind reset "
+                """--scope-json '{"plan_ids":["33333333-3333-4333-8333-333333333333"]}'""",
+            ],
+            add_arguments=_add_issue_open_arguments,
+            build_arguments=_build_issue_open_arguments,
+            supports_dry_run=True,
+        ),
     ]
 
 
@@ -2685,6 +2896,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
             "workspace_id": ctx.workspace_id,
             "elements": elements,
             "note": ctx.arguments.get("note"),
+            "rationale": ctx.arguments.get("rationale"),
         }
         if persona_id is not None:
             body["persona"] = {"persona_id": persona_id}
@@ -3133,6 +3345,41 @@ async def _execute_issues_pull(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_learning_add(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/agentic-creative-campaigns/{campaign_id}/learning-entries",
+        json_body=compact_params(
+            {
+                "workspace_id": ctx.workspace_id,
+                "claim": ctx.arguments.get("claim"),
+                "scope": ctx.arguments.get("scope"),
+                "confidence": ctx.arguments.get("confidence"),
+                "evidence": ctx.arguments.get("evidence"),
+            }
+        ),
+    )
+
+
+async def _execute_issue_open(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/agentic-creative-campaigns/{campaign_id}/issues",
+        json_body=compact_params(
+            {
+                "workspace_id": ctx.workspace_id,
+                "kind": ctx.arguments.get("kind"),
+                "note": ctx.arguments.get("note"),
+                "scope": ctx.arguments.get("scope"),
+            }
+        ),
+    )
+
+
 EXECUTORS = {
     "agentic-campaign.confirm-schedule-rollout": redacted_direct_enveloped(
         _execute_confirm_schedule_rollout, redact_api_errors=True
@@ -3156,8 +3403,14 @@ EXECUTORS = {
         _execute_campaign_rename, redact_api_errors=True
     ),
     "agentic-campaign.get": redacted_direct_enveloped(_execute_get, redact_api_errors=True),
+    "agentic-campaign.issue-open": redacted_direct_enveloped(
+        _execute_issue_open, redact_api_errors=True
+    ),
     "agentic-campaign.issues-pull": redacted_direct_enveloped(
         _execute_issues_pull, redact_api_errors=True
+    ),
+    "agentic-campaign.learning-add": redacted_direct_enveloped(
+        _execute_learning_add, redact_api_errors=True
     ),
     "agentic-campaign.list": redacted_direct_enveloped(_execute_list, redact_api_errors=True),
     "agentic-campaign.overview": redacted_direct_enveloped(
