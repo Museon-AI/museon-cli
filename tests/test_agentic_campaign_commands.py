@@ -7,7 +7,6 @@ from typing import Any
 
 import pytest
 import httpx
-from jsonschema import Draft202012Validator
 
 from museoncli import main as main_module
 from museoncli.config import Config, WorkspaceState
@@ -1154,20 +1153,20 @@ def test_plan_update_requires_plan_id() -> None:
         parse(["agentic-campaign", "+plan-update", "--name", "New"])
 
 
-def test_plan_propose_dispatches_draft_submit() -> None:
+def test_proposal_create_dispatches_draft_submit() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     capture = Capture(
         campaign_list(plan_id),
         campaign_detail(plan_id),
         {"proposal": {"id": "proposal-1"}},
     )
-    argv = ["agentic-campaign", "+plan-propose", "--plan-id", plan_id]
+    argv = ["agentic-campaign", "proposal", "+create", "--plan-id", plan_id]
     complete_args = _complete_plan_cli_args()
     args = parse([*argv, *complete_args])
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    arguments = agentic_campaign._build_proposal_create_arguments(args)
     result = asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", arguments, capture)
         )
     )
     call = capture.calls[-1]
@@ -1186,17 +1185,16 @@ def test_plan_propose_dispatches_draft_submit() -> None:
     }
 
 
-def test_plan_propose_dispatches_rationale_distinct_from_note() -> None:
+def test_proposal_create_dispatches_rationale_distinct_from_note() -> None:
     """--rationale (why the change) and --note (operational remark) are two separate
-    fields on the wire, both threaded through the legacy +plan-propose surface the same
-    way the canonical proposal +create/+revise commands already do."""
+    fields on the wire, both threaded through the canonical proposal +create surface."""
     plan_id = "33333333-3333-4333-8333-333333333333"
     capture = Capture(
         campaign_list(plan_id),
         campaign_detail(plan_id),
         {"proposal": {"id": "proposal-1"}},
     )
-    argv = ["agentic-campaign", "+plan-propose", "--plan-id", plan_id]
+    argv = ["agentic-campaign", "proposal", "+create", "--plan-id", plan_id]
     complete_args = _complete_plan_cli_args()
     args = parse(
         [
@@ -1208,10 +1206,10 @@ def test_plan_propose_dispatches_rationale_distinct_from_note() -> None:
             "Winner plan has plateaued; testing a darker visual direction",
         ]
     )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    arguments = agentic_campaign._build_proposal_create_arguments(args)
     asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", arguments, capture)
         )
     )
     body = capture.calls[-1]["json_body"]
@@ -1219,11 +1217,12 @@ def test_plan_propose_dispatches_rationale_distinct_from_note() -> None:
     assert body["rationale"] == "Winner plan has plateaued; testing a darker visual direction"
 
 
-def test_plan_propose_rejects_draft_name_over_proposal_title_limit() -> None:
+def test_proposal_create_rejects_draft_name_over_proposal_title_limit() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
             "--name",
@@ -1248,12 +1247,12 @@ def test_plan_propose_rejects_draft_name_over_proposal_title_limit() -> None:
         ]
     )
 
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    arguments = agentic_campaign._build_proposal_create_arguments(args)
     with pytest.raises(ValueError, match="80 characters or fewer"):
         asyncio.run(
-            agentic_campaign._execute_plan_propose(
+            agentic_campaign._execute_proposal_create(
                 context(
-                    "agentic-campaign.plan-propose",
+                    "agentic-campaign.proposal-create",
                     arguments,
                     Capture(
                         campaign_list("33333333-3333-4333-8333-333333333333"),
@@ -1264,7 +1263,7 @@ def test_plan_propose_rejects_draft_name_over_proposal_title_limit() -> None:
         )
 
 
-def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
+def test_proposal_create_dispatches_draft_submit_with_persona_id() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     persona_id = "99999999-9999-4999-8999-999999999999"
     capture = Capture(
@@ -1274,7 +1273,8 @@ def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
     )
     argv = [
         "agentic-campaign",
-        "+plan-propose",
+        "proposal",
+        "+create",
         "--plan-id",
         plan_id,
         "--persona-id",
@@ -1292,12 +1292,12 @@ def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
         "DIY problem solver",
     ]
     args = parse(argv)
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    arguments = agentic_campaign._build_proposal_create_arguments(args)
     assert arguments["persona_id"] == persona_id
     assert "persona_payload" not in arguments
     result = asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", arguments, capture)
         )
     )
     call = capture.calls[-1]
@@ -1307,11 +1307,12 @@ def test_plan_propose_dispatches_draft_submit_with_persona_id() -> None:
     assert result["proposal_id"] == "proposal-1"
 
 
-def test_plan_propose_rejects_persona_json_and_persona_id_together() -> None:
+def test_proposal_create_rejects_persona_json_and_persona_id_together() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
             "--name",
@@ -1338,14 +1339,15 @@ def test_plan_propose_rejects_persona_json_and_persona_id_together() -> None:
         ]
     )
     with pytest.raises(ValueError, match="mutually exclusive"):
-        agentic_campaign._build_plan_propose_arguments(args)
+        agentic_campaign._build_proposal_create_arguments(args)
 
 
-def test_plan_propose_rejects_neither_persona_json_nor_persona_id() -> None:
+def test_proposal_create_rejects_neither_persona_json_nor_persona_id() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
             "--name",
@@ -1362,127 +1364,10 @@ def test_plan_propose_rejects_neither_persona_json_nor_persona_id() -> None:
         ]
     )
     with pytest.raises(ValueError, match="exactly one of"):
-        agentic_campaign._build_plan_propose_arguments(args)
+        agentic_campaign._build_proposal_create_arguments(args)
 
 
-_REVISION_ELEMENTS = [
-    {
-        "format_id": "44444444-4444-4444-8444-444444444444",
-        "topic_id": "55555555-5555-4555-8555-555555555555",
-    }
-]
-
-
-def test_plan_propose_revision_builds_arguments_with_persona_id() -> None:
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--proposal-id",
-            "77777777-7777-4777-8777-777777777777",
-            "--persona-id",
-            "99999999-9999-4999-8999-999999999999",
-            "--elements-json",
-            json.dumps(_REVISION_ELEMENTS),
-        ]
-    )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
-    assert arguments == {
-        "plan_id": "33333333-3333-4333-8333-333333333333",
-        "proposal_id": "77777777-7777-4777-8777-777777777777",
-        "elements": _REVISION_ELEMENTS,
-        "persona_id": "99999999-9999-4999-8999-999999999999",
-        "dry_run": False,
-    }
-
-
-def test_plan_propose_revision_builds_arguments_with_persona_payload() -> None:
-    persona_payload = {"name": "Mia", "description": "Practical maker", "visual_prompt": "Portrait"}
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--proposal-id",
-            "77777777-7777-4777-8777-777777777777",
-            "--persona-json",
-            json.dumps(persona_payload),
-            "--elements-json",
-            json.dumps(_REVISION_ELEMENTS),
-        ]
-    )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
-    assert arguments == {
-        "plan_id": "33333333-3333-4333-8333-333333333333",
-        "proposal_id": "77777777-7777-4777-8777-777777777777",
-        "elements": _REVISION_ELEMENTS,
-        "persona_payload": persona_payload,
-        "dry_run": False,
-    }
-
-
-def test_plan_propose_revision_builds_arguments_without_persona() -> None:
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--proposal-id",
-            "77777777-7777-4777-8777-777777777777",
-            "--elements-json",
-            json.dumps(_REVISION_ELEMENTS),
-        ]
-    )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
-    assert "persona_id" not in arguments
-    assert "persona_payload" not in arguments
-
-
-def test_plan_propose_revision_rejects_persona_payload_and_persona_id_together() -> None:
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--proposal-id",
-            "77777777-7777-4777-8777-777777777777",
-            "--persona-id",
-            "99999999-9999-4999-8999-999999999999",
-            "--persona-json",
-            json.dumps({"name": "Mia", "description": "d", "visual_prompt": "v"}),
-            "--elements-json",
-            json.dumps(_REVISION_ELEMENTS),
-        ]
-    )
-    with pytest.raises(ValueError, match="mutually exclusive"):
-        agentic_campaign._build_plan_propose_arguments(args)
-
-
-def test_plan_propose_revision_rejects_patch_persona_payload() -> None:
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--proposal-id",
-            "77777777-7777-4777-8777-777777777777",
-            "--patch-persona-payload",
-            json.dumps({"name": "New name"}),
-            "--elements-json",
-            json.dumps(_REVISION_ELEMENTS),
-        ]
-    )
-    with pytest.raises(ValueError, match="--patch-persona-payload is not valid"):
-        agentic_campaign._build_plan_propose_arguments(args)
-
-
-def test_plan_propose_dispatches_active_adjustment() -> None:
+def test_proposal_create_dispatches_active_adjustment() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     add_elements = [
         {
@@ -1507,7 +1392,8 @@ def test_plan_propose_dispatches_active_adjustment() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             plan_id,
             "--add-elements-json",
@@ -1520,11 +1406,11 @@ def test_plan_propose_dispatches_active_adjustment() -> None:
             "Expand the winner",
         ]
     )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    arguments = agentic_campaign._build_proposal_create_arguments(args)
 
     result = asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", arguments, capture)
         )
     )
 
@@ -1559,7 +1445,7 @@ def test_plan_propose_dispatches_active_adjustment() -> None:
     }
 
 
-def test_plan_propose_dispatches_persona_and_retirement_in_one_adjustment() -> None:
+def test_proposal_create_dispatches_persona_and_retirement_in_one_adjustment() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     persona_id = "99999999-9999-4999-8999-999999999999"
     retired_id = "88888888-8888-4888-8888-888888888888"
@@ -1571,10 +1457,11 @@ def test_plan_propose_dispatches_persona_and_retirement_in_one_adjustment() -> N
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             plan_id,
-            "--persona-id",
+            "--replace-persona-id",
             persona_id,
             "--retire-element-ids",
             retired_id,
@@ -1582,19 +1469,22 @@ def test_plan_propose_dispatches_persona_and_retirement_in_one_adjustment() -> N
             "Persona and retirement update",
         ]
     )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    arguments = agentic_campaign._build_proposal_create_arguments(args)
     assert arguments["changes"] == {
+        "retire_element_ids": [retired_id],
+        "persona": {"persona_id": persona_id},
+    }
+    result = asyncio.run(
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", arguments, capture)
+        )
+    )
+    assert capture.calls[-1]["json_body"]["changes"] == {
         "add_elements": [],
         "retire_element_ids": [retired_id],
         "boost_elements": [],
         "persona": {"persona_id": persona_id},
     }
-    result = asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
-        )
-    )
-    assert capture.calls[-1]["json_body"]["changes"] == arguments["changes"]
     assert result["change_summary"] == {
         "new_directions": 0,
         "directions_to_stop": 1,
@@ -1603,7 +1493,7 @@ def test_plan_propose_dispatches_persona_and_retirement_in_one_adjustment() -> N
     }
 
 
-def test_plan_propose_dispatches_patch_persona_payload() -> None:
+def test_proposal_create_dispatches_patch_persona_payload() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     patch_payload = {"description": "New description", "reference_media_ids": None}
     capture = Capture(
@@ -1614,24 +1504,25 @@ def test_plan_propose_dispatches_patch_persona_payload() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             plan_id,
-            "--patch-persona-payload",
+            "--persona-patch-json",
             json.dumps(patch_payload),
         ]
     )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    arguments = agentic_campaign._build_proposal_create_arguments(args)
     assert arguments["changes"]["patch_persona_payload"] == patch_payload
     asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", arguments, capture)
         )
     )
     assert capture.calls[-1]["json_body"]["changes"]["patch_persona_payload"] == patch_payload
 
 
-def test_plan_propose_active_adjustment_threads_title() -> None:
+def test_proposal_create_active_adjustment_threads_title() -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     add_elements = [
         {
@@ -1647,7 +1538,8 @@ def test_plan_propose_active_adjustment_threads_title() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             plan_id,
             "--add-elements-json",
@@ -1656,48 +1548,23 @@ def test_plan_propose_active_adjustment_threads_title() -> None:
             "暗黑向第二批开测",
         ]
     )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
+    arguments = agentic_campaign._build_proposal_create_arguments(args)
 
     asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", arguments, capture)
         )
     )
 
     assert capture.calls[-1]["json_body"]["title"] == "暗黑向第二批开测"
 
 
-def test_plan_propose_rejects_title_when_revising_proposal() -> None:
+def test_proposal_create_rejects_title_for_draft_plan() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--proposal-id",
-            "77777777-7777-4777-8777-777777777777",
-            "--title",
-            "not allowed here",
-            "--elements-json",
-            json.dumps(
-                [
-                    {
-                        "format_id": "44444444-4444-4444-8444-444444444444",
-                        "topic_id": "55555555-5555-4555-8555-555555555555",
-                    }
-                ]
-            ),
-        ]
-    )
-    with pytest.raises(ValueError, match="--title is not valid when revising"):
-        agentic_campaign._build_plan_propose_arguments(args)
-
-
-def test_plan_propose_rejects_title_for_draft_plan() -> None:
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
             "--title",
@@ -1705,521 +1572,30 @@ def test_plan_propose_rejects_title_for_draft_plan() -> None:
             *_complete_plan_cli_args(),
         ]
     )
-    with pytest.raises(ValueError, match="--title is only valid for an active-plan adjustment"):
-        agentic_campaign._build_plan_propose_arguments(args)
+    with pytest.raises(ValueError, match="--title is only valid for an active-plan Proposal"):
+        agentic_campaign._build_proposal_create_arguments(args)
 
 
-def test_proposal_get_returns_operator_revision_context() -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    feedback_summary = (
-        "提案修订意见（坐标以预览左上角为原点）：\n\n"
-        "整体意见：\n让视觉更明亮\n\n逐项标注：\n- 保留完整意见"
-    )
-    capture = Capture(
-        campaign_list(plan_id),
-        campaign_detail(plan_id, status="active"),
-        {
-            "id": proposal_id,
-            "proposal_number": 56,
-            "proposal_url": (
-                "https://www.museon.ai/zh/admin/orgs/museon-official/"
-                "workspaces/museon-official/proposals/56"
-            ),
-            "status": "awaiting_review",
-            "revision_round": 2,
-            "changes": {
-                "add_elements": [{"format_id": "format-1"}],
-                "retire_element_ids": ["element-old"],
-                "boost_elements": [{"element_id": "element-winner"}],
-            },
-            "elements": [
-                {
-                    "id": "internal-element-id",
-                    "format_id": "44444444-4444-4444-8444-444444444444",
-                    "topic_id": "55555555-5555-4555-8555-555555555555",
-                    "cta_target_id": "66666666-6666-4666-8666-666666666666",
-                }
-            ],
-            "feedback_summary": feedback_summary,
-        },
-        {
-            "items": [
-                {
-                    "id": "feedback-1",
-                    "round": 1,
-                    "compiled_summary": "方向A · 帖子1 · 第1页",
-                    "resolved_at": "2026-07-20T00:00:00Z",
-                },
-                {
-                    "id": "feedback-2",
-                    "round": 2,
-                    "compiled_summary": None,
-                    "resolved_at": None,
-                },
-            ]
-        },
-    )
-    result = asyncio.run(
-        agentic_campaign._execute_proposal_get(
-            context(
-                "agentic-campaign.proposal-get",
-                {"plan_id": plan_id, "proposal_id": proposal_id},
-                capture,
-            )
-        )
-    )
-
-    assert capture.calls[-2] == {
-        "method": "GET",
-        "path": (
-            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}"
-        ),
-        "json_body": None,
-        "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
-    }
-    assert capture.calls[-1] == {
-        "method": "GET",
-        "path": (
-            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}/feedback"
-        ),
-        "json_body": None,
-        "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
-    }
-    assert result == {
-        "proposal_number": 56,
-        "proposal_url": (
-            "https://www.museon.ai/zh/admin/orgs/museon-official/"
-            "workspaces/museon-official/proposals/56"
-        ),
-        "status": "awaiting_review",
-        "revision_round": 2,
-        "change_summary": {
-            "new_directions": 1,
-            "directions_to_stop": 1,
-            "winner_boosts": 1,
-        },
-        "elements": [
-            {
-                "format_id": "44444444-4444-4444-8444-444444444444",
-                "topic_id": "55555555-5555-4555-8555-555555555555",
-                "cta_target_id": "66666666-6666-4666-8666-666666666666",
-            }
-        ],
-        "feedback_summary": feedback_summary,
-        "annotations": [
-            {"round": 2, "resolved": False, "compiled_summary": "该轮无可渲染文本"},
-            {"round": 1, "resolved": True, "compiled_summary": "方向A · 帖子1 · 第1页"},
-        ],
-        "next_step": "请在 Museon 审阅台查看这一稿；运营可继续标注意见或确认。",
-    }
-    assert "internal-element-id" not in repr(result)
-    assert "feedback-1" not in repr(result)
-
-
-def test_proposal_get_annotations_placeholder_when_no_feedback() -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    capture = Capture(
-        campaign_list(plan_id),
-        campaign_detail(plan_id, status="active"),
-        {
-            "id": proposal_id,
-            "status": "awaiting_review",
-            "revision_round": 1,
-            "changes": {},
-            "elements": [],
-        },
-        {"items": []},
-    )
-    result = asyncio.run(
-        agentic_campaign._execute_proposal_get(
-            context(
-                "agentic-campaign.proposal-get",
-                {"plan_id": plan_id, "proposal_id": proposal_id},
-                capture,
-            )
-        )
-    )
-    assert result["annotations"] == "暂无标注意见"
-
-
-def test_plan_propose_submits_active_proposal_revision() -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    elements = [
-        {
-            "format_id": "44444444-4444-4444-8444-444444444444",
-            "topic_id": "55555555-5555-4555-8555-555555555555",
-            "cta_target_id": "66666666-6666-4666-8666-666666666666",
-        }
-    ]
-    capture = Capture(
-        campaign_list(plan_id),
-        campaign_detail(plan_id, status="active"),
-        {"elements": [{"id": "new-element"}], "round": 3, "dispatched_task_count": 1},
-    )
+def test_proposal_create_requires_one_complete_content_shape() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            plan_id,
-            "--proposal-id",
-            proposal_id,
-            "--elements-json",
-            json.dumps(elements),
-            "--note",
-            "Apply the compiled feedback",
-            "--rationale",
-            "Operator flagged the CTA as unclear in the last review round",
-        ]
-    )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
-    result = asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
-        )
-    )
-
-    assert capture.calls[-1] == {
-        "method": "POST",
-        "path": (
-            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:submit-revision"
-        ),
-        "json_body": {
-            "workspace_id": "11111111-1111-4111-8111-111111111111",
-            "elements": elements,
-            "note": "Apply the compiled feedback",
-            "rationale": "Operator flagged the CTA as unclear in the last review round",
-        },
-        "params": None,
-    }
-    assert result == {
-        "revision_round": 3,
-        "new_element_count": 1,
-        "preview_task_count": 1,
-        "next_step": "第 3 稿已提交；运营将在审阅台看到新一稿。",
-    }
-
-
-def test_plan_propose_submits_draft_stage_proposal_revision_with_persona_payload() -> None:
-    """Restores what --candidate-id used to do (deleted in error by museoncli v0.3.96,
-    then renamed by mistake in the same release): revise a proposal on a still-draft
-    plan with a full persona replacement inline. The backend's persona field on
-    :submit-revision is the same nested shape plan-propose already uses elsewhere --
-    exactly one of persona_id or persona_payload."""
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    persona_payload = {
-        "name": "Mia",
-        "description": "Practical maker",
-        "visual_prompt": "Warm workshop portrait",
-    }
-    capture = Capture(
-        campaign_list(plan_id),
-        campaign_detail(plan_id, status="draft"),
-        {"elements": [{"id": "new-element"}], "round": 2, "dispatched_task_count": 1},
-    )
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            plan_id,
-            "--proposal-id",
-            proposal_id,
-            "--persona-json",
-            json.dumps(persona_payload),
-            "--elements-json",
-            json.dumps(_REVISION_ELEMENTS),
-            "--note",
-            "Brighter visual direction",
-        ]
-    )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
-    result = asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
-        )
-    )
-    assert capture.calls[-1] == {
-        "method": "POST",
-        "path": (
-            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:submit-revision"
-        ),
-        "json_body": {
-            "workspace_id": "11111111-1111-4111-8111-111111111111",
-            "elements": _REVISION_ELEMENTS,
-            "note": "Brighter visual direction",
-            "rationale": None,
-            "persona": {"persona_payload": persona_payload},
-        },
-        "params": None,
-    }
-    assert result["revision_round"] == 2
-
-
-def test_plan_propose_submits_draft_stage_proposal_revision_with_persona_id() -> None:
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    persona_id = "99999999-9999-4999-8999-999999999999"
-    capture = Capture(
-        campaign_list(plan_id),
-        campaign_detail(plan_id, status="draft"),
-        {"elements": [{"id": "new-element"}], "round": 2, "dispatched_task_count": 1},
-    )
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            plan_id,
-            "--proposal-id",
-            proposal_id,
-            "--persona-id",
-            persona_id,
-            "--elements-json",
-            json.dumps(_REVISION_ELEMENTS),
-        ]
-    )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
-    result = asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
-        )
-    )
-    assert capture.calls[-1] == {
-        "method": "POST",
-        "path": (
-            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
-            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:submit-revision"
-        ),
-        "json_body": {
-            "workspace_id": "11111111-1111-4111-8111-111111111111",
-            "elements": _REVISION_ELEMENTS,
-            "note": None,
-            "rationale": None,
-            "persona": {"persona_id": persona_id},
-        },
-        "params": None,
-    }
-    assert result["revision_round"] == 2
-
-
-def test_plan_propose_submits_draft_stage_proposal_revision_without_persona() -> None:
-    """A revision with no persona flag at all must produce a body with no persona
-    field -- the omission means "keep the persona the proposal already carries", and
-    existing elements-only callers (draft or active) must be unchanged by this fix."""
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    capture = Capture(
-        campaign_list(plan_id),
-        campaign_detail(plan_id, status="draft"),
-        {"elements": [{"id": "new-element"}], "round": 2, "dispatched_task_count": 1},
-    )
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            plan_id,
-            "--proposal-id",
-            proposal_id,
-            "--elements-json",
-            json.dumps(_REVISION_ELEMENTS),
-        ]
-    )
-    arguments = agentic_campaign._build_plan_propose_arguments(args)
-    asyncio.run(
-        agentic_campaign._execute_plan_propose(
-            context("agentic-campaign.plan-propose", arguments, capture)
-        )
-    )
-    body = capture.calls[-1]["json_body"]
-    assert "persona" not in body
-    assert body["elements"] == _REVISION_ELEMENTS
-
-
-def test_execute_plan_propose_rejects_patch_persona_payload_defensively() -> None:
-    """The executor re-checks patch_persona_payload independently of the argument
-    builder, matching this codebase's existing dual-validation convention (see the
-    same pattern for name/changes above it in _execute_plan_propose): a caller that
-    builds ctx.arguments directly, bypassing the CLI's own flag parsing, must not be
-    able to sneak a patch payload past the builder's rejection and have it silently
-    sent as a full persona replacement."""
-    plan_id = "33333333-3333-4333-8333-333333333333"
-    proposal_id = "77777777-7777-4777-8777-777777777777"
-    capture = Capture(campaign_list(plan_id), campaign_detail(plan_id, status="draft"))
-    arguments = {
-        "plan_id": plan_id,
-        "proposal_id": proposal_id,
-        "elements": _REVISION_ELEMENTS,
-        "patch_persona_payload": {"name": "New name"},
-    }
-    with pytest.raises(ValueError, match="patch_persona_payload is not valid"):
-        asyncio.run(
-            agentic_campaign._execute_plan_propose(
-                context("agentic-campaign.plan-propose", arguments, capture)
-            )
-        )
-
-
-def test_plan_propose_revision_rejects_name() -> None:
-    """--name still names a *new* proposal, so it stays rejected on a revision -- unlike
-    --persona-json/--persona-id, which the backend's persona field on :submit-revision now
-    accepts (see test_plan_propose_revision_builds_arguments_with_persona_*)."""
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            "--proposal-id",
-            "77777777-7777-4777-8777-777777777777",
-            "--elements-json",
-            json.dumps(
-                [
-                    {
-                        "format_id": "44444444-4444-4444-8444-444444444444",
-                        "topic_id": "55555555-5555-4555-8555-555555555555",
-                    }
-                ]
-            ),
-            "--name",
-            "not applicable",
-        ]
-    )
-    with pytest.raises(ValueError, match="--name is not valid"):
-        agentic_campaign._build_plan_propose_arguments(args)
-
-
-@pytest.mark.parametrize(
-    ("shape", "expected_branch"),
-    [
-        pytest.param(
-            {
-                "name": "n",
-                "elements": _REVISION_ELEMENTS,
-                "persona_payload": {
-                    "name": "Mia",
-                    "description": "Practical maker",
-                    "visual_prompt": "Portrait",
-                },
-            },
-            "Create a proposal",
-            id="new-persona-payload",
-        ),
-        pytest.param(
-            {
-                "name": "n",
-                "elements": _REVISION_ELEMENTS,
-                "persona_id": "99999999-9999-4999-8999-999999999999",
-            },
-            "Create a proposal",
-            id="new-persona-id",
-        ),
-        pytest.param(
-            {
-                "proposal_id": "77777777-7777-4777-8777-777777777777",
-                "elements": _REVISION_ELEMENTS,
-                "persona_payload": {
-                    "name": "Mia",
-                    "description": "Practical maker",
-                    "visual_prompt": "Portrait",
-                },
-            },
-            "Revise an open proposal",
-            id="revise-with-persona-payload",
-        ),
-        pytest.param(
-            {
-                "proposal_id": "77777777-7777-4777-8777-777777777777",
-                "elements": _REVISION_ELEMENTS,
-                "persona_id": "99999999-9999-4999-8999-999999999999",
-            },
-            "Revise an open proposal",
-            id="revise-with-persona-id",
-        ),
-        pytest.param(
-            {"changes": {"retire_element_ids": ["88888888-8888-4888-8888-888888888888"]}},
-            "Adjust a running plan",
-            id="active-plan-adjustment",
-        ),
-        pytest.param(
-            {
-                "proposal_id": "77777777-7777-4777-8777-777777777777",
-                "elements": _REVISION_ELEMENTS,
-            },
-            "Revise an open proposal",
-            id="proposal-revision-elements-only",
-        ),
-    ],
-)
-def test_plan_propose_oneof_call_shapes_match_exactly_one_branch(
-    shape: dict[str, Any], expected_branch: str
-) -> None:
-    """Each legal CLI call shape validates and reaches exactly one action branch."""
-    spec = get_command_spec("agentic-campaign.plan-propose")
-    payload = {
-        "plan_id": "33333333-3333-4333-8333-333333333333",
-        **shape,
-    }
-    Draft202012Validator(spec.input_schema).validate(payload)
-    branches = spec.input_schema["oneOf"]
-    matches = [
-        branch["title"] for branch in branches if Draft202012Validator(branch).is_valid(payload)
-    ]
-    assert matches == [expected_branch]
-
-
-def test_plan_propose_schema_has_three_content_shapes_and_dry_run() -> None:
-    spec = get_command_spec("agentic-campaign.plan-propose")
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
-            "--plan-id",
-            "33333333-3333-4333-8333-333333333333",
-            *_complete_plan_cli_args(),
-            "--dry-run",
-        ]
-    )
-    assert len(spec.input_schema["oneOf"]) == 3
-    assert spec.supports_dry_run is True
-    changes_schema = spec.input_schema["properties"]["changes"]
-    assert "patch_persona_payload" in changes_schema["properties"]
-    with pytest.raises(Exception):
-        Draft202012Validator(changes_schema).validate({})
-    assert args.dry_run is True
-
-    proposal_get = get_command_spec("agentic-campaign.proposal-get")
-    assert proposal_get.risk_level == "read"
-    assert proposal_get.input_schema["required"] == ["plan_id", "proposal_id"]
-
-
-def test_plan_propose_requires_one_complete_content_shape() -> None:
-    args = parse(
-        [
-            "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
         ]
     )
-    with pytest.raises(ValueError, match="requires either a complete plan or an adjustment"):
-        agentic_campaign._build_plan_propose_arguments(args)
+    with pytest.raises(ValueError, match="at least one atomic change"):
+        agentic_campaign._build_proposal_create_arguments(args)
 
 
-def test_plan_propose_rejects_mixed_content() -> None:
+def test_proposal_create_rejects_mixed_content() -> None:
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             "33333333-3333-4333-8333-333333333333",
             *_complete_plan_cli_args(),
@@ -2227,12 +1603,15 @@ def test_plan_propose_rejects_mixed_content() -> None:
             "77777777-7777-4777-8777-777777777777",
         ]
     )
-    with pytest.raises(ValueError, match="一次提案只能是一种:整套方案 或 调整"):
-        agentic_campaign._build_plan_propose_arguments(args)
+    with pytest.raises(
+        ValueError,
+        match="a Proposal is either a complete draft solution or atomic active changes",
+    ):
+        agentic_campaign._build_proposal_create_arguments(args)
 
 
 @pytest.mark.parametrize("status", [None, "archived"])
-def test_plan_propose_rejects_missing_or_unknown_status(status: str | None) -> None:
+def test_proposal_create_rejects_missing_or_unknown_status(status: str | None) -> None:
     plan_id = "33333333-3333-4333-8333-333333333333"
     detail = campaign_detail(plan_id)
     plan = detail["agentic_persona_plans"][0]
@@ -2244,7 +1623,8 @@ def test_plan_propose_rejects_missing_or_unknown_status(status: str | None) -> N
     args = parse(
         [
             "agentic-campaign",
-            "+plan-propose",
+            "proposal",
+            "+create",
             "--plan-id",
             plan_id,
             *_complete_plan_cli_args(),
@@ -2252,10 +1632,10 @@ def test_plan_propose_rejects_missing_or_unknown_status(status: str | None) -> N
     )
     with pytest.raises(ValueError, match="plan status must be draft or active"):
         asyncio.run(
-            agentic_campaign._execute_plan_propose(
+            agentic_campaign._execute_proposal_create(
                 context(
-                    "agentic-campaign.plan-propose",
-                    agentic_campaign._build_plan_propose_arguments(args),
+                    "agentic-campaign.proposal-create",
+                    agentic_campaign._build_proposal_create_arguments(args),
                     capture,
                 )
             )
