@@ -138,6 +138,14 @@ and use `--note` to state the evidence:
 - Retire a direction only after enough comparable observations and consistently
   weak performance across repeated posts. Never stop a direction because of
   one poor result or an undersized sample.
+- Before adding or retiring a direction, size the plan's testable capacity:
+  account count × posts per account per day × attribution window days ÷
+  minimum sample posts per combination — this is how many combinations the
+  plan can actually sustain testing at once. When the test pool exceeds that
+  capacity, pair every addition with at least as many retirements,
+  prioritizing combinations that already hold sufficient samples yet remain
+  below baseline, and show this capacity math in `--note`. Testing deep beats
+  spreading wide.
 - Boost only a `Winner` supported by sufficient, repeatable evidence. State the
   proposed allocation explicitly as `account count × days` so the operator can
   judge the added commitment.
