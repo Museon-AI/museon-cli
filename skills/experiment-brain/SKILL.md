@@ -6,7 +6,9 @@ description: "Design and revise evidence-driven social persona experiments for M
 # Experiment Brain
 
 Use this Skill to produce experiment proposals for Agentic Campaign Persona
-Plans. Mel proposes; the operator decides and applies.
+Plans. Mel researches, then creates and submits proposals directly; the
+system Gate governs application, and the operator steps in only on
+exceptions.
 
 ## 1. Core model
 
@@ -88,9 +90,13 @@ Read holdings as the operator-facing experiment state:
 
 ## 6. Proposals — the only way you change a plan
 
-Mel always proposes; the operator reviews the visuals and confirms on the
-review page. Never select, merge, finalize, enable, boost, or stop a direction
-on the operator's behalf.
+Mel proposes and submits directly without waiting for conversational
+approval. The Gate governs application: element-level changes (add / retire /
+boost with rollout intent / account reallocation) are auto-class with a
+1-hour operator veto window — a veto returns with its reason; persona-level
+changes go to operator review; strategy-level questions reach the operator as
+`needs_human` issues. Never claim a change has taken effect before system
+confirmation.
 
 ### Action 1: create a complete proposal during preparation
 
@@ -154,9 +160,10 @@ museoncli agentic-campaign +plan-propose \
   --note "Add one distinct direction, stop the repeatedly weak direction, and boost the Winner across 3 accounts for 7 days"
 ```
 
-The command creates an `调整记录` for review; it never confirms it. Tell the
-operator what will be added, stopped, and boosted, then direct them to review
-the visuals and confirm on the page.
+The command creates an `调整记录` and submits it directly; the Gate applies it
+automatically after a 1-hour operator veto window, and a veto returns with its
+reason. Tell the operator what will be added, stopped, and boosted, and that
+they can veto within the window if something looks wrong.
 
 ### Action 3: revise an open proposal
 
@@ -183,26 +190,15 @@ asset.
 **Persona is a plan-shared asset — never edit it directly.** `asset +update`
 against a plan-held persona is rejected by the server (409) no matter who
 asks: operator-instructed rewrites, "replace with persona X" requests, and
-annotation feedback all go through the same draft flow. Whenever ANY change
-to a plan's persona identity or appearance (name, description, visual
-reference) is needed, first call `+proposal-persona-draft` to create or reuse
-this proposal's own draft persona:
-
-```bash
-museoncli agentic-campaign +proposal-persona-draft \
-  --plan-id 33333333-3333-4333-8333-333333333333 \
-  --proposal-id 77777777-7777-4777-8777-777777777777
-```
-
-When the operator names an existing persona to source from (for example
-"replace with persona X"), pass `--from-persona-id <id>` to seed the draft
-directly instead of hand-copying fields: it copies the source persona's
-description and look references into the draft — a copy, not a live link —
-and re-running with this flag overwrites the draft's current content.
-
-Edit only the returned draft persona, then regenerate this proposal's
-previews. It is idempotent across a proposal: calling it again returns the
-same draft instead of creating a duplicate.
+annotation feedback all go through the same proposal-revision flow. Whenever
+ANY change to a plan's persona identity or appearance (name, description,
+visual reference) is needed, include `--persona-json` or `--persona-id` on
+the same `+plan-propose --proposal-id` revision call used for the element
+list (see the command below) — never a separate persona-only step. When the
+operator names an existing persona to source from (for example "replace with
+persona X"), pass `--persona-id <id>` instead of hand-copying fields: the
+server snapshots that persona's name, description, and look-reference media
+at submission time — a copy, not a live link.
 
 **Verify before retiring or shrinking a direction.** Before proposing to
 retire or reduce an element, confirm its current state and performance with a
