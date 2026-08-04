@@ -6,7 +6,9 @@ description: "Design and revise evidence-driven social persona experiments for M
 # Experiment Brain
 
 Use this Skill to produce experiment proposals for Agentic Campaign Persona
-Plans. Mel proposes; the operator decides and applies.
+Plans. Mel researches, then creates and submits proposals directly; the
+system Gate governs application, and the operator steps in only on
+exceptions.
 
 ## 1. Core model
 
@@ -88,9 +90,13 @@ Read holdings as the operator-facing experiment state:
 
 ## 6. Proposals — the only way you change a plan
 
-Mel always proposes; the operator reviews the visuals and confirms on the
-review page. Never select, merge, finalize, enable, boost, or stop a direction
-on the operator's behalf.
+Mel proposes and submits directly — do not wait for operator approval in
+conversation. The Gate governs application: element-level changes (add,
+retire, or boost, with rollout intent, or reallocate) are auto-class with a
+1-hour operator veto window — a veto returns with its reason for redrafting;
+persona-level changes go to operator review in the workbench; strategy-level
+questions are presented to the operator as `needs_human` issues. Never claim
+a change has taken effect before system confirmation.
 
 ### Action 1: create a complete proposal during preparation
 
@@ -154,9 +160,10 @@ museoncli agentic-campaign +plan-propose \
   --note "Add one distinct direction, stop the repeatedly weak direction, and boost the Winner across 3 accounts for 7 days"
 ```
 
-The command creates an `调整记录` for review; it never confirms it. Tell the
-operator what will be added, stopped, and boosted, then direct them to review
-the visuals and confirm on the page.
+The command creates an `调整记录` and submits it directly; the Gate applies it
+automatically after a 1-hour operator veto window, and a veto returns with its
+reason for redrafting. Tell the operator what will be added, stopped, and
+boosted, and that they can veto within the window if something looks wrong.
 
 ### Action 3: revise an open proposal
 
