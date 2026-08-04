@@ -6056,7 +6056,7 @@
       "product"
     ]
   },
-  "contract_revision": "0.5.3",
+  "contract_revision": "0.5.4",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -13332,7 +13332,8 @@
       "capability_key": "agentic-campaign.recap",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign +recap --id 22222222-2222-4222-8222-222222222222"
+        "museoncli agentic-campaign +recap --id 22222222-2222-4222-8222-222222222222",
+        "museoncli agentic-campaign +recap --id 22222222-2222-4222-8222-222222222222 --cells"
       ],
       "execution": "direct",
       "input_schema": {
@@ -13344,6 +13345,11 @@
             ],
             "format": "uuid",
             "type": "string"
+          },
+          "include_cells": {
+            "default": false,
+            "description": "Include testing ledger details.",
+            "type": "boolean"
           }
         },
         "required": [
