@@ -4,6 +4,12 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+- Added an explicit credential-provider resolver for Agents-hosted capability
+  leases and ordinary user API keys.
+- Fixed stale persisted bootstrap credentials shadowing fresh per-turn agent
+  capabilities and incorrectly triggering browser reauthorization.
+- Agent-managed authentication now fails closed without API-key fallback and
+  reports its provider, expiry, and lease version through `auth status`.
 - Added `agentic-campaign proposal +reallocate` to move managed accounts into a
   Plan from another Plan in the same Campaign or from the recruitable pool, as a
   reviewable allocation Proposal.

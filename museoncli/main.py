@@ -322,8 +322,11 @@ def cli_version_tuple(value: str) -> tuple[int, ...] | None:
 
 
 async def dispatch_config(args: argparse.Namespace) -> dict[str, Any]:
+    cfg = load_config()
     if args.config_command == "get":
-        return {"data": load_config().safe_dict()}
+        return {"data": cfg.safe_dict()}
+    if cfg.auth.is_host_managed():
+        raise RuntimeError("managed_auth")
     cfg = update_config(
         api_base_url=args.api_base_url,
         site_url=args.site_url,
@@ -332,6 +335,8 @@ async def dispatch_config(args: argparse.Namespace) -> dict[str, Any]:
 
 
 async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]:
+    if args.auth_command != "status" and cfg.auth.is_host_managed():
+        raise RuntimeError("managed_auth")
     if args.auth_command == "logout":
         delete_auth_credentials()
         cfg.auth = AuthState()
@@ -343,23 +348,32 @@ async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]
         clear_expired_pending_web_approval(cfg)
         auth_expired = cfg.auth.is_expired()
         authenticated = bool(auth_headers(cfg))
+        status = {
+            "authenticated": authenticated,
+            "status": (
+                "expired"
+                if auth_expired
+                else "authenticated"
+                if authenticated
+                else "unauthenticated"
+            ),
+            "reason": cfg.auth.resolution_error or (
+                "credential_expired" if auth_expired else None
+            ),
+            "auth_method": auth_method(cfg),
+            "expires_at": cfg.auth.expires_at,
+            "user": safe_user(cfg.auth.user),
+            "workspace": cfg.workspace.__dict__,
+            "pending_web_approval": pending_web_approval_status(cfg),
+        }
+        if cfg.auth.provider is not None:
+            status["credential_provider"] = cfg.auth.provider
+        if cfg.auth.managed_by is not None:
+            status["managed_by"] = cfg.auth.managed_by
+        if cfg.auth.version is not None:
+            status["version"] = cfg.auth.version
         return {
-            "data": {
-                "authenticated": authenticated,
-                "status": (
-                    "expired"
-                    if auth_expired
-                    else "authenticated"
-                    if authenticated
-                    else "unauthenticated"
-                ),
-                "reason": "credential_expired" if auth_expired else None,
-                "auth_method": auth_method(cfg),
-                "expires_at": cfg.auth.expires_at,
-                "user": safe_user(cfg.auth.user),
-                "workspace": cfg.workspace.__dict__,
-                "pending_web_approval": pending_web_approval_status(cfg),
-            }
+            "data": status
         }
     if args.auth_command == "start":
         data = await start_web_approval_login(config=cfg)
@@ -753,6 +767,8 @@ def safe_user(user: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def auth_method(cfg: Config) -> str:
+    if cfg.auth.method:
+        return cfg.auth.method
     if cfg.auth.api_key:
         return "api_key"
     return "none"
@@ -791,6 +807,7 @@ def reason_from_exception(exc: Exception) -> str:
         "missing_workspace",
         "confirmation_required",
         "cli_outdated",
+        "managed_auth",
     }:
         return text
     if text.startswith("cli_outdated"):

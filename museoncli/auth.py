@@ -21,6 +21,7 @@ async def run_web_approval_login(
     open_browser: bool = True,
     poll_interval_seconds: float = 2.0,
 ) -> dict[str, Any]:
+    _require_user_managed_auth(config)
     start = await begin_web_approval(config=config)
     verification_url = _verification_url(start)
     print(f"Open this URL to authorize Museon CLI:\n{verification_url}", file=stderr, flush=True)
@@ -41,6 +42,7 @@ async def run_web_approval_login(
 
 
 async def start_web_approval_login(*, config: Config) -> dict[str, Any]:
+    _require_user_managed_auth(config)
     start = await begin_web_approval(config=config)
     expires_in = int(start.get("expires_in") or 0)
     expires_at = int(time.time()) + expires_in if expires_in else None
@@ -72,6 +74,7 @@ async def finish_pending_web_approval_login(
     timeout_seconds: int = 300,
     poll_interval_seconds: float = 2.0,
 ) -> dict[str, Any]:
+    _require_user_managed_auth(config)
     pending = config.pending_auth
     device_code = pending.device_code
     if not device_code:
@@ -241,6 +244,11 @@ def auth_headers(config: Config) -> dict[str, str]:
     headers["X-CLI-Version"] = __version__
     headers.update(_usage_context_headers(config))
     return headers
+
+
+def _require_user_managed_auth(config: Config) -> None:
+    if config.auth.is_host_managed():
+        raise RuntimeError("managed_auth")
 
 
 def _usage_context_headers(config: Config) -> dict[str, str]:

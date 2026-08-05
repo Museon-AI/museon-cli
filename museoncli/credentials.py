@@ -25,19 +25,26 @@ MANAGED_SECRET_FIELDS = SECRET_FIELDS + LEGACY_SECRET_FIELDS
 
 
 def load_credentials(config_file: Path) -> dict[str, str]:
+    credentials, _backend = load_credentials_with_backend(config_file)
+    return credentials
+
+
+def load_credentials_with_backend(config_file: Path) -> tuple[dict[str, str], str]:
     credentials = _load_file_credentials(config_file)
+    backend = "protected_file" if credentials else "unavailable"
     if _file_has_legacy_credentials(config_file):
         _save_file_credentials(config_file, credentials)
     if _force_file_backend():
-        return credentials
+        return credentials, "protected_file"
     try:
         for field in SECRET_FIELDS:
             value = keyring.get_password(SERVICE_NAME, _account(config_file, field))
             if value:
                 credentials[field] = value
+                backend = "system_keyring"
     except KeyringError:
-        return credentials
-    return credentials
+        return credentials, backend
+    return credentials, backend
 
 
 def save_credentials(config_file: Path, values: Mapping[str, str | None]) -> str:

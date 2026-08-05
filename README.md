@@ -103,7 +103,10 @@ command set. Use the live schema rather than copying flags from an old transcrip
 - The Agent must explain the intended change before a sensitive operation.
 - Credentials stay in the Agent's local environment. Museon CLI uses the
   operating-system credential store when available and a mode-0600 file only
-  in headless environments; authorization decisions remain on Museon's servers.
+  in headless environments; an Agents-hosted session instead uses an exclusive,
+  short-lived private lease that cannot fall back to a user API key. Authorization
+  decisions remain on Museon's servers. See
+  [Authentication credential providers](docs/auth-credential-providers.md).
 
 ## Install without an Agent
 
@@ -111,7 +114,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.6/museoncli-0.5.6-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.7/museoncli-0.5.7-py3-none-any.whl"
 ```
 
 Then continue with setup and browser authorization:
