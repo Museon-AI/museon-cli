@@ -2060,12 +2060,13 @@ def test_learning_add_posts_rule_entry_to_learning_entries() -> None:
             "method": "POST",
             "path": f"/agentic-creative-campaigns/{campaign_id}/learning-entries",
             "json_body": {
-                "workspace_id": "11111111-1111-4111-8111-111111111111",
                 "claim": "Warm workshop portraits outperform studio shots",
                 "confidence": "medium",
                 "evidence": {"proposal_ids": ["77777777-7777-4777-8777-777777777777"]},
             },
-            "params": None,
+            "params": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+            },
         }
     ]
     assert result["id"] == "entry-1"
@@ -2123,12 +2124,13 @@ def test_issue_open_posts_manual_issue_with_optional_scope() -> None:
             "method": "POST",
             "path": f"/agentic-creative-campaigns/{campaign_id}/issues",
             "json_body": {
-                "workspace_id": "11111111-1111-4111-8111-111111111111",
                 "kind": "reset",
                 "note": "Persona drift observed across all plans",
                 "scope": {"plan_ids": [plan_id]},
             },
-            "params": None,
+            "params": {
+                "workspace_id": "11111111-1111-4111-8111-111111111111",
+            },
         }
     ]
     assert result["id"] == "issue-1"

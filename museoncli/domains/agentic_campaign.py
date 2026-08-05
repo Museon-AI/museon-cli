@@ -2956,9 +2956,9 @@ async def _execute_learning_add(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         f"/agentic-creative-campaigns/{campaign_id}/learning-entries",
+        params={"workspace_id": ctx.workspace_id},
         json_body=compact_params(
             {
-                "workspace_id": ctx.workspace_id,
                 "claim": ctx.arguments.get("claim"),
                 "scope": ctx.arguments.get("scope"),
                 "confidence": ctx.arguments.get("confidence"),
@@ -2974,9 +2974,9 @@ async def _execute_issue_open(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         f"/agentic-creative-campaigns/{campaign_id}/issues",
+        params={"workspace_id": ctx.workspace_id},
         json_body=compact_params(
             {
-                "workspace_id": ctx.workspace_id,
                 "kind": ctx.arguments.get("kind"),
                 "note": ctx.arguments.get("note"),
                 "scope": ctx.arguments.get("scope"),
