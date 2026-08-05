@@ -627,7 +627,7 @@
           "risk_level": "write",
           "shortcut": "+create",
           "stability": "stable",
-          "summary": "Create one operator-review Proposal. Draft Plans require a complete Persona and element selection; active Plans accept named atomic changes.",
+          "summary": "Create one operator-review Proposal. Draft Plans require a complete Persona and element selection; active Plans accept content changes, account reallocation, or one mixed content-and-reallocation payload. Reallocation cannot be combined with a persona change.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -677,7 +677,7 @@
           "risk_level": "write",
           "shortcut": "+reallocate",
           "stability": "stable",
-          "summary": "Create an allocation Proposal that moves managed accounts into this Plan, either from another Plan in the same Campaign or from the recruitable account pool. The server validates eligibility (pool sourcing requires policy.auto_recruit, the target Plan must be active, and this cannot be mixed with content changes) and returns a normal awaiting-review Proposal.",
+          "summary": "Create an allocation Proposal that moves managed accounts into this Plan, either from another Plan in the same Campaign or from the recruitable account pool. The server validates eligibility (pool sourcing requires policy.auto_recruit and the target Plan must be active) and returns a normal awaiting-review Proposal. This compatibility command submits pure reallocation; use proposal +create or +revise to mix it with content changes.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -702,7 +702,7 @@
           "risk_level": "write",
           "shortcut": "+revise",
           "stability": "stable",
-          "summary": "Revise an open Proposal after operator feedback. Each supplied atomic field replaces that field's current proposed value; omit fields to preserve them.",
+          "summary": "Revise an open Proposal after operator feedback. Each supplied atomic field replaces that field's current proposed value; omit fields to preserve them. Content changes and account reallocation may be supplied together, but reallocation cannot be combined with a persona change.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -12088,7 +12088,7 @@
       "domain": "agentic-campaign",
       "examples": [
         "museoncli agentic-campaign proposal +create --plan-id 33333333-3333-4333-8333-333333333333 --name 'DIY problem solver' --persona-id 99999999-9999-4999-8999-999999999999 --elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
-        "museoncli agentic-campaign proposal +create --plan-id 33333333-3333-4333-8333-333333333333 --title 'Dark-tone second test batch' --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'"
+        "museoncli agentic-campaign proposal +create --plan-id 33333333-3333-4333-8333-333333333333 --title 'Dark-tone second test batch' --add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\",\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' --reallocate-accounts-json '{\"count\":2,\"from\":{\"pool\":true}}'"
       ],
       "execution": "direct",
       "input_schema": {
@@ -12170,6 +12170,24 @@
         "properties": {
           "changes": {
             "additionalProperties": false,
+            "allOf": [
+              {
+                "not": {
+                  "required": [
+                    "reallocate_accounts",
+                    "persona"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "reallocate_accounts",
+                    "patch_persona_payload"
+                  ]
+                }
+              }
+            ],
             "minProperties": 1,
             "properties": {
               "add_elements": {
@@ -12249,6 +12267,51 @@
                 "type": "object"
               },
               "persona": {
+                "type": "object"
+              },
+              "reallocate_accounts": {
+                "additionalProperties": false,
+                "description": "Move accounts into this Plan from exactly one source. May be combined with add_elements, retire_element_ids, and boost_elements, but not persona changes.",
+                "properties": {
+                  "count": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "from": {
+                    "additionalProperties": false,
+                    "description": "Exactly one of plan_id or pool=true.",
+                    "oneOf": [
+                      {
+                        "required": [
+                          "plan_id"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "pool"
+                        ]
+                      }
+                    ],
+                    "properties": {
+                      "plan_id": {
+                        "description": "Source Persona Plan id in the same Campaign",
+                        "examples": [
+                          "33333333-3333-4333-8333-333333333333"
+                        ],
+                        "format": "uuid",
+                        "type": "string"
+                      },
+                      "pool": {
+                        "const": true
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "count",
+                  "from"
+                ],
                 "type": "object"
               },
               "retire_element_ids": {
@@ -12519,7 +12582,7 @@
       "risk_level": "write",
       "shortcut": "+create",
       "stability": "stable",
-      "summary": "Create one operator-review Proposal. Draft Plans require a complete Persona and element selection; active Plans accept named atomic changes.",
+      "summary": "Create one operator-review Proposal. Draft Plans require a complete Persona and element selection; active Plans accept content changes, account reallocation, or one mixed content-and-reallocation payload. Reallocation cannot be combined with a persona change.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -12822,6 +12885,7 @@
             "properties": {
               "reallocate_accounts": {
                 "additionalProperties": false,
+                "description": "Move accounts into this Plan from exactly one source. May be combined with add_elements, retire_element_ids, and boost_elements, but not persona changes.",
                 "properties": {
                   "count": {
                     "minimum": 1,
@@ -12829,7 +12893,19 @@
                   },
                   "from": {
                     "additionalProperties": false,
-                    "description": "Exactly one of plan_id or pool.",
+                    "description": "Exactly one of plan_id or pool=true.",
+                    "oneOf": [
+                      {
+                        "required": [
+                          "plan_id"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "pool"
+                        ]
+                      }
+                    ],
                     "properties": {
                       "plan_id": {
                         "description": "Source Persona Plan id in the same Campaign",
@@ -12943,7 +13019,7 @@
       "risk_level": "write",
       "shortcut": "+reallocate",
       "stability": "stable",
-      "summary": "Create an allocation Proposal that moves managed accounts into this Plan, either from another Plan in the same Campaign or from the recruitable account pool. The server validates eligibility (pool sourcing requires policy.auto_recruit, the target Plan must be active, and this cannot be mixed with content changes) and returns a normal awaiting-review Proposal.",
+      "summary": "Create an allocation Proposal that moves managed accounts into this Plan, either from another Plan in the same Campaign or from the recruitable account pool. The server validates eligibility (pool sourcing requires policy.auto_recruit and the target Plan must be active) and returns a normal awaiting-review Proposal. This compatibility command submits pure reallocation; use proposal +create or +revise to mix it with content changes.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -12963,13 +13039,31 @@
       "capability_key": "agentic-campaign.proposal-revise",
       "domain": "agentic-campaign",
       "examples": [
-        "museoncli agentic-campaign proposal +revise --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --retire-element-ids '[\"88888888-8888-4888-8888-888888888888\"]' --boost-elements-json '[{\"element_id\":\"99999999-9999-4999-8999-999999999999\",\"account_count\":2,\"days\":7}]'"
+        "museoncli agentic-campaign proposal +revise --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --retire-element-ids '[\"88888888-8888-4888-8888-888888888888\"]' --boost-elements-json '[{\"element_id\":\"99999999-9999-4999-8999-999999999999\",\"account_count\":2,\"days\":7}]' --reallocate-accounts-json '{\"count\":2,\"from\":{\"plan_id\":\"44444444-4444-4444-8444-444444444444\"}}'"
       ],
       "execution": "direct",
       "input_schema": {
         "properties": {
           "changes": {
             "additionalProperties": false,
+            "allOf": [
+              {
+                "not": {
+                  "required": [
+                    "reallocate_accounts",
+                    "persona"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "required": [
+                    "reallocate_accounts",
+                    "patch_persona_payload"
+                  ]
+                }
+              }
+            ],
             "minProperties": 1,
             "properties": {
               "add_elements": {
@@ -13049,6 +13143,51 @@
                 "type": "object"
               },
               "persona": {
+                "type": "object"
+              },
+              "reallocate_accounts": {
+                "additionalProperties": false,
+                "description": "Move accounts into this Plan from exactly one source. May be combined with add_elements, retire_element_ids, and boost_elements, but not persona changes.",
+                "properties": {
+                  "count": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "from": {
+                    "additionalProperties": false,
+                    "description": "Exactly one of plan_id or pool=true.",
+                    "oneOf": [
+                      {
+                        "required": [
+                          "plan_id"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "pool"
+                        ]
+                      }
+                    ],
+                    "properties": {
+                      "plan_id": {
+                        "description": "Source Persona Plan id in the same Campaign",
+                        "examples": [
+                          "33333333-3333-4333-8333-333333333333"
+                        ],
+                        "format": "uuid",
+                        "type": "string"
+                      },
+                      "pool": {
+                        "const": true
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "count",
+                  "from"
+                ],
                 "type": "object"
               },
               "retire_element_ids": {
@@ -13201,7 +13340,7 @@
       "risk_level": "write",
       "shortcut": "+revise",
       "stability": "stable",
-      "summary": "Revise an open Proposal after operator feedback. Each supplied atomic field replaces that field's current proposed value; omit fields to preserve them.",
+      "summary": "Revise an open Proposal after operator feedback. Each supplied atomic field replaces that field's current proposed value; omit fields to preserve them. Content changes and account reallocation may be supplied together, but reallocation cannot be combined with a persona change.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
