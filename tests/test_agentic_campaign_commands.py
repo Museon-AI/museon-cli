@@ -681,7 +681,7 @@ def test_overview_renders_matrix_summary(matrix_summary: dict[str, Any]) -> None
         }
     ]
     assert result == {
-        "items": [{"id": "campaign-1", "台账": "在测组合 8 · 容量 6 · 超载 1.33×"}],
+        "items": [{"id": "campaign-1", "台账": "在测组合 8 · 产能 6 · 透支 1.33×"}],
         "meta": {"page": 1, "page_size": 20, "total": 1},
     }
 
@@ -733,7 +733,7 @@ def test_recap_renders_matrix_summary(matrix_summary: dict[str, Any]) -> None:
     assert result == {
         "campaign": {"id": campaign_id},
         "decision_history": [],
-        "测试台账": "在测组合 8 · 容量 6 · 超载 1.33× · 零样本 2 · 赢家 3",
+        "测试台账": "在测组合 8 · 产能 6 · 透支 1.33× · 零样本 2 · 赢家 3",
     }
 
 
@@ -794,9 +794,11 @@ def test_recap_cells_requests_and_renders_combination_details(
         "workspace_id": "11111111-1111-4111-8111-111111111111",
         "include_cells": True,
     }
-    assert result["测试台账"] == "在测组合 8 · 容量 6 · 零样本 2 · 赢家 3"
+    assert result["测试台账"] == "在测组合 8 · 产能 6 · 零样本 2 · 赢家 3"
     assert result["组合明细"] == [
         {
+            "element_id": "element-1",
+            "plan_id": "plan-1",
             "plan": "实用派",
             "状态": "在测",
             "format": "步骤拆解",

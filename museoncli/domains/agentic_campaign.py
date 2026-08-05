@@ -2710,11 +2710,11 @@ def _ledger_summary(summary: Any, *, compact: bool = False) -> str | None:
         return None
     parts = [
         f"在测组合 {summary.get('testing_cells', 0)}",
-        f"容量 {summary.get('capacity_cells', 0)}",
+        f"产能 {summary.get('capacity_cells', 0)}",
     ]
     overload_ratio = summary.get("overload_ratio")
     if overload_ratio is not None:
-        parts.append(f"超载 {overload_ratio:g}×")
+        parts.append(f"透支 {overload_ratio:g}×")
     if not compact:
         parts.extend(
             [
@@ -2753,6 +2753,8 @@ def _ledger_detail(cells: Any) -> list[dict[str, Any]]:
         return []
     return [
         {
+            "element_id": cell.get("element_id") or "—",
+            "plan_id": cell.get("plan_id") or "—",
             "plan": cell.get("plan_name") or cell.get("plan_id") or "—",
             "状态": _LEDGER_STATUS.get(cell.get("element_status"), "—"),
             "format": cell.get("format_name") or cell.get("format_id") or "—",
