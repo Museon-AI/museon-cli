@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from museoncli.domains._model import CommandSpec, Domain
@@ -103,6 +104,14 @@ def _add_proposal_create_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--add-elements-json")
     parser.add_argument("--retire-element-ids")
     parser.add_argument("--boost-elements-json")
+    parser.add_argument(
+        "--reallocate-accounts-json",
+        help=(
+            "Account reallocation to include with content changes, as JSON: "
+            "{\"count\":2,\"from\":{\"plan_id\":\"...\"}} or "
+            "{\"count\":2,\"from\":{\"pool\":true}}. Cannot be mixed with persona changes."
+        ),
+    )
     parser.add_argument("--replace-persona-json")
     parser.add_argument("--replace-persona-id")
     parser.add_argument("--persona-patch-json")
@@ -124,6 +133,14 @@ def _add_proposal_revise_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--add-elements-json")
     parser.add_argument("--retire-element-ids")
     parser.add_argument("--boost-elements-json")
+    parser.add_argument(
+        "--reallocate-accounts-json",
+        help=(
+            "Account reallocation to include with content changes, as JSON: "
+            "{\"count\":2,\"from\":{\"plan_id\":\"...\"}} or "
+            "{\"count\":2,\"from\":{\"pool\":true}}. Cannot be mixed with persona changes."
+        ),
+    )
     parser.add_argument("--replace-persona-json")
     parser.add_argument("--replace-persona-id")
     parser.add_argument("--persona-patch-json")
@@ -303,6 +320,55 @@ def _retire_element_ids(value: str | None) -> list[str] | None:
     return _csv(value)
 
 
+def _reallocate_accounts(value: str | None) -> dict[str, Any] | None:
+    if value is None:
+        return None
+    parsed = _candidate_json(value, field="reallocate-accounts", expected_type=dict)
+    return _normalize_reallocate_accounts(parsed)
+
+
+def _normalize_reallocate_accounts(parsed: Any) -> dict[str, Any]:
+    if not isinstance(parsed, dict):
+        raise ValueError("reallocate-accounts must be a JSON object")
+    if set(parsed) != {"count", "from"}:
+        raise ValueError("reallocate-accounts must contain exactly count and from")
+    count = parsed["count"]
+    if type(count) is not int or count < 1:
+        raise ValueError("reallocate-accounts count must be a positive integer")
+    source = parsed["from"]
+    if not isinstance(source, dict):
+        raise ValueError("reallocate-accounts from must be a JSON object")
+    if set(source) == {"plan_id"}:
+        plan_id = source["plan_id"]
+        if not isinstance(plan_id, str) or not plan_id.strip():
+            raise ValueError("reallocate-accounts from.plan_id must be a nonblank string")
+        plan_id = plan_id.strip()
+        try:
+            UUID(plan_id)
+        except ValueError:
+            raise ValueError(
+                "reallocate-accounts from.plan_id must be a UUID"
+            ) from None
+        normalized_source: dict[str, Any] = {"plan_id": plan_id}
+    elif set(source) == {"pool"} and source["pool"] is True:
+        normalized_source = {"pool": True}
+    else:
+        raise ValueError(
+            "reallocate-accounts from must contain exactly a nonblank plan_id or pool=true"
+        )
+    return {"count": count, "from": normalized_source}
+
+
+def _reject_persona_reallocation(changes: dict[str, Any]) -> None:
+    if changes.get("reallocate_accounts") is not None and (
+        changes.get("persona") is not None
+        or changes.get("patch_persona_payload") is not None
+    ):
+        raise ValueError(
+            "account reallocation can be mixed with content changes, but not persona changes"
+        )
+
+
 def _proposal_persona_operation(args: argparse.Namespace) -> dict[str, Any]:
     sources = [
         ("replace-persona-id", args.replace_persona_id),
@@ -334,6 +400,7 @@ def _proposal_persona_operation(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _build_proposal_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    reallocate_accounts_json = getattr(args, "reallocate_accounts_json", None)
     complete_persona_sources = [
         value for value in (args.persona_id, args.persona_json) if value is not None
     ]
@@ -347,6 +414,7 @@ def _build_proposal_create_arguments(args: argparse.Namespace) -> dict[str, Any]
             args.add_elements_json,
             args.retire_element_ids,
             args.boost_elements_json,
+            reallocate_accounts_json,
         )
     ) or bool(persona_operation)
     if complete_supplied and atomic_supplied:
@@ -389,9 +457,11 @@ def _build_proposal_create_arguments(args: argparse.Namespace) -> dict[str, Any]
                 if args.boost_elements_json is not None
                 else None
             ),
+            "reallocate_accounts": _reallocate_accounts(reallocate_accounts_json),
             **persona_operation,
         }
     )
+    _reject_persona_reallocation(changes)
     return compact_params(
         {
             "plan_id": args.plan_id,
@@ -406,6 +476,7 @@ def _build_proposal_create_arguments(args: argparse.Namespace) -> dict[str, Any]
 
 
 def _build_proposal_revise_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    reallocate_accounts_json = getattr(args, "reallocate_accounts_json", None)
     if args.elements_json is not None and args.add_elements_json is not None:
         raise ValueError("--elements-json and --add-elements-json are mutually exclusive.")
     persona_operation = _proposal_persona_operation(args)
@@ -425,9 +496,11 @@ def _build_proposal_revise_arguments(args: argparse.Namespace) -> dict[str, Any]
                 if args.boost_elements_json is not None
                 else None
             ),
+            "reallocate_accounts": _reallocate_accounts(reallocate_accounts_json),
             **persona_operation,
         }
     )
+    _reject_persona_reallocation(changes)
     if not changes:
         raise ValueError("a Proposal revision requires at least one named change")
     return {
@@ -495,6 +568,7 @@ def _revision_changes(
     add_elements: Any,
     retire_element_ids: Any,
     boost_elements: Any,
+    reallocate_accounts: dict[str, Any] | None = None,
     persona: dict[str, Any] | None = None,
     patch_persona_payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
@@ -507,11 +581,16 @@ def _revision_changes(
         changes["persona"] = persona
     if patch_persona_payload is not None:
         changes["patch_persona_payload"] = patch_persona_payload
+    if reallocate_accounts is not None:
+        changes["reallocate_accounts"] = _normalize_reallocate_accounts(
+            reallocate_accounts
+        )
+    _reject_persona_reallocation(changes)
     if not any(changes.values()):
         raise ValueError(
             "an active-plan Proposal adjustment requires at least one of "
             "persona, patch_persona_payload, add_elements, retire_element_ids, "
-            "or boost_elements."
+            "boost_elements, or reallocate_accounts."
         )
     return changes
 
@@ -952,6 +1031,36 @@ def _revision_add_elements_schema() -> dict[str, Any]:
     return schema
 
 
+def _reallocate_accounts_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "description": (
+            "Move accounts into this Plan from exactly one source. May be combined with "
+            "add_elements, retire_element_ids, and boost_elements, but not persona changes."
+        ),
+        "additionalProperties": False,
+        "properties": {
+            "count": {"type": "integer", "minimum": 1},
+            "from": {
+                "type": "object",
+                "description": "Exactly one of plan_id or pool=true.",
+                "additionalProperties": False,
+                "properties": {
+                    "plan_id": _uuid_property(
+                        "Source Persona Plan id in the same Campaign"
+                    ),
+                    "pool": {"const": True},
+                },
+                "oneOf": [
+                    {"required": ["plan_id"]},
+                    {"required": ["pool"]},
+                ],
+            },
+        },
+        "required": ["count", "from"],
+    }
+
+
 def _proposal_create_input_schema() -> dict[str, Any]:
     schema = _plan_schema(
         {
@@ -971,9 +1080,21 @@ def _proposal_create_input_schema() -> dict[str, Any]:
                         "items": _uuid_property("Active Plan element id"),
                     },
                     "boost_elements": _revision_boosts_schema(),
+                    "reallocate_accounts": _reallocate_accounts_schema(),
                     "persona": {"type": "object"},
                     "patch_persona_payload": {"type": "object"},
                 },
+                "allOf": [
+                    {"not": {"required": ["reallocate_accounts", "persona"]}},
+                    {
+                        "not": {
+                            "required": [
+                                "reallocate_accounts",
+                                "patch_persona_payload",
+                            ]
+                        }
+                    },
+                ],
             },
             "note": {"type": ["string", "null"], "maxLength": 2000},
             "rationale": {"type": ["string", "null"]},
@@ -1245,7 +1366,9 @@ def specs() -> list[CommandSpec]:
             resource="proposal",
             summary=(
                 "Create one operator-review Proposal. Draft Plans require a complete Persona "
-                "and element selection; active Plans accept named atomic changes."
+                "and element selection; active Plans accept content changes, account "
+                "reallocation, or one mixed content-and-reallocation payload. Reallocation "
+                "cannot be combined with a persona change."
             ),
             risk_level="write",
             execution="direct",
@@ -1264,7 +1387,9 @@ def specs() -> list[CommandSpec]:
                 "--plan-id 33333333-3333-4333-8333-333333333333 "
                 "--title 'Dark-tone second test batch' "
                 "--add-elements-json '[{\"format_id\":\"44444444-4444-4444-8444-444444444444\","
-                "\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]'",
+                "\"topic_id\":\"55555555-5555-4555-8555-555555555555\"}]' "
+                "--reallocate-accounts-json "
+                "'{\"count\":2,\"from\":{\"pool\":true}}'",
             ],
             add_arguments=_add_proposal_create_arguments,
             build_arguments=_build_proposal_create_arguments,
@@ -1303,8 +1428,9 @@ def specs() -> list[CommandSpec]:
                 "Create an allocation Proposal that moves managed accounts into this Plan, "
                 "either from another Plan in the same Campaign or from the recruitable "
                 "account pool. The server validates eligibility (pool sourcing requires "
-                "policy.auto_recruit, the target Plan must be active, and this cannot be "
-                "mixed with content changes) and returns a normal awaiting-review Proposal."
+                "policy.auto_recruit and the target Plan must be active) and returns a normal "
+                "awaiting-review Proposal. This compatibility command submits pure "
+                "reallocation; use proposal +create or +revise to mix it with content changes."
             ),
             risk_level="write",
             execution="direct",
@@ -1317,25 +1443,7 @@ def specs() -> list[CommandSpec]:
                         "type": "object",
                         "additionalProperties": False,
                         "properties": {
-                            "reallocate_accounts": {
-                                "type": "object",
-                                "additionalProperties": False,
-                                "properties": {
-                                    "count": {"type": "integer", "minimum": 1},
-                                    "from": {
-                                        "type": "object",
-                                        "description": "Exactly one of plan_id or pool.",
-                                        "additionalProperties": False,
-                                        "properties": {
-                                            "plan_id": _uuid_property(
-                                                "Source Persona Plan id in the same Campaign"
-                                            ),
-                                            "pool": {"const": True},
-                                        },
-                                    },
-                                },
-                                "required": ["count", "from"],
-                            },
+                            "reallocate_accounts": _reallocate_accounts_schema(),
                         },
                         "required": ["reallocate_accounts"],
                     },
@@ -1367,7 +1475,9 @@ def specs() -> list[CommandSpec]:
             resource="proposal",
             summary=(
                 "Revise an open Proposal after operator feedback. Each supplied atomic field "
-                "replaces that field's current proposed value; omit fields to preserve them."
+                "replaces that field's current proposed value; omit fields to preserve them. "
+                "Content changes and account reallocation may be supplied together, but "
+                "reallocation cannot be combined with a persona change."
             ),
             risk_level="write",
             execution="direct",
@@ -1386,9 +1496,21 @@ def specs() -> list[CommandSpec]:
                                 "items": _uuid_property("Active Plan element id"),
                             },
                             "boost_elements": _revision_boosts_schema(),
+                            "reallocate_accounts": _reallocate_accounts_schema(),
                             "persona": {"type": "object"},
                             "patch_persona_payload": {"type": "object"},
                         },
+                        "allOf": [
+                            {"not": {"required": ["reallocate_accounts", "persona"]}},
+                            {
+                                "not": {
+                                    "required": [
+                                        "reallocate_accounts",
+                                        "patch_persona_payload",
+                                    ]
+                                }
+                            },
+                        ],
                     },
                     "note": {"type": ["string", "null"], "maxLength": 2000},
                     "rationale": {"type": ["string", "null"]},
@@ -1429,7 +1551,10 @@ def specs() -> list[CommandSpec]:
                 "--proposal-id 77777777-7777-4777-8777-777777777777 "
                 "--retire-element-ids '[\"88888888-8888-4888-8888-888888888888\"]' "
                 "--boost-elements-json '[{\"element_id\":\"99999999-9999-4999-8999-999999999999\","
-                "\"account_count\":2,\"days\":7}]'",
+                "\"account_count\":2,\"days\":7}]' "
+                "--reallocate-accounts-json "
+                "'{\"count\":2,\"from\":{\"plan_id\":"
+                "\"44444444-4444-4444-8444-444444444444\"}}'",
             ],
             add_arguments=_add_proposal_revise_arguments,
             build_arguments=_build_proposal_revise_arguments,
@@ -2329,6 +2454,11 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
             "new_directions": len(changes.get("add_elements") or []),
             "directions_to_stop": len(changes.get("retire_element_ids") or []),
             "winner_boosts": len(changes.get("boost_elements") or []),
+            **(
+                {"reallocate_accounts": changes["reallocate_accounts"]}
+                if isinstance(changes.get("reallocate_accounts"), dict)
+                else {}
+            ),
         },
         "elements": _proposal_elements(proposal.get("elements")),
         **(
@@ -2490,6 +2620,7 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
         add_elements=raw_changes.get("add_elements"),
         retire_element_ids=raw_changes.get("retire_element_ids"),
         boost_elements=raw_changes.get("boost_elements"),
+        reallocate_accounts=raw_changes.get("reallocate_accounts"),
         persona=raw_changes.get("persona"),
         patch_persona_payload=raw_changes.get("patch_persona_payload"),
     )
@@ -2516,6 +2647,8 @@ async def _execute_plan_propose(ctx: CommandContext) -> Any:
     }
     if changes.get("persona") or changes.get("patch_persona_payload"):
         change_summary["persona_change"] = True
+    if changes.get("reallocate_accounts") is not None:
+        change_summary["reallocate_accounts"] = changes["reallocate_accounts"]
     return _proposal_output(response, changes=change_summary)
 
 
@@ -2526,7 +2659,15 @@ async def _execute_proposal_create(ctx: CommandContext) -> Any:
 async def _execute_proposal_reallocate(ctx: CommandContext) -> Any:
     campaign_id = str(ctx.arguments["campaign_id"])
     plan_id = str(ctx.arguments["plan_id"])
-    changes = ctx.arguments["changes"]
+    raw_changes = ctx.arguments["changes"]
+    if not isinstance(raw_changes, dict):
+        raise ValueError("proposal changes must be an object")
+    changes = {
+        **raw_changes,
+        "reallocate_accounts": _normalize_reallocate_accounts(
+            raw_changes.get("reallocate_accounts")
+        ),
+    }
     response = await ctx.api_data_v2(
         ctx.cfg,
         "POST",
@@ -2547,6 +2688,15 @@ async def _execute_proposal_reallocate(ctx: CommandContext) -> Any:
 async def _execute_proposal_revise(ctx: CommandContext) -> Any:
     campaign_id, plan, _ = await _locate_plan(ctx)
     proposal_id = str(ctx.arguments["proposal_id"])
+    changes = ctx.arguments["changes"]
+    if not isinstance(changes, dict):
+        raise ValueError("proposal changes must be an object")
+    changes = dict(changes)
+    if changes.get("reallocate_accounts") is not None:
+        changes["reallocate_accounts"] = _normalize_reallocate_accounts(
+            changes["reallocate_accounts"]
+        )
+    _reject_persona_reallocation(changes)
     response = await ctx.api_data_v2(
         ctx.cfg,
         "POST",
@@ -2556,7 +2706,7 @@ async def _execute_proposal_revise(ctx: CommandContext) -> Any:
         ),
         json_body={
             "workspace_id": ctx.workspace_id,
-            "changes": ctx.arguments["changes"],
+            "changes": changes,
             "note": ctx.arguments.get("note"),
             "rationale": ctx.arguments.get("rationale"),
             "rollout_intent": ctx.arguments.get("rollout_intent"),

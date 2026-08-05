@@ -169,14 +169,22 @@ and use `--note` to state the evidence:
 - Boost only a `Winner` supported by sufficient, repeatable evidence. State the
   proposed allocation explicitly as `account count × days` so the operator can
   judge the added commitment.
+- When the same evidence calls for both content changes and more accounts, put
+  the account move in the same Proposal with `--reallocate-accounts-json`.
+  Source it from exactly one other Plan (`from.plan_id`) or the recruitable
+  pool (`from.pool=true`). Use `proposal +reallocate` only for a pure account
+  move with no content changes.
 
 Require enough comparable observations before retiring a direction; never stop
 one because of a single poor result or an undersized sample. Boost only a
 `Winner` with sufficient, repeatable evidence. Create one adjustment proposal
-containing any combination of additions, retirements, and Winner boosts. Always
-set `--title` to a short name the operator can recognize at a glance in the
-proposal list (for example `「暗黑向第二批开测」`) — without it every proposal
-renders with the generic label and the operator cannot tell them apart:
+containing any combination of additions, retirements, Winner boosts, and
+account reallocation. Account reallocation may be mixed with those content
+changes, but never with `--replace-persona-json`, `--replace-persona-id`, or
+`--persona-patch-json`; submit persona work as a separate Proposal. Always set
+`--title` to a short name the operator can recognize at a glance in the proposal
+list (for example `「暗黑向第二批开测」`) — without it every proposal renders with
+the generic label and the operator cannot tell them apart:
 
 ```bash
 museoncli agentic-campaign proposal +create \
@@ -185,6 +193,7 @@ museoncli agentic-campaign proposal +create \
   --add-elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
   --retire-element-ids 77777777-7777-4777-8777-777777777777 \
   --boost-elements-json '[{"element_id":"88888888-8888-4888-8888-888888888888","account_count":3,"days":7}]' \
+  --reallocate-accounts-json '{"count":2,"from":{"pool":true}}' \
   --note "Add one distinct direction, stop the repeatedly weak direction, and boost the Winner across 3 accounts for 7 days"
 ```
 
@@ -248,6 +257,12 @@ museoncli agentic-campaign proposal +revise \
   --elements-json '[{"format_id":"44444444-4444-4444-8444-444444444444","topic_id":"55555555-5555-4555-8555-555555555555","cta_target_id":"66666666-6666-4666-8666-666666666666"}]' \
   --note "Applied the latest compiled review feedback across the replacement supply"
 ```
+
+When the revision also changes account allocation, add
+`--reallocate-accounts-json '{"count":2,"from":{"plan_id":"44444444-4444-4444-8444-444444444444"}}'`
+to that same `proposal +revise` call. Keep it in one mixed Proposal with the
+content changes. Do not include any persona replacement or persona patch in
+that mixed revision.
 
 This form intentionally omits persona options, so the proposal keeps its
 current persona. Add exactly one of `--replace-persona-json` or

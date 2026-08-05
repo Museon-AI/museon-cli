@@ -3,10 +3,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+from pathlib import Path
 from typing import Any
 
-import pytest
 import httpx
+from jsonschema import Draft202012Validator
+import pytest
 
 from museoncli import main as main_module
 from museoncli.config import Config, WorkspaceState
@@ -522,6 +524,320 @@ def test_proposal_persona_operations_are_mutually_exclusive() -> None:
     )
     with pytest.raises(ValueError, match="mutually exclusive"):
         agentic_campaign._build_proposal_revise_arguments(args)
+
+
+def test_proposal_create_posts_mixed_content_and_account_reallocation() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    add_elements = [
+        {
+            "format_id": "44444444-4444-4444-8444-444444444444",
+            "topic_id": "55555555-5555-4555-8555-555555555555",
+        }
+    ]
+    retired_ids = ["66666666-6666-4666-8666-666666666666"]
+    boosts = [
+        {
+            "element_id": "77777777-7777-4777-8777-777777777777",
+            "account_count": 2,
+            "days": 7,
+        }
+    ]
+    reallocation = {
+        "count": 3,
+        "from": {"plan_id": "88888888-8888-4888-8888-888888888888"},
+    }
+    arguments = agentic_campaign._build_proposal_create_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "proposal",
+                "+create",
+                "--plan-id",
+                plan_id,
+                "--add-elements-json",
+                json.dumps(add_elements),
+                "--retire-element-ids",
+                json.dumps(retired_ids),
+                "--boost-elements-json",
+                json.dumps(boosts),
+                "--reallocate-accounts-json",
+                json.dumps(reallocation),
+                "--note",
+                "Test more creative while moving capacity",
+            ]
+        )
+    )
+    assert arguments["changes"] == {
+        "add_elements": add_elements,
+        "retire_element_ids": retired_ids,
+        "boost_elements": boosts,
+        "reallocate_accounts": reallocation,
+    }
+
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"proposal": {"id": "proposal-mixed-create"}},
+    )
+    asyncio.run(
+        agentic_campaign._execute_proposal_create(
+            context("agentic-campaign.proposal-create", arguments, capture)
+        )
+    )
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "title": None,
+            "note": "Test more creative while moving capacity",
+            "rationale": None,
+            "rollout_intent": None,
+            "changes": arguments["changes"],
+        },
+        "params": None,
+    }
+
+
+def test_proposal_revise_posts_mixed_content_and_account_reallocation() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    proposal_id = "77777777-7777-4777-8777-777777777777"
+    add_elements = [
+        {
+            "format_id": "44444444-4444-4444-8444-444444444444",
+            "topic_id": "55555555-5555-4555-8555-555555555555",
+        }
+    ]
+    reallocation = {"count": 1, "from": {"pool": True}}
+    arguments = agentic_campaign._build_proposal_revise_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "proposal",
+                "+revise",
+                "--plan-id",
+                plan_id,
+                "--proposal-id",
+                proposal_id,
+                "--add-elements-json",
+                json.dumps(add_elements),
+                "--reallocate-accounts-json",
+                json.dumps(reallocation),
+                "--rationale",
+                "Use newly recruited capacity for this test",
+            ]
+        )
+    )
+    assert arguments["changes"] == {
+        "add_elements": add_elements,
+        "reallocate_accounts": reallocation,
+    }
+
+    capture = Capture(
+        campaign_list(plan_id),
+        campaign_detail(plan_id, status="active"),
+        {"round": 4},
+    )
+    asyncio.run(
+        agentic_campaign._execute_proposal_revise(
+            context("agentic-campaign.proposal-revise", arguments, capture)
+        )
+    )
+    assert capture.calls[-1] == {
+        "method": "POST",
+        "path": (
+            "/agentic-creative-campaigns/22222222-2222-4222-8222-222222222222/"
+            f"persona-plans/{plan_id}/revision-proposals/{proposal_id}:submit-revision"
+        ),
+        "json_body": {
+            "workspace_id": "11111111-1111-4111-8111-111111111111",
+            "changes": arguments["changes"],
+            "note": None,
+            "rationale": "Use newly recruited capacity for this test",
+            "rollout_intent": None,
+        },
+        "params": None,
+    }
+
+
+@pytest.mark.parametrize("command", ["+create", "+revise"])
+@pytest.mark.parametrize(
+    ("persona_flag", "persona_value"),
+    [
+        ("--replace-persona-id", "99999999-9999-4999-8999-999999999999"),
+        ("--persona-patch-json", '{"description":"More direct"}'),
+    ],
+)
+def test_proposal_mixed_reallocation_rejects_persona_changes(
+    command: str, persona_flag: str, persona_value: str
+) -> None:
+    argv = [
+        "agentic-campaign",
+        "proposal",
+        command,
+        "--plan-id",
+        "33333333-3333-4333-8333-333333333333",
+    ]
+    if command == "+revise":
+        argv.extend(
+            ["--proposal-id", "77777777-7777-4777-8777-777777777777"]
+        )
+    args = parse(
+        [
+            *argv,
+            "--add-elements-json",
+            '[{"format_id":"44444444-4444-4444-8444-444444444444",'
+            '"topic_id":"55555555-5555-4555-8555-555555555555"}]',
+            "--reallocate-accounts-json",
+            '{"count":1,"from":{"pool":true}}',
+            persona_flag,
+            persona_value,
+        ]
+    )
+    builder = (
+        agentic_campaign._build_proposal_create_arguments
+        if command == "+create"
+        else agentic_campaign._build_proposal_revise_arguments
+    )
+    with pytest.raises(ValueError, match="(?i)persona|realloc|allocation"):
+        builder(args)
+
+
+@pytest.mark.parametrize("command", ["+create", "+revise"])
+@pytest.mark.parametrize(
+    "reallocation",
+    [
+        {"count": True, "from": {"pool": True}},
+        {"count": 0, "from": {"pool": True}},
+        {"count": -1, "from": {"pool": True}},
+        {"count": "2", "from": {"pool": True}},
+        {"count": 1, "from": {"pool": True}, "unexpected": "field"},
+        {
+            "count": 1,
+            "from": {
+                "pool": True,
+                "plan_id": "88888888-8888-4888-8888-888888888888",
+            },
+        },
+        {"count": 1, "from": {}},
+        {"count": 1, "from": {"pool": False}},
+        {"count": 1, "from": {"pool": "true"}},
+        {"count": 1, "from": {"plan_id": "  "}},
+        {"count": 1, "from": {"plan_id": "not-a-uuid"}},
+        {"count": 1, "from": {"plan_id": 123}},
+    ],
+    ids=[
+        "boolean-count",
+        "zero-count",
+        "negative-count",
+        "string-count",
+        "extra-key",
+        "both-sources",
+        "neither-source",
+        "false-pool",
+        "string-pool",
+        "blank-plan",
+        "malformed-plan",
+        "wrong-plan-type",
+    ],
+)
+def test_proposal_mixed_reallocation_rejects_malformed_allocation(
+    command: str, reallocation: dict[str, Any]
+) -> None:
+    argv = [
+        "agentic-campaign",
+        "proposal",
+        command,
+        "--plan-id",
+        "33333333-3333-4333-8333-333333333333",
+    ]
+    if command == "+revise":
+        argv.extend(
+            ["--proposal-id", "77777777-7777-4777-8777-777777777777"]
+        )
+    args = parse(
+        [
+            *argv,
+            "--add-elements-json",
+            '[{"format_id":"44444444-4444-4444-8444-444444444444",'
+            '"topic_id":"55555555-5555-4555-8555-555555555555"}]',
+            "--reallocate-accounts-json",
+            json.dumps(reallocation),
+        ]
+    )
+    builder = (
+        agentic_campaign._build_proposal_create_arguments
+        if command == "+create"
+        else agentic_campaign._build_proposal_revise_arguments
+    )
+    with pytest.raises(ValueError, match="(?i)realloc|allocation"):
+        builder(args)
+
+
+def test_proposal_mixed_reallocation_registry_schemas_expose_and_restrict_change() -> None:
+    plan_id = "33333333-3333-4333-8333-333333333333"
+    allocation = {"count": 2, "from": {"pool": True}}
+    content = [
+        {
+            "format_id": "44444444-4444-4444-8444-444444444444",
+            "topic_id": "55555555-5555-4555-8555-555555555555",
+        }
+    ]
+    for command in (
+        "agentic-campaign.proposal-create",
+        "agentic-campaign.proposal-revise",
+    ):
+        schema = get_command_spec(command).input_schema
+        changes_schema = schema["properties"]["changes"]
+        assert "reallocate_accounts" in changes_schema["properties"]
+
+        instance: dict[str, Any] = {
+            "plan_id": plan_id,
+            "changes": {
+                "add_elements": content,
+                "reallocate_accounts": allocation,
+            },
+        }
+        if command.endswith("proposal-revise"):
+            instance["proposal_id"] = "77777777-7777-4777-8777-777777777777"
+        validator = Draft202012Validator(schema)
+        assert list(validator.iter_errors(instance)) == []
+
+        instance["changes"]["persona"] = {
+            "persona_id": "99999999-9999-4999-8999-999999999999"
+        }
+        assert list(validator.iter_errors(instance)), (
+            f"{command} schema must reject persona mixed with reallocate_accounts"
+        )
+
+
+def test_generated_contract_exposes_mixed_reallocation_for_create_and_revise() -> None:
+    catalog_path = (
+        Path(__file__).resolve().parents[1] / "contracts" / "command-catalog.json"
+    )
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    commands = catalog["schemas"]
+
+    for command in (
+        "agentic-campaign.proposal-create",
+        "agentic-campaign.proposal-revise",
+    ):
+        entry = commands[command]
+        changes = entry["input_schema"]["properties"]["changes"]
+        assert "reallocate_accounts" in changes["properties"]
+        assert "content" in entry["summary"].lower()
+        assert any(
+            "--reallocate-accounts-json" in example
+            and (
+                "--add-elements-json" in example
+                or "--retire-element-ids" in example
+                or "--boost-elements-json" in example
+            )
+            for example in entry["examples"]
+        )
 
 
 def test_proposal_reallocate_builds_plan_and_pool_sources() -> None:
