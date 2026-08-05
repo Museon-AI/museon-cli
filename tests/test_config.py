@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import stat
+import base64
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,15 @@ from museoncli.config import (
     normalize_api_base_url,
     save_config,
 )
+from museoncli.secret_provider import agent_secret_lease_path
+
+
+def _capability(*, expires_at: int, version: str = "lease-1") -> str:
+    def segment(payload: dict[str, object]) -> str:
+        encoded = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()
+        return encoded.rstrip("=")
+
+    return f"mcap_{segment({'alg': 'RS256'})}.{segment({'exp': expires_at, 'jti': version})}.signature"
 
 
 def test_normalize_api_base_url_accepts_v1_base() -> None:
@@ -88,8 +98,16 @@ def test_safe_dict_reports_expired_credentials(
         "auth_method": "api_key",
         "credential_storage": "ignored",
         "expires_at": 1000,
+        "managed_by": None,
+        "version": None,
         "user": None,
     }
+
+
+def test_safe_dict_does_not_report_expired_without_a_credential() -> None:
+    cfg = Config(auth=AuthState(expires_at=1000))
+
+    assert cfg.safe_dict()["auth"]["status"] == "unauthenticated"
 
 
 def test_environment_api_key_does_not_inherit_stored_expiration(
@@ -182,6 +200,25 @@ def test_environment_credentials_are_not_persisted(
     assert "injected-secret" not in config_file.read_text(encoding="utf-8")
 
 
+def test_environment_key_is_not_persisted_while_migrating_legacy_config(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+    monkeypatch.setenv("MUSEON_API_KEY", "environment-key")
+    config_file.write_text(
+        json.dumps({"auth": {"api_key": "legacy-user-key"}}), encoding="utf-8"
+    )
+
+    cfg = load_config()
+
+    assert cfg.auth.api_key == "environment-key"
+    assert json.loads(tmp_path.joinpath("credentials.json").read_text()) == {
+        "api_key": "legacy-user-key"
+    }
+
+
 def test_legacy_inline_credentials_are_migrated_on_load(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -200,6 +237,177 @@ def test_legacy_inline_credentials_are_migrated_on_load(
     assert json.loads(tmp_path.joinpath("credentials.json").read_text())["api_key"] == (
         "legacy-secret"
     )
+
+
+def test_fresh_legacy_inline_capability_overrides_stale_stored_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    credential_file = tmp_path / "credentials.json"
+    capability = _capability(expires_at=4_000_000_000)
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+    config_file.write_text(json.dumps({"auth": {"api_key": capability}}), encoding="utf-8")
+    credential_file.write_text(json.dumps({"api_key": "stale-key"}), encoding="utf-8")
+
+    cfg = load_config()
+
+    assert cfg.auth.api_key == capability
+    assert cfg.auth.method == "agent_capability"
+    assert cfg.auth.provider == "legacy_inline"
+    assert json.loads(credential_file.read_text()) == {"api_key": "stale-key"}
+
+
+def test_saving_public_state_preserves_legacy_inline_capability(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    capability = _capability(expires_at=4_000_000_000)
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    config_file.write_text(
+        json.dumps({"auth": {"api_key": capability}, "workspace": {}}), encoding="utf-8"
+    )
+    cfg = load_config()
+    cfg.workspace.id = "workspace-2"
+
+    save_config(cfg)
+
+    payload = json.loads(config_file.read_text())
+    assert payload["auth"] == {"api_key": capability}
+    assert payload["workspace"]["id"] == "workspace-2"
+    assert load_config().auth.api_key == capability
+
+
+def test_agent_session_lease_is_exclusive_over_environment_and_stored_api_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    capability = _capability(expires_at=4_000_000_000, version="lease-current")
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+    monkeypatch.setenv("MUSEON_API_KEY", "environment-key")
+    config_file.write_text(
+        json.dumps(
+            {
+                "auth": {
+                    "method": "agent_capability",
+                    "provider": "agent_session",
+                    "secret_ref": "museon-api",
+                    "managed_by": "agents_host",
+                    "persistable": False,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    tmp_path.joinpath("credentials.json").write_text(
+        json.dumps({"api_key": "stored-key"}), encoding="utf-8"
+    )
+    lease_path = agent_secret_lease_path(config_file)
+    lease_path.parent.mkdir()
+    lease_path.write_text(
+        json.dumps(
+            {
+                "value": capability,
+                "auth_method": "agent_capability",
+                "managed_by": "agents_host",
+                "expires_at": 4_000_000_000,
+                "version": "lease-current",
+                "persistable": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cfg = load_config()
+
+    assert cfg.auth.api_key == capability
+    assert cfg.auth.method == "agent_capability"
+    assert cfg.auth.provider == "agent_session"
+    assert cfg.auth.version == "lease-current"
+
+
+def test_missing_agent_session_lease_fails_closed_without_api_key_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+    monkeypatch.setenv("MUSEON_API_KEY", "environment-key")
+    config_file.write_text(
+        json.dumps(
+            {
+                "auth": {
+                    "method": "agent_capability",
+                    "provider": "agent_session",
+                    "secret_ref": "museon-api",
+                    "managed_by": "agents_host",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    tmp_path.joinpath("credentials.json").write_text(
+        json.dumps({"api_key": "stored-key"}), encoding="utf-8"
+    )
+
+    cfg = load_config()
+
+    assert cfg.auth.api_key is None
+    assert cfg.auth.method == "agent_capability"
+    assert cfg.auth.resolution_error == "credential_missing"
+
+
+def test_agent_session_mode_does_not_touch_persistent_credential_provider(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setattr(
+        "museoncli.config.load_credentials_with_backend",
+        lambda _path: (_ for _ in ()).throw(AssertionError("must not load stored credentials")),
+    )
+    config_file.write_text(
+        json.dumps(
+            {
+                "auth": {
+                    "method": "agent_capability",
+                    "provider": "agent_session",
+                    "secret_ref": "museon-api",
+                    "managed_by": "agents_host",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cfg = load_config()
+
+    assert cfg.auth.method == "agent_capability"
+    assert cfg.auth.resolution_error == "credential_missing"
+
+
+def test_host_managed_config_save_does_not_persist_capability(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+    cfg = Config(
+        auth=AuthState(
+            api_key=_capability(expires_at=4_000_000_000),
+            method="agent_capability",
+            provider="agent_session",
+            managed_by="agents_host",
+            secret_ref="museon-api",
+            persistable=False,
+        )
+    )
+
+    save_config(cfg)
+
+    assert not tmp_path.joinpath("credentials.json").exists()
+    assert "mcap_" not in config_file.read_text(encoding="utf-8")
 
 
 def test_legacy_bearer_credentials_are_removed_on_load(

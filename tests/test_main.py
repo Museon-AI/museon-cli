@@ -441,6 +441,26 @@ def test_auth_start_parser() -> None:
     assert args.auth_command == "start"
 
 
+def test_host_managed_auth_blocks_config_mutation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config(
+        auth=AuthState(
+            method="agent_capability",
+            provider="agent_session",
+            managed_by="agents_host",
+        )
+    )
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+
+    with pytest.raises(RuntimeError, match="managed_auth"):
+        asyncio.run(
+            main_module.dispatch_config(
+                argparse.Namespace(config_command="set"),
+            )
+        )
+
+
 def test_auth_status_clears_expired_pending_authorization(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -514,6 +534,35 @@ def test_auth_status_reports_expired_credential_without_authenticating(
             "user_code": None,
         },
     }
+
+
+def test_host_managed_auth_status_is_explicit_and_mutations_are_blocked() -> None:
+    cfg = Config(
+        auth=AuthState(
+            api_key="mcap_current",
+            method="agent_capability",
+            provider="agent_session",
+            managed_by="agents_host",
+            expires_at=4_000_000_000,
+            version="lease-current",
+            persistable=False,
+        )
+    )
+
+    result = asyncio.run(
+        main_module.dispatch_auth(argparse.Namespace(auth_command="status"), cfg)
+    )
+
+    assert result["data"]["authenticated"] is True
+    assert result["data"]["auth_method"] == "agent_capability"
+    assert result["data"]["credential_provider"] == "agent_session"
+    assert result["data"]["managed_by"] == "agents_host"
+    assert result["data"]["version"] == "lease-current"
+    for command in ("login", "start", "finish", "logout"):
+        with pytest.raises(RuntimeError, match="managed_auth"):
+            asyncio.run(
+                main_module.dispatch_auth(argparse.Namespace(auth_command=command), cfg)
+            )
 
 
 def test_auth_finish_parser_supports_optional_wait() -> None:

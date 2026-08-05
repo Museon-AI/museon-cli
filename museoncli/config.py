@@ -12,8 +12,15 @@ from museoncli.credentials import (
     clear_credentials,
     credential_backend,
     load_credentials,
+    load_credentials_with_backend,
     save_credentials,
     write_private_json,
+)
+from museoncli.secret_provider import (
+    AGENT_CAPABILITY_METHOD,
+    API_KEY_METHOD,
+    CredentialLease,
+    resolve_auth_credential,
 )
 
 
@@ -27,12 +34,24 @@ class AuthState:
     expires_at: int | None = None
     user: dict[str, Any] | None = None
     api_key: str | None = None
+    method: str | None = None
+    provider: str | None = None
+    managed_by: str | None = None
+    secret_ref: str | None = None
+    version: str | None = None
+    persistable: bool = True
+    resolution_error: str | None = None
 
     def is_expired(self, *, now: int | None = None) -> bool:
-        if not self.api_key or self.expires_at is None:
+        if self.expires_at is None or (
+            not self.api_key and self.resolution_error != "credential_expired"
+        ):
             return False
         current_time = int(time.time()) if now is None else now
         return self.expires_at <= current_time
+
+    def is_host_managed(self) -> bool:
+        return self.method == AGENT_CAPABILITY_METHOD and self.managed_by == "agents_host"
 
 
 @dataclass
@@ -104,10 +123,12 @@ class Config:
                 if authenticated
                 else "unauthenticated"
             ),
-            "reason": "credential_expired" if auth_expired else None,
-            "auth_method": "api_key" if auth.get("api_key") else "none",
-            "credential_storage": credential_backend(config_path()),
+            "reason": self.auth.resolution_error or ("credential_expired" if auth_expired else None),
+            "auth_method": self.auth.method or ("api_key" if auth.get("api_key") else "none"),
+            "credential_storage": self.auth.provider or credential_backend(config_path()),
             "expires_at": auth.get("expires_at"),
+            "managed_by": auth.get("managed_by"),
+            "version": auth.get("version"),
             "user": auth.get("user"),
         }
         pending_auth = data.get("pending_auth") or {}
@@ -138,22 +159,44 @@ def load_config() -> Config:
         return cfg
     raw = json.loads(path.read_text(encoding="utf-8"))
     cfg = Config.from_dict(raw)
-    stored_auth = load_credentials(path)
     legacy_auth = raw.get("auth") if isinstance(raw.get("auth"), dict) else {}
-    api_key = stored_auth.get("api_key") or legacy_auth.get("api_key")
-    if isinstance(api_key, str) and api_key:
-        cfg.auth.api_key = api_key
+    inline_credential = legacy_auth.get("api_key")
+    capability_mode = legacy_auth.get("method") == AGENT_CAPABILITY_METHOD or (
+        isinstance(inline_credential, str) and inline_credential.startswith("mcap_")
+    )
+    stored_auth, stored_provider = (
+        ({}, "unavailable") if capability_mode else load_credentials_with_backend(path)
+    )
+    lease = resolve_auth_credential(
+        path,
+        raw,
+        stored_credentials=stored_auth,
+        stored_provider=stored_provider,
+    )
+    if lease is not None:
+        _apply_credential_lease(cfg.auth, lease)
     if any(
         legacy_auth.get(field_name) for field_name in ("api_key", "access_token", "refresh_token")
-    ):
-        save_credentials(path, {"api_key": cfg.auth.api_key})
+    ) and not (lease and lease.auth_method == AGENT_CAPABILITY_METHOD):
+        legacy_api_key = legacy_auth.get("api_key")
+        migration_api_key = stored_auth.get("api_key") or (
+            legacy_api_key if isinstance(legacy_api_key, str) else None
+        )
+        save_credentials(path, {"api_key": migration_api_key})
         _write_non_secret_config(path, cfg)
-    apply_env_overrides(cfg)
+    if not (lease and lease.auth_method == AGENT_CAPABILITY_METHOD):
+        apply_env_overrides(cfg)
     return cfg
 
 
 def save_config(config: Config) -> None:
     path = config_path()
+    if config.auth.is_host_managed():
+        if config.auth.provider == "legacy_inline":
+            _write_legacy_inline_config(path, config)
+        else:
+            _write_non_secret_config(path, config)
+        return
     previous = load_credentials(path)
     values: dict[str, str | None] = {}
     for field_name in stored_auth_fields():
@@ -180,6 +223,21 @@ def _write_non_secret_config(path: Path, config: Config) -> None:
     write_private_json(path, data)
 
 
+def _write_legacy_inline_config(path: Path, config: Config) -> None:
+    """Update public state without converting an old host config to lease mode."""
+    try:
+        current = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, ValueError):
+        return
+    current_auth = current.get("auth") if isinstance(current, dict) else None
+    inline = current_auth.get("api_key") if isinstance(current_auth, dict) else None
+    if not isinstance(inline, str) or not inline.startswith("mcap_"):
+        return
+    data = asdict(config)
+    data["auth"] = dict(current_auth)
+    write_private_json(path, data)
+
+
 def _auth_field_is_from_environment(config: Config, field_name: str) -> bool:
     return (
         field_name == "api_key"
@@ -198,9 +256,24 @@ def apply_env_overrides(config: Config) -> None:
         config.site_url = os.environ["MUSEON_SITE_URL"].rstrip("/")
     if os.environ.get("MUSEON_API_KEY"):
         config.auth.api_key = os.environ["MUSEON_API_KEY"]
+        config.auth.method = API_KEY_METHOD
+        config.auth.provider = "environment"
+        config.auth.managed_by = "environment"
+        config.auth.persistable = False
         # Environment credentials are independent from any previously stored
         # device-flow credential and therefore do not inherit its expiry.
         config.auth.expires_at = None
+
+
+def _apply_credential_lease(auth: AuthState, lease: CredentialLease) -> None:
+    auth.api_key = lease.value
+    auth.method = lease.auth_method
+    auth.provider = lease.provider
+    auth.managed_by = lease.managed_by
+    auth.expires_at = lease.expires_at
+    auth.version = lease.version
+    auth.persistable = lease.persistable
+    auth.resolution_error = lease.error
 
 
 def update_config(**values: str | None) -> Config:

@@ -47,7 +47,18 @@ def test_agent_skill_is_available_before_cli_installation() -> None:
 
 
 def test_public_auth_surface_only_persists_scoped_api_keys() -> None:
-    assert set(AuthState.__dataclass_fields__) == {"expires_at", "user", "api_key"}
+    assert set(AuthState.__dataclass_fields__) == {
+        "expires_at",
+        "user",
+        "api_key",
+        "method",
+        "provider",
+        "managed_by",
+        "secret_ref",
+        "version",
+        "persistable",
+        "resolution_error",
+    }
     assert stored_auth_fields() == ("api_key",)
     config_source = (ROOT / "museoncli" / "config.py").read_text(encoding="utf-8")
     assert "MUSEON_AUTH_TOKEN" not in config_source
