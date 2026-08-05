@@ -1069,6 +1069,56 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.control-read",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.control-read",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+control-read",
+          "stability": "stable",
+          "summary": "Read normalized effective strategy_signal and policy controls with default/source metadata, stable etags, campaign status, and campaign version before executing a needs_human decision.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.issue-decision",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.issue-decision",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+issue-decision",
+          "stability": "stable",
+          "summary": "Execute one explicit human decision bound to a needs_human Campaign Issue. Reuse decision_id on retry; control changes require the latest etag, lifecycle changes require campaign version, and archive requires --yes.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.plan-list",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -10645,6 +10695,104 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "agentic-campaign.control-read": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.control-read",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +control-read --campaign-id 22222222-2222-4222-8222-222222222222"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.control-read",
+      "output_schema": {
+        "description": "Normalized strategy_signal and policy snapshots with optimistic-concurrency receipts.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+control-read",
+      "stability": "stable",
+      "summary": "Read normalized effective strategy_signal and policy controls with default/source metadata, stable etags, campaign status, and campaign version before executing a needs_human decision.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "agentic-campaign.get": {
       "authorization": {
         "authentication_required": true,
@@ -10741,6 +10889,178 @@
       "stability": "stable",
       "summary": "Get an Agentic Creative Campaign detail by campaign id.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.issue-decision": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.issue-decision",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +issue-decision --campaign-id 22222222-2222-4222-8222-222222222222 --issue-id 33333333-3333-4333-8333-333333333333 --decision-id 44444444-4444-4444-8444-444444444444 --action adjust-policy --patch-json '{\"veto_window_minutes\":120}' --expected-etag 0123456789abcdef01234567 --rationale 'Operator chose a longer veto window'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "action": {
+            "enum": [
+              "adjust-strategy-signal",
+              "adjust-policy",
+              "pause",
+              "archive",
+              "observe",
+              "abandon"
+            ],
+            "type": "string"
+          },
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "decision_id": {
+            "description": "Stable idempotency key for this human decision",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "destructive_confirmation": {
+            "default": false,
+            "type": "boolean"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "expected_campaign_version": {
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "expected_etag": {
+            "minLength": 8,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issue_id": {
+            "description": "Campaign Issue id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "observe_until": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "patch": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "rationale": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "schedule_recheck": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "issue_id",
+          "decision_id",
+          "action",
+          "rationale"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.issue-decision",
+      "output_schema": {
+        "description": "Decision outcome and canonical issue/control or campaign lifecycle readback receipt.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+issue-decision",
+      "stability": "stable",
+      "summary": "Execute one explicit human decision bound to a needs_human Campaign Issue. Reuse decision_id on retry; control changes require the latest etag, lifecycle changes require campaign version, and archive requires --yes.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "agentic-campaign.issue-open": {
