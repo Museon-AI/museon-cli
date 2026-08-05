@@ -75,6 +75,83 @@ def _build_recap_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {"campaign_id": args.campaign_id, "include_cells": args.cells}
 
 
+def _add_control_read_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+
+
+def _build_control_read_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {"campaign_id": args.campaign_id}
+
+
+def _add_issue_decision_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--issue-id", required=True)
+    parser.add_argument("--decision-id", required=True)
+    parser.add_argument(
+        "--action",
+        choices=[
+            "adjust-strategy-signal",
+            "adjust-policy",
+            "pause",
+            "archive",
+            "observe",
+            "abandon",
+        ],
+        required=True,
+    )
+    parser.add_argument("--rationale", required=True)
+    parser.add_argument("--patch-json")
+    parser.add_argument("--expected-etag")
+    parser.add_argument("--expected-campaign-version", type=int)
+    parser.add_argument("--observe-until")
+    parser.add_argument("--schedule-recheck", action="store_true")
+    parser.add_argument("--yes", action="store_true")
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_issue_decision_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    action = args.action.replace("-", "_")
+    patch = (
+        _candidate_json(args.patch_json, field="patch", expected_type=dict)
+        if args.patch_json is not None
+        else None
+    )
+    if action in {"adjust_strategy_signal", "adjust_policy"}:
+        if not patch or not args.expected_etag:
+            raise ValueError(
+                "control decisions require --patch-json and --expected-etag from +control-read."
+            )
+    elif patch is not None or args.expected_etag is not None:
+        raise ValueError("--patch-json and --expected-etag only apply to control decisions.")
+    if action in {"pause", "archive"} and args.expected_campaign_version is None:
+        raise ValueError("pause/archive require --expected-campaign-version from +control-read.")
+    if action == "archive" and not args.yes and not args.dry_run:
+        raise ValueError("archive requires explicit --yes confirmation.")
+    if action == "observe" and args.observe_until is None:
+        raise ValueError("observe requires --observe-until.")
+    if args.schedule_recheck and action != "observe":
+        raise ValueError("--schedule-recheck only applies to observe.")
+    rationale = args.rationale.strip()
+    if not rationale:
+        raise ValueError("--rationale must not be empty.")
+    return compact_params(
+        {
+            "campaign_id": args.campaign_id,
+            "issue_id": args.issue_id,
+            "decision_id": args.decision_id,
+            "action": action,
+            "rationale": rationale,
+            "patch": patch,
+            "expected_etag": args.expected_etag,
+            "expected_campaign_version": args.expected_campaign_version,
+            "observe_until": args.observe_until,
+            "schedule_recheck": args.schedule_recheck,
+            "destructive_confirmation": args.yes,
+            "dry_run": args.dry_run,
+        }
+    )
+
+
 def _add_campaign_id_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--id", dest="campaign_id", required=True)
 
@@ -2005,6 +2082,88 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=domain,
+            shortcut="+control-read",
+            summary=(
+                "Read normalized effective strategy_signal and policy controls with default/source "
+                "metadata, stable etags, campaign status, and campaign version before executing a "
+                "needs_human decision."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_control_read",
+            input_schema=_schema(
+                {"campaign_id": _uuid_property("Agentic Creative Campaign id")},
+                required=["campaign_id"],
+            ),
+            output_schema=_direct_output_schema(
+                "Normalized strategy_signal and policy snapshots with optimistic-concurrency receipts."
+            ),
+            examples=[
+                "museoncli agentic-campaign +control-read "
+                "--campaign-id 22222222-2222-4222-8222-222222222222"
+            ],
+            add_arguments=_add_control_read_arguments,
+            build_arguments=_build_control_read_arguments,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+issue-decision",
+            summary=(
+                "Execute one explicit human decision bound to a needs_human Campaign Issue. Reuse "
+                "decision_id on retry; control changes require the latest etag, lifecycle changes "
+                "require campaign version, and archive requires --yes."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_issue_decision",
+            input_schema=_schema(
+                {
+                    "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                    "issue_id": _uuid_property("Campaign Issue id"),
+                    "decision_id": _uuid_property("Stable idempotency key for this human decision"),
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "adjust-strategy-signal",
+                            "adjust-policy",
+                            "pause",
+                            "archive",
+                            "observe",
+                            "abandon",
+                        ],
+                    },
+                    "rationale": {"type": "string", "minLength": 1},
+                    "patch": {"type": ["object", "null"]},
+                    "expected_etag": {"type": ["string", "null"], "minLength": 8},
+                    "expected_campaign_version": {
+                        "type": ["integer", "null"],
+                        "minimum": 1,
+                    },
+                    "observe_until": {"type": ["string", "null"], "format": "date-time"},
+                    "schedule_recheck": {"type": "boolean", "default": False},
+                    "destructive_confirmation": {"type": "boolean", "default": False},
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=["campaign_id", "issue_id", "decision_id", "action", "rationale"],
+            ),
+            output_schema=_direct_output_schema(
+                "Decision outcome and canonical issue/control or campaign lifecycle readback receipt."
+            ),
+            examples=[
+                "museoncli agentic-campaign +issue-decision "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--issue-id 33333333-3333-4333-8333-333333333333 "
+                "--decision-id 44444444-4444-4444-8444-444444444444 "
+                "--action adjust-policy --patch-json '{\"veto_window_minutes\":120}' "
+                "--expected-etag 0123456789abcdef01234567 "
+                "--rationale 'Operator chose a longer veto window'"
+            ],
+            add_arguments=_add_issue_decision_arguments,
+            build_arguments=_build_issue_decision_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
             shortcut="+plan-list",
             summary=(
                 "List Persona Plans for one campaign with member pool account ids and handles; "
@@ -2948,6 +3107,32 @@ async def _execute_recap(ctx: CommandContext) -> Any:
     return _render_recap_ledger(response)
 
 
+async def _execute_control_read(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "GET",
+        f"/agentic-creative-campaigns/{campaign_id}/control",
+        params={"workspace_id": ctx.workspace_id},
+    )
+
+
+async def _execute_issue_decision(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    issue_id = str(ctx.arguments.get("issue_id") or "")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/agentic-creative-campaigns/{campaign_id}/issues/{issue_id}:decide",
+        params={"workspace_id": ctx.workspace_id},
+        json_body={
+            key: value
+            for key, value in ctx.arguments.items()
+            if key not in {"campaign_id", "issue_id", "dry_run"}
+        },
+    )
+
+
 async def _execute_campaign_update(ctx: CommandContext) -> Any:
     campaign_id = str(ctx.arguments.get("campaign_id") or "")
     expected_version = await _current_campaign_version(ctx, campaign_id)
@@ -3160,6 +3345,12 @@ EXECUTORS = {
         _execute_campaign_rename, redact_api_errors=True
     ),
     "agentic-campaign.get": redacted_direct_enveloped(_execute_get, redact_api_errors=True),
+    "agentic-campaign.control-read": redacted_direct_enveloped(
+        _execute_control_read, redact_api_errors=True
+    ),
+    "agentic-campaign.issue-decision": redacted_direct_enveloped(
+        _execute_issue_decision, redact_api_errors=True
+    ),
     "agentic-campaign.issue-open": redacted_direct_enveloped(
         _execute_issue_open, redact_api_errors=True
     ),

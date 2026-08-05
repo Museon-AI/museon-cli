@@ -2469,3 +2469,120 @@ def test_issue_open_rejects_unknown_scope_keys() -> None:
     )
     with pytest.raises(ValueError, match="only accepts plan_ids and account_ids"):
         agentic_campaign._build_issue_open_arguments(args)
+
+
+def test_control_read_uses_public_campaign_control_route() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    arguments = agentic_campaign._build_control_read_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "+control-read",
+                "--campaign-id",
+                campaign_id,
+            ]
+        )
+    )
+    capture = Capture({"campaign_id": campaign_id, "campaign_version": 4})
+
+    result = asyncio.run(
+        agentic_campaign._execute_control_read(
+            context("agentic-campaign.control-read", arguments, capture)
+        )
+    )
+
+    assert result["campaign_version"] == 4
+    assert capture.calls == [
+        {
+            "method": "GET",
+            "path": f"/agentic-creative-campaigns/{campaign_id}/control",
+            "json_body": None,
+            "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+        }
+    ]
+
+
+def test_issue_decision_sends_field_patch_and_concurrency_receipt() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    issue_id = "33333333-3333-4333-8333-333333333333"
+    decision_id = "44444444-4444-4444-8444-444444444444"
+    arguments = agentic_campaign._build_issue_decision_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "+issue-decision",
+                "--campaign-id",
+                campaign_id,
+                "--issue-id",
+                issue_id,
+                "--decision-id",
+                decision_id,
+                "--action",
+                "adjust-policy",
+                "--rationale",
+                "Operator chose a longer veto window",
+                "--patch-json",
+                json.dumps({"veto_window_minutes": 120}),
+                "--expected-etag",
+                "0123456789abcdef01234567",
+            ]
+        )
+    )
+    capture = Capture({"decision_id": decision_id, "outcome": "resolved"})
+
+    result = asyncio.run(
+        agentic_campaign._execute_issue_decision(
+            context("agentic-campaign.issue-decision", arguments, capture)
+        )
+    )
+
+    assert result["outcome"] == "resolved"
+    assert capture.calls == [
+        {
+            "method": "POST",
+            "path": (
+                f"/agentic-creative-campaigns/{campaign_id}/issues/{issue_id}:decide"
+            ),
+            "json_body": {
+                "decision_id": decision_id,
+                "action": "adjust_policy",
+                "rationale": "Operator chose a longer veto window",
+                "patch": {"veto_window_minutes": 120},
+                "expected_etag": "0123456789abcdef01234567",
+                "schedule_recheck": False,
+                "destructive_confirmation": False,
+            },
+            "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+        }
+    ]
+
+
+def test_issue_decision_requires_control_receipt_and_archive_confirmation() -> None:
+    common = [
+        "agentic-campaign",
+        "+issue-decision",
+        "--campaign-id",
+        "22222222-2222-4222-8222-222222222222",
+        "--issue-id",
+        "33333333-3333-4333-8333-333333333333",
+        "--decision-id",
+        "44444444-4444-4444-8444-444444444444",
+        "--rationale",
+        "explicit operator decision",
+    ]
+    with pytest.raises(ValueError, match="require --patch-json and --expected-etag"):
+        agentic_campaign._build_issue_decision_arguments(
+            parse([*common, "--action", "adjust-strategy-signal"])
+        )
+    with pytest.raises(ValueError, match="explicit --yes"):
+        agentic_campaign._build_issue_decision_arguments(
+            parse(
+                [
+                    *common,
+                    "--action",
+                    "archive",
+                    "--expected-campaign-version",
+                    "4",
+                ]
+            )
+        )
