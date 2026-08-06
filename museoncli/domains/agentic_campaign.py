@@ -152,6 +152,46 @@ def _build_issue_decision_arguments(args: argparse.Namespace) -> dict[str, Any]:
     )
 
 
+def _add_issue_resolve_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--issue-id", required=True)
+    parser.add_argument("--resolution-id", required=True)
+    parser.add_argument("--outcome", choices=["no-change"], required=True)
+    parser.add_argument("--rationale", required=True)
+    parser.add_argument("--evidence-ref", dest="evidence_refs", action="append", required=True)
+    parser.add_argument("--expected-issue-updated-at", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_issue_resolve_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    rationale = args.rationale.strip()
+    if not rationale:
+        raise ValueError("--rationale must not be empty.")
+    evidence_refs = [value.strip() for value in args.evidence_refs if value.strip()]
+    if not evidence_refs:
+        raise ValueError("at least one non-empty --evidence-ref is required.")
+    if len(evidence_refs) > 20:
+        raise ValueError("--evidence-ref may be repeated at most 20 times.")
+    return {
+        "campaign_id": args.campaign_id,
+        "issue_id": args.issue_id,
+        "resolution_id": args.resolution_id,
+        "outcome": args.outcome.replace("-", "_"),
+        "rationale": rationale,
+        "evidence_refs": evidence_refs,
+        "expected_issue_updated_at": args.expected_issue_updated_at,
+        "dry_run": args.dry_run,
+    }
+
+
+def _issue_resolve_output_schema() -> dict[str, Any]:
+    schema = _direct_output_schema(
+        "Idempotent no-change resolution receipt and terminal Campaign Issue status."
+    )
+    schema.pop("description")
+    return schema
+
+
 def _add_campaign_id_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--id", dest="campaign_id", required=True)
 
@@ -2164,6 +2204,73 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=domain,
+            shortcut="+issue-resolve",
+            summary=(
+                "Resolve an ordinary open or drafting Campaign Issue when Mel has evidence that "
+                "no change is required. Reuse resolution_id on retry and pass the issue updated_at "
+                "observed with the evidence."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="agentic_campaign_issue_resolve",
+            input_schema=_schema(
+                {
+                    "campaign_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Agentic Creative Campaign id",
+                    },
+                    "issue_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Campaign Issue id",
+                    },
+                    "resolution_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Stable idempotency key for this Mel resolution",
+                    },
+                    "outcome": {"type": "string", "const": "no-change"},
+                    "rationale": {"type": "string", "minLength": 1},
+                    "evidence_refs": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "items": {"type": "string", "minLength": 1},
+                    },
+                    "expected_issue_updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Issue updated_at observed with the evidence",
+                    },
+                    "dry_run": {"type": "boolean", "default": False},
+                },
+                required=[
+                    "campaign_id",
+                    "issue_id",
+                    "resolution_id",
+                    "outcome",
+                    "rationale",
+                    "evidence_refs",
+                    "expected_issue_updated_at",
+                ],
+            ),
+            output_schema=_issue_resolve_output_schema(),
+            examples=[
+                "museoncli agentic-campaign +issue-resolve "
+                "--campaign-id 22222222-2222-4222-8222-222222222222 "
+                "--issue-id 33333333-3333-4333-8333-333333333333 "
+                "--resolution-id 44444444-4444-4444-8444-444444444444 "
+                "--outcome no-change --rationale 'Existing implementation satisfies acceptance' "
+                "--evidence-ref 'campaign-recap:2026-08-06T04:00:00Z' "
+                "--expected-issue-updated-at 2026-08-06T04:00:00Z"
+            ],
+            add_arguments=_add_issue_resolve_arguments,
+            build_arguments=_build_issue_resolve_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=domain,
             shortcut="+plan-list",
             summary=(
                 "List Persona Plans for one campaign with member pool account ids and handles; "
@@ -3133,6 +3240,22 @@ async def _execute_issue_decision(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_issue_resolve(ctx: CommandContext) -> Any:
+    campaign_id = str(ctx.arguments.get("campaign_id") or "")
+    issue_id = str(ctx.arguments.get("issue_id") or "")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/agentic-creative-campaigns/{campaign_id}/issues/{issue_id}:resolve-no-change",
+        params={"workspace_id": ctx.workspace_id},
+        json_body={
+            key: value
+            for key, value in ctx.arguments.items()
+            if key not in {"campaign_id", "issue_id", "dry_run"}
+        },
+    )
+
+
 async def _execute_campaign_update(ctx: CommandContext) -> Any:
     campaign_id = str(ctx.arguments.get("campaign_id") or "")
     expected_version = await _current_campaign_version(ctx, campaign_id)
@@ -3350,6 +3473,9 @@ EXECUTORS = {
     ),
     "agentic-campaign.issue-decision": redacted_direct_enveloped(
         _execute_issue_decision, redact_api_errors=True
+    ),
+    "agentic-campaign.issue-resolve": redacted_direct_enveloped(
+        _execute_issue_resolve, redact_api_errors=True
     ),
     "agentic-campaign.issue-open": redacted_direct_enveloped(
         _execute_issue_open, redact_api_errors=True
