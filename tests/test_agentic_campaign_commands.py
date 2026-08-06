@@ -2557,6 +2557,98 @@ def test_issue_decision_sends_field_patch_and_concurrency_receipt() -> None:
     ]
 
 
+def test_issue_resolve_sends_idempotent_no_change_receipt() -> None:
+    campaign_id = "22222222-2222-4222-8222-222222222222"
+    issue_id = "33333333-3333-4333-8333-333333333333"
+    resolution_id = "44444444-4444-4444-8444-444444444444"
+    arguments = agentic_campaign._build_issue_resolve_arguments(
+        parse(
+            [
+                "agentic-campaign",
+                "+issue-resolve",
+                "--campaign-id",
+                campaign_id,
+                "--issue-id",
+                issue_id,
+                "--resolution-id",
+                resolution_id,
+                "--outcome",
+                "no-change",
+                "--rationale",
+                " Existing behavior satisfies the acceptance criteria ",
+                "--evidence-ref",
+                "campaign-recap:2026-08-06T04:00:00Z",
+                "--evidence-ref",
+                "test:campaign-policy",
+                "--expected-issue-updated-at",
+                "2026-08-06T04:00:00Z",
+            ]
+        )
+    )
+    assert arguments["outcome"] == "no_change"
+    assert arguments["rationale"] == "Existing behavior satisfies the acceptance criteria"
+    capture = Capture(
+        {
+            "resolution_id": resolution_id,
+            "outcome": "no_change",
+            "issue_status": "resolved",
+        }
+    )
+
+    result = asyncio.run(
+        agentic_campaign._execute_issue_resolve(
+            context("agentic-campaign.issue-resolve", arguments, capture)
+        )
+    )
+
+    assert result["issue_status"] == "resolved"
+    assert capture.calls == [
+        {
+            "method": "POST",
+            "path": (
+                f"/agentic-creative-campaigns/{campaign_id}/issues/"
+                f"{issue_id}:resolve-no-change"
+            ),
+            "json_body": {
+                "resolution_id": resolution_id,
+                "outcome": "no_change",
+                "rationale": "Existing behavior satisfies the acceptance criteria",
+                "evidence_refs": [
+                    "campaign-recap:2026-08-06T04:00:00Z",
+                    "test:campaign-policy",
+                ],
+                "expected_issue_updated_at": "2026-08-06T04:00:00Z",
+            },
+            "params": {"workspace_id": "11111111-1111-4111-8111-111111111111"},
+        }
+    ]
+
+
+def test_issue_resolve_rejects_empty_evidence_and_rationale() -> None:
+    common = [
+        "agentic-campaign",
+        "+issue-resolve",
+        "--campaign-id",
+        "22222222-2222-4222-8222-222222222222",
+        "--issue-id",
+        "33333333-3333-4333-8333-333333333333",
+        "--resolution-id",
+        "44444444-4444-4444-8444-444444444444",
+        "--outcome",
+        "no-change",
+        "--expected-issue-updated-at",
+        "2026-08-06T04:00:00Z",
+    ]
+    with pytest.raises(ValueError, match="rationale must not be empty"):
+        agentic_campaign._build_issue_resolve_arguments(
+            parse([*common, "--rationale", " ", "--evidence-ref", "evidence"])
+        )
+    with pytest.raises(ValueError, match="non-empty --evidence-ref"):
+        agentic_campaign._build_issue_resolve_arguments(
+            parse([*common, "--rationale", "No change", "--evidence-ref", " "])
+        )
+
+
 def test_issue_decision_requires_control_receipt_and_archive_confirmation() -> None:
     common = [
         "agentic-campaign",

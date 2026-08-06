@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-145 commands across 14 domains (source of truth: `museoncli schema`).
+146 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -221,6 +221,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `agentic-campaign +recap` | read | — | — | direct | Read one Campaign's full recap: the archive fields (direction_brief, success_hypothesis, contract, strategy_signal, policy), its decision history with rationale, the last weeks of strategy signals, learnings, and open issues/proposals. This is the same payload the AgentClock issue dispatch injects into Mel's prompt. |
 | `agentic-campaign +control-read` | read | — | — | direct | Read normalized effective strategy_signal and policy controls with default/source metadata, stable etags, campaign status, and campaign version before executing a needs_human decision. |
 | `agentic-campaign +issue-decision` | write | yes | — | direct | Execute one explicit human decision bound to a needs_human Campaign Issue. Reuse decision_id on retry; control changes require the latest etag, lifecycle changes require campaign version, and archive requires --yes. |
+| `agentic-campaign +issue-resolve` | write | yes | — | direct | Resolve an ordinary open or drafting Campaign Issue when Mel has evidence that no change is required. Reuse resolution_id on retry and pass the issue updated_at observed with the evidence. |
 | `agentic-campaign +plan-list` | read | — | — | direct | List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-get` | read | — | — | direct | Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |

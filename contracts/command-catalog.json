@@ -1119,6 +1119,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.issue-resolve",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.issue-resolve",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+issue-resolve",
+          "stability": "stable",
+          "summary": "Resolve an ordinary open or drafting Campaign Issue when Mel has evidence that no change is required. Reuse resolution_id on retry and pass the issue updated_at observed with the evidence.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.plan-list",
           "domain": "agentic-campaign",
           "execution": "direct",
@@ -11208,6 +11233,142 @@
       "shortcut": "+issue-open",
       "stability": "stable",
       "summary": "Manually open a Campaign Issue (reset, evolution, or strategy) outside the automated evaluation pipeline, e.g. for an operator- or Mel-initiated intervention. The issue starts in status open, source manual.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.issue-resolve": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.issue-resolve",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +issue-resolve --campaign-id 22222222-2222-4222-8222-222222222222 --issue-id 33333333-3333-4333-8333-333333333333 --resolution-id 44444444-4444-4444-8444-444444444444 --outcome no-change --rationale 'Existing implementation satisfies acceptance' --evidence-ref 'campaign-recap:2026-08-06T04:00:00Z' --expected-issue-updated-at 2026-08-06T04:00:00Z"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "evidence_refs": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "expected_issue_updated_at": {
+            "description": "Issue updated_at observed with the evidence",
+            "format": "date-time",
+            "type": "string"
+          },
+          "issue_id": {
+            "description": "Campaign Issue id",
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "const": "no-change",
+            "type": "string"
+          },
+          "rationale": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "resolution_id": {
+            "description": "Stable idempotency key for this Mel resolution",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "issue_id",
+          "resolution_id",
+          "outcome",
+          "rationale",
+          "evidence_refs",
+          "expected_issue_updated_at"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.issue-resolve",
+      "output_schema": {
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+issue-resolve",
+      "stability": "stable",
+      "summary": "Resolve an ordinary open or drafting Campaign Issue when Mel has evidence that no change is required. Reuse resolution_id on retry and pass the issue updated_at observed with the evidence.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
