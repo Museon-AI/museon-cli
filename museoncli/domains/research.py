@@ -279,6 +279,101 @@ def _build_social_media_search_arguments(args: argparse.Namespace) -> dict[str, 
     return payload
 
 
+def _add_social_hook_analyze_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--url", dest="post_urls", action="append")
+    parser.add_argument("--profile-url", dest="profile_urls", action="append")
+    parser.add_argument("--limit-per-profile", type=int, default=12)
+    parser.add_argument("--max-items", type=int, default=20)
+    parser.add_argument("--idempotency-key", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_social_hook_analyze_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    if args.post_urls:
+        payload["post_urls"] = list(args.post_urls)
+    if args.profile_urls:
+        payload["profile_urls"] = list(args.profile_urls)
+    payload.update(
+        {
+            "limit_per_profile": args.limit_per_profile,
+            "max_items": args.max_items,
+            "idempotency_key": args.idempotency_key.strip(),
+        }
+    )
+    post_urls = _optional_url_list(payload.get("post_urls"), field="post_urls")
+    profile_urls = _optional_url_list(payload.get("profile_urls"), field="profile_urls")
+    if not post_urls and not profile_urls:
+        raise ValueError("research +social-media-hook-analyze requires --url or --profile-url.")
+    if len(post_urls) + len(profile_urls) > 40:
+        raise ValueError("At most 40 --url/--profile-url values are allowed.")
+    payload["post_urls"] = post_urls
+    payload["profile_urls"] = profile_urls
+    if len(payload["idempotency_key"]) < 8 or len(payload["idempotency_key"]) > 240:
+        raise ValueError("--idempotency-key must contain 8 to 240 characters.")
+    _validate_int_range(
+        payload, key="limit_per_profile", flag="--limit-per-profile", minimum=1, maximum=20
+    )
+    _validate_int_range(payload, key="max_items", flag="--max-items", minimum=1, maximum=30)
+    return payload
+
+
+def _add_social_hook_get_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--id", dest="analysis_id", required=True)
+
+
+def _build_social_hook_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return {**_load_structured_args(args), "analysis_id": args.analysis_id}
+
+
+def _add_social_hook_poll_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--id", dest="analysis_ids", action="append", required=True)
+
+
+def _build_social_hook_poll_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    payload["analysis_ids"] = list(dict.fromkeys(args.analysis_ids))
+    if len(payload["analysis_ids"]) > 20:
+        raise ValueError("--id accepts at most 20 analysis IDs per poll.")
+    return payload
+
+
+def _add_social_hook_results_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--id", dest="analysis_id", required=True)
+    parser.add_argument("--page", type=int, default=1)
+    parser.add_argument("--page-size", type=int, default=20)
+
+
+def _build_social_hook_results_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    payload.update(
+        {
+            "analysis_id": args.analysis_id,
+            "page": args.page,
+            "page_size": args.page_size,
+        }
+    )
+    if payload["page"] < 1:
+        raise ValueError("--page must be at least 1.")
+    _validate_int_range(payload, key="page_size", flag="--page-size", minimum=1, maximum=100)
+    return {key: value for key, value in payload.items() if value is not None}
+
+
+def _optional_url_list(value: Any, *, field: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise ValueError(f"{field} must be an array of URLs.")
+    normalized = [item.strip() for item in value if item.strip()]
+    if any(len(item) > 2048 for item in normalized):
+        raise ValueError(f"{field} values must be at most 2048 characters.")
+    return list(dict.fromkeys(normalized))
+
+
 def _add_community_search_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
     parser.add_argument("--platform", choices=COMMUNITY_PLATFORM_CHOICES)
@@ -699,6 +794,66 @@ def _social_media_search_input_schema() -> dict[str, Any]:
     }
 
 
+def _social_hook_analyze_input_schema() -> dict[str, Any]:
+    url_array = {
+        "type": "array",
+        "items": {"type": "string", "format": "uri", "maxLength": 2048},
+        "maxItems": 40,
+        "uniqueItems": True,
+    }
+    return {
+        "type": "object",
+        "properties": {
+            "post_urls": url_array,
+            "profile_urls": url_array,
+            "limit_per_profile": {"type": "integer", "minimum": 1, "maximum": 20, "default": 12},
+            "max_items": {"type": "integer", "minimum": 1, "maximum": 30, "default": 20},
+            "idempotency_key": {"type": "string", "minLength": 8, "maxLength": 240},
+        },
+        "required": ["idempotency_key"],
+        "anyOf": [
+            {"required": ["post_urls"], "properties": {"post_urls": {"minItems": 1}}},
+            {"required": ["profile_urls"], "properties": {"profile_urls": {"minItems": 1}}},
+        ],
+    }
+
+
+def _social_hook_get_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {"analysis_id": _uuid_id_schema("Social Hook analysis batch ID.")},
+        "required": ["analysis_id"],
+    }
+
+
+def _social_hook_poll_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "analysis_ids": {
+                "type": "array",
+                "items": _uuid_id_schema("Social Hook analysis batch ID."),
+                "minItems": 1,
+                "maxItems": 20,
+                "uniqueItems": True,
+            }
+        },
+        "required": ["analysis_ids"],
+    }
+
+
+def _social_hook_results_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "analysis_id": _uuid_id_schema("Social Hook analysis batch ID."),
+            "page": {"type": "integer", "minimum": 1, "default": 1},
+            "page_size": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20},
+        },
+        "required": ["analysis_id"],
+    }
+
+
 def _community_search_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -988,6 +1143,81 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
+            shortcut="+social-media-hook-analyze",
+            summary=(
+                "Start a durable Instagram Hook analysis batch from post and/or profile URLs. "
+                "Returns immediately; poll batches together and read structured results by page."
+            ),
+            risk_level="write",
+            execution="async_run",
+            adapter_tool_name="social_media_hook_analyze",
+            input_schema=_social_hook_analyze_input_schema(),
+            output_schema=_async_output_schema(
+                "Accepted Social Media Hook analysis batch with stable schema and strategy versions."
+            ),
+            examples=[
+                (
+                    "museoncli research +social-media-hook-analyze "
+                    "--url https://www.instagram.com/reel/<id>/ "
+                    "--profile-url https://www.instagram.com/<creator>/ "
+                    "--idempotency-key <stable_key>"
+                )
+            ],
+            add_arguments=_add_social_hook_analyze_arguments,
+            build_arguments=_build_social_hook_analyze_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
+            shortcut="+social-media-hook-analyze-get",
+            summary="Read one Social Media Hook analysis batch and its aggregate progress.",
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="social_media_hook_analyze_get",
+            input_schema=_social_hook_get_input_schema(),
+            output_schema=_async_output_schema("Social Media Hook analysis batch status."),
+            examples=["museoncli research +social-media-hook-analyze-get --id <analysis_id>"],
+            add_arguments=_add_social_hook_get_arguments,
+            build_arguments=_build_social_hook_get_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
+            shortcut="+social-media-hook-analyze-poll",
+            summary="Poll up to 20 Social Media Hook analysis batches in one request.",
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="social_media_hook_analyze_poll",
+            input_schema=_social_hook_poll_input_schema(),
+            output_schema=_async_output_schema("Grouped Social Media Hook analysis progress."),
+            examples=["museoncli research +social-media-hook-analyze-poll --id <id_1> --id <id_2>"],
+            add_arguments=_add_social_hook_poll_arguments,
+            build_arguments=_build_social_hook_poll_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
+            shortcut="+social-media-hook-analyze-results",
+            summary=(
+                "List versioned, structured Hook evidence and deterministic strategy decisions "
+                "for one analysis batch."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="social_media_hook_analyze_results",
+            input_schema=_social_hook_results_input_schema(),
+            output_schema=_direct_output_schema(
+                "Paginated Social Media Hook analysis items and strategy decisions."
+            ),
+            examples=[
+                (
+                    "museoncli research +social-media-hook-analyze-results --id <analysis_id> "
+                    "--page 1 --page-size 20"
+                )
+            ],
+            add_arguments=_add_social_hook_results_arguments,
+            build_arguments=_build_social_hook_results_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
             shortcut="+community-search",
             summary=(
                 "Search community evidence across X, Reddit, and LinkedIn using "
@@ -1175,6 +1405,64 @@ async def _execute_creative_search_ads(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_social_hook_analyze(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/research/social-media-hook-analyze",
+            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+        )
+    )
+
+
+async def _execute_social_hook_get(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    analysis_id = ctx.arguments["analysis_id"]
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "GET",
+            f"/agent-cli/research/social-media-hook-analyze/{analysis_id}",
+            params={"workspace_id": ctx.workspace_id},
+        )
+    )
+
+
+async def _execute_social_hook_poll(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/research/social-media-hook-analyze-poll",
+            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+        )
+    )
+
+
+async def _execute_social_hook_results(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    analysis_id = ctx.arguments["analysis_id"]
+    params = {
+        "workspace_id": ctx.workspace_id,
+        **{key: value for key, value in ctx.arguments.items() if key != "analysis_id"},
+    }
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "GET",
+            f"/agent-cli/research/social-media-hook-analyze/{analysis_id}/results",
+            params=params,
+        )
+    )
+
+
 async def _execute_creative_search_ads_get(ctx: CommandContext) -> Any:
     if not ctx.workspace_id:
         raise RuntimeError("missing_workspace")
@@ -1212,4 +1500,8 @@ EXECUTORS = {
     "research.creative-search-ads": direct_enveloped(_execute_creative_search_ads),
     "research.creative-search-ads-get": direct_enveloped(_execute_creative_search_ads_get),
     "research.creative-search-ads-results": direct_enveloped(_execute_creative_search_ads_results),
+    "research.social-media-hook-analyze": direct_enveloped(_execute_social_hook_analyze),
+    "research.social-media-hook-analyze-get": direct_enveloped(_execute_social_hook_get),
+    "research.social-media-hook-analyze-poll": direct_enveloped(_execute_social_hook_poll),
+    "research.social-media-hook-analyze-results": direct_enveloped(_execute_social_hook_results),
 }

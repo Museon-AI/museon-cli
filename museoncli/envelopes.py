@@ -11,6 +11,7 @@ from museoncli.config import DEFAULT_SITE_URL
 
 GENERATION_RECOMMENDED_WAKEUP_DELAY_SECONDS = 300
 CREATIVE_SEARCH_ADS_RECOMMENDED_WAKEUP_DELAY_SECONDS = 20
+SOCIAL_HOOK_ANALYSIS_RECOMMENDED_WAKEUP_DELAY_SECONDS = 5
 
 
 def domain_command_dry_run_envelope(
@@ -80,6 +81,11 @@ def direct_api_envelope(
         "research.creative-search-ads-get",
     }:
         run = _creative_search_ads_run_from_data(data)
+    elif command_name in {
+        "research.social-media-hook-analyze",
+        "research.social-media-hook-analyze-get",
+    }:
+        run = _social_hook_analysis_run_from_data(data)
     elif command_name in {
         "social-account.profile-edit-submit",
         "social-account.profile-edit-batch-submit",
@@ -459,6 +465,26 @@ def _creative_search_ads_run_from_data(data: Any) -> dict[str, Any] | None:
     if status.lower() not in {"completed", "failed", "cancelled", "canceled"}:
         run["recommended_wakeup_delay_seconds"] = (
             CREATIVE_SEARCH_ADS_RECOMMENDED_WAKEUP_DELAY_SECONDS
+        )
+    return run
+
+
+def _social_hook_analysis_run_from_data(data: Any) -> dict[str, Any] | None:
+    if not isinstance(data, dict):
+        return None
+    analysis_id = data.get("id")
+    if not analysis_id:
+        return None
+    terminal = bool(data.get("terminal"))
+    run: dict[str, Any] = {
+        "id": analysis_id,
+        "type": "social_hook_analysis",
+        "status": data.get("status"),
+        "watch_command": (f"museoncli research +social-media-hook-analyze-get --id {analysis_id}"),
+    }
+    if not terminal:
+        run["recommended_wakeup_delay_seconds"] = int(
+            data.get("poll_after_seconds") or SOCIAL_HOOK_ANALYSIS_RECOMMENDED_WAKEUP_DELAY_SECONDS
         )
     return run
 
