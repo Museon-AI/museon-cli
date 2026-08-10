@@ -1,0 +1,4 @@
+interface:
+  display_name: "Social Media Hook Analyze"
+  short_description: "Find UGC creator Hooks from Instagram video evidence"
+  default_prompt: "Use $social-media-hook-analyze to research Instagram posts in batches, classify each post as a UGC creator Hook from structured evidence, and rank only qualified candidates."

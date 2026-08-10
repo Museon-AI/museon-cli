@@ -37,8 +37,8 @@ https://www.museon.ai/cli/install.md
 
 1. **Agent 安装 Museon CLI。** 它会安装 GitHub Release 中固定版本的 Python wheel，
    并确认 CLI 命令真正可用。
-2. **Museon CLI 安装 Skill。** CLI 内置的同版本 Skill 会告诉 Agent 如何完成社媒
-   工作、什么时候需要向你确认，以及遇到登录问题时如何恢复。
+2. **Museon CLI 安装 Skills。** CLI 会同时安装基础操作 Skill 和 Instagram Hook
+   调研 Skill；需要登录态浏览时，再单独安装并初始化 ego lite。
 3. **你在浏览器里完成授权。** 登录 Museon，然后选择允许 Agent 使用的工作区。
 4. **你只需要描述工作。** Agent 会自己找到合适的 Museon 能力并继续完成任务，
    不需要你提供命令。
@@ -90,7 +90,7 @@ CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用
 uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.11/museoncli-0.5.11-py3-none-any.whl"
 ```
 
-安装成功后继续配置 Skill 和浏览器授权：
+安装成功后继续配置 Skills 和浏览器授权：
 
 ```bash
 museoncli setup --agent codex
@@ -103,7 +103,7 @@ museoncli whoami
 Claude Code 和 Cursor 分别使用 `--agent claude-code`、`--agent cursor`；
 `--agent auto` 会优先识别当前运行的 Agent；没有运行环境标记时，只会在唯一一个
 已有的 Agent 目录中安装。如果检测到多个目录，请明确选择一个 Agent，或使用
-`--agent all`。安装 Skill 后需要重启 Agent。完成授权后，`skills +list` 会列出当前工作区可用的业务 Skill。`auth finish --wait` 默认等待授权最多
+`--agent all`。安装 Skills 后需要重启 Agent。完成授权后，`skills +list` 会列出当前工作区可用的业务 Skill。`auth finish --wait` 默认等待授权最多
 五分钟，可以通过 `--timeout` 调整。CLI 可以使用 `museoncli`，也可以使用更短的
 别名 `museon`。
 

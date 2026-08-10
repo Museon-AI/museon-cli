@@ -12,6 +12,7 @@
 <p align="center">
   <a href="https://www.museon.ai/cli">Website</a> ·
   <a href="./skills/museon-cli/SKILL.md">Agent Skill</a> ·
+  <a href="./skills/social-media-hook-analyze/SKILL.md">Hook Analysis Skill</a> ·
   <a href="./README.zh-CN.md">简体中文</a>
 </p>
 
@@ -39,9 +40,10 @@ repository, choose CLI flags, or configure credentials by hand.
 
 1. **Your Agent installs Museon CLI.** It installs the exact Python wheel from
    the official GitHub release and verifies that the command is available.
-2. **Museon CLI installs the Skill.** The bundled, same-version Skill teaches
-   the Agent how to use Museon, when to ask for approval, and how to recover
-   from authentication problems.
+2. **Museon CLI installs the Skills.** The bundled, same-version Skills teach
+   the Agent how to use Museon safely and add the Instagram Hook research
+   workflow. ego lite is installed separately when authenticated browsing is
+   needed.
 3. **You approve access in the browser.** Sign in to Museon and choose the
    workspace the Agent may use.
 4. **You describe the work, not the commands.** The Agent discovers the right
@@ -117,7 +119,7 @@ wheel from the official GitHub release:
 uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.11/museoncli-0.5.11-py3-none-any.whl"
 ```
 
-Then continue with setup and browser authorization:
+Then continue with Skill setup and browser authorization:
 
 ```bash
 museoncli setup --agent codex
