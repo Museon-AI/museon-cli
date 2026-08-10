@@ -47,7 +47,7 @@ The tables below are generated — edit code, then run
 | `research +social-media-hook-analyze` | write | yes | — | async_run | Start a durable Instagram Hook analysis batch from post and/or profile URLs. Returns immediately; poll batches together and read structured results by page. |
 | `research +social-media-hook-analyze-get` | read | — | — | direct | Read one Social Media Hook analysis batch and its aggregate progress. |
 | `research +social-media-hook-analyze-poll` | read | — | — | direct | Poll up to 20 Social Media Hook analysis batches in one request. |
-| `research +social-media-hook-analyze-results` | read | — | — | direct | List versioned, structured Hook evidence and deterministic strategy decisions for one analysis batch. |
+| `research +social-media-hook-analyze-results` | read | — | — | direct | List versioned, structured Hook evidence for one analysis batch. Apply scoring and recommendation policy in the consuming Skill. |
 | `research +community-search` | read | — | — | direct | Search community evidence across X, Reddit, and LinkedIn using a stable platform and intent contract. |
 | `research +creative-search-ads` | write | yes | — | async_run | Start a durable Creative Search Ads task across Meta and TikTok ad libraries. Requires a stable idempotency key for safe retries. This is Ads-only and never falls back to organic social search. |
 | `research +creative-search-ads-get` | read | — | — | direct | Read one Creative Search Ads task, including terminal aggregate statistics and sanitized partial-failure details. |

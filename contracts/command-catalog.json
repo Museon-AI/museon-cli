@@ -3932,7 +3932,7 @@
           "risk_level": "read",
           "shortcut": "+social-media-hook-analyze-results",
           "stability": "stable",
-          "summary": "List versioned, structured Hook evidence and deterministic strategy decisions for one analysis batch.",
+          "summary": "List versioned, structured Hook evidence for one analysis batch. Apply scoring and recommendation policy in the consuming Skill.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -6231,7 +6231,7 @@
       "product"
     ]
   },
-  "contract_revision": "0.5.10",
+  "contract_revision": "0.5.11",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -22360,7 +22360,7 @@
       },
       "name": "research.social-media-hook-analyze-results",
       "output_schema": {
-        "description": "Paginated Social Media Hook analysis items and strategy decisions.",
+        "description": "Paginated Social Media Hook analysis items with policy-free structured evidence.",
         "properties": {
           "command": {
             "type": "string"
@@ -22417,7 +22417,7 @@
       "risk_level": "read",
       "shortcut": "+social-media-hook-analyze-results",
       "stability": "stable",
-      "summary": "List versioned, structured Hook evidence and deterministic strategy decisions for one analysis batch.",
+      "summary": "List versioned, structured Hook evidence for one analysis batch. Apply scoring and recommendation policy in the consuming Skill.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
