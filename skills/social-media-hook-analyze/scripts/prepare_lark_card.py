@@ -184,17 +184,31 @@ def _item_block(
     }
 
 
-def _analysis_url(admin_base_url: str, analysis_id: str) -> str:
+def _analysis_url(
+    admin_base_url: str, analysis_id: str, recommended_item_ids: list[str]
+) -> str:
     parts = urlsplit(admin_base_url)
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
-    query.update({"source": "social-hook-analysis", "analysis_id": analysis_id})
+    query.update(
+        {
+            "source": "social-hook-analysis",
+            "analysis_id": analysis_id,
+            "recommended_item_ids": ",".join(recommended_item_ids),
+        }
+    )
     query.pop("selected_item_ids", None)
     query.pop("auto_save", None)
-    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+    return urlunsplit(
+        (parts.scheme, parts.netloc, parts.path, urlencode(query, safe=","), parts.fragment)
+    )
 
 
-def _open_analysis_block(analysis_id: str, admin_base_url: str) -> dict[str, Any]:
-    view_url = _analysis_url(admin_base_url, analysis_id)
+def _open_analysis_block(
+    analysis_id: str,
+    admin_base_url: str,
+    recommended_item_ids: list[str],
+) -> dict[str, Any]:
+    view_url = _analysis_url(admin_base_url, analysis_id, recommended_item_ids)
     return {
         "tag": "column_set",
         "flex_mode": "none",
@@ -281,7 +295,13 @@ def build_card(
         )
         for index, item in enumerate(selected, start=1)
     ]
-    elements.append(_open_analysis_block(batch_id, admin_base_url))
+    elements.append(
+        _open_analysis_block(
+            batch_id,
+            admin_base_url,
+            [str(item["id"]) for item in selected],
+        )
+    )
     return {
         "schema": "2.0",
         "config": {
@@ -320,7 +340,7 @@ def main() -> int:
     parser.add_argument("--analysis-id", required=True, help="analysis batch id shown in the card")
     parser.add_argument(
         "--admin-base-url",
-        default="https://museon-ai-hook.vercel.app/hook-format",
+        default="https://museon-ai-hook.vercel.app/hook-format/social-analysis",
         help="AI Hook app page used after a successful form submission",
     )
     parser.add_argument("--min-score", type=int, default=DEFAULT_MIN_SCORE)

@@ -179,7 +179,7 @@ media keys:
 python3 scripts/prepare_lark_card.py ranked_hooks.json \
   --analysis-id <analysis-id> \
   --media-keys lark_media_keys.json \
-  --admin-base-url https://museon-ai-hook.vercel.app/hook-format \
+  --admin-base-url https://museon-ai-hook.vercel.app/hook-format/social-analysis \
   --min-score 75 \
   --max-items 4 \
   --pretty > lark_card.json
@@ -195,7 +195,7 @@ The bottom action is a static `open_url` to the AI Hook page with only the batch
 identity:
 
 ```text
-https://museon-ai-hook.vercel.app/hook-format?source=social-hook-analysis&analysis_id=<analysis-id>
+https://museon-ai-hook.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=<analysis-id>&recommended_item_ids=<codex-filtered-item-ids>
 ```
 
 The AI Hook page loads the batch, lets the authenticated user preview and choose
