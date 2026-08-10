@@ -11,7 +11,7 @@ from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 CARD_SCHEMA_VERSION = "social-hook-lark-card.v1"
-MEDIA_SCHEMA_VERSION = "social-hook-lark-media.v1"
+MEDIA_SCHEMA_VERSION = "social-hook-lark-media.v2"
 RANKING_SCHEMA_VERSION = "hook-score.v2"
 DEFAULT_MIN_SCORE = 75
 DEFAULT_MAX_ITEMS = 4
@@ -75,8 +75,17 @@ def _summary_block(batch_id: str, selected: list[dict[str, Any]], total: int) ->
                 "padding": "12px",
                 "vertical_spacing": "2px",
                 "elements": [
-                    {"tag": "markdown", "content": f"## <font color='blue'>{len(selected)}</font>", "text_align": "center"},
-                    {"tag": "markdown", "content": "<font color='grey'>高分 Hook</font>", "text_align": "center", "text_size": "notation"},
+                    {
+                        "tag": "markdown",
+                        "content": f"## <font color='blue'>{len(selected)}</font>",
+                        "text_align": "center",
+                    },
+                    {
+                        "tag": "markdown",
+                        "content": "<font color='grey'>高分 Hook</font>",
+                        "text_align": "center",
+                        "text_size": "notation",
+                    },
                 ],
             },
             {
@@ -85,8 +94,17 @@ def _summary_block(batch_id: str, selected: list[dict[str, Any]], total: int) ->
                 "padding": "12px",
                 "vertical_spacing": "2px",
                 "elements": [
-                    {"tag": "markdown", "content": f"## <font color='blue'>{best}</font>", "text_align": "center"},
-                    {"tag": "markdown", "content": "<font color='grey'>最高分</font>", "text_align": "center", "text_size": "notation"},
+                    {
+                        "tag": "markdown",
+                        "content": f"## <font color='blue'>{best}</font>",
+                        "text_align": "center",
+                    },
+                    {
+                        "tag": "markdown",
+                        "content": "<font color='grey'>最高分</font>",
+                        "text_align": "center",
+                        "text_size": "notation",
+                    },
                 ],
             },
             {
@@ -95,8 +113,17 @@ def _summary_block(batch_id: str, selected: list[dict[str, Any]], total: int) ->
                 "padding": "12px",
                 "vertical_spacing": "2px",
                 "elements": [
-                    {"tag": "markdown", "content": f"## <font color='blue'>{total}</font>", "text_align": "center"},
-                    {"tag": "markdown", "content": "<font color='grey'>批次条目</font>", "text_align": "center", "text_size": "notation"},
+                    {
+                        "tag": "markdown",
+                        "content": f"## <font color='blue'>{total}</font>",
+                        "text_align": "center",
+                    },
+                    {
+                        "tag": "markdown",
+                        "content": "<font color='grey'>批次条目</font>",
+                        "text_align": "center",
+                        "text_size": "notation",
+                    },
                 ],
             },
         ],
@@ -134,50 +161,31 @@ def _item_block(
             },
         },
     }
-    cover_img_key = media.get("cover_img_key")
-    if isinstance(cover_img_key, str) and cover_img_key.strip():
-        video["cover"] = {"img_key": cover_img_key.strip()}
+    video["cover"] = {"img_key": str(media["cover_img_key"]).strip()}
     return {
-        "tag": "interactive_container",
-        "width": "fill",
-        "has_border": True,
-        "border_color": "blue-100",
-        "corner_radius": "8px",
-        "background_style": "blue-50",
-        "padding": "8px",
+        "tag": "column_set",
+        "flex_mode": "none",
         "margin": "0px 0px 12px 0px",
-        "behaviors": [{"type": "open_url", "default_url": url}],
-        "elements": [
+        "columns": [
             {
-                "tag": "column_set",
-                "flex_mode": "none",
-                "horizontal_spacing": "8px",
-                "columns": [
+                "tag": "column",
+                "width": "weighted",
+                "weight": 1,
+                "background_style": "blue-50",
+                "padding": "8px",
+                "vertical_spacing": "8px",
+                "elements": [
+                    video,
                     {
-                        "tag": "column",
-                        "width": "weighted",
-                        "weight": 2,
-                        "elements": [video],
+                        "tag": "markdown",
+                        "content": f"**[#{index} · {title}]({url})**  <text_tag color='blue'>{item['score']} 分</text_tag>\n<font color='grey'>{_creator(item)}</font>",
                     },
                     {
-                        "tag": "column",
-                        "width": "weighted",
-                        "weight": 3,
-                        "vertical_spacing": "4px",
-                        "elements": [
-                            {
-                                "tag": "markdown",
-                                "content": f"**[#{index} · {title}]({url})**  <text_tag color='blue'>{item['score']} 分</text_tag>\n<font color='grey'>{_creator(item)}</font>",
-                            },
-                            {
-                                "tag": "markdown",
-                                "content": f"**前三秒**：{opening_text}\n**声音/口播**：{speech}",
-                                "text_size": "notation",
-                            },
-                        ],
+                        "tag": "markdown",
+                        "content": f"**前三秒**：{opening_text}\n**声音/口播**：{speech}",
+                        "text_size": "notation",
                     },
                 ],
-                "element_id": f"hook_row_{index}",
             }
         ],
         "element_id": f"hook_item_{index}",
@@ -185,7 +193,11 @@ def _item_block(
 
 
 def _analysis_url(
-    admin_base_url: str, analysis_id: str, recommended_item_ids: list[str]
+    admin_base_url: str,
+    analysis_id: str,
+    recommended_item_ids: list[str],
+    *,
+    auto_save: bool = False,
 ) -> str:
     parts = urlsplit(admin_base_url)
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
@@ -197,60 +209,75 @@ def _analysis_url(
         }
     )
     query.pop("selected_item_ids", None)
-    query.pop("auto_save", None)
+    if auto_save:
+        query["auto_save"] = "1"
+    else:
+        query.pop("auto_save", None)
     return urlunsplit(
         (parts.scheme, parts.netloc, parts.path, urlencode(query, safe=","), parts.fragment)
     )
 
 
-def _open_analysis_block(
+def _open_analysis_blocks(
     analysis_id: str,
     admin_base_url: str,
     recommended_item_ids: list[str],
-) -> dict[str, Any]:
+) -> list[dict[str, Any]]:
     view_url = _analysis_url(admin_base_url, analysis_id, recommended_item_ids)
-    return {
-        "tag": "column_set",
-        "flex_mode": "none",
-        "horizontal_spacing": "8px",
-        "columns": [
-            {
-                "tag": "column",
-                "width": "weighted",
-                "weight": 3,
-                "vertical_align": "center",
-                "elements": [
-                    {
-                        "tag": "markdown",
-                        "content": "**在 AI Hook 页面挑选**\n<font color='grey'>打开整批结果，预览后选择并保存</font>",
-                        "text_size": "notation",
-                    }
-                ],
-            },
-            {
-                "tag": "column",
-                "width": "weighted",
-                "weight": 1,
-                "horizontal_align": "right",
-                "vertical_align": "center",
-                "elements": [
-                    {
-                        "tag": "button",
-                        "text": {
-                            "tag": "plain_text",
-                            "content": "挑选并保存",
-                        },
-                        "type": "primary_filled",
-                        "size": "small",
-                        "width": "default",
-                        "behaviors": [{"type": "open_url", "default_url": view_url}],
-                        "element_id": "open_analysis_batch",
-                    }
-                ],
-            },
-        ],
-        "element_id": "batch_open_area",
-    }
+    save_all_url = _analysis_url(
+        admin_base_url,
+        analysis_id,
+        recommended_item_ids,
+        auto_save=True,
+    )
+    return [
+        {
+            "tag": "markdown",
+            "content": "**保存为 AI Hook**\n<font color='grey'>可以进入页面继续挑选，也可以直接保存本卡片中的全部推荐结果</font>",
+            "text_size": "notation",
+            "element_id": "batch_open_description",
+        },
+        {
+            "tag": "column_set",
+            "flex_mode": "none",
+            "horizontal_spacing": "8px",
+            "columns": [
+                {
+                    "tag": "column",
+                    "width": "weighted",
+                    "weight": 1,
+                    "elements": [
+                        {
+                            "tag": "button",
+                            "text": {"tag": "plain_text", "content": "挑选并保存"},
+                            "type": "default",
+                            "size": "medium",
+                            "width": "fill",
+                            "behaviors": [{"type": "open_url", "default_url": view_url}],
+                            "element_id": "open_analysis_batch",
+                        }
+                    ],
+                },
+                {
+                    "tag": "column",
+                    "width": "weighted",
+                    "weight": 1,
+                    "elements": [
+                        {
+                            "tag": "button",
+                            "text": {"tag": "plain_text", "content": "全部保存"},
+                            "type": "primary_filled",
+                            "size": "medium",
+                            "width": "fill",
+                            "behaviors": [{"type": "open_url", "default_url": save_all_url}],
+                            "element_id": "save_all_recommended",
+                        }
+                    ],
+                },
+            ],
+            "element_id": "batch_open_area",
+        },
+    ]
 
 
 def _media_map(payload: Any) -> dict[str, dict[str, Any]]:
@@ -268,6 +295,14 @@ def _media_map(payload: Any) -> dict[str, dict[str, Any]]:
             raise ValueError("Every Lark media item requires item_id")
         if not isinstance(file_key, str) or not file_key.startswith("file_"):
             raise ValueError(f"Lark media item {item_id!r} requires a file_key")
+        duration_ms = item.get("duration_ms")
+        if not isinstance(duration_ms, int) or isinstance(duration_ms, bool) or duration_ms <= 0:
+            raise ValueError(
+                f"Lark media item {item_id!r} requires duration_ms > 0 from the MP4 upload"
+            )
+        cover_img_key = item.get("cover_img_key")
+        if not isinstance(cover_img_key, str) or not cover_img_key.startswith("img_"):
+            raise ValueError(f"Lark media item {item_id!r} requires a cover_img_key")
         result[item_id] = item
     return result
 
@@ -295,8 +330,8 @@ def build_card(
         )
         for index, item in enumerate(selected, start=1)
     ]
-    elements.append(
-        _open_analysis_block(
+    elements.extend(
+        _open_analysis_blocks(
             batch_id,
             admin_base_url,
             [str(item["id"]) for item in selected],
@@ -319,7 +354,11 @@ def build_card(
             "template": "blue",
             "icon": {"tag": "standard_icon", "token": "chart_colorful"},
             "text_tag_list": [
-                {"tag": "text_tag", "text": {"tag": "plain_text", "content": "已完成"}, "color": "blue"}
+                {
+                    "tag": "text_tag",
+                    "text": {"tag": "plain_text", "content": "已完成"},
+                    "color": "blue",
+                }
             ],
         },
         "body": {
@@ -335,7 +374,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("input", nargs="?", help="ranked_hooks.json; defaults to stdin")
     parser.add_argument(
-        "--media-keys", required=True, help="social-hook-lark-media.v1 JSON from Lark uploads"
+        "--media-keys", required=True, help="social-hook-lark-media.v2 JSON from Lark uploads"
     )
     parser.add_argument("--analysis-id", required=True, help="analysis batch id shown in the card")
     parser.add_argument(

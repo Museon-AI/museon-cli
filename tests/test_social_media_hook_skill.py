@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "skills/social-media-hook-analyze/scripts/rank_hooks.py"
 CARD_SCRIPT = ROOT / "skills/social-media-hook-analyze/scripts/prepare_lark_card.py"
+UPLOAD_SCRIPT = ROOT / "skills/social-media-hook-analyze/scripts/upload_lark_media.py"
 SETUP_SCRIPT = ROOT / "skills/social-media-hook-analyze/scripts/check_setup.py"
 
 
@@ -157,12 +159,13 @@ def test_lark_card_groups_only_recommended_hooks_with_clickable_video(tmp_path: 
     media_path.write_text(
         json.dumps(
             {
-                "media_schema_version": "social-hook-lark-media.v1",
+                "media_schema_version": "social-hook-lark-media.v2",
                 "items": [
                     {
                         "item_id": "item-1",
                         "file_key": "file_v3_demo",
                         "cover_img_key": "img_v3_demo",
+                        "duration_ms": 47000,
                     }
                 ],
             }
@@ -188,15 +191,13 @@ def test_lark_card_groups_only_recommended_hooks_with_clickable_video(tmp_path: 
 
     assert card["schema"] == "2.0"
     assert card["header"]["subtitle"]["content"] == "批次 batch-1 · 1 条"
-    assert len(card["body"]["elements"]) == 2
+    assert len(card["body"]["elements"]) == 3
     item_block = card["body"]["elements"][0]
-    open_area = card["body"]["elements"][1]
+    open_area = card["body"]["elements"][2]
     assert card["config"]["enable_forward"] is False
-    row = item_block["elements"][0]
-    assert row["tag"] == "column_set"
-    assert row["columns"][0]["weight"] == 2
-    assert row["columns"][1]["weight"] == 3
-    assert row["columns"][0]["elements"][0] == {
+    assert item_block["tag"] == "column_set"
+    assert item_block["columns"][0]["weight"] == 1
+    assert item_block["columns"][0]["elements"][0] == {
         "tag": "video",
         "element_id": "hook_video_1",
         "file_key": "file_v3_demo",
@@ -212,26 +213,33 @@ def test_lark_card_groups_only_recommended_hooks_with_clickable_video(tmp_path: 
         },
         "cover": {"img_key": "img_v3_demo"},
     }
-    assert item_block["behaviors"] == [
-        {
-            "type": "open_url",
-            "default_url": "https://www.instagram.com/reel/example/",
-        }
-    ]
-    title = row["columns"][1]["elements"][0]
+    assert "behaviors" not in item_block
+    title = item_block["columns"][0]["elements"][1]
     assert title["tag"] == "markdown"
     assert "@creator" in title["content"]
     assert "https://www.instagram.com/reel/example/" in title["content"]
     assert "checker" not in json.dumps(card)
     assert "form_action_type" not in json.dumps(card)
-    open_button = open_area["columns"][1]["elements"][0]
+    open_button = open_area["columns"][0]["elements"][0]
     assert open_button["text"]["content"] == "挑选并保存"
-    assert open_button["type"] == "primary_filled"
-    assert open_button["size"] == "small"
+    assert open_button["type"] == "default"
+    assert open_button["size"] == "medium"
+    assert open_button["width"] == "fill"
     assert open_button["behaviors"] == [
         {
             "type": "open_url",
             "default_url": "https://museon-ai-hook.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=batch-1&recommended_item_ids=item-1",
+        }
+    ]
+    save_all_button = open_area["columns"][1]["elements"][0]
+    assert save_all_button["text"]["content"] == "全部保存"
+    assert save_all_button["type"] == "primary_filled"
+    assert save_all_button["size"] == "medium"
+    assert save_all_button["width"] == "fill"
+    assert save_all_button["behaviors"] == [
+        {
+            "type": "open_url",
+            "default_url": "https://museon-ai-hook.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=batch-1&recommended_item_ids=item-1&auto_save=1",
         }
     ]
     assert open_area["element_id"] == "batch_open_area"
@@ -253,7 +261,7 @@ def test_lark_card_fails_closed_without_recommended_hooks(tmp_path: Path) -> Non
     ranked_path.write_text(json.dumps(ranked), encoding="utf-8")
     media_path = tmp_path / "media.json"
     media_path.write_text(
-        json.dumps({"media_schema_version": "social-hook-lark-media.v1", "items": []}),
+        json.dumps({"media_schema_version": "social-hook-lark-media.v2", "items": []}),
         encoding="utf-8",
     )
 
@@ -273,6 +281,119 @@ def test_lark_card_fails_closed_without_recommended_hooks(tmp_path: Path) -> Non
 
     assert completed.returncode != 0
     assert "No recommended Instagram Hook" in completed.stderr
+
+
+def test_lark_card_fails_closed_without_duration_and_cover(tmp_path: Path) -> None:
+    ranked = _run(tmp_path, _assessment())
+    ranked_path = tmp_path / "ranked.json"
+    ranked_path.write_text(json.dumps(ranked), encoding="utf-8")
+
+    for media_item, expected_error in [
+        (
+            {"item_id": "item-1", "file_key": "file_v3_demo", "cover_img_key": "img_v3_demo"},
+            "duration_ms > 0",
+        ),
+        (
+            {"item_id": "item-1", "file_key": "file_v3_demo", "duration_ms": 47000},
+            "cover_img_key",
+        ),
+    ]:
+        media_path = tmp_path / "media-invalid.json"
+        media_path.write_text(
+            json.dumps(
+                {
+                    "media_schema_version": "social-hook-lark-media.v2",
+                    "items": [media_item],
+                }
+            ),
+            encoding="utf-8",
+        )
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(CARD_SCRIPT),
+                str(ranked_path),
+                "--analysis-id",
+                "batch-1",
+                "--media-keys",
+                str(media_path),
+            ],
+            text=True,
+            capture_output=True,
+        )
+
+        assert completed.returncode != 0
+        assert expected_error in completed.stderr
+
+
+def test_lark_media_uploader_passes_real_duration_and_uploads_cover(
+    tmp_path: Path, monkeypatch: Any
+) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    upload_log = tmp_path / "upload.log"
+    ffprobe = bin_dir / "ffprobe"
+    ffprobe.write_text("#!/bin/sh\nprintf '47.125\\n'\n", encoding="utf-8")
+    ffmpeg = bin_dir / "ffmpeg"
+    ffmpeg.write_text(
+        "#!/bin/sh\n"
+        'case "$*" in\n'
+        "  *blackdetect*) echo 'black_start:0 black_end:0.08' >&2 ;;\n"
+        "  *) for last do :; done; printf 'jpeg' > \"$last\" ;;\n"
+        "esac\n",
+        encoding="utf-8",
+    )
+    lark = bin_dir / "lark-cli"
+    lark.write_text(
+        "#!/bin/sh\n"
+        'printf \'%s\\n\' "$*" >> "$UPLOAD_LOG"\n'
+        'case "$*" in\n'
+        '  */open-apis/im/v1/files*) echo \'{"ok":true,"data":{"file_key":"file_v3_demo"}}\' ;;\n'
+        '  *) echo \'{"ok":true,"data":{"image_key":"img_v3_demo"}}\' ;;\n'
+        "esac\n",
+        encoding="utf-8",
+    )
+    for executable in (ffprobe, ffmpeg, lark):
+        executable.chmod(0o755)
+    video_path = tmp_path / "hook.mp4"
+    video_path.write_bytes(b"fake-mp4")
+    sources_path = tmp_path / "sources.json"
+    sources_path.write_text(
+        json.dumps(
+            {
+                "media_source_schema_version": "social-hook-lark-media-source.v1",
+                "items": [{"item_id": "item-1", "video_path": "hook.mp4"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
+    monkeypatch.setenv("UPLOAD_LOG", str(upload_log))
+
+    completed = subprocess.run(
+        [sys.executable, str(UPLOAD_SCRIPT), str(sources_path)],
+        cwd=tmp_path,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    result = json.loads(completed.stdout)
+
+    assert result == {
+        "media_schema_version": "social-hook-lark-media.v2",
+        "items": [
+            {
+                "item_id": "item-1",
+                "file_key": "file_v3_demo",
+                "cover_img_key": "img_v3_demo",
+                "duration_ms": 47125,
+            }
+        ],
+    }
+    upload_calls = upload_log.read_text(encoding="utf-8")
+    assert '"duration":47125' in upload_calls
+    assert "/open-apis/im/v1/files --as bot" in upload_calls
+    assert "im images create --as bot" in upload_calls
 
 
 def test_skill_setup_checks_ego_and_required_museon_schemas(
