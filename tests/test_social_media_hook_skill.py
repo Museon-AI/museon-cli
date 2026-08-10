@@ -231,7 +231,7 @@ def test_lark_card_groups_only_recommended_hooks_with_clickable_video(tmp_path: 
     assert open_button["behaviors"] == [
         {
             "type": "open_url",
-            "default_url": "https://museon-ai-hook.vercel.app/hook-format?source=social-hook-analysis&analysis_id=batch-1",
+            "default_url": "https://museon-ai-hook.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=batch-1&recommended_item_ids=item-1",
         }
     ]
     assert open_area["element_id"] == "batch_open_area"
