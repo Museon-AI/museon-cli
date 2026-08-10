@@ -1197,15 +1197,15 @@ def specs() -> list[CommandSpec]:
             domain=Domain.RESEARCH,
             shortcut="+social-media-hook-analyze-results",
             summary=(
-                "List versioned, structured Hook evidence and deterministic strategy decisions "
-                "for one analysis batch."
+                "List versioned, structured Hook evidence for one analysis batch. "
+                "Apply scoring and recommendation policy in the consuming Skill."
             ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="social_media_hook_analyze_results",
             input_schema=_social_hook_results_input_schema(),
             output_schema=_direct_output_schema(
-                "Paginated Social Media Hook analysis items and strategy decisions."
+                "Paginated Social Media Hook analysis items with policy-free structured evidence."
             ),
             examples=[
                 (
