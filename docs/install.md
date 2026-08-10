@@ -51,9 +51,9 @@ If the command is unavailable:
 3. Verify the installation with `museoncli version`. Do not claim success
    until it works.
 
-## 2. Install the Museon CLI Skill
+## 2. Install the Museon Agent Skills
 
-For Codex, Claude Code, or Cursor, install the Skill bundled with the CLI:
+For Codex, Claude Code, or Cursor, install the Skills bundled with the CLI:
 
 ```bash
 museoncli setup --agent auto
@@ -68,12 +68,14 @@ museoncli setup --agent cursor
 ```
 
 Run only the command matching the current Agent. A successful result reports
-the Skill status as `installed` or `current` and includes its destination path.
+both `museon-cli` and `social-media-hook-analyze` as `installed` or `current`
+and includes their destination paths.
 
 For another Agent that supports Skills, use that Agent's native Skill installer
-to install this folder:
+to install both folders:
 
 https://github.com/Museon-AI/museon-cli/tree/v0.5.11/skills/museon-cli
+https://github.com/Museon-AI/museon-cli/tree/v0.5.11/skills/social-media-hook-analyze
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and

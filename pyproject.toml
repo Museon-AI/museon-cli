@@ -52,6 +52,7 @@ packages = ["museoncli"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "skills/museon-cli" = "museoncli/bundled_skills/museon-cli"
+"skills/social-media-hook-analyze" = "museoncli/bundled_skills/social-media-hook-analyze"
 
 [tool.ruff]
 line-length = 100

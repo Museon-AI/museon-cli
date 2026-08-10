@@ -62,12 +62,16 @@ def _assert_no_forbidden_paths(entries: list[ArchiveEntry], *, artifact: Path) -
             raise RuntimeError(f"{artifact.name} contains sensitive file type: {entry.name}")
 
 
-def _assert_complete_skill(entries: list[ArchiveEntry], *, prefix: str, artifact: Path) -> None:
+def _assert_complete_skill(
+    entries: list[ArchiveEntry], *, skill_name: str, prefix: str, artifact: Path
+) -> None:
     names = {entry.name for entry in entries}
     source_files = {
-        path.relative_to(ROOT / "skills" / "museon-cli").as_posix()
-        for path in (ROOT / "skills" / "museon-cli").rglob("*")
+        path.relative_to(ROOT / "skills" / skill_name).as_posix()
+        for path in (ROOT / "skills" / skill_name).rglob("*")
         if path.is_file()
+        and "__pycache__" not in path.parts
+        and path.suffix not in {".pyc", ".pyo"}
     }
     expected = {f"{prefix}/{relative}" for relative in source_files}
     missing = sorted(expected - names)
@@ -145,7 +149,14 @@ def verify_dist(dist_dir: Path) -> None:
     _assert_no_forbidden_paths(wheel_entries, artifact=wheel)
     _assert_complete_skill(
         wheel_entries,
+        skill_name="museon-cli",
         prefix="museoncli/bundled_skills/museon-cli",
+        artifact=wheel,
+    )
+    _assert_complete_skill(
+        wheel_entries,
+        skill_name="social-media-hook-analyze",
+        prefix="museoncli/bundled_skills/social-media-hook-analyze",
         artifact=wheel,
     )
     _assert_public_wheel_content(wheel_entries, artifact=wheel)

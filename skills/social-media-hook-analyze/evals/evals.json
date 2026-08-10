@@ -1,0 +1,23 @@
+{
+  "skill_name": "social-media-hook-analyze",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Browse this Instagram automotive account, analyze its strongest openings in one batch, and give me reusable UGC creator Hooks.",
+      "expected_output": "Product showcases and event reveals are excluded even when the server reports UGC-style filming; only creator-led post Hooks can be recommended.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I have 35 Instagram Reel URLs. Start the analyses together, poll them in groups, and rank the creator Hooks without blocking on each run one by one.",
+      "expected_output": "The Agent starts batches first, batch-polls up to 20 IDs, writes post assessments, and passes them to the local ranker.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Find both good Hooks and creators from these Instagram profiles. Some grid posts are photos and some are mixed carousels.",
+      "expected_output": "Only reliably known images are pre-filtered; ambiguous posts use the server NOT_VIDEO fallback, and creator candidacy is assessed separately after post qualification.",
+      "files": []
+    }
+  ]
+}

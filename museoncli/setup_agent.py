@@ -1,4 +1,4 @@
-"""Install the bundled Museon Agent Skill into supported Agent homes."""
+"""Install the bundled Museon Agent Skills into supported Agent homes."""
 
 from __future__ import annotations
 
@@ -14,18 +14,42 @@ from museoncli import __version__
 
 
 SUPPORTED_AGENTS = ("codex", "claude-code", "cursor")
+MANAGED_SKILLS = ("museon-cli", "social-media-hook-analyze")
 
 
 def install_agent_skill(agent: str, *, force: bool = False) -> dict[str, Any]:
     targets = _resolve_agents(agent)
-    source = _skill_source()
-    results = [_install_one(source, target, force=force) for target in targets]
+    sources = _skill_sources()
+    for target in targets:
+        for skill_name in sources:
+            _validate_destination(target, skill_name=skill_name, force=force)
+    results = []
+    for target in targets:
+        installed = [
+            _install_one(source, target, skill_name=skill_name, force=force)
+            for skill_name, source in sources.items()
+        ]
+        primary = installed[0]
+        results.append(
+            {
+                "agent": target,
+                "status": (
+                    "current" if all(item["status"] == "current" for item in installed) else "installed"
+                ),
+                "path": primary["path"],
+                "digest": primary["digest"],
+                "skills": installed,
+            }
+        )
     return {
         "cli_version": __version__,
         "skill": "museon-cli",
+        "skills": list(MANAGED_SKILLS),
         "agents": results,
         "next_steps": [
             "Restart the host Agent so it reloads installed Skills.",
+            "Install and complete onboarding for ego lite when Instagram browsing is needed; "
+            "the social-media-hook-analyze Skill checks the ego-browser command before use.",
             "Run `museoncli auth start`, approve access in the browser, then run "
             "`museoncli auth finish --wait` (waits up to five minutes by default).",
             "After authentication, run `museoncli skills +list` to discover the "
@@ -84,27 +108,38 @@ def _agent_home(agent: str) -> Path:
     raise ValueError(f"Unsupported Agent: {agent}")
 
 
-def _skill_source():
-    bundled = files("museoncli").joinpath("bundled_skills", "museon-cli")
-    if bundled.joinpath("SKILL.md").is_file():
-        return bundled
-    development_source = Path(__file__).resolve().parents[1] / "skills" / "museon-cli"
-    if development_source.joinpath("SKILL.md").is_file():
-        return development_source
-    raise RuntimeError("The Museon CLI package does not contain its bundled Agent Skill.")
+def _skill_sources() -> dict[str, Any]:
+    bundled_root = files("museoncli").joinpath("bundled_skills")
+    development_root = Path(__file__).resolve().parents[1] / "skills"
+    sources: dict[str, Any] = {}
+    for skill_name in MANAGED_SKILLS:
+        bundled = bundled_root.joinpath(skill_name)
+        if bundled.joinpath("SKILL.md").is_file():
+            sources[skill_name] = bundled
+            continue
+        development_source = development_root / skill_name
+        if development_source.joinpath("SKILL.md").is_file():
+            sources[skill_name] = development_source
+            continue
+        raise RuntimeError(
+            f"The Museon CLI package does not contain its bundled {skill_name} Agent Skill."
+        )
+    return sources
 
 
-def _install_one(source, agent: str, *, force: bool) -> dict[str, str]:
-    destination = _agent_home(agent) / "skills" / "museon-cli"
+def _install_one(
+    source, agent: str, *, skill_name: str, force: bool
+) -> dict[str, str]:
+    destination = _agent_home(agent) / "skills" / skill_name
     source_digest = _tree_digest(source)
     if destination.is_dir() and _tree_digest(destination) == source_digest:
         return {
-            "agent": agent,
+            "name": skill_name,
             "status": "current",
             "path": str(destination),
             "digest": source_digest,
         }
-    if destination.exists() and not force and not _is_museon_skill(destination):
+    if destination.exists() and not force and not _is_managed_skill(destination, skill_name):
         raise RuntimeError(
             f"Refusing to replace an unmanaged path: {destination}. "
             "Move it aside or rerun with --force."
@@ -130,16 +165,27 @@ def _install_one(source, agent: str, *, force: bool) -> dict[str, str]:
         raise
 
     return {
-        "agent": agent,
+        "name": skill_name,
         "status": "installed",
         "path": str(destination),
         "digest": source_digest,
     }
 
 
+def _validate_destination(agent: str, *, skill_name: str, force: bool) -> None:
+    destination = _agent_home(agent) / "skills" / skill_name
+    if destination.exists() and not force and not _is_managed_skill(destination, skill_name):
+        raise RuntimeError(
+            f"Refusing to replace an unmanaged path: {destination}. "
+            "Move it aside or rerun with --force."
+        )
+
+
 def _copy_tree(source, destination: Path) -> None:
     destination.mkdir(parents=True, exist_ok=True)
     for child in source.iterdir():
+        if child.name == "__pycache__" or child.name.endswith((".pyc", ".pyo")):
+            continue
         target = destination / child.name
         if child.is_dir():
             _copy_tree(child, target)
@@ -160,6 +206,8 @@ def _tree_digest(root) -> str:
 
 def _walk_files(root, prefix: str = ""):
     for child in root.iterdir():
+        if child.name == "__pycache__" or child.name.endswith((".pyc", ".pyo")):
+            continue
         relative = f"{prefix}/{child.name}" if prefix else child.name
         if child.is_dir():
             yield from _walk_files(child, relative)
@@ -167,12 +215,12 @@ def _walk_files(root, prefix: str = ""):
             yield relative, child
 
 
-def _is_museon_skill(path: Path) -> bool:
+def _is_managed_skill(path: Path, skill_name: str) -> bool:
     skill_file = path / "SKILL.md"
     if not skill_file.is_file():
         return False
     try:
-        return "name: museon-cli" in skill_file.read_text(encoding="utf-8")[:500]
+        return f"name: {skill_name}" in skill_file.read_text(encoding="utf-8")[:500]
     except OSError:
         return False
 

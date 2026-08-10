@@ -118,6 +118,16 @@ def test_release_workflow_publishes_deterministic_skills_asset(tmp_path: Path) -
         members = archive.getmembers()
     assert "skills/museon-cli/SKILL.md" in {member.name for member in members}
     assert "skills/experiment-brain/SKILL.md" in {member.name for member in members}
+    assert "skills/social-media-hook-analyze/SKILL.md" in {
+        member.name for member in members
+    }
+    assert "skills/social-media-hook-analyze/scripts/rank_hooks.py" in {
+        member.name for member in members
+    }
+    assert not any(
+        "__pycache__" in member.name or member.name.endswith((".pyc", ".pyo"))
+        for member in members
+    )
     assert all(
         member.mtime == 0
         and member.uid == 0

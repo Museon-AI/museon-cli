@@ -13,6 +13,10 @@ DEFAULT_SOURCE = ROOT / "skills"
 DEFAULT_OUTPUT = ROOT / "release" / "skills.tar.gz"
 
 
+def _is_skill_source(path: Path) -> bool:
+    return "__pycache__" not in path.parts and path.suffix not in {".pyc", ".pyo"}
+
+
 def _normalized(info: tarfile.TarInfo) -> tarfile.TarInfo:
     info.uid = 0
     info.gid = 0
@@ -30,7 +34,13 @@ def build_archive(source: Path, output: Path) -> None:
         raise ValueError(f"skills source directory does not exist: {source}")
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    paths = [source, *sorted(source.rglob("*"), key=lambda path: path.relative_to(source).as_posix())]
+    paths = [
+        source,
+        *sorted(
+            (path for path in source.rglob("*") if _is_skill_source(path)),
+            key=lambda path: path.relative_to(source).as_posix(),
+        ),
+    ]
     with output.open("wb") as raw:
         with gzip.GzipFile(fileobj=raw, mode="wb", filename="", mtime=0) as compressed:
             with tarfile.open(fileobj=compressed, mode="w", format=tarfile.GNU_FORMAT) as archive:
