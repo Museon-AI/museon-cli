@@ -549,9 +549,7 @@ def test_host_managed_auth_status_is_explicit_and_mutations_are_blocked() -> Non
         )
     )
 
-    result = asyncio.run(
-        main_module.dispatch_auth(argparse.Namespace(auth_command="status"), cfg)
-    )
+    result = asyncio.run(main_module.dispatch_auth(argparse.Namespace(auth_command="status"), cfg))
 
     assert result["data"]["authenticated"] is True
     assert result["data"]["auth_method"] == "agent_capability"
@@ -560,9 +558,7 @@ def test_host_managed_auth_status_is_explicit_and_mutations_are_blocked() -> Non
     assert result["data"]["version"] == "lease-current"
     for command in ("login", "start", "finish", "logout"):
         with pytest.raises(RuntimeError, match="managed_auth"):
-            asyncio.run(
-                main_module.dispatch_auth(argparse.Namespace(auth_command=command), cfg)
-            )
+            asyncio.run(main_module.dispatch_auth(argparse.Namespace(auth_command=command), cfg))
 
 
 def test_auth_finish_parser_supports_optional_wait() -> None:
@@ -2760,6 +2756,10 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
     assert [item["name"] for item in result["data"]["commands"]["research"]] == [
         "research.web-research",
         "research.social-media-search",
+        "research.social-media-hook-analyze",
+        "research.social-media-hook-analyze-get",
+        "research.social-media-hook-analyze-poll",
+        "research.social-media-hook-analyze-results",
         "research.community-search",
         "research.creative-search-ads",
         "research.creative-search-ads-get",

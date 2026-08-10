@@ -3849,6 +3849,106 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "research.social-media-hook-analyze",
+          "domain": "research",
+          "execution": "async_run",
+          "name": "research.social-media-hook-analyze",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+social-media-hook-analyze",
+          "stability": "stable",
+          "summary": "Start a durable Instagram Hook analysis batch from post and/or profile URLs. Returns immediately; poll batches together and read structured results by page.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "research.social-media-hook-analyze-get",
+          "domain": "research",
+          "execution": "direct",
+          "name": "research.social-media-hook-analyze-get",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+social-media-hook-analyze-get",
+          "stability": "stable",
+          "summary": "Read one Social Media Hook analysis batch and its aggregate progress.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "research.social-media-hook-analyze-poll",
+          "domain": "research",
+          "execution": "direct",
+          "name": "research.social-media-hook-analyze-poll",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+social-media-hook-analyze-poll",
+          "stability": "stable",
+          "summary": "Poll up to 20 Social Media Hook analysis batches in one request.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "research.social-media-hook-analyze-results",
+          "domain": "research",
+          "execution": "direct",
+          "name": "research.social-media-hook-analyze-results",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+social-media-hook-analyze-results",
+          "stability": "stable",
+          "summary": "List versioned, structured Hook evidence and deterministic strategy decisions for one analysis batch.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "research.community-search",
           "domain": "research",
           "execution": "direct",
@@ -6131,7 +6231,7 @@
       "product"
     ]
   },
-  "contract_revision": "0.5.9",
+  "contract_revision": "0.5.10",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -21813,6 +21913,511 @@
       "shortcut": "+creative-search-ads-results",
       "stability": "stable",
       "summary": "List deduplicated Creative Search Ads evidence for one task. Defaults to analysis-eligible matches and returns relevance, evidence quality, metric extrema, and limitations. Treat results as one snapshot: cite item IDs for numeric claims and do not infer causality, conversion effectiveness, market growth, competition intensity, or geographic activity without additional evidence.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "research.social-media-hook-analyze": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.social-media-hook-analyze",
+      "domain": "research",
+      "examples": [
+        "museoncli research +social-media-hook-analyze --url https://www.instagram.com/reel/<id>/ --profile-url https://www.instagram.com/<creator>/ --idempotency-key <stable_key>"
+      ],
+      "execution": "async_run",
+      "input_schema": {
+        "anyOf": [
+          {
+            "properties": {
+              "post_urls": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "post_urls"
+            ]
+          },
+          {
+            "properties": {
+              "profile_urls": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "profile_urls"
+            ]
+          }
+        ],
+        "properties": {
+          "idempotency_key": {
+            "maxLength": 240,
+            "minLength": 8,
+            "type": "string"
+          },
+          "limit_per_profile": {
+            "default": 12,
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "max_items": {
+            "default": 20,
+            "maximum": 30,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "post_urls": {
+            "items": {
+              "format": "uri",
+              "maxLength": 2048,
+              "type": "string"
+            },
+            "maxItems": 40,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "profile_urls": {
+            "items": {
+              "format": "uri",
+              "maxLength": 2048,
+              "type": "string"
+            },
+            "maxItems": 40,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "research.social-media-hook-analyze",
+      "output_schema": {
+        "description": "Accepted Social Media Hook analysis batch with stable schema and strategy versions.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "watch_command": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ],
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+social-media-hook-analyze",
+      "stability": "stable",
+      "summary": "Start a durable Instagram Hook analysis batch from post and/or profile URLs. Returns immediately; poll batches together and read structured results by page.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "research.social-media-hook-analyze-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.social-media-hook-analyze-get",
+      "domain": "research",
+      "examples": [
+        "museoncli research +social-media-hook-analyze-get --id <analysis_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "analysis_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Social Hook analysis batch ID.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "analysis_id"
+        ],
+        "type": "object"
+      },
+      "name": "research.social-media-hook-analyze-get",
+      "output_schema": {
+        "description": "Social Media Hook analysis batch status.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "watch_command": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ],
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+social-media-hook-analyze-get",
+      "stability": "stable",
+      "summary": "Read one Social Media Hook analysis batch and its aggregate progress.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "research.social-media-hook-analyze-poll": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.social-media-hook-analyze-poll",
+      "domain": "research",
+      "examples": [
+        "museoncli research +social-media-hook-analyze-poll --id <id_1> --id <id_2>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "analysis_ids": {
+            "items": {
+              "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Social Hook analysis batch ID.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "analysis_ids"
+        ],
+        "type": "object"
+      },
+      "name": "research.social-media-hook-analyze-poll",
+      "output_schema": {
+        "description": "Grouped Social Media Hook analysis progress.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "watch_command": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ],
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+social-media-hook-analyze-poll",
+      "stability": "stable",
+      "summary": "Poll up to 20 Social Media Hook analysis batches in one request.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "research.social-media-hook-analyze-results": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.social-media-hook-analyze-results",
+      "domain": "research",
+      "examples": [
+        "museoncli research +social-media-hook-analyze-results --id <analysis_id> --page 1 --page-size 20"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "analysis_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Social Hook analysis batch ID.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "analysis_id"
+        ],
+        "type": "object"
+      },
+      "name": "research.social-media-hook-analyze-results",
+      "output_schema": {
+        "description": "Paginated Social Media Hook analysis items and strategy decisions.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+social-media-hook-analyze-results",
+      "stability": "stable",
+      "summary": "List versioned, structured Hook evidence and deterministic strategy decisions for one analysis batch.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
