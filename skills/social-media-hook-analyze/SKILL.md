@@ -157,23 +157,45 @@ and evidence rather than only an ordered list.
 
 When the user asks to publish high-scoring results, read the installed
 `lark-shared` and `lark-im` Skills before using `lark-cli`. For every selected
-Hook, obtain a temporary local MP4, verify it is at most 30 MB, and upload it
-through `/open-apis/im/v1/files` with `file_type=mp4` and its actual duration.
-The upload and card send must use the same Lark application identity. Upload an
-optional cover through `im images create`, then record only the returned keys:
+Hook, obtain a temporary local MP4 of at most 30 MB. Put the item IDs and local
+paths in a source manifest, then use the bundled uploader rather than assembling
+the multipart requests by hand:
 
 ```json
 {
-  "media_schema_version": "social-hook-lark-media.v1",
+  "media_source_schema_version": "social-hook-lark-media-source.v1",
   "items": [
-    {"item_id": "<analysis-item-id>", "file_key": "file_v3_xxx", "cover_img_key": "img_v3_xxx"}
+    {"item_id": "<analysis-item-id>", "video_path": "./hook-1.mp4"}
   ]
 }
 ```
 
-Delete temporary media after successful upload; never save the Instagram CDN
-URL. Prepare a bounded Card 2.0 payload from the ranked result and uploaded
-media keys:
+```bash
+python3 scripts/upload_lark_media.py lark_media_sources.json --pretty > lark_media_keys.json
+```
+
+The uploader probes the real duration with `ffprobe`, passes that positive
+millisecond value to `/open-apis/im/v1/files`, extracts a visible opening cover,
+uploads it through `im images create`, and deletes its temporary copies. It uses
+the Lark bot identity for both uploads; send the card with the same bot
+application. The resulting manifest is deliberately fail-closed:
+
+```json
+{
+  "media_schema_version": "social-hook-lark-media.v2",
+  "items": [
+    {
+      "item_id": "<analysis-item-id>",
+      "file_key": "file_v3_xxx",
+      "cover_img_key": "img_v3_xxx",
+      "duration_ms": 47000
+    }
+  ]
+}
+```
+
+Never save the Instagram CDN URL. Prepare a bounded Card 2.0 payload from the
+ranked result and uploaded media keys:
 
 ```bash
 python3 scripts/prepare_lark_card.py ranked_hooks.json \
@@ -185,25 +207,28 @@ python3 scripts/prepare_lark_card.py ranked_hooks.json \
   --pretty > lark_card.json
 ```
 
-The card contains up to four `recommended` Instagram Hooks in one compact
-batch. Each row uses a narrow left column for the native `video` component and
-a wider right column for the linked title, score, creator, and opening evidence.
-There are no card-side selectors, forms, submit actions, or callbacks. The
-native player handles playback and expansion.
+The card contains up to four `recommended` Instagram Hooks in one batch. Each
+item uses a full-width native `video` component with its required cover; title,
+score, creator, and opening evidence sit below it. Do not wrap the player in an
+`open_url` container because that competes with video taps on mobile. The
+Instagram link lives in the title instead. There are no card-side selectors,
+forms, submit actions, or callbacks.
 
-The bottom action is a static `open_url` to the AI Hook page with only the batch
-identity:
+The bottom area has two static `open_url` actions. **挑选并保存** opens the
+curated batch for review:
 
 ```text
 https://museon-ai-hook.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=<analysis-id>&recommended_item_ids=<codex-filtered-item-ids>
 ```
 
 The AI Hook page loads the batch, lets the authenticated user preview and choose
-items, then calls the explicit idempotent import endpoint. Do not put
-`selected_item_ids` or `auto_save=1` in the card link. Override the frontend
-origin with `--admin-base-url` when required. Because the card has no interactive
-form state, the sending Lark application does not need `card.action.trigger` or
-a callback webhook for this workflow.
+items, then calls the explicit idempotent import endpoint. **全部保存** uses the
+same URL plus `auto_save=1`; after authentication the frontend imports exactly
+the `recommended_item_ids` already selected by the host Agent. It never imports
+all analyzed posts. Do not put `selected_item_ids` in either link. Override the
+frontend origin with `--admin-base-url` when required. Because the card has no
+interactive form state, the sending Lark application does not need
+`card.action.trigger` or a callback webhook for this workflow.
 
 Video cards require Feishu 7.56+, MP4 files no larger than 30 MB, and
 `config.enable_forward=false`; the script enforces the card-side contract.
@@ -215,7 +240,7 @@ an idempotency key derived from the analysis id:
 ```bash
 lark-cli im +messages-send \
   --chat-id <confirmed-chat-id> \
-  --as <confirmed-user-or-bot> \
+  --as bot \
   --msg-type interactive \
   --content "$(tr -d '\n' < lark_card.json)" \
   --idempotency-key "hook-card-<analysis-id-prefix>"
