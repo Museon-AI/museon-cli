@@ -116,7 +116,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.11/museoncli-0.5.11-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.12/museoncli-0.5.12-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:
