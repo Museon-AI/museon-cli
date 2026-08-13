@@ -357,9 +357,7 @@ async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]
                 if authenticated
                 else "unauthenticated"
             ),
-            "reason": cfg.auth.resolution_error or (
-                "credential_expired" if auth_expired else None
-            ),
+            "reason": cfg.auth.resolution_error or ("credential_expired" if auth_expired else None),
             "auth_method": auth_method(cfg),
             "expires_at": cfg.auth.expires_at,
             "user": safe_user(cfg.auth.user),
@@ -372,9 +370,7 @@ async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]
             status["managed_by"] = cfg.auth.managed_by
         if cfg.auth.version is not None:
             status["version"] = cfg.auth.version
-        return {
-            "data": status
-        }
+        return {"data": status}
     if args.auth_command == "start":
         data = await start_web_approval_login(config=cfg)
         return {"data": data}
@@ -464,6 +460,58 @@ async def api_data(
         params=params,
         unwrap_success=unwrap_success,
     )
+
+
+async def download_api_file(
+    cfg: Config,
+    path: str,
+    *,
+    params: dict[str, Any],
+    destination: Path,
+    max_bytes: int,
+) -> dict[str, Any]:
+    """Stream one authenticated API response to a caller-owned temporary file."""
+    if not auth_headers(cfg):
+        raise RuntimeError("missing_auth")
+    url = f"{cfg.api_base_url.rstrip('/')}{path}"
+    async with httpx.AsyncClient(timeout=None) as client:
+        async with client.stream(
+            "GET", url, headers=_request_headers(cfg), params=params
+        ) as response:
+            if response.status_code >= 400:
+                await response.aread()
+                if response.status_code == 401:
+                    raise RuntimeError("unauthorized")
+                if response.status_code == 403:
+                    raise RuntimeError(forbidden_error_message(response))
+                raise ApiRequestError(response.status_code, response_error_payload(response))
+            content_type = response.headers.get("content-type", "").split(";", 1)[0].lower()
+            if content_type not in {
+                "video/mp4",
+                "video/quicktime",
+                "video/webm",
+                "video/x-msvideo",
+            }:
+                raise RuntimeError("unsupported_media_type")
+            declared_length = response.headers.get("content-length")
+            if declared_length:
+                try:
+                    if int(declared_length) < 1 or int(declared_length) > max_bytes:
+                        raise RuntimeError("invalid_media_size")
+                except ValueError as exc:
+                    raise RuntimeError("invalid_content_length") from exc
+            written = 0
+            with destination.open("xb") as output:
+                async for chunk in response.aiter_bytes():
+                    written += len(chunk)
+                    if written > max_bytes:
+                        raise RuntimeError("media_too_large")
+                    output.write(chunk)
+                output.flush()
+                os.fsync(output.fileno())
+            if written < 1 or (declared_length and written != int(declared_length)):
+                raise RuntimeError("media_length_mismatch")
+            return {"content_type": content_type, "bytes": written}
 
 
 async def _api_request(
@@ -910,6 +958,7 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
         api_data_v2=api_data_v2,
         upload_media_file=upload_media_file,
         upload_artifact_file=upload_artifact_file,
+        download_api_file=download_api_file,
     )
     command_token = _ACTIVE_COMMAND_NAME.set(spec.schema_name)
     try:

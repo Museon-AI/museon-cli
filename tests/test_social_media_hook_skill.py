@@ -422,4 +422,26 @@ def test_skill_setup_checks_ego_and_required_museon_schemas(
         "research.social-media-hook-analyze",
         "research.social-media-hook-analyze-poll",
         "research.social-media-hook-analyze-results",
+        "research.social-media-hook-analyze-media-get",
     }
+
+
+def test_skill_setup_vmos_mode_does_not_require_ego(tmp_path: Path, monkeypatch: Any) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    museon = bin_dir / "museoncli"
+    museon.write_text("#!/bin/sh\necho '{\"ok\": true}'\n", encoding="utf-8")
+    museon.chmod(0o755)
+    monkeypatch.setenv("PATH", str(bin_dir))
+
+    completed = subprocess.run(
+        [sys.executable, str(SETUP_SCRIPT), "--collector", "vmos"],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    result = json.loads(completed.stdout)
+
+    assert result["ready"] is True
+    assert result["collector"] == "vmos"
+    assert result["dependencies"]["ego_browser"]["required"] is False

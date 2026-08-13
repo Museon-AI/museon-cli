@@ -2760,6 +2760,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "research.social-media-hook-analyze-get",
         "research.social-media-hook-analyze-poll",
         "research.social-media-hook-analyze-results",
+        "research.social-media-hook-analyze-media-get",
         "research.community-search",
         "research.creative-search-ads",
         "research.creative-search-ads-get",

@@ -3949,6 +3949,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "research.social-media-hook-analyze-media-get",
+          "domain": "research",
+          "execution": "direct",
+          "name": "research.social-media-hook-analyze-media-get",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+social-media-hook-analyze-media-get",
+          "stability": "stable",
+          "summary": "Download one workspace-scoped temporary source video from a Social Media Hook analysis item without exposing a signed URL.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "research.community-search",
           "domain": "research",
           "execution": "direct",
@@ -22193,6 +22218,117 @@
       "shortcut": "+social-media-hook-analyze-get",
       "stability": "stable",
       "summary": "Read one Social Media Hook analysis batch and its aggregate progress.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "research.social-media-hook-analyze-media-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.social-media-hook-analyze-media-get",
+      "domain": "research",
+      "examples": [
+        "museoncli research +social-media-hook-analyze-media-get --id <analysis_id> --item-id <item_id> --output ./hook.mp4"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "analysis_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Social Hook analysis batch ID.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "force": {
+            "default": false,
+            "type": "boolean"
+          },
+          "item_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Social Hook analysis item ID.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "output": {
+            "description": "Local destination path for the downloaded video.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "analysis_id",
+          "item_id",
+          "output"
+        ],
+        "type": "object"
+      },
+      "name": "research.social-media-hook-analyze-media-get",
+      "output_schema": {
+        "description": "Local path, content type, and byte length of the downloaded Hook video.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+social-media-hook-analyze-media-get",
+      "stability": "stable",
+      "summary": "Download one workspace-scoped temporary source video from a Social Media Hook analysis item without exposing a signed URL.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

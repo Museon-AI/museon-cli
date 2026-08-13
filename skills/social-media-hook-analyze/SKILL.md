@@ -15,12 +15,15 @@ brand/product video just as easily as creator content.
 
 ## Set up once per environment
 
-This Skill requires the `ego-browser` Skill/runtime for authenticated Instagram
-browsing and the `museon-cli` Skill/command for asynchronous analysis. On first
-use in an environment, or after either command fails, run:
+This Skill always requires `museon-cli`. The `ego-browser` dependency is
+conditional: require it only for the ego collector. VMOS natural-feed collection
+does not require ego, and analyzed media is retrieved through Museon CLI. On
+first use in an environment, or after a required command fails, run one matching
+check:
 
 ```bash
 python3 scripts/check_setup.py --pretty
+python3 scripts/check_setup.py --collector vmos --pretty
 ```
 
 Continue when it returns `ready=true`. Otherwise read
@@ -157,9 +160,22 @@ and evidence rather than only an ordered list.
 
 When the user asks to publish high-scoring results, read the installed
 `lark-shared` and `lark-im` Skills before using `lark-cli`. For every selected
-Hook, obtain a temporary local MP4 of at most 30 MB. Put the item IDs and local
-paths in a source manifest, then use the bundled uploader rather than assembling
-the multipart requests by hand:
+Hook, download its persisted temporary MP4 (at most 30 MB) through the
+workspace-scoped CLI endpoint. This avoids browser cookies and never exposes a
+signed GCS URL:
+
+```bash
+museoncli research +social-media-hook-analyze-media-get \
+  --id <analysis-id> \
+  --item-id <analysis-item-id> \
+  --output ./hook-1.mp4
+```
+
+The command refuses to overwrite by default; use `--force` only for an explicit
+retry. A `media_expired` response means the temporary source is no longer
+available and must not be replaced with a browser-session download. Put the item
+IDs and downloaded local paths in a source manifest, then use the bundled
+uploader rather than assembling multipart requests by hand:
 
 ```json
 {
