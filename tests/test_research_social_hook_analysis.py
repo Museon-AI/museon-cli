@@ -67,6 +67,93 @@ def test_start_requires_at_least_one_source() -> None:
         command_payload(args)
 
 
+def test_seen_parser_builds_ordered_url_payload_and_read_schema() -> None:
+    args = _parse(
+        [
+            "research",
+            "+social-media-hook-analyze-seen",
+            "--url",
+            "https://www.instagram.com/reel/post-1/",
+            "--url",
+            "https://www.instagram.com/reel/post-2/",
+            "--workspace-id",
+            "workspace-2",
+        ]
+    )
+
+    assert args.domain_command == "research.social-media-hook-analyze-seen"
+    assert args.workspace_id == "workspace-2"
+    assert command_payload(args) == {
+        "urls": [
+            "https://www.instagram.com/reel/post-1/",
+            "https://www.instagram.com/reel/post-2/",
+        ]
+    }
+    schema = schema_payload("research.social-media-hook-analyze-seen")
+    assert schema["risk_level"] == "read"
+    assert schema["execution"] == "direct"
+    assert schema["input_schema"]["properties"]["urls"]["maxItems"] == 40
+
+
+@pytest.mark.parametrize("count", [0, 41])
+def test_seen_requires_one_to_forty_urls(count: int) -> None:
+    argv = ["research", "+social-media-hook-analyze-seen"]
+    for index in range(count):
+        argv.extend(["--url", f"https://www.instagram.com/reel/post-{index}/"])
+
+    with pytest.raises(ValueError, match="1 to 40"):
+        command_payload(_parse(argv))
+
+
+def test_seen_dispatch_posts_workspace_scoped_batch(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, Any]] = []
+
+    async def fake_api_data(
+        _cfg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        calls.append({"method": method, "path": path, "json_body": json_body, "params": params})
+        return {
+            "domain": "research",
+            "operation": "social-media-hook-analyze-seen",
+            "result": {"items": []},
+        }
+
+    monkeypatch.setattr(main_module, "load_config", _config)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+    result = asyncio.run(
+        main_module.dispatch(
+            _parse(
+                [
+                    "research",
+                    "+social-media-hook-analyze-seen",
+                    "--url",
+                    "https://www.instagram.com/reel/post-1/",
+                    "--workspace-id",
+                    "workspace-override",
+                ]
+            )
+        )
+    )
+
+    assert result["command"] == "research.social-media-hook-analyze-seen"
+    assert calls == [
+        {
+            "method": "POST",
+            "path": "/agent-cli/research/social-media-hook-analyze-seen",
+            "json_body": {
+                "workspace_id": "workspace-override",
+                "payload": {"urls": ["https://www.instagram.com/reel/post-1/"]},
+            },
+            "params": None,
+        }
+    ]
+
+
 def test_poll_collects_up_to_twenty_ids() -> None:
     args = _parse(
         [

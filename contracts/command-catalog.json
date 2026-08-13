@@ -3874,6 +3874,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "research.social-media-hook-analyze-seen",
+          "domain": "research",
+          "execution": "direct",
+          "name": "research.social-media-hook-analyze-seen",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+social-media-hook-analyze-seen",
+          "stability": "stable",
+          "summary": "Check up to 40 Instagram post URLs against prior workspace-scoped Social Media Hook analyses.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "research.social-media-hook-analyze-get",
           "domain": "research",
           "execution": "direct",
@@ -22554,6 +22579,107 @@
       "shortcut": "+social-media-hook-analyze-results",
       "stability": "stable",
       "summary": "List versioned, structured Hook evidence for one analysis batch. Apply scoring and recommendation policy in the consuming Skill.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "research.social-media-hook-analyze-seen": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.social-media-hook-analyze-seen",
+      "domain": "research",
+      "examples": [
+        "museoncli research +social-media-hook-analyze-seen --url https://www.instagram.com/reel/<id_1>/ --url https://www.instagram.com/reel/<id_2>/"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "urls": {
+            "description": "Instagram post URLs to check against prior Hook analyses.",
+            "items": {
+              "format": "uri",
+              "maxLength": 2048,
+              "type": "string"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "urls"
+        ],
+        "type": "object"
+      },
+      "name": "research.social-media-hook-analyze-seen",
+      "output_schema": {
+        "description": "Workspace-scoped seen status for each supplied Instagram post URL.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+social-media-hook-analyze-seen",
+      "stability": "stable",
+      "summary": "Check up to 40 Instagram post URLs against prior workspace-scoped Social Media Hook analyses.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
