@@ -1,6 +1,6 @@
 ---
 name: social-media-hook-analyze
-description: Research and compare Instagram video Hooks in asynchronous batches with Museon CLI. Use when an Agent needs to browse Instagram posts or profiles, filter non-video posts, decide whether each post is a UGC creator Hook, rank reusable Hooks, or identify UGC creator candidates. The host Agent owns every semantic classification and recommendation; Museon only returns structured observations.
+description: Research and compare Instagram video Hooks in asynchronous batches with Museon CLI. Use when an Agent needs to browse Instagram posts, profiles, or a VMOS cloud-phone natural Reels feed; filter non-video posts; decide whether each post is a UGC creator Hook; rank reusable Hooks; or identify UGC creator candidates. The host Agent owns every semantic classification and recommendation; Museon only returns structured observations.
 ---
 
 # Social Media Hook Analyze
@@ -48,6 +48,13 @@ discovery.
 
 Collect canonical Instagram post permalinks and optional profile URLs. Keep the
 source link beside every later assessment.
+
+Honor the requested discovery source exactly. A natural home/Reels feed, a
+specific profile, and a Museon Campaign are different research populations;
+never substitute one for another because its URLs are easier to obtain. When
+the request uses a VMOS cloud phone or Instagram's natural recommendation feed,
+read [references/vmos-natural-reels.md](references/vmos-natural-reels.md) and
+capture each permalink while that Reel is still on screen.
 
 Filter a post before submission only when its media type is reliable:
 
