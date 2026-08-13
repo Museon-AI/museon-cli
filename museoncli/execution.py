@@ -37,6 +37,7 @@ class CommandContext:
     api_data_v2: Callable[..., Awaitable[Any]]
     upload_media_file: Callable[..., Awaitable[Any]]
     upload_artifact_file: Callable[..., Awaitable[Any]]
+    download_api_file: Callable[..., Awaitable[Any]] | None = None
 
 
 Executor = Callable[[CommandContext], Awaitable[dict[str, Any]]]
@@ -209,9 +210,7 @@ def routine_target_context(
     other_scope_conversation_id = clean_optional_argument(
         arguments.get("other_scope_conversation_id")
     )
-    requested_result_delivery_mode = clean_optional_argument(
-        arguments.get("result_delivery_mode")
-    )
+    requested_result_delivery_mode = clean_optional_argument(arguments.get("result_delivery_mode"))
     target_conversation_id = clean_optional_argument(arguments.get("target_conversation_id"))
     target_channel_chat_id = clean_optional_argument(arguments.get("target_channel_chat_id"))
     requested_target_delivery_mode = clean_optional_argument(arguments.get("target_delivery_mode"))

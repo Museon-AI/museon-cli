@@ -14,6 +14,7 @@ REQUIRED_SCHEMAS = (
     "research.social-media-hook-analyze",
     "research.social-media-hook-analyze-poll",
     "research.social-media-hook-analyze-results",
+    "research.social-media-hook-analyze-media-get",
 )
 
 
@@ -39,7 +40,7 @@ def _run(
     return result
 
 
-def check_setup() -> dict[str, Any]:
+def check_setup(*, collector: str = "ego") -> dict[str, Any]:
     ego_command = shutil.which("ego-browser")
     cli_command = shutil.which("museoncli") or shutil.which("museon")
 
@@ -65,9 +66,7 @@ def check_setup() -> dict[str, Any]:
         }
     else:
         version = _run([cli_command, "version"], keep_success_detail=True)
-        schemas = {
-            schema: _run([cli_command, "schema", schema]) for schema in REQUIRED_SCHEMAS
-        }
+        schemas = {schema: _run([cli_command, "schema", schema]) for schema in REQUIRED_SCHEMAS}
         museon = {
             "ready": version["ready"] and all(item["ready"] for item in schemas.values()),
             "command": cli_command,
@@ -75,13 +74,18 @@ def check_setup() -> dict[str, Any]:
             "schemas": schemas,
         }
 
-    ready = bool(ego["ready"] and museon["ready"])
+    ego_required = collector == "ego"
+    ready = bool(museon["ready"] and (ego["ready"] or not ego_required))
     return {
         "setup_schema_version": "social-hook-setup.v1",
+        "collector": collector,
         "ready": ready,
-        "dependencies": {"ego_browser": ego, "museon_cli": museon},
+        "dependencies": {
+            "ego_browser": {**ego, "required": ego_required},
+            "museon_cli": museon,
+        },
         "next_step": (
-            "Start browser collection and asynchronous analysis."
+            f"Start {collector} collection and asynchronous analysis."
             if ready
             else "Read references/setup.md and repair only the missing dependency."
         ),
@@ -91,8 +95,9 @@ def check_setup() -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pretty", action="store_true")
+    parser.add_argument("--collector", choices=("ego", "vmos"), default="ego")
     args = parser.parse_args()
-    result = check_setup()
+    result = check_setup(collector=args.collector)
     json.dump(result, sys.stdout, ensure_ascii=False, indent=2 if args.pretty else None)
     sys.stdout.write("\n")
     return 0 if result["ready"] else 2

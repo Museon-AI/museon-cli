@@ -10,6 +10,7 @@ import argparse
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import (
     _add_common_adapter_arguments,
@@ -346,6 +347,29 @@ def _add_social_hook_results_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--id", dest="analysis_id", required=True)
     parser.add_argument("--page", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=20)
+
+
+def _add_social_hook_media_get_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--id", dest="analysis_id", required=True)
+    parser.add_argument("--item-id", required=True)
+    parser.add_argument("--output", required=True)
+    parser.add_argument("--force", action="store_true")
+
+
+def _build_social_hook_media_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    payload.update(
+        {
+            "analysis_id": args.analysis_id,
+            "item_id": args.item_id,
+            "output": args.output,
+            "force": bool(args.force),
+        }
+    )
+    if not str(payload["output"]).strip():
+        raise ValueError("--output must not be empty.")
+    return payload
 
 
 def _build_social_hook_results_arguments(args: argparse.Namespace) -> dict[str, Any]:
@@ -854,6 +878,23 @@ def _social_hook_results_input_schema() -> dict[str, Any]:
     }
 
 
+def _social_hook_media_get_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "analysis_id": _uuid_id_schema("Social Hook analysis batch ID."),
+            "item_id": _uuid_id_schema("Social Hook analysis item ID."),
+            "output": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Local destination path for the downloaded video.",
+            },
+            "force": {"type": "boolean", "default": False},
+        },
+        "required": ["analysis_id", "item_id", "output"],
+    }
+
+
 def _community_search_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -1218,6 +1259,29 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
+            shortcut="+social-media-hook-analyze-media-get",
+            summary=(
+                "Download one workspace-scoped temporary source video from a Social Media "
+                "Hook analysis item without exposing a signed URL."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="social_media_hook_analyze_media_get",
+            input_schema=_social_hook_media_get_input_schema(),
+            output_schema=_direct_output_schema(
+                "Local path, content type, and byte length of the downloaded Hook video."
+            ),
+            examples=[
+                (
+                    "museoncli research +social-media-hook-analyze-media-get "
+                    "--id <analysis_id> --item-id <item_id> --output ./hook.mp4"
+                )
+            ],
+            add_arguments=_add_social_hook_media_get_arguments,
+            build_arguments=_build_social_hook_media_get_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
             shortcut="+community-search",
             summary=(
                 "Search community evidence across X, Reddit, and LinkedIn using "
@@ -1463,6 +1527,43 @@ async def _execute_social_hook_results(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_social_hook_media_get(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    if ctx.download_api_file is None:
+        raise RuntimeError("download_transport_unavailable")
+    destination = Path(str(ctx.arguments["output"])).expanduser().resolve()
+    if destination.exists() and not ctx.arguments.get("force"):
+        raise RuntimeError("output_exists")
+    if destination.exists() and not destination.is_file():
+        raise RuntimeError("output_not_file")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(f".{destination.name}.{uuid4().hex}.part")
+    try:
+        metadata = await ctx.download_api_file(
+            ctx.cfg,
+            (
+                "/agent-cli/research/social-media-hook-analyze/"
+                f"{ctx.arguments['analysis_id']}/items/{ctx.arguments['item_id']}/media"
+            ),
+            params={"workspace_id": ctx.workspace_id},
+            destination=temporary,
+            max_bytes=30 * 1024 * 1024,
+        )
+        if destination.exists() and not ctx.arguments.get("force"):
+            raise RuntimeError("output_exists")
+        temporary.replace(destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return {
+        "analysis_id": ctx.arguments["analysis_id"],
+        "item_id": ctx.arguments["item_id"],
+        "path": str(destination),
+        "content_type": metadata["content_type"],
+        "bytes": metadata["bytes"],
+    }
+
+
 async def _execute_creative_search_ads_get(ctx: CommandContext) -> Any:
     if not ctx.workspace_id:
         raise RuntimeError("missing_workspace")
@@ -1504,4 +1605,7 @@ EXECUTORS = {
     "research.social-media-hook-analyze-get": direct_enveloped(_execute_social_hook_get),
     "research.social-media-hook-analyze-poll": direct_enveloped(_execute_social_hook_poll),
     "research.social-media-hook-analyze-results": direct_enveloped(_execute_social_hook_results),
+    "research.social-media-hook-analyze-media-get": direct_enveloped(
+        _execute_social_hook_media_get
+    ),
 }
