@@ -320,6 +320,28 @@ def _build_social_hook_analyze_arguments(args: argparse.Namespace) -> dict[str, 
     return payload
 
 
+def _add_social_hook_analyze_seen_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--url", dest="urls", action="append")
+
+
+def _build_social_hook_analyze_seen_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    if args.urls:
+        payload["urls"] = list(args.urls)
+    raw_urls = payload.get("urls", [])
+    if not isinstance(raw_urls, list) or any(not isinstance(url, str) for url in raw_urls):
+        raise ValueError("urls must be an array of URLs.")
+    urls = [url.strip() for url in raw_urls]
+    if not 1 <= len(urls) <= 40:
+        raise ValueError("research +social-media-hook-analyze-seen requires 1 to 40 --url values.")
+    if any(not url for url in urls):
+        raise ValueError("--url must not be blank.")
+    if any(len(url) > 2048 for url in urls):
+        raise ValueError("--url values must be at most 2048 characters.")
+    return {"urls": urls}
+
+
 def _add_social_hook_get_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
     parser.add_argument("--id", dest="analysis_id", required=True)
@@ -842,6 +864,22 @@ def _social_hook_analyze_input_schema() -> dict[str, Any]:
     }
 
 
+def _social_hook_analyze_seen_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "urls": {
+                "type": "array",
+                "items": {"type": "string", "format": "uri", "maxLength": 2048},
+                "minItems": 1,
+                "maxItems": 40,
+                "description": "Instagram post URLs to check against prior Hook analyses.",
+            }
+        },
+        "required": ["urls"],
+    }
+
+
 def _social_hook_get_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -1210,6 +1248,30 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
+            shortcut="+social-media-hook-analyze-seen",
+            summary=(
+                "Check up to 40 Instagram post URLs against prior workspace-scoped "
+                "Social Media Hook analyses."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="social_media_hook_analyze_seen",
+            input_schema=_social_hook_analyze_seen_input_schema(),
+            output_schema=_direct_output_schema(
+                "Workspace-scoped seen status for each supplied Instagram post URL."
+            ),
+            examples=[
+                (
+                    "museoncli research +social-media-hook-analyze-seen "
+                    "--url https://www.instagram.com/reel/<id_1>/ "
+                    "--url https://www.instagram.com/reel/<id_2>/"
+                )
+            ],
+            add_arguments=_add_social_hook_analyze_seen_arguments,
+            build_arguments=_build_social_hook_analyze_seen_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
             shortcut="+social-media-hook-analyze-get",
             summary="Read one Social Media Hook analysis batch and its aggregate progress.",
             risk_level="read",
@@ -1482,6 +1544,19 @@ async def _execute_social_hook_analyze(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_social_hook_analyze_seen(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/research/social-media-hook-analyze-seen",
+            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+        )
+    )
+
+
 async def _execute_social_hook_get(ctx: CommandContext) -> Any:
     if not ctx.workspace_id:
         raise RuntimeError("missing_workspace")
@@ -1602,6 +1677,9 @@ EXECUTORS = {
     "research.creative-search-ads-get": direct_enveloped(_execute_creative_search_ads_get),
     "research.creative-search-ads-results": direct_enveloped(_execute_creative_search_ads_results),
     "research.social-media-hook-analyze": direct_enveloped(_execute_social_hook_analyze),
+    "research.social-media-hook-analyze-seen": direct_enveloped(
+        _execute_social_hook_analyze_seen
+    ),
     "research.social-media-hook-analyze-get": direct_enveloped(_execute_social_hook_get),
     "research.social-media-hook-analyze-poll": direct_enveloped(_execute_social_hook_poll),
     "research.social-media-hook-analyze-results": direct_enveloped(_execute_social_hook_results),
