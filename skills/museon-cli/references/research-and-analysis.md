@@ -20,6 +20,11 @@ Do not substitute generic web search for social-native evidence when the object
 is a creator, post, comment, hashtag, or platform trend. Do not use the campaign
 monitor store as if it were a live public-platform search.
 
+For comment pagination, reuse the cursor returned in `evidence.pagination`:
+
+- TikTok: `museoncli research +social-media-search --platform tiktok --intent comments --query '7551234567890123456' --cursor 0`; `query` is the numeric video `aweme_id`, not a share URL, and later cursors are numeric.
+- Instagram: `museoncli research +social-media-search --platform instagram --intent comments --query 'https://www.instagram.com/reel/SHORTCODE/'`; `query` may also be the post shortcode, and later `pagination_token` values are passed unchanged with `--cursor`.
+
 ## Research workflow
 
 1. Resolve the business question, target platforms, and time horizon. Ask only

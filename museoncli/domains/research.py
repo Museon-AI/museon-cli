@@ -768,7 +768,7 @@ def _social_media_search_input_schema() -> dict[str, Any]:
                     "hashtag-search, hashtag-videos, post, comments, music-search, "
                     "and music-posts. Instagram supports profile, creator-posts, reels, "
                     "keyword-search, keyword-reels, hashtag-search, hashtag-reels, post, "
-                    "music-search, and music-posts. "
+                    "comments, music-search, and music-posts. "
                     "YouTube supports channel, channel-videos, channel-shorts, video, "
                     "and keyword-search. XHS/RedNote supports keyword-search, post, "
                     "profile, and creator-posts."
@@ -781,6 +781,8 @@ def _social_media_search_input_schema() -> dict[str, Any]:
                 "description": (
                     "Search query, creator handle, profile/channel URL, hashtag/ch_id, "
                     "post URL/id, or aweme_id depending on platform and intent. For "
+                    "TikTok comments, pass the numeric video aweme_id, not a share URL. "
+                    "For Instagram comments, pass a post shortcode or full post/Reel URL. "
                     "Instagram creator-posts, handles/profile URLs read an account "
                     "timeline; multi-word plain text runs keyword posts search. "
                     "For XHS keyword-search, pass a note search keyword; for XHS post, "
@@ -825,12 +827,14 @@ def _social_media_search_input_schema() -> dict[str, Any]:
             "cursor": {
                 "type": ["string", "null"],
                 "description": (
-                    "Optional pagination cursor from evidence.pagination. Pass a simple token "
-                    "directly, or pass the whole pagination object as JSON when it contains "
-                    "multiple fields such as cursor + search_id. Supported for TikTok "
+                    "Optional pagination cursor from evidence.pagination. For TikTok comments, "
+                    "pass the numeric cursor (0 for the first page). For Instagram comments, "
+                    "pass pagination_token unchanged. Otherwise pass a simple token directly, "
+                    "or the whole pagination object as JSON when it contains multiple fields. "
+                    "Supported for TikTok "
                     "creator-search/creator-posts/keyword-search/keyword-videos/keyword-photos/"
                     "hashtag-search/hashtag-videos/comments/music-posts, Instagram creator-posts/"
-                    "reels/keyword-search/keyword-reels/hashtag-search/hashtag-reels/"
+                    "reels/keyword-search/keyword-reels/hashtag-search/hashtag-reels/comments/"
                     "music-search/music-posts, YouTube keyword-search, XHS keyword-search, "
                     "and XHS creator-posts."
                 ),
@@ -1199,6 +1203,14 @@ def specs() -> list[CommandSpec]:
                 (
                     "museoncli research +social-media-search --platform instagram "
                     "--intent reels --query '@creator' --limit 10"
+                ),
+                (
+                    "museoncli research +social-media-search --platform tiktok "
+                    "--intent comments --query '7551234567890123456' --limit 20"
+                ),
+                (
+                    "museoncli research +social-media-search --platform instagram "
+                    "--intent comments --query 'https://www.instagram.com/reel/<shortcode>/'"
                 ),
                 (
                     "museoncli research +social-media-search --platform youtube "
