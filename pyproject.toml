@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "museoncli"
-version = "0.5.17"
+version = "0.5.18"
 description = "Agent-ready CLI for Museon's social media operating platform"
 readme = "README.md"
 license = "Apache-2.0"
@@ -57,7 +57,6 @@ packages = ["museoncli"]
 "skills/museon-content-workflow-generation" = "museoncli/bundled_skills/museon-content-workflow-generation"
 "skills/museon-content-workflow-social-account" = "museoncli/bundled_skills/museon-content-workflow-social-account"
 "skills/museon-content-workflow-account-publish" = "museoncli/bundled_skills/museon-content-workflow-account-publish"
-"skills/museon-content-workflow-account-operation" = "museoncli/bundled_skills/museon-content-workflow-account-operation"
 "skills/museon-content-workflow-campaign-monitor" = "museoncli/bundled_skills/museon-content-workflow-campaign-monitor"
 "skills/museon-content-workflow-routines" = "museoncli/bundled_skills/museon-content-workflow-routines"
 "skills/museon-content-workflow-artifacts" = "museoncli/bundled_skills/museon-content-workflow-artifacts"

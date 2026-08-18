@@ -76,8 +76,8 @@ publish → review → reuse**.
 
 These three parts work together:
 
-- **Museon workflow Skills** teach your Agent how to approach social-media work and how
-  to use the available tools safely.
+- **Museon workflow Skills** split 11 task-result areas. Agentic Campaign includes its
+  Persona Plans, member-account operations, and runs; the Skills also teach safe tool use.
 - **Museon CLI** is the connection the Agent uses to take action from its own
   environment.
 - **Museon** runs the hosted research, generation, account, scheduling,
@@ -91,7 +91,8 @@ workspace membership, role, and target resource for every operation.
 | Find market, creator, post, community, and visual evidence | `research`, `campaign-monitor` |
 | Analyze content and preserve reusable knowledge | `content-analysis`, `asset`, `artifacts`, `skills` |
 | Create images and slideshows | `generation` |
-| Connect accounts, configure publish pools, schedule work, publish, and review results | `social-account`, `account-publish`, `account-operation` |
+| Connect accounts, configure publish pools, schedule work, publish, and review results | `social-account`, `account-publish` |
+| Operate campaigns, Persona Plans, member accounts, and runs | `agentic-campaign`, `account-operation` |
 | Run recurring or one-off operating loops | `routines`, `evaluator` |
 
 The generated contract snapshot is the reviewed source of truth for the public
@@ -116,7 +117,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.17/museoncli-0.5.17-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.18/museoncli-0.5.18-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:

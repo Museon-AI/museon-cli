@@ -1,25 +1,43 @@
 ---
 name: museon-content-workflow-routines
-description: "Create, inspect, approve, pause, resume, rebuild, or cancel Museon recurring routines and preserve durable automation memory across social-media runs."
+description: "Create and manage Museon recurring routines, triggers, ownership, lifecycle, and durable memory across social-media operating runs."
+metadata:
+  requires:
+    bins: ["museoncli"]
+    skills: ["museon-content-workflow-base"]
+  cliHelp: "museoncli schema routines"
 ---
 
 # Museon routines workflow
 
-Use for the `routines` domain and recurring automation memory.
+**CRITICAL — first read [`../museon-content-workflow-base/SKILL.md`](../museon-content-workflow-base/SKILL.md).**
 
-| Command family | Purpose |
+## Mental model
+
+A Routine combines instruction, owner, trigger, active lifecycle, and durable memory. Drafts have
+no registered trigger until accepted. Rebuild replaces instruction/trigger and may carry memory;
+pause/resume/cancel affect the trigger. Platform output capture is automatic. See
+[routine-lifecycle.md](references/routine-lifecycle.md).
+
+## Shortcuts
+
+| Situation | Start with |
 | --- | --- |
-| `museoncli routines ...` reads | Inspect routines, triggers, ownership, and memory |
-| `museoncli routines ...` writes | Draft/create/accept or lifecycle changes exposed by schema |
+| Find existing routine | `museoncli routines +list` |
+| Review before scheduling | `museoncli routines +create-draft` |
+| Create approved recurring work | `museoncli routines +create-ad-hoc` |
+| Inspect trigger/owner | `museoncli routines +get` |
+| Read durable memory | `museoncli routines +memory-get` |
 
-## References
+## DON'T
 
-- [recurring-automation.md](references/recurring-automation.md): outcome definition, approvals,
-  ownership, lifecycle, and durable memory.
-- Inspect `museoncli schema routines` and the exact shortcut before use.
+- **DON'T** create a duplicate before reading existing routines.
+- **DON'T** mutate lifecycle for a routine owned by someone else; surface the owner.
+- **DON'T** activate an under-specified routine instead of creating a draft.
+- **DON'T** record transient chatter or entire outputs as durable memory.
+- **DON'T** manually record ordinary output already captured by the platform.
 
-## Cross-skill handoff
+## Relationships
 
-Use the relevant domain skill for the work a routine performs. Send shareable run outputs to
-`museon-content-workflow-artifacts` and review evidence to campaign-monitor, social-account, or
-account-operation according to the object.
+Each routine delegates its work to the owning domain Skill. Artifacts retains shareable outputs;
+campaign-monitor/social-account/Agentic Campaign provide the state reviewed on later runs.

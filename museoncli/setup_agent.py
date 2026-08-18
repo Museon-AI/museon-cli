@@ -17,8 +17,8 @@ SUPPORTED_AGENTS = ("codex", "claude-code", "cursor")
 MANAGED_SKILLS = (
     "museon-research", "museon-content-workflow-base", "museon-content-workflow-assets",
     "museon-content-workflow-generation", "museon-content-workflow-social-account",
-    "museon-content-workflow-account-publish", "museon-content-workflow-account-operation",
-    "museon-content-workflow-campaign-monitor", "museon-content-workflow-routines",
+    "museon-content-workflow-account-publish", "museon-content-workflow-campaign-monitor",
+    "museon-content-workflow-routines",
     "museon-content-workflow-artifacts", "museon-content-workflow-agentic-campaign",
     "museon-content-workflow-evaluator", "social-media-hook-analyze",
 )

@@ -1,26 +1,42 @@
 ---
 name: museon-content-workflow-evaluator
-description: "List, inspect, create, update, and run Museon prompt-based evaluators against text, media, research, or generation output, then inspect evaluator runs."
+description: "Discover, manage, and run Museon prompt-based evaluators against text, media, research, or generation output, then inspect run history."
+metadata:
+  requires:
+    bins: ["museoncli"]
+    skills: ["museon-content-workflow-base"]
+  cliHelp: "museoncli schema evaluator"
 ---
 
 # Museon evaluator workflow
 
-Use only for the `evaluator` domain. Do not infer behavior beyond current CommandSpecs.
+**CRITICAL — first read [`../museon-content-workflow-base/SKILL.md`](../museon-content-workflow-base/SKILL.md).**
 
-| Command family | Purpose |
+## Mental model
+
+An evaluator kind classifies purpose; an evaluator definition stores prompt/metadata/visibility;
+an evaluator run binds one definition to supported text, media, research, or generation output.
+Definitions and run history are separate object sets. See [evaluation-model.md](references/evaluation-model.md).
+
+## Shortcuts
+
+| Situation | Start with |
 | --- | --- |
-| `+kind-list/+list/+get` | Discover evaluator kinds and definitions |
-| `+create/+update` | Manage prompt-based evaluator definitions |
-| `+run` | Evaluate text, media, research, or generation output |
-| `+run-list/+run-get` | Inspect evaluator run history and detail |
+| Discover configured kinds | `museoncli evaluator +kind-list` |
+| Find available definition | `museoncli evaluator +list` |
+| Inspect definition | `museoncli evaluator +get` |
+| Evaluate an output | `museoncli evaluator +run` |
+| Review run history | `museoncli evaluator +run-list` |
 
-## References
+## DON'T
 
-- [command-surface.md](references/command-surface.md): summaries, risk, inputs, role boundary,
-  and dry-run semantics extracted from `evaluator.py`.
-- Inspect `museoncli schema evaluator` and exact shortcut before use.
+- **DON'T** invent an evaluator kind or input shape absent from live schema.
+- **DON'T** confuse a definition ID with a run ID.
+- **DON'T** create/update definitions without the required elevated workspace role.
+- **DON'T** mutate a definition merely to preserve one run's result.
+- **DON'T** report an evaluation without retaining the evaluated source object's identity.
 
-## Cross-skill handoff
+## Relationships
 
-Collect inputs through `museon-research` or `museon-content-workflow-generation`; return durable
-evaluation reports through `museon-content-workflow-artifacts`.
+Research and generation supply common inputs; Agentic Campaign has its own campaign evaluation
+memory; artifacts can retain a user-facing evaluation report.

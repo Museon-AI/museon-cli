@@ -6281,7 +6281,7 @@
       "product"
     ]
   },
-  "contract_revision": "0.5.17",
+  "contract_revision": "0.5.18",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
