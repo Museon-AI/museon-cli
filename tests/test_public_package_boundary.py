@@ -41,7 +41,7 @@ def test_generated_contract_hides_monorepo_implementation_paths() -> None:
 
 
 def test_agent_skill_is_available_before_cli_installation() -> None:
-    skill = ROOT / "skills" / "museon-cli" / "SKILL.md"
+    skill = ROOT / "skills" / "museon-content-workflow-base" / "SKILL.md"
     assert skill.is_file()
     assert "Install the CLI when needed" in skill.read_text(encoding="utf-8")
 
@@ -116,7 +116,16 @@ def test_release_workflow_publishes_deterministic_skills_asset(tmp_path: Path) -
     ).digest()
     with tarfile.open(first, "r:gz") as archive:
         members = archive.getmembers()
-    assert "skills/museon-cli/SKILL.md" in {member.name for member in members}
+    top_level_skills = {
+        member.name.split("/")[1]
+        for member in members
+        if member.name.startswith("skills/") and member.name.count("/") >= 1
+    }
+    assert len(top_level_skills) == 14
+    assert "skills/museon-content-workflow-base/SKILL.md" in {
+        member.name for member in members
+    }
+    assert "skills/museon-research/SKILL.md" in {member.name for member in members}
     assert "skills/experiment-brain/SKILL.md" in {member.name for member in members}
     assert "skills/social-media-hook-analyze/SKILL.md" in {
         member.name for member in members

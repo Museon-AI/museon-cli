@@ -14,7 +14,14 @@ from museoncli import __version__
 
 
 SUPPORTED_AGENTS = ("codex", "claude-code", "cursor")
-MANAGED_SKILLS = ("museon-cli", "social-media-hook-analyze")
+MANAGED_SKILLS = (
+    "museon-research", "museon-content-workflow-base", "museon-content-workflow-assets",
+    "museon-content-workflow-generation", "museon-content-workflow-social-account",
+    "museon-content-workflow-account-publish", "museon-content-workflow-account-operation",
+    "museon-content-workflow-campaign-monitor", "museon-content-workflow-routines",
+    "museon-content-workflow-artifacts", "museon-content-workflow-agentic-campaign",
+    "museon-content-workflow-evaluator", "social-media-hook-analyze",
+)
 
 
 def install_agent_skill(agent: str, *, force: bool = False) -> dict[str, Any]:
@@ -43,7 +50,7 @@ def install_agent_skill(agent: str, *, force: bool = False) -> dict[str, Any]:
         )
     return {
         "cli_version": __version__,
-        "skill": "museon-cli",
+        "skill": "museon-content-workflow-base",
         "skills": list(MANAGED_SKILLS),
         "agents": results,
         "next_steps": [

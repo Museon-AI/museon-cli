@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://www.museon.ai/cli">Website</a> ·
-  <a href="./skills/museon-cli/SKILL.md">Agent Skill</a> ·
+  <a href="./skills/museon-content-workflow-base/SKILL.md">Workflow Skills</a> ·
   <a href="./skills/social-media-hook-analyze/SKILL.md">Hook Analysis Skill</a> ·
   <a href="./README.zh-CN.md">简体中文</a>
 </p>
@@ -40,8 +40,8 @@ repository, choose CLI flags, or configure credentials by hand.
 
 1. **Your Agent installs Museon CLI.** It installs the exact Python wheel from
    the official GitHub release and verifies that the command is available.
-2. **Museon CLI installs the Skills.** The bundled, same-version Skills teach
-   the Agent how to use Museon safely and add the Instagram Hook research
+2. **Museon CLI installs the Skills.** The bundled, same-version workflow Skills teach
+   the Agent how to route and use Museon safely and add the Instagram Hook research
    workflow. ego lite is installed separately when authenticated browsing is
    needed.
 3. **You approve access in the browser.** Sign in to Museon and choose the
@@ -76,7 +76,7 @@ publish → review → reuse**.
 
 These three parts work together:
 
-- **Museon Skill** teaches your Agent how to approach social-media work and how
+- **Museon workflow Skills** teach your Agent how to approach social-media work and how
   to use the available tools safely.
 - **Museon CLI** is the connection the Agent uses to take action from its own
   environment.

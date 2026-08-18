@@ -11,7 +11,15 @@ from museoncli import __version__
 from museoncli.domains import command_specs
 
 ROOT = Path(__file__).resolve().parents[1]
-SKILL_ROOT = ROOT / "skills" / "museon-cli"
+SKILL_NAMES = (
+    "museon-research", "museon-content-workflow-base", "museon-content-workflow-assets",
+    "museon-content-workflow-generation", "museon-content-workflow-social-account",
+    "museon-content-workflow-account-publish", "museon-content-workflow-account-operation",
+    "museon-content-workflow-campaign-monitor", "museon-content-workflow-routines",
+    "museon-content-workflow-artifacts", "museon-content-workflow-agentic-campaign",
+    "museon-content-workflow-evaluator",
+)
+SKILL_ROOTS = tuple(ROOT / "skills" / name for name in SKILL_NAMES)
 INSTALL_GUIDE_URL = "https://www.museon.ai/cli/install.md"
 
 
@@ -52,27 +60,29 @@ def test_docs_mention_only_registered_commands() -> None:
 
 
 def test_agent_skill_is_complete_and_portable() -> None:
-    skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+    for name, skill_root in zip(SKILL_NAMES, SKILL_ROOTS, strict=True):
+        skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
+        assert skill.startswith(f"---\nname: {name}\n")
+        assert len(skill.splitlines()) <= 60
+        assert "TODO" not in skill
+        assert "AskUserQuestion" not in skill
+        linked_references = set(re.findall(r"\(references/([a-z0-9-]+\.md)\)", skill))
+        actual_references = {path.name for path in (skill_root / "references").glob("*.md")}
+        assert linked_references == actual_references
 
-    assert skill.startswith("---\nname: museon-cli\n")
-    assert "TODO" not in skill
-    assert "museon-research-task" not in skill
-    assert "museon-social-media-workflow" not in skill
-    assert "AskUserQuestion" not in skill
-    assert (SKILL_ROOT / "agents" / "openai.yaml").is_file()
-    assert "uv tool install" in skill
-    assert "museoncli version" in skill
-
-    linked_references = set(re.findall(r"\(references/([a-z0-9-]+\.md)\)", skill))
-    actual_references = {path.name for path in (SKILL_ROOT / "references").glob("*.md")}
-    assert linked_references == actual_references
+    base = ROOT / "skills" / "museon-content-workflow-base"
+    base_skill = (base / "SKILL.md").read_text(encoding="utf-8")
+    assert (base / "agents" / "openai.yaml").is_file()
+    assert "uv tool install" in base_skill
+    assert "museoncli version" in base_skill
 
 
 def test_agent_skill_mentions_only_registered_commands() -> None:
     registered = {spec.schema_name for spec in command_specs()}
-    for doc in SKILL_ROOT.rglob("*.md"):
-        unknown = sorted(_mentioned_commands(doc.read_text(encoding="utf-8")) - registered)
-        assert unknown == [], f"{doc.relative_to(ROOT)} references unknown commands: {unknown}"
+    for skill_root in SKILL_ROOTS:
+        for doc in skill_root.rglob("*.md"):
+            unknown = sorted(_mentioned_commands(doc.read_text(encoding="utf-8")) - registered)
+            assert unknown == [], f"{doc.relative_to(ROOT)} references unknown commands: {unknown}"
 
 
 def test_install_docs_use_one_versioned_official_wheel() -> None:
@@ -85,7 +95,7 @@ def test_install_docs_use_one_versioned_official_wheel() -> None:
         ROOT / "docs" / "install.md",
         ROOT / "README.md",
         ROOT / "README.zh-CN.md",
-        SKILL_ROOT / "SKILL.md",
+        ROOT / "skills" / "museon-content-workflow-base" / "SKILL.md",
     )
 
     for path in docs:

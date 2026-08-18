@@ -1,0 +1,4 @@
+interface:
+  display_name: "Museon Content Workflow"
+  short_description: "Route Museon research, creation, publishing, and learning"
+  default_prompt: "Use $museon-content-workflow-base to install Museon CLI if needed, help me sign in, and route my social-media goal to the correct Museon workflow skill."
