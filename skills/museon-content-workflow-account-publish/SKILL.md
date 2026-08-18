@@ -1,27 +1,47 @@
 ---
 name: museon-content-workflow-account-publish
-description: "Preview and apply multi-account Museon asset-pool changes or schedule plans, including cancellation, BGM policy, idempotency, and per-account result review."
+description: "Preview and apply Museon multi-account asset-pool changes and durable schedule plans, including replacement, cancellation, BGM, and result review."
+metadata:
+  requires:
+    bins: ["museoncli"]
+    skills: ["museon-content-workflow-base", "museon-content-workflow-assets"]
+  cliHelp: "museoncli schema account-publish"
 ---
 
 # Museon account publish workflow
 
-Use for the `account-publish` domain and canonical multi-account publishing flows.
+**CRITICAL — first read [`../museon-content-workflow-base/SKILL.md`](../museon-content-workflow-base/SKILL.md).**
 
-| Command family | Purpose |
+## Mental model
+
+Asset pools define which Persona/Product/Format/Topic/BGM resources accounts may publish from.
+A schedule plan is a separate durable operation that previews then creates/replaces/cancels
+schedule items. Preview tokens bind server-observed state to a write; status is the authoritative
+post-submit state. See [publish-plans.md](references/publish-plans.md).
+
+## Shortcuts
+
+| Situation | Start with |
 | --- | --- |
-| `+asset-pools-batch-get/+preview/+set/+status` | Read, preview, apply, and poll asset pools |
-| `+schedule-plan-preview/+schedule-plan-batch/+schedule-plan-status` | Build, rebuild, or cancel schedules |
-| `+schedule-plan-cancel` | Stop unfinished job work, not created schedule items |
+| Audit effective pools | `museoncli account-publish +asset-pools-batch-get` |
+| Change pools | `museoncli account-publish +asset-pools-batch-preview` |
+| Build/replace schedule | `museoncli account-publish +schedule-plan-preview` |
+| Remove eligible schedule items | `museoncli account-publish +schedule-plan-preview` |
+| Follow pool job | `museoncli account-publish +asset-pools-batch-status` |
+| Follow schedule job | `museoncli account-publish +schedule-plan-status` |
 
-## References
+## DON'T
 
-- [asset-pools.md](references/asset-pools.md): atomic pool configuration and retained snapshots.
-- [schedule-plans.md](references/schedule-plans.md): preview tokens, cancellation, limits, BGM,
-  idempotency, polling, and verification.
-- Inspect `museoncli schema account-publish` and the exact shortcut before use.
+- **DON'T** loop social-account reads/writes or use Python/shell for batch pool/schedule work.
+- **DON'T** submit without a fresh matching preview or alter its normalized request/token.
+- **DON'T** rescan accounts after submission; the matching status command is the state source.
+- **DON'T** treat schedule-job cancellation as deletion of schedule items already created.
+- **DON'T** silently create no-BGM occurrences when BGM is required.
+- **DON'T** reuse an idempotency key for an intentional new operation.
+- **DON'T** skip failed, skipped, protected, or already-completed per-account rows.
 
-## Cross-skill handoff
+## Relationships
 
-Resolve accounts with `museon-content-workflow-social-account`; create missing reusable inputs with
-`museon-content-workflow-assets`; review published outcomes through social-account performance or
-`museon-content-workflow-campaign-monitor` as appropriate.
+Social-account resolves account identity; assets owns pool resources. Submitting an account into
+Agentic Campaign fully-managed operation transfers its publish allocation without requiring
+schedule cancellation.

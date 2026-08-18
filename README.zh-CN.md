@@ -65,7 +65,8 @@ Museon 关注的是完整循环：**调研 → 判断 → 创作 → 确认 → 
 
 它们共同组成 Agent 的社媒工作能力：
 
-- **Museon workflow Skills** 告诉 Agent 应该怎样完成社媒任务、路由能力，以及怎样安全地使用工具。
+- **Museon workflow Skills** 按 11 类任务结果组织能力；Agentic Campaign 同时覆盖
+  Persona Plan、成员账号运营和 runs，并告诉 Agent 怎样安全地使用工具。
 - **Museon CLI** 是 Agent 在自己环境里调用 Museon 能力的连接方式。
 - **Museon** 在服务端完成调研、生成、账号、排期、发布和表现分析等工作。
 
@@ -87,7 +88,7 @@ CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.17/museoncli-0.5.17-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.18/museoncli-0.5.18-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：

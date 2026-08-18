@@ -18,12 +18,15 @@ def test_setup_agent_installs_and_verifies_codex_skill(
 
     destination = codex_home / "skills" / "museon-content-workflow-base"
     research_destination = codex_home / "skills" / "museon-research"
+    campaign_destination = codex_home / "skills" / "museon-content-workflow-agentic-campaign"
     hook_destination = codex_home / "skills" / "social-media-hook-analyze"
     assert first["agents"][0]["status"] == "installed"
     assert second["agents"][0]["status"] == "current"
     assert destination.joinpath("SKILL.md").is_file()
     assert destination.joinpath("agents", "openai.yaml").is_file()
     assert research_destination.joinpath("SKILL.md").is_file()
+    assert campaign_destination.joinpath("references", "member-account-operations.md").is_file()
+    assert not (codex_home / "skills" / "museon-content-workflow-account-operation").exists()
     assert hook_destination.joinpath("SKILL.md").is_file()
     assert hook_destination.joinpath("scripts", "rank_hooks.py").is_file()
     assert first["skills"] == list(MANAGED_SKILLS)

@@ -1,28 +1,46 @@
 ---
 name: museon-content-workflow-social-account
-description: "Connect, inspect, configure, schedule, publish, and review one Museon social account, including account assets, hashtags, BGM, and performance provenance."
+description: "Connect and inspect Museon social accounts, manage one-account configuration and schedule state, edit profiles, and read performance provenance."
+metadata:
+  requires:
+    bins: ["museoncli"]
+    skills: ["museon-content-workflow-base"]
+  cliHelp: "museoncli schema social-account"
 ---
 
 # Museon social account workflow
 
-Use for the `social-account` domain and precise one-account work.
+**CRITICAL — first read [`../museon-content-workflow-base/SKILL.md`](../museon-content-workflow-base/SKILL.md).**
 
-| Command family | Purpose |
+## Mental model
+
+A social account has connection state, publish configuration, asset bindings, versioned config,
+schedule items, profile state, and performance. This Skill owns precise one-account work; batch
+pool/schedule plans belong to account-publish. Performance can come from authorized analytics or
+public fallback and must retain provenance. See [account-state.md](references/account-state.md).
+
+## Shortcuts
+
+| Situation | Start with |
 | --- | --- |
-| `museoncli social-account +list/+get` | Resolve accounts and inspect state |
-| `+connect-link-create/+connect-link-status` | Connect a user-owned platform account |
-| `+assets-get/+assets-set`, `+config-get/+config-update` | One-account assets and publish config |
-| `+schedule-list/+schedule-get` | Planned posts and generation state |
-| `+performance-get` | Performance with source provenance |
+| Resolve known accounts | `museoncli social-account +list` |
+| Connect user-owned account | `museoncli social-account +connect-link-create` |
+| Read one account's bindings | `museoncli social-account +assets-get` |
+| Read publish configuration | `museoncli social-account +config-get` |
+| Read schedule item | `museoncli social-account +schedule-get` |
+| Read performance | `museoncli social-account +performance-get` |
+| Draft profile changes | `museoncli social-account +profile-edit-draft` |
 
-## References
+## DON'T
 
-- [account-connection-and-state.md](references/account-connection-and-state.md): canonical IDs,
-  authorization links, precise edits, publishing, and performance provenance.
-- Inspect `museoncli schema social-account` and the exact shortcut before use.
+- **DON'T** concatenate handles or page-scan account lists when resolving several known handles.
+- **DON'T** expect `+list` to contain publish asset bindings; read the owning asset surface.
+- **DON'T** loop one-account asset/config writes for a multi-account change.
+- **DON'T** alter a fully-managed account's assets without relaying impact and obtaining approval.
+- **DON'T** describe public-data fallback as official analytics or an API delay.
+- **DON'T** ask users for social-platform passwords; return the authorization link.
 
-## Cross-skill handoff
+## Relationships
 
-For multi-account asset pools or schedule plans, use `museon-content-workflow-account-publish`.
-For fully managed fleet lifecycle, use `museon-content-workflow-account-operation`; for missing
-creative assets, use `museon-content-workflow-assets`.
+Account-publish owns multi-account pools and schedule plans. Agentic Campaign owns fully-managed
+membership and operations. Assets owns reusable objects; campaign-monitor owns synced history.

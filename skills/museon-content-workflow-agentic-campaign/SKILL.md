@@ -1,28 +1,53 @@
 ---
 name: museon-content-workflow-agentic-campaign
-description: "Create, inspect, activate, pause, archive, and evolve Museon Agentic Creative Campaigns, Persona Plans, proposals, rollouts, issues, controls, and learnings."
+description: "Operate Museon Agentic Creative Campaigns from Persona Plans through member accounts and runs, including proposals, rollouts, issues, and fleet health."
+metadata:
+  requires:
+    bins: ["museoncli"]
+    skills: ["museon-content-workflow-base"]
+  cliHelp: "museoncli schema agentic-campaign"
 ---
 
 # Museon Agentic Creative Campaign workflow
 
-Use only for the `agentic-campaign` domain. Do not infer behavior beyond the current schema.
+**CRITICAL — first read [`../museon-content-workflow-base/SKILL.md`](../museon-content-workflow-base/SKILL.md).**
 
-| Command family | Purpose |
+## Mental model
+
+Campaign → Persona Plan → member account operation → daily runs. A Persona Plan owns one Persona
+and shared creative direction; account-operation submits pool accounts into that active Plan and
+is the managed execution layer, not a parallel top-level workflow. Proposals evolve plans;
+confirmed rollouts bind changes to schedules. See [campaign-lifecycle.md](references/campaign-lifecycle.md)
+and [member-account-operations.md](references/member-account-operations.md).
+
+## Shortcuts
+
+| Situation | Start with |
 | --- | --- |
-| Campaign `+create/+update/+activate/+pause/+archive/+rename/+list/+get` | Campaign lifecycle |
-| Plan `+plan-create/+plan-update/+plan-list/+plan-get/+members-reconcile` | Persona Plans and members |
-| `proposal +create/+list/+get/+revise/+reallocate/+withdraw` | Operator-review proposals |
-| `+schedule-rollout-preflight/+confirm-schedule-rollout/+schedule-rollout-get` | Rollout preview, apply, status |
-| `+overview/+recap/+control-read`, issue and learning commands | Review and intervention |
+| Choose campaign needing attention | `museoncli agentic-campaign +overview` |
+| Inspect one campaign context | `museoncli agentic-campaign +recap` |
+| Inspect Persona Plans | `museoncli agentic-campaign +plan-list` |
+| Propose plan evolution | `museoncli agentic-campaign proposal +create` |
+| Preview proposal rollout | `museoncli agentic-campaign +schedule-rollout-preflight` |
+| Enroll member accounts | `museoncli account-operation +submit-batch` |
+| Read whole-fleet health | `museoncli account-operation +ops-status` |
+| Check exact account membership | `museoncli account-operation +ops-status-accounts` |
+| Read one-day publish roster | `museoncli account-operation +daily-roster` |
 
-## References
+## DON'T
 
-- [command-surface.md](references/command-surface.md): current CommandSpec summaries, risk levels,
-  rollout order, proposal semantics, issues, and learning.
-- Inspect `museoncli schema agentic-campaign` and exact shortcut before use.
+- **DON'T** submit an account without a valid active Persona Plan with a Persona.
+- **DON'T** use per-account Persona/Product overrides inside one batch; split by Plan/context.
+- **DON'T** cancel live schedules to enroll an account; transfer/adoption handles them.
+- **DON'T** infer unmanaged status from absence on one paginated operation-list page.
+- **DON'T** confuse `operation_id` with `pool_account_id`.
+- **DON'T** treat normal draining backlog as an incident or sample a few runs as fleet health.
+- **DON'T** assume replacement enrollment retires originals; stopping is a separate terminal action.
+- **DON'T** resend a conflicted proposal unchanged; revise or withdraw the named blocker.
+- **DON'T** confirm a rollout without a matching current preflight.
 
-## Cross-skill handoff
+## Relationships
 
-Use `museon-content-workflow-account-operation` for account-operation detail,
-`museon-content-workflow-generation` for standalone generation, and
-`museon-content-workflow-evaluator` for evaluator definitions/runs outside campaign commands.
+Account-publish hands an allocation into fully-managed operation; assets supply Persona/Product/
+Format/Topic; campaign-monitor stores monitored external history; evaluator is separate from
+campaign learning and decision memory.

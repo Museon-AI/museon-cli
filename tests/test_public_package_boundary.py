@@ -121,7 +121,7 @@ def test_release_workflow_publishes_deterministic_skills_asset(tmp_path: Path) -
         for member in members
         if member.name.startswith("skills/") and member.name.count("/") >= 1
     }
-    assert len(top_level_skills) == 14
+    assert len(top_level_skills) == 13
     assert "skills/museon-content-workflow-base/SKILL.md" in {
         member.name for member in members
     }

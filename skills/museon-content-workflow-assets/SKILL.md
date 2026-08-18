@@ -1,26 +1,44 @@
 ---
 name: museon-content-workflow-assets
-description: "Create, list, inspect, and reuse Museon product, persona, format, topic, media, and other creative assets for social-media content workflows."
+description: "Create, inspect, and reuse Museon products, personas, formats, topics, media, and Product CTA targets for social-media content workflows."
+metadata:
+  requires:
+    bins: ["museoncli"]
+    skills: ["museon-content-workflow-base"]
+  cliHelp: "museoncli schema asset"
 ---
 
 # Museon content workflow assets
 
-Use for the `asset` and `product` domains and the reusable content model.
+**CRITICAL — first read [`../museon-content-workflow-base/SKILL.md`](../museon-content-workflow-base/SKILL.md).**
 
-| Command family | Purpose |
+## Mental model
+
+Product is what is promoted; Persona is the speaker; Format is reusable creative structure;
+Topic is the angle; Media is reusable source material. Generation combines format × topic ×
+persona × optional product without changing those reusable objects. Product CTA targets reference
+media already owned by the asset domain. See [content-model.md](references/content-model.md).
+
+## Shortcuts
+
+| Situation | Start with |
 | --- | --- |
-| `museoncli asset ...` | Discover and manage reusable personas, formats, topics, media, and assets |
-| `museoncli product ...` | Discover and manage promoted products and brand media |
+| Find reusable objects | `museoncli asset +list` |
+| Read several known formats | `museoncli asset +get-batch` |
+| Discover canonical values | `museoncli asset +options` |
+| Create reusable object | `museoncli asset +create` |
+| Product CTA targets | `museoncli product +cta-target-list` |
 
-## References
+## DON'T
 
-- [content-model-and-reuse.md](references/content-model-and-reuse.md): product/persona/format/topic
-  semantics, deduplication, and evidence-to-asset workflow.
-- Inspect `museoncli schema asset` or `museoncli schema product`, then the exact command schema,
-  for every command's current inputs and examples.
+- **DON'T** create near-duplicates before searching existing assets.
+- **DON'T** loop `asset +get` for two or more known Format IDs; use the batch read.
+- **DON'T** join multiple search concepts into one comma-separated search value.
+- **DON'T** delete a Persona held by a live Persona Plan; replace/retire the plan relationship first.
+- **DON'T** treat Product CTA target commands as media upload; create media assets upstream.
+- **DON'T** ask customers for opaque asset IDs when creative input can be gathered in plain language.
 
-## Cross-skill handoff
+## Relationships
 
-If source evidence is missing, use `museon-research`. When required assets are ready, hand off
-to `museon-content-workflow-generation`; for account-bound pools, hand off to
-`museon-content-workflow-social-account` or `museon-content-workflow-account-publish`.
+Research supplies evidence for Formats/Topics; generation consumes assets; social-account and
+account-publish bind them to publishing; Agentic Campaign Persona Plans hold Personas.

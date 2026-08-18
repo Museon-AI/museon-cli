@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL_NAMES = (
     "museon-research", "museon-content-workflow-base", "museon-content-workflow-assets",
     "museon-content-workflow-generation", "museon-content-workflow-social-account",
-    "museon-content-workflow-account-publish", "museon-content-workflow-account-operation",
-    "museon-content-workflow-campaign-monitor", "museon-content-workflow-routines",
+    "museon-content-workflow-account-publish", "museon-content-workflow-campaign-monitor",
+    "museon-content-workflow-routines",
     "museon-content-workflow-artifacts", "museon-content-workflow-agentic-campaign",
     "museon-content-workflow-evaluator",
 )
@@ -64,11 +64,22 @@ def test_agent_skill_is_complete_and_portable() -> None:
         skill = (skill_root / "SKILL.md").read_text(encoding="utf-8")
         assert skill.startswith(f"---\nname: {name}\n")
         assert len(skill.splitlines()) <= 60
+        assert 'bins: ["museoncli"]' in skill
+        assert "cliHelp:" in skill
         assert "TODO" not in skill
         assert "AskUserQuestion" not in skill
+        if name != "museon-content-workflow-base":
+            assert 'skills: ["museon-content-workflow-base"' in skill
+            assert "**CRITICAL" in skill
+        for heading in ("## Mental model", "## Shortcuts", "## DON'T", "## Relationships"):
+            assert heading in skill
         linked_references = set(re.findall(r"\(references/([a-z0-9-]+\.md)\)", skill))
         actual_references = {path.name for path in (skill_root / "references").glob("*.md")}
         assert linked_references == actual_references
+        for reference in (skill_root / "references").glob("*.md"):
+            reference_text = reference.read_text(encoding="utf-8")
+            for heading in ("## Mental model", "## Shortcuts", "## DON'T", "## Relationships"):
+                assert heading in reference_text, reference
 
     base = ROOT / "skills" / "museon-content-workflow-base"
     base_skill = (base / "SKILL.md").read_text(encoding="utf-8")

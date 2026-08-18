@@ -1,25 +1,43 @@
 ---
 name: museon-content-workflow-campaign-monitor
-description: "Monitor Museon campaigns, creators, content, summaries, social-media sync jobs, and locally synced post histories for performance review and next actions."
+description: "Track Museon campaign collections, creators, content, synced posts, and local performance history for monitoring and review."
+metadata:
+  requires:
+    bins: ["museoncli"]
+    skills: ["museon-content-workflow-base"]
+  cliHelp: "museoncli schema campaign-monitor"
 ---
 
 # Museon campaign monitor workflow
 
-Use for the `campaign-monitor` domain, including commands implemented in `social_media.py`.
+**CRITICAL — first read [`../museon-content-workflow-base/SKILL.md`](../museon-content-workflow-base/SKILL.md).**
 
-| Command family | Purpose |
+## Mental model
+
+A campaign monitor is a collection of tracked creators and content with locally synced post and
+performance history. Adding URLs may start import/sync work. Removing a monitor record changes the
+collection, not the source platform object. See [monitor-store.md](references/monitor-store.md).
+
+## Shortcuts
+
+| Situation | Start with |
 | --- | --- |
-| `museoncli campaign-monitor +content-list/+creator-list` | Read monitored content and creators |
-| `museoncli campaign-monitor ...` | Campaign summaries, sync commands, and post history exposed by schema |
+| Find monitor collection | `museoncli campaign-monitor +list` |
+| Inspect tracked creators | `museoncli campaign-monitor +creator-list` |
+| Inspect tracked content | `museoncli campaign-monitor +content-list` |
+| Review collection performance | `museoncli campaign-monitor +summary` |
+| Resolve schedule to live post | `museoncli campaign-monitor +post-resolve` |
+| Read synced post history | `museoncli campaign-monitor +post-list` |
 
-## References
+## DON'T
 
-- [monitoring-and-review.md](references/monitoring-and-review.md): source boundaries, review
-  discipline, and next-action loop.
-- Inspect `museoncli schema campaign-monitor` and the exact shortcut before use.
+- **DON'T** treat synced post history as a live platform-history fetch.
+- **DON'T** treat removing a creator monitor as deleting the creator's platform account.
+- **DON'T** treat removing content as deleting the original platform post.
+- **DON'T** assume a workspace-wide monitor disappears while another campaign references it.
+- **DON'T** use public research when the question concerns already monitored local history.
 
-## Cross-skill handoff
+## Relationships
 
-Use `museon-research` for live public-platform evidence, not the monitor store. Send durable
-reviews to `museon-content-workflow-artifacts` and recurring monitoring to
-`museon-content-workflow-routines`.
+Research owns live public evidence; social-account owns connected-account performance; Agentic
+Campaign owns strategy and managed operations; artifacts owns durable review reports.
