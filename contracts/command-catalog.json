@@ -22707,7 +22707,8 @@
         "museoncli research +social-media-search --platform youtube --intent keyword-search --query 'AI video ads'",
         "museoncli research +social-media-search --platform xhs --intent keyword-search --query 'coffee shop decor' --content-type image",
         "museoncli research +social-media-search --platform xhs --intent post --query 'https://www.xiaohongshu.com/explore/<note_id>'",
-        "museoncli research +social-media-search --platform xhs --intent creator-posts --query '<user_id>' --limit 10"
+        "museoncli research +social-media-search --platform xhs --intent comments --query 'https://xhslink.cn/o/<share_id>'",
+        "museoncli research +social-media-search --platform xhs --intent creator-posts --query 'https://www.xiaohongshu.com/user/profile/<user_id>' --limit 10"
       ],
       "execution": "direct",
       "input_schema": {
@@ -22730,14 +22731,14 @@
             "type": "string"
           },
           "cursor": {
-            "description": "Optional pagination cursor from evidence.pagination. For TikTok comments, pass the numeric cursor (0 for the first page). For Instagram comments, pass pagination_token unchanged. Otherwise pass a simple token directly, or the whole pagination object as JSON when it contains multiple fields. Supported for TikTok creator-search/creator-posts/keyword-search/keyword-videos/keyword-photos/hashtag-search/hashtag-videos/comments/music-posts, Instagram creator-posts/reels/keyword-search/keyword-reels/hashtag-search/hashtag-reels/comments/music-search/music-posts, YouTube keyword-search, XHS keyword-search, and XHS creator-posts.",
+            "description": "Optional pagination cursor from evidence.pagination. For TikTok comments, pass the numeric cursor (0 for the first page). For Instagram comments, pass pagination_token unchanged. For XHS comments, pass the opaque cursor string unchanged. Otherwise pass a simple token directly, or the whole pagination object as JSON when it contains multiple fields. Supported for TikTok creator-search/creator-posts/keyword-search/keyword-videos/keyword-photos/hashtag-search/hashtag-videos/comments/music-posts, Instagram creator-posts/reels/keyword-search/keyword-reels/hashtag-search/hashtag-reels/comments/music-search/music-posts, YouTube keyword-search, XHS keyword-search/comments, and XHS creator-posts.",
             "type": [
               "string",
               "null"
             ]
           },
           "intent": {
-            "description": "Domain search intent. TikTok supports creator-search, profile, creator-posts, keyword-search, keyword-videos, keyword-photos, hashtag-search, hashtag-videos, post, comments, music-search, and music-posts. Instagram supports profile, creator-posts, reels, keyword-search, keyword-reels, hashtag-search, hashtag-reels, post, comments, music-search, and music-posts. YouTube supports channel, channel-videos, channel-shorts, video, and keyword-search. XHS/RedNote supports keyword-search, post, profile, and creator-posts.",
+            "description": "Domain search intent. TikTok supports creator-search, profile, creator-posts, keyword-search, keyword-videos, keyword-photos, hashtag-search, hashtag-videos, post, comments, music-search, and music-posts. Instagram supports profile, creator-posts, reels, keyword-search, keyword-reels, hashtag-search, hashtag-reels, post, comments, music-search, and music-posts. YouTube supports channel, channel-videos, channel-shorts, video, and keyword-search. XHS/RedNote supports keyword-search, post, profile, and creator-posts. Comments is also supported.",
             "enum": [
               "creator-search",
               "profile",
@@ -22785,7 +22786,7 @@
             "type": "string"
           },
           "query": {
-            "description": "Search query, creator handle, profile/channel URL, hashtag/ch_id, post URL/id, or aweme_id depending on platform and intent. For TikTok comments, pass the numeric video aweme_id, not a share URL. For Instagram comments, pass a post shortcode or full post/Reel URL. Instagram creator-posts, handles/profile URLs read an account timeline; multi-word plain text runs keyword posts search. For XHS keyword-search, pass a note search keyword; for XHS post, pass a note id or share URL; for XHS profile/creator-posts, pass a user id or profile share URL.",
+            "description": "Search query, creator handle, profile/channel URL, hashtag/ch_id, post URL/id, or aweme_id depending on platform and intent. For TikTok comments, pass the numeric video aweme_id, not a share URL. For Instagram comments, pass a post shortcode or full post/Reel URL. Instagram creator-posts, handles/profile URLs read an account timeline; multi-word plain text runs keyword posts search. For XHS keyword-search, pass a note search keyword; for XHS post, pass a note id or share URL; for XHS comments, pass a note id, note URL, or xhslink share link; for XHS profile/creator-posts, pass a user id, profile URL/share link, or Xiaohongshu ID.",
             "maxLength": 4096,
             "minLength": 1,
             "type": "string"
@@ -22838,7 +22839,7 @@
       },
       "name": "research.social-media-search",
       "output_schema": {
-        "description": "Social Media Search evidence payload returned by Museon API.",
+        "description": "Social Media Search evidence payload returned by Museon API. For XHS post video notes, evidence includes video_url (a directly downloadable MP4 URL), video_duration_seconds, and video_size_bytes.",
         "properties": {
           "command": {
             "type": "string"

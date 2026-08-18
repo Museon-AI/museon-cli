@@ -68,13 +68,14 @@ museoncli setup --agent cursor
 ```
 
 Run only the command matching the current Agent. A successful result reports
-both `museon-cli` and `social-media-hook-analyze` as `installed` or `current`
-and includes their destination paths.
+all 12 `museon-*` workflow Skills and `social-media-hook-analyze` as `installed`
+or `current` and includes their destination paths.
 
 For another Agent that supports Skills, use that Agent's native Skill installer
-to install both folders:
+to install the workflow Skill folders and Hook Analysis Skill:
 
-https://github.com/Museon-AI/museon-cli/tree/v0.5.17/skills/museon-cli
+https://github.com/Museon-AI/museon-cli/tree/v0.5.17/skills/museon-content-workflow-base
+https://github.com/Museon-AI/museon-cli/tree/v0.5.17/skills/museon-research
 https://github.com/Museon-AI/museon-cli/tree/v0.5.17/skills/social-media-hook-analyze
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from museoncli.setup_agent import _resolve_agents, install_agent_skill
+from museoncli.setup_agent import MANAGED_SKILLS, _resolve_agents, install_agent_skill
 
 
 def test_setup_agent_installs_and_verifies_codex_skill(
@@ -16,19 +16,18 @@ def test_setup_agent_installs_and_verifies_codex_skill(
     first = install_agent_skill("codex")
     second = install_agent_skill("codex")
 
-    destination = codex_home / "skills" / "museon-cli"
+    destination = codex_home / "skills" / "museon-content-workflow-base"
+    research_destination = codex_home / "skills" / "museon-research"
     hook_destination = codex_home / "skills" / "social-media-hook-analyze"
     assert first["agents"][0]["status"] == "installed"
     assert second["agents"][0]["status"] == "current"
     assert destination.joinpath("SKILL.md").is_file()
     assert destination.joinpath("agents", "openai.yaml").is_file()
+    assert research_destination.joinpath("SKILL.md").is_file()
     assert hook_destination.joinpath("SKILL.md").is_file()
     assert hook_destination.joinpath("scripts", "rank_hooks.py").is_file()
-    assert first["skills"] == ["museon-cli", "social-media-hook-analyze"]
-    assert [item["name"] for item in first["agents"][0]["skills"]] == [
-        "museon-cli",
-        "social-media-hook-analyze",
-    ]
+    assert first["skills"] == list(MANAGED_SKILLS)
+    assert [item["name"] for item in first["agents"][0]["skills"]] == list(MANAGED_SKILLS)
     assert first["agents"][0]["digest"] == second["agents"][0]["digest"]
     assert any("museoncli skills +list" in step for step in first["next_steps"])
 
@@ -109,7 +108,7 @@ def test_setup_agent_refuses_unmanaged_destination(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     codex_home = tmp_path / "codex"
-    destination = codex_home / "skills" / "museon-cli"
+    destination = codex_home / "skills" / "museon-content-workflow-base"
     destination.mkdir(parents=True)
     destination.joinpath("SKILL.md").write_text("name: something-else\n", encoding="utf-8")
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
@@ -130,4 +129,4 @@ def test_setup_agent_preflights_all_skill_destinations_before_writing(
     with pytest.raises(RuntimeError, match="unmanaged"):
         install_agent_skill("codex")
 
-    assert not (codex_home / "skills" / "museon-cli").exists()
+    assert not (codex_home / "skills" / "museon-research").exists()

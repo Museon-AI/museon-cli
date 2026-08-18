@@ -771,7 +771,7 @@ def _social_media_search_input_schema() -> dict[str, Any]:
                     "comments, music-search, and music-posts. "
                     "YouTube supports channel, channel-videos, channel-shorts, video, "
                     "and keyword-search. XHS/RedNote supports keyword-search, post, "
-                    "profile, and creator-posts."
+                    "profile, and creator-posts. Comments is also supported."
                 ),
             },
             "query": {
@@ -786,8 +786,9 @@ def _social_media_search_input_schema() -> dict[str, Any]:
                     "Instagram creator-posts, handles/profile URLs read an account "
                     "timeline; multi-word plain text runs keyword posts search. "
                     "For XHS keyword-search, pass a note search keyword; for XHS post, "
-                    "pass a note id or share URL; for XHS profile/creator-posts, pass a "
-                    "user id or profile share URL."
+                    "pass a note id or share URL; for XHS comments, pass a note id, note "
+                    "URL, or xhslink share link; for XHS profile/creator-posts, pass a user "
+                    "id, profile URL/share link, or Xiaohongshu ID."
                 ),
             },
             "limit": {"type": "integer", "minimum": 1, "maximum": 30, "default": 5},
@@ -829,14 +830,15 @@ def _social_media_search_input_schema() -> dict[str, Any]:
                 "description": (
                     "Optional pagination cursor from evidence.pagination. For TikTok comments, "
                     "pass the numeric cursor (0 for the first page). For Instagram comments, "
-                    "pass pagination_token unchanged. Otherwise pass a simple token directly, "
-                    "or the whole pagination object as JSON when it contains multiple fields. "
+                    "pass pagination_token unchanged. For XHS comments, pass the opaque cursor "
+                    "string unchanged. Otherwise pass a simple token directly, or the whole "
+                    "pagination object as JSON when it contains multiple fields. "
                     "Supported for TikTok "
                     "creator-search/creator-posts/keyword-search/keyword-videos/keyword-photos/"
                     "hashtag-search/hashtag-videos/comments/music-posts, Instagram creator-posts/"
                     "reels/keyword-search/keyword-reels/hashtag-search/hashtag-reels/comments/"
-                    "music-search/music-posts, YouTube keyword-search, XHS keyword-search, "
-                    "and XHS creator-posts."
+                    "music-search/music-posts, YouTube keyword-search, XHS keyword-search/"
+                    "comments, and XHS creator-posts."
                 ),
             },
         },
@@ -1189,7 +1191,9 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="social_media_search",
             input_schema=_social_media_search_input_schema(),
             output_schema=_direct_output_schema(
-                "Social Media Search evidence payload returned by Museon API."
+                "Social Media Search evidence payload returned by Museon API. For XHS post "
+                "video notes, evidence includes video_url (a directly downloadable MP4 URL), "
+                "video_duration_seconds, and video_size_bytes."
             ),
             examples=[
                 (
@@ -1226,7 +1230,12 @@ def specs() -> list[CommandSpec]:
                 ),
                 (
                     "museoncli research +social-media-search --platform xhs "
-                    "--intent creator-posts --query '<user_id>' --limit 10"
+                    "--intent comments --query 'https://xhslink.cn/o/<share_id>'"
+                ),
+                (
+                    "museoncli research +social-media-search --platform xhs "
+                    "--intent creator-posts "
+                    "--query 'https://www.xiaohongshu.com/user/profile/<user_id>' --limit 10"
                 ),
             ],
             add_arguments=_add_social_media_search_arguments,

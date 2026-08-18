@@ -118,9 +118,10 @@ def smoke_install(wheel: Path) -> None:
             raise RuntimeError(f"Skill was not installed: {installed!r}")
         if not current_agents or current_agents[0].get("status") != "current":
             raise RuntimeError(f"Skill installation was not idempotent: {current!r}")
-        skill = home / ".codex" / "skills" / "museon-cli" / "SKILL.md"
-        if not skill.is_file():
-            raise RuntimeError(f"installed Skill is missing: {skill}")
+        for skill_name in ("museon-content-workflow-base", "museon-research"):
+            skill = home / ".codex" / "skills" / skill_name / "SKILL.md"
+            if not skill.is_file():
+                raise RuntimeError(f"installed Skill is missing: {skill}")
 
         version_data = version.get("data", {})
         print(

@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://www.museon.ai/zh/cli">产品页面</a> ·
-  <a href="./skills/museon-cli/SKILL.md">Agent Skill</a> ·
+  <a href="./skills/museon-content-workflow-base/SKILL.md">Workflow Skills</a> ·
   <a href="./README.md">English</a>
 </p>
 
@@ -37,7 +37,7 @@ https://www.museon.ai/cli/install.md
 
 1. **Agent 安装 Museon CLI。** 它会安装 GitHub Release 中固定版本的 Python wheel，
    并确认 CLI 命令真正可用。
-2. **Museon CLI 安装 Skills。** CLI 会同时安装基础操作 Skill 和 Instagram Hook
+2. **Museon CLI 安装 Skills。** CLI 会同时安装按任务结果拆分的工作流 Skills 和 Instagram Hook
    调研 Skill；需要登录态浏览时，再单独安装并初始化 ego lite。
 3. **你在浏览器里完成授权。** 登录 Museon，然后选择允许 Agent 使用的工作区。
 4. **你只需要描述工作。** Agent 会自己找到合适的 Museon 能力并继续完成任务，
@@ -65,7 +65,7 @@ Museon 关注的是完整循环：**调研 → 判断 → 创作 → 确认 → 
 
 它们共同组成 Agent 的社媒工作能力：
 
-- **Museon Skill** 告诉 Agent 应该怎样完成社媒任务，以及怎样安全地使用工具。
+- **Museon workflow Skills** 告诉 Agent 应该怎样完成社媒任务、路由能力，以及怎样安全地使用工具。
 - **Museon CLI** 是 Agent 在自己环境里调用 Museon 能力的连接方式。
 - **Museon** 在服务端完成调研、生成、账号、排期、发布和表现分析等工作。
 

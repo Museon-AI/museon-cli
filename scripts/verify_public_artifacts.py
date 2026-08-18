@@ -11,6 +11,14 @@ from pathlib import Path, PurePosixPath
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MANAGED_SKILLS = (
+    "museon-research", "museon-content-workflow-base", "museon-content-workflow-assets",
+    "museon-content-workflow-generation", "museon-content-workflow-social-account",
+    "museon-content-workflow-account-publish", "museon-content-workflow-account-operation",
+    "museon-content-workflow-campaign-monitor", "museon-content-workflow-routines",
+    "museon-content-workflow-artifacts", "museon-content-workflow-agentic-campaign",
+    "museon-content-workflow-evaluator", "social-media-hook-analyze",
+)
 PRIVATE_REFERENCES = (
     b"apps/museoncli",
     b"apps/api",
@@ -147,18 +155,13 @@ def verify_dist(dist_dir: Path) -> None:
     wheel = wheels[0]
     wheel_entries = _wheel_entries(wheel)
     _assert_no_forbidden_paths(wheel_entries, artifact=wheel)
-    _assert_complete_skill(
-        wheel_entries,
-        skill_name="museon-cli",
-        prefix="museoncli/bundled_skills/museon-cli",
-        artifact=wheel,
-    )
-    _assert_complete_skill(
-        wheel_entries,
-        skill_name="social-media-hook-analyze",
-        prefix="museoncli/bundled_skills/social-media-hook-analyze",
-        artifact=wheel,
-    )
+    for skill_name in MANAGED_SKILLS:
+        _assert_complete_skill(
+            wheel_entries,
+            skill_name=skill_name,
+            prefix=f"museoncli/bundled_skills/{skill_name}",
+            artifact=wheel,
+        )
     _assert_public_wheel_content(wheel_entries, artifact=wheel)
 
     _assert_license_files_packaged(
