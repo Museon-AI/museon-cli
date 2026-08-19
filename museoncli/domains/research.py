@@ -320,6 +320,38 @@ def _build_social_hook_analyze_arguments(args: argparse.Namespace) -> dict[str, 
     return payload
 
 
+def _add_social_hook_source_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument("--url", dest="candidate_urls", action="append")
+    parser.add_argument("--max-items", type=int, default=20)
+    parser.add_argument("--idempotency-key", required=True)
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_social_hook_source_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    if args.candidate_urls:
+        payload["candidate_urls"] = list(args.candidate_urls)
+    candidate_urls = _optional_url_list(
+        payload.get("candidate_urls"), field="candidate_urls"
+    )
+    if not 1 <= len(candidate_urls) <= 40:
+        raise ValueError(
+            "research +social-media-hook-source requires 1 to 40 --url values."
+        )
+    if len(candidate_urls) != len(set(candidate_urls)):
+        raise ValueError("--url values must be unique.")
+    payload["candidate_urls"] = candidate_urls
+    payload["max_items"] = args.max_items
+    payload["idempotency_key"] = args.idempotency_key.strip()
+    if not 8 <= len(payload["idempotency_key"]) <= 240:
+        raise ValueError("--idempotency-key must contain 8 to 240 characters.")
+    _validate_int_range(
+        payload, key="max_items", flag="--max-items", minimum=1, maximum=30
+    )
+    return payload
+
+
 def _add_social_hook_analyze_seen_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
     parser.add_argument("--url", dest="urls", action="append")
@@ -870,6 +902,28 @@ def _social_hook_analyze_input_schema() -> dict[str, Any]:
     }
 
 
+def _social_hook_source_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "candidate_urls": {
+                "type": "array",
+                "items": {"type": "string", "format": "uri", "maxLength": 2048},
+                "minItems": 1,
+                "maxItems": 40,
+                "uniqueItems": True,
+                "description": (
+                    "Instagram post URLs retained by an Agent after opening-frame "
+                    "visual prefiltering."
+                ),
+            },
+            "max_items": {"type": "integer", "minimum": 1, "maximum": 30, "default": 20},
+            "idempotency_key": {"type": "string", "minLength": 8, "maxLength": 240},
+        },
+        "required": ["candidate_urls", "idempotency_key"],
+    }
+
+
 def _social_hook_analyze_seen_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -1269,6 +1323,31 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
+            shortcut="+social-media-hook-source",
+            summary=(
+                "Submit Agent-prefiltered Instagram Hook candidates, recheck "
+                "workspace-scoped duplicates, and start the existing durable analysis batch."
+            ),
+            risk_level="write",
+            execution="async_run",
+            adapter_tool_name="social_media_hook_source",
+            input_schema=_social_hook_source_input_schema(),
+            output_schema=_async_output_schema(
+                "Accepted Social Hook analysis batch plus the initial duplicate preview."
+            ),
+            examples=[
+                (
+                    "museoncli research +social-media-hook-source "
+                    "--url https://www.instagram.com/reel/<id>/ "
+                    "--idempotency-key <stable_key>"
+                )
+            ],
+            add_arguments=_add_social_hook_source_arguments,
+            build_arguments=_build_social_hook_source_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=Domain.RESEARCH,
             shortcut="+social-media-hook-analyze-seen",
             summary=(
                 "Check up to 40 Instagram post URLs against prior workspace-scoped "
@@ -1565,6 +1644,19 @@ async def _execute_social_hook_analyze(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_social_hook_source(ctx: CommandContext) -> Any:
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/research/social-media-hook-source",
+            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+        )
+    )
+
+
 async def _execute_social_hook_analyze_seen(ctx: CommandContext) -> Any:
     if not ctx.workspace_id:
         raise RuntimeError("missing_workspace")
@@ -1698,6 +1790,7 @@ EXECUTORS = {
     "research.creative-search-ads-get": direct_enveloped(_execute_creative_search_ads_get),
     "research.creative-search-ads-results": direct_enveloped(_execute_creative_search_ads_results),
     "research.social-media-hook-analyze": direct_enveloped(_execute_social_hook_analyze),
+    "research.social-media-hook-source": direct_enveloped(_execute_social_hook_source),
     "research.social-media-hook-analyze-seen": direct_enveloped(
         _execute_social_hook_analyze_seen
     ),

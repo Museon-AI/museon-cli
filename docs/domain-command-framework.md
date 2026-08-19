@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-152 commands across 14 domains (source of truth: `museoncli schema`).
+153 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -45,6 +45,7 @@ The tables below are generated — edit code, then run
 | `research +web-research` | read | — | — | direct | Research public web evidence from a query or URL, including page text and official-site visual assets. |
 | `research +social-media-search` | read | — | — | direct | Search social-native evidence across TikTok, Instagram, YouTube, and XHS using a stable platform and intent contract. |
 | `research +social-media-hook-analyze` | write | yes | — | async_run | Start a durable Instagram Hook analysis batch from post and/or profile URLs. Returns immediately; poll batches together and read structured results by page. |
+| `research +social-media-hook-source` | write | yes | — | async_run | Submit Agent-prefiltered Instagram Hook candidates, recheck workspace-scoped duplicates, and start the existing durable analysis batch. |
 | `research +social-media-hook-analyze-seen` | read | — | — | direct | Check up to 40 Instagram post URLs against prior workspace-scoped Social Media Hook analyses. |
 | `research +social-media-hook-analyze-get` | read | — | — | direct | Read one Social Media Hook analysis batch and its aggregate progress. |
 | `research +social-media-hook-analyze-poll` | read | — | — | direct | Poll up to 20 Social Media Hook analysis batches in one request. |

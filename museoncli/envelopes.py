@@ -83,6 +83,7 @@ def direct_api_envelope(
         run = _creative_search_ads_run_from_data(data)
     elif command_name in {
         "research.social-media-hook-analyze",
+        "research.social-media-hook-source",
         "research.social-media-hook-analyze-get",
     }:
         run = _social_hook_analysis_run_from_data(data)
