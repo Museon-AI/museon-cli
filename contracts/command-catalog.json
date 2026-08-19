@@ -3874,6 +3874,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "research.social-media-hook-source",
+          "domain": "research",
+          "execution": "async_run",
+          "name": "research.social-media-hook-source",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+social-media-hook-source",
+          "stability": "stable",
+          "summary": "Submit Agent-prefiltered Instagram Hook candidates, recheck workspace-scoped duplicates, and start the existing durable analysis batch.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "research.social-media-hook-analyze-seen",
           "domain": "research",
           "execution": "direct",
@@ -22681,6 +22706,138 @@
       "stability": "stable",
       "summary": "Check up to 40 Instagram post URLs against prior workspace-scoped Social Media Hook analyses.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "research.social-media-hook-source": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "research.social-media-hook-source",
+      "domain": "research",
+      "examples": [
+        "museoncli research +social-media-hook-source --url https://www.instagram.com/reel/<id>/ --idempotency-key <stable_key>"
+      ],
+      "execution": "async_run",
+      "input_schema": {
+        "properties": {
+          "candidate_urls": {
+            "description": "Instagram post URLs retained by an Agent after opening-frame visual prefiltering.",
+            "items": {
+              "format": "uri",
+              "maxLength": 2048,
+              "type": "string"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "idempotency_key": {
+            "maxLength": 240,
+            "minLength": 8,
+            "type": "string"
+          },
+          "max_items": {
+            "default": 20,
+            "maximum": 30,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "candidate_urls",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "research.social-media-hook-source",
+      "output_schema": {
+        "description": "Accepted Social Hook analysis batch plus the initial duplicate preview.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "watch_command": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "status"
+            ],
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+social-media-hook-source",
+      "stability": "stable",
+      "summary": "Submit Agent-prefiltered Instagram Hook candidates, recheck workspace-scoped duplicates, and start the existing durable analysis batch.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "research.social-media-search": {

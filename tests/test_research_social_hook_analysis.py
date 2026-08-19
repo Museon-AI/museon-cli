@@ -67,6 +67,83 @@ def test_start_requires_at_least_one_source() -> None:
         command_payload(args)
 
 
+def test_source_builds_agent_prefiltered_candidate_payload() -> None:
+    args = _parse(
+        [
+            "research",
+            "+social-media-hook-source",
+            "--url",
+            "https://www.instagram.com/reel/post-1/",
+            "--url",
+            "https://www.instagram.com/reel/post-2/",
+            "--max-items",
+            "10",
+            "--idempotency-key",
+            "home-source-1",
+        ]
+    )
+
+    assert command_payload(args) == {
+        "candidate_urls": [
+            "https://www.instagram.com/reel/post-1/",
+            "https://www.instagram.com/reel/post-2/",
+        ],
+        "max_items": 10,
+        "idempotency_key": "home-source-1",
+    }
+    schema = schema_payload("research.social-media-hook-source")
+    assert schema["execution"] == "async_run"
+    assert schema["input_schema"]["properties"]["candidate_urls"]["minItems"] == 1
+
+
+def test_source_dispatches_to_sourcing_boundary(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[dict[str, Any]] = []
+
+    async def fake_api_data(
+        _cfg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        calls.append({"method": method, "path": path, "json_body": json_body, "params": params})
+        return {
+            "domain": "research",
+            "operation": "social-media-hook-source",
+            "result": {
+                "id": ANALYSIS_ID,
+                "status": "queued",
+                "terminal": False,
+                "poll_after_seconds": 5,
+                "sourcing": {"initial_unseen_count": 1},
+            },
+        }
+
+    monkeypatch.setattr(main_module, "load_config", _config)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+    result = asyncio.run(
+        main_module.dispatch(
+            _parse(
+                [
+                    "research",
+                    "+social-media-hook-source",
+                    "--url",
+                    "https://www.instagram.com/reel/post-1/",
+                    "--idempotency-key",
+                    "home-source-dispatch",
+                ]
+            )
+        )
+    )
+
+    assert result["run"]["id"] == ANALYSIS_ID
+    assert calls[0]["path"] == "/agent-cli/research/social-media-hook-source"
+    assert calls[0]["json_body"]["payload"]["candidate_urls"] == [
+        "https://www.instagram.com/reel/post-1/"
+    ]
+
+
 def test_seen_parser_builds_ordered_url_payload_and_read_schema() -> None:
     args = _parse(
         [
