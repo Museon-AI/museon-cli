@@ -2641,7 +2641,7 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
     if not serial or not password:
         raise RuntimeError("incomplete_adb_connection_response")
 
-    await _run_adb("connect", serial)
+    await _run_adb("connect", "connect", serial)
     await _run_adb("glogin", "-s", serial, "shell", "glogin", password)
     state = await _run_adb("get-state", "-s", serial, "get-state")
     if state != "device":
