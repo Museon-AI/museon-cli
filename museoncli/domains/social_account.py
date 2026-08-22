@@ -179,12 +179,32 @@ def _build_social_account_id_arguments(args: argparse.Namespace) -> dict[str, An
 
 
 def _add_social_account_adb_connect_arguments(parser: argparse.ArgumentParser) -> None:
-    _add_social_account_id_arguments(parser)
+    _add_common_adapter_arguments(parser)
+    target = parser.add_mutually_exclusive_group(required=True)
+    target.add_argument("--id", dest="account_id")
+    target.add_argument("--handle")
+    parser.add_argument(
+        "--platform",
+        help="Required with --handle; must exactly match the account platform.",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate the intended account target without enabling ADB or connecting locally.",
     )
+
+
+def _build_social_account_adb_connect_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    if args.account_id:
+        payload["account_id"] = args.account_id
+        return payload
+    if not args.platform:
+        raise ValueError("social-account +adb-connect requires --platform with --handle.")
+    payload.update({"handle": args.handle, "platform": args.platform})
+    if args.workspace_id:
+        payload["workspace_id"] = args.workspace_id
+    return payload
 
 
 def _add_social_account_assets_set_arguments(parser: argparse.ArgumentParser) -> None:
@@ -994,10 +1014,41 @@ def _social_account_adb_connect_input_schema() -> dict[str, Any]:
         "type": "object",
         "properties": {
             "account_id": _uuid_id_schema(
-                "Pool account UUID. Museon resolves its active cloud phone internally."
+                "Pool account UUID. Mutually exclusive with handle. Museon resolves its "
+                "active cloud phone internally."
             ),
+            "handle": {
+                "type": "string",
+                "minLength": 1,
+                "description": (
+                    "Account handle resolved by the server. Mutually exclusive with account_id; "
+                    "platform is required when handle is used."
+                ),
+            },
+            "platform": {
+                "type": "string",
+                "minLength": 1,
+                "description": (
+                    "Exact platform string. Required with handle; accepts the same unrestricted "
+                    "platform values as social-account +list."
+                ),
+            },
+            "workspace_id": {
+                "type": ["string", "null"],
+                "format": "uuid",
+                "description": (
+                    "Optional explicit workspace scope for handle resolution. Omitted unless "
+                    "--workspace-id is passed; the selected workspace is not injected."
+                ),
+            },
         },
-        "required": ["account_id"],
+        "oneOf": [
+            {"required": ["account_id"], "not": {"required": ["handle"]}},
+            {
+                "required": ["handle", "platform"],
+                "not": {"required": ["account_id"]},
+            },
+        ],
     }
 
 
@@ -1751,10 +1802,11 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 "museoncli social-account +adb-connect --id <pool_account_id>",
+                "museoncli social-account +adb-connect --handle @creator --platform tiktok",
                 "museoncli social-account +adb-connect --id <pool_account_id> --dry-run",
             ],
             add_arguments=_add_social_account_adb_connect_arguments,
-            build_arguments=_build_social_account_id_arguments,
+            build_arguments=_build_social_account_adb_connect_arguments,
             supports_dry_run=True,
         ),
         CommandSpec(
@@ -2620,22 +2672,51 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
-    if not account_id:
-        raise RuntimeError(f"{command_name} requires account_id")
-
-    connection = agent_domain_result(
-        await api_data(
-            cfg,
-            "POST",
-            f"/agent-cli/social-accounts/{account_id}/adb-credentials",
-            params={"workspace_id": workspace_id},
+    if account_id:
+        if not workspace_id:
+            raise RuntimeError("missing_workspace")
+        connection = agent_domain_result(
+            await api_data(
+                cfg,
+                "POST",
+                f"/agent-cli/social-accounts/{account_id}/adb-credentials",
+                params={"workspace_id": workspace_id},
+            )
         )
-    )
+        resolved_account = None
+    else:
+        handle = str(arguments.get("handle") or "").strip()
+        platform = str(arguments.get("platform") or "").strip()
+        if not handle or not platform:
+            raise RuntimeError(f"{command_name} requires handle and platform")
+        body = {"handle": handle, "platform": platform}
+        explicit_workspace_id = arguments.get("workspace_id")
+        if explicit_workspace_id:
+            body["workspace_id"] = explicit_workspace_id
+        connection = agent_domain_result(
+            await api_data(
+                cfg,
+                "POST",
+                "/agent-cli/social-accounts/adb-credentials",
+                json_body=body,
+            )
+        )
+        resolved_account = connection
     if not isinstance(connection, dict):
         raise RuntimeError("invalid_adb_connection_response")
+    result = await _connect_adb(connection)
+    if isinstance(resolved_account, dict):
+        result.update(
+            {
+                key: resolved_account.get(key)
+                for key in ("account_id", "username", "platform", "workspace_id")
+            }
+        )
+    return result
+
+
+async def _connect_adb(connection: dict[str, Any]) -> dict[str, Any]:
     serial = str(connection.get("serial") or "").strip()
     password = str(connection.get("password") or "").strip()
     if not serial or not password:

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import sys
 from typing import Any
 
 import pytest
@@ -134,6 +136,162 @@ def test_adb_connect_uses_native_adb_without_printing_the_temporary_password(
     assert result is not None
     assert result["data"]["serial"] == "203.0.113.9:12345"
     assert "temporary-password" not in repr(result)
+
+
+def test_adb_connect_target_arguments_are_mutually_exclusive() -> None:
+    with pytest.raises(SystemExit):
+        _parse(["social-account", "+adb-connect"])
+    with pytest.raises(SystemExit):
+        _parse(
+            [
+                "social-account",
+                "+adb-connect",
+                "--id",
+                ACCOUNT_ID,
+                "--handle",
+                "@creator",
+                "--platform",
+                "tiktok",
+            ]
+        )
+
+    args = _parse(["social-account", "+adb-connect", "--handle", "@creator"])
+    with pytest.raises(ValueError, match="requires --platform with --handle"):
+        get_command_spec("social-account.adb-connect").build_arguments(args)
+
+    scoped_args = _parse(
+        [
+            "social-account",
+            "+adb-connect",
+            "--handle",
+            "@creator",
+            "--platform",
+            "custom-platform",
+            "--workspace-id",
+            "30000000-0000-4000-8000-000000000003",
+        ]
+    )
+    assert get_command_spec("social-account.adb-connect").build_arguments(scoped_args) == {
+        "handle": "@creator",
+        "platform": "custom-platform",
+        "workspace_id": "30000000-0000-4000-8000-000000000003",
+    }
+
+
+def test_adb_connect_resolves_handle_without_injecting_selected_workspace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _AdbCapture(_Capture):
+        async def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+            await super().__call__(*args, **kwargs)
+            return {
+                "domain": "social-account",
+                "result": {
+                    "serial": "203.0.113.9:12345",
+                    "password": "temporary-password",
+                    "account_id": ACCOUNT_ID,
+                    "workspace_id": "workspace-2",
+                    "username": "creator",
+                    "platform": "tiktok",
+                },
+            }
+
+    capture = _AdbCapture()
+
+    async def fake_run_adb(operation: str, *_arguments: str) -> str:
+        return "device" if operation == "get-state" else ""
+
+    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "api_data", capture)
+    monkeypatch.setattr(social_account, "_run_adb", fake_run_adb)
+
+    result = asyncio.run(
+        main_module.dispatch(
+            _parse(
+                [
+                    "social-account",
+                    "+adb-connect",
+                    "--handle",
+                    "@creator",
+                    "--platform",
+                    "tiktok",
+                ]
+            )
+        )
+    )
+
+    assert capture.calls == [
+        {
+            "method": "POST",
+            "path": "/agent-cli/social-accounts/adb-credentials",
+            "json_body": {"handle": "@creator", "platform": "tiktok"},
+            "params": None,
+        }
+    ]
+    assert result is not None
+    assert result["data"] == {
+        "serial": "203.0.113.9:12345",
+        "connected": True,
+        "next_step": "Use native adb or u2cli with this serial.",
+        "account_id": ACCOUNT_ID,
+        "username": "creator",
+        "platform": "tiktok",
+        "workspace_id": "workspace-2",
+    }
+    assert "temporary-password" not in repr(result)
+
+
+def test_adb_connect_prints_all_ambiguous_handle_candidates(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    candidates = [
+        {
+            "account_id": ACCOUNT_ID,
+            "workspace_id": "workspace-1",
+            "workspace_name": "Primary",
+            "platform": "tiktok",
+            "username": "creator",
+        },
+        {
+            "account_id": "20000000-0000-4000-8000-000000000002",
+            "workspace_id": "workspace-2",
+            "workspace_name": "Secondary",
+            "platform": "tiktok",
+            "username": "creator",
+        },
+    ]
+
+    async def ambiguous(*_args: Any, **_kwargs: Any) -> Any:
+        raise main_module.ApiRequestError(
+            409,
+            {"code": "AMBIGUOUS_ACCOUNT", "candidates": candidates},
+        )
+
+    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "api_data", ambiguous)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "museoncli",
+            "social-account",
+            "+adb-connect",
+            "--handle",
+            "@creator",
+            "--platform",
+            "tiktok",
+        ],
+    )
+
+    with pytest.raises(SystemExit, match="1"):
+        main_module.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["reason"] == "ApiRequestError"
+    assert output["detail"] == {
+        "code": "AMBIGUOUS_ACCOUNT",
+        "candidates": candidates,
+    }
 
 
 def test_adb_connect_dry_run_avoids_provider_and_local_adb(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -25667,6 +25667,7 @@
       "domain": "social-account",
       "examples": [
         "museoncli social-account +adb-connect --id <pool_account_id>",
+        "museoncli social-account +adb-connect --handle @creator --platform tiktok",
         "museoncli social-account +adb-connect --id <pool_account_id> --dry-run"
       ],
       "execution": "direct",
@@ -25702,16 +25703,54 @@
         }
       ],
       "input_schema": {
+        "oneOf": [
+          {
+            "not": {
+              "required": [
+                "handle"
+              ]
+            },
+            "required": [
+              "account_id"
+            ]
+          },
+          {
+            "not": {
+              "required": [
+                "account_id"
+              ]
+            },
+            "required": [
+              "handle",
+              "platform"
+            ]
+          }
+        ],
         "properties": {
           "account_id": {
-            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID. Museon resolves its active cloud phone internally.",
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID. Mutually exclusive with handle. Museon resolves its active cloud phone internally.",
             "format": "uuid",
             "type": "string"
+          },
+          "handle": {
+            "description": "Account handle resolved by the server. Mutually exclusive with account_id; platform is required when handle is used.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "platform": {
+            "description": "Exact platform string. Required with handle; accepts the same unrestricted platform values as social-account +list.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "workspace_id": {
+            "description": "Optional explicit workspace scope for handle resolution. Omitted unless --workspace-id is passed; the selected workspace is not injected.",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
-        "required": [
-          "account_id"
-        ],
         "type": "object"
       },
       "name": "social-account.adb-connect",
