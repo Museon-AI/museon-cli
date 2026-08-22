@@ -93,15 +93,26 @@ def test_adb_connect_uses_native_adb_without_printing_the_temporary_password(
             }
 
     capture = _AdbCapture()
-    adb_calls: list[tuple[str, tuple[str, ...]]] = []
+    adb_commands: list[tuple[str, ...]] = []
 
-    async def fake_run_adb(operation: str, *arguments: str) -> str:
-        adb_calls.append((operation, arguments))
-        return "device" if operation == "get-state" else ""
+    class _Process:
+        def __init__(self, stdout: bytes) -> None:
+            self.returncode = 0
+            self._stdout = stdout
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            return self._stdout, b""
+
+    async def fake_create_subprocess_exec(*argv: str, **_kwargs: Any) -> _Process:
+        adb_commands.append(argv)
+        stdout = b"device\n" if argv[-1] == "get-state" else b""
+        return _Process(stdout)
 
     monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
     monkeypatch.setattr(main_module, "api_data", capture)
-    monkeypatch.setattr(social_account, "_run_adb", fake_run_adb)
+    monkeypatch.setattr(
+        social_account.asyncio, "create_subprocess_exec", fake_create_subprocess_exec
+    )
 
     result = asyncio.run(
         main_module.dispatch(_parse(["social-account", "+adb-connect", "--id", ACCOUNT_ID]))
@@ -115,13 +126,10 @@ def test_adb_connect_uses_native_adb_without_printing_the_temporary_password(
             "params": {"workspace_id": "workspace-1"},
         }
     ]
-    assert adb_calls == [
-        ("connect", ("203.0.113.9:12345",)),
-        (
-            "glogin",
-            ("-s", "203.0.113.9:12345", "shell", "glogin", "temporary-password"),
-        ),
-        ("get-state", ("-s", "203.0.113.9:12345", "get-state")),
+    assert adb_commands == [
+        ("adb", "connect", "203.0.113.9:12345"),
+        ("adb", "-s", "203.0.113.9:12345", "shell", "glogin", "temporary-password"),
+        ("adb", "-s", "203.0.113.9:12345", "get-state"),
     ]
     assert result is not None
     assert result["data"]["serial"] == "203.0.113.9:12345"
