@@ -59,6 +59,7 @@ SOCIAL_ACCOUNT_ALLOCATION_TYPE_CHOICES = [
 
 
 SOCIAL_ACCOUNT_SEARCH_TERMS_MAX = 100
+ADB_COMMAND_TIMEOUT_SECONDS = 20
 
 
 SOCIAL_ACCOUNT_SCHEDULE_STATUS_CHOICES = [
@@ -175,6 +176,15 @@ def _build_social_account_id_arguments(args: argparse.Namespace) -> dict[str, An
     payload = _load_structured_args(args)
     payload["account_id"] = args.account_id
     return payload
+
+
+def _add_social_account_adb_connect_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_social_account_id_arguments(parser)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate the intended account target without enabling ADB or connecting locally.",
+    )
 
 
 def _add_social_account_assets_set_arguments(parser: argparse.ArgumentParser) -> None:
@@ -420,9 +430,7 @@ def _build_social_account_config_batch_update_arguments(
         try:
             account_updates = json.loads(args.account_updates)
         except json.JSONDecodeError as exc:
-            raise ValueError(
-                f"--account-updates must be valid JSON: {exc}"
-            ) from exc
+            raise ValueError(f"--account-updates must be valid JSON: {exc}") from exc
         if not isinstance(account_updates, list) or not account_updates:
             raise ValueError("--account-updates must be a non-empty JSON array")
         payload["account_updates"] = account_updates
@@ -430,9 +438,7 @@ def _build_social_account_config_batch_update_arguments(
 
     ids = [part.strip() for part in (args.ids or "").split(",") if part.strip()]
     if not ids:
-        raise ValueError(
-            "social-account +config-batch-update requires --account-updates or --ids."
-        )
+        raise ValueError("social-account +config-batch-update requires --account-updates or --ids.")
     uniform: dict[str, Any] = {}
     if args.require_approval_before_publish is not None:
         uniform["require_approval_before_publish"] = args.require_approval_before_publish
@@ -448,9 +454,7 @@ def _build_social_account_config_batch_update_arguments(
             "--required-hashtags, --output-language, "
             "--require-approval-before-publish, or --no-require-approval-before-publish."
         )
-    payload["account_updates"] = [
-        {"account_id": account_id, **uniform} for account_id in ids
-    ]
+    payload["account_updates"] = [{"account_id": account_id, **uniform} for account_id in ids]
     return payload
 
 
@@ -826,13 +830,9 @@ def _build_social_account_profile_edit_batch_submit_arguments(
     try:
         account_updates = json.loads(args.account_updates)
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"--account-updates must be valid JSON: {exc}"
-        ) from exc
+        raise ValueError(f"--account-updates must be valid JSON: {exc}") from exc
     if not isinstance(account_updates, list) or not account_updates:
-        raise ValueError(
-            "--account-updates must be a non-empty JSON array"
-        )
+        raise ValueError("--account-updates must be a non-empty JSON array")
     payload["account_updates"] = account_updates
     payload["update_nick_name"] = getattr(args, "update_nick_name", False)
     payload["update_bio"] = getattr(args, "update_bio", False)
@@ -985,6 +985,18 @@ def _social_account_get_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {"account_id": _uuid_id_schema("Pool account UUID, not a list caption.")},
+        "required": ["account_id"],
+    }
+
+
+def _social_account_adb_connect_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_id": _uuid_id_schema(
+                "Pool account UUID. Museon resolves its active cloud phone internally."
+            ),
+        },
         "required": ["account_id"],
     }
 
@@ -1420,9 +1432,7 @@ def _social_account_profile_edit_status_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "task_id": _uuid_id_schema(
-                "Task UUID returned by social-account +profile-edit-submit."
-            )
+            "task_id": _uuid_id_schema("Task UUID returned by social-account +profile-edit-submit.")
         },
         "required": ["task_id"],
     }
@@ -1726,6 +1736,29 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
+            shortcut="+adb-connect",
+            summary=(
+                "Connect the current sandbox to this account's cloud phone over ADB. "
+                "After success, use native adb or u2cli with the returned serial; "
+                "the temporary connection password is never printed."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="social_account_adb_connect",
+            input_schema=_social_account_adb_connect_input_schema(),
+            output_schema=_direct_output_schema(
+                "Local ADB connection result with a serial ready for native adb and u2cli."
+            ),
+            examples=[
+                "museoncli social-account +adb-connect --id <pool_account_id>",
+                "museoncli social-account +adb-connect --id <pool_account_id> --dry-run",
+            ],
+            add_arguments=_add_social_account_adb_connect_arguments,
+            build_arguments=_build_social_account_id_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+connect-link-create",
             summary=(
                 "Create a workspace self-authorization link to connect a user-owned "
@@ -1952,7 +1985,7 @@ def specs() -> list[CommandSpec]:
                 ),
                 (
                     "museoncli social-account +config-batch-update --account-updates "
-                    "'[{\"account_id\":\"<uuid>\",\"output_language\":\"zh-CN\"}]'"
+                    '\'[{"account_id":"<uuid>","output_language":"zh-CN"}]\''
                 ),
             ],
             add_arguments=_add_social_account_config_batch_update_arguments,
@@ -2209,7 +2242,7 @@ def specs() -> list[CommandSpec]:
             examples=[
                 (
                     "museoncli social-account +profile-edit-batch-submit "
-                    "--account-updates '[{\"account_id\":\"<uuid>\",\"bio\":\"AI assistant\"}]' "
+                    '--account-updates \'[{"account_id":"<uuid>","bio":"AI assistant"}]\' '
                     "--update-bio --wait"
                 ),
             ],
@@ -2579,6 +2612,72 @@ async def _execute_get(ctx: CommandContext) -> Any:
             f"/agent-cli/social-accounts/{account_id}",
         )
     )
+
+
+async def _execute_adb_connect(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    command_name = ctx.spec.schema_name
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    account_id = str(arguments.get("account_id") or "")
+    if not account_id:
+        raise RuntimeError(f"{command_name} requires account_id")
+
+    connection = agent_domain_result(
+        await api_data(
+            cfg,
+            "POST",
+            f"/agent-cli/social-accounts/{account_id}/adb-credentials",
+            params={"workspace_id": workspace_id},
+        )
+    )
+    if not isinstance(connection, dict):
+        raise RuntimeError("invalid_adb_connection_response")
+    serial = str(connection.get("serial") or "").strip()
+    password = str(connection.get("password") or "").strip()
+    if not serial or not password:
+        raise RuntimeError("incomplete_adb_connection_response")
+
+    await _run_adb("connect", serial)
+    await _run_adb("glogin", "-s", serial, "shell", "glogin", password)
+    state = await _run_adb("get-state", "-s", serial, "get-state")
+    if state != "device":
+        raise RuntimeError("adb_device_not_ready")
+    return {
+        "serial": serial,
+        "connected": True,
+        "next_step": "Use native adb or u2cli with this serial.",
+    }
+
+
+async def _run_adb(operation: str, *arguments: str) -> str:
+    """Run one local ADB command without exposing provider credentials in errors."""
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "adb",
+            *arguments,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("adb_not_installed") from exc
+    try:
+        stdout, _stderr = await asyncio.wait_for(
+            process.communicate(), timeout=ADB_COMMAND_TIMEOUT_SECONDS
+        )
+    except TimeoutError as exc:
+        try:
+            process.kill()
+        except ProcessLookupError:
+            pass
+        await process.communicate()
+        raise RuntimeError(f"adb_{operation}_timed_out") from exc
+    if process.returncode != 0:
+        raise RuntimeError(f"adb_{operation}_failed")
+    return stdout.decode("utf-8", errors="replace").strip()
 
 
 async def _execute_list(ctx: CommandContext) -> Any:
@@ -3067,12 +3166,15 @@ EXECUTORS = {
     "social-account.config-batch-update": direct_enveloped(_execute_config_batch_update),
     "social-account.connect-link-create": direct_enveloped(_execute_connect_link_create),
     "social-account.connect-link-status": direct_enveloped(_execute_connect_link_status),
+    "social-account.adb-connect": direct_enveloped(_execute_adb_connect),
     "social-account.get": direct_enveloped(_execute_get),
     "social-account.performance-get": direct_enveloped(_execute_performance_get),
     "social-account.list": direct_enveloped(_execute_list),
     "social-account.avatar-generate-batch": direct_enveloped(_execute_avatar_generate_batch),
     "social-account.avatar-generate-status": direct_enveloped(_execute_avatar_generate_status),
-    "social-account.profile-edit-batch-submit": direct_enveloped(_execute_profile_edit_batch_submit),
+    "social-account.profile-edit-batch-submit": direct_enveloped(
+        _execute_profile_edit_batch_submit
+    ),
     "social-account.profile-edit-draft": direct_enveloped(_execute_profile_edit_draft),
     "social-account.profile-edit-status": direct_enveloped(_execute_profile_edit_status),
     "social-account.profile-edit-submit": direct_enveloped(_execute_profile_edit_submit),

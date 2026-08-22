@@ -4884,6 +4884,62 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "social-account.adb-connect",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts workspace.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.adb-connect",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+adb-connect",
+          "stability": "stable",
+          "summary": "Connect the current sandbox to this account's cloud phone over ADB. After success, use native adb or u2cli with the returned serial; the temporary connection password is never printed.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "social-account.connect-link-create",
           "domain": "social-account",
           "execution": "direct",
@@ -25591,6 +25647,133 @@
       "shortcut": "+update",
       "stability": "stable",
       "summary": "Update a workspace-private Museon skill's Markdown content, description, reference, or active status; changing --is-public requires organization admin permission.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "social-account.adb-connect": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "social-account.adb-connect",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account +adb-connect --id <pool_account_id>",
+        "museoncli social-account +adb-connect --id <pool_account_id> --dry-run"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts workspace.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "account_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID. Museon resolves its active cloud phone internally.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.adb-connect",
+      "output_schema": {
+        "description": "Local ADB connection result with a serial ready for native adb and u2cli.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+adb-connect",
+      "stability": "stable",
+      "summary": "Connect the current sandbox to this account's cloud phone over ADB. After success, use native adb or u2cli with the returned serial; the temporary connection password is never printed.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
