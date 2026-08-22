@@ -9,7 +9,7 @@ import pytest
 
 from museoncli import main as main_module
 from museoncli.config import Config, WorkspaceState
-from museoncli.domains import get_command_spec
+from museoncli.domains import get_command_spec, social_account
 from museoncli.main import build_parser
 
 
@@ -76,6 +76,104 @@ def test_config_update_schema_allows_language_without_approval() -> None:
 
     assert schema["properties"]["output_language"]["maxLength"] == 32
     assert {"required": ["output_language"]} in schema["anyOf"]
+
+
+def test_adb_connect_uses_native_adb_without_printing_the_temporary_password(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _AdbCapture(_Capture):
+        async def __call__(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+            await super().__call__(*args, **kwargs)
+            return {
+                "domain": "social-account",
+                "result": {
+                    "serial": "203.0.113.9:12345",
+                    "password": "temporary-password",
+                },
+            }
+
+    capture = _AdbCapture()
+    adb_calls: list[tuple[str, tuple[str, ...]]] = []
+
+    async def fake_run_adb(operation: str, *arguments: str) -> str:
+        adb_calls.append((operation, arguments))
+        return "device" if operation == "get-state" else ""
+
+    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "api_data", capture)
+    monkeypatch.setattr(social_account, "_run_adb", fake_run_adb)
+
+    result = asyncio.run(
+        main_module.dispatch(_parse(["social-account", "+adb-connect", "--id", ACCOUNT_ID]))
+    )
+
+    assert capture.calls == [
+        {
+            "method": "POST",
+            "path": f"/agent-cli/social-accounts/{ACCOUNT_ID}/adb-credentials",
+            "json_body": None,
+            "params": {"workspace_id": "workspace-1"},
+        }
+    ]
+    assert adb_calls == [
+        ("connect", ("203.0.113.9:12345",)),
+        (
+            "glogin",
+            ("-s", "203.0.113.9:12345", "shell", "glogin", "temporary-password"),
+        ),
+        ("get-state", ("-s", "203.0.113.9:12345", "get-state")),
+    ]
+    assert result is not None
+    assert result["data"]["serial"] == "203.0.113.9:12345"
+    assert "temporary-password" not in repr(result)
+
+
+def test_adb_connect_dry_run_avoids_provider_and_local_adb(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def fail_api(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("dry-run must not call the API")
+
+    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "api_data", fail_api)
+
+    result = asyncio.run(
+        main_module.dispatch(
+            _parse(["social-account", "+adb-connect", "--id", ACCOUNT_ID, "--dry-run"])
+        )
+    )
+
+    assert result is not None
+    assert result["data"]["dry_run"] is True
+    assert result["data"]["would_execute"] == "social-account.adb-connect"
+
+
+def test_adb_connect_kills_a_timed_out_native_subprocess(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _HangingProcess:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.killed = False
+            self.returncode = 0
+
+        async def communicate(self) -> tuple[bytes, bytes]:
+            self.calls += 1
+            if self.calls == 1:
+                await asyncio.Event().wait()
+            return b"", b""
+
+        def kill(self) -> None:
+            self.killed = True
+
+    process = _HangingProcess()
+
+    async def fake_create_subprocess_exec(*_args: Any, **_kwargs: Any) -> _HangingProcess:
+        return process
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create_subprocess_exec)
+    monkeypatch.setattr(social_account, "ADB_COMMAND_TIMEOUT_SECONDS", 0.001)
+
+    with pytest.raises(RuntimeError, match="adb_connect_timed_out"):
+        asyncio.run(social_account._run_adb("connect", "203.0.113.9:12345"))
+
+    assert process.killed is True
 
 
 def test_config_update_schema_allows_required_hashtags_only() -> None:
@@ -243,9 +341,7 @@ def test_config_batch_update_passes_through_account_updates_json() -> None:
 
     built = get_command_spec("social-account.config-batch-update").build_arguments(args)
 
-    assert built["account_updates"] == [
-        {"account_id": ACCOUNT_ID, "output_language": "zh-CN"}
-    ]
+    assert built["account_updates"] == [{"account_id": ACCOUNT_ID, "output_language": "zh-CN"}]
 
 
 def test_config_batch_update_requires_ids_or_account_updates() -> None:
@@ -297,9 +393,7 @@ def test_config_batch_update_dispatches_to_batch_endpoint(
     )
 
     assert capture.calls[0]["method"] == "POST"
-    assert capture.calls[0]["path"] == (
-        "/agent-cli/social-accounts/publish-config/settings:batch"
-    )
+    assert capture.calls[0]["path"] == ("/agent-cli/social-accounts/publish-config/settings:batch")
     assert capture.calls[0]["json_body"] == {
         "workspace_id": "workspace-1",
         "payload": {

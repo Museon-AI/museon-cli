@@ -2791,6 +2791,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
     assert [item["name"] for item in result["data"]["commands"]["social-account"]] == [
         "social-account.list",
         "social-account.get",
+        "social-account.adb-connect",
         "social-account.connect-link-create",
         "social-account.connect-link-status",
         "social-account.performance-get",
