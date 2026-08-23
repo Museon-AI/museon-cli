@@ -17,8 +17,9 @@ metadata:
 Campaign → Persona Plan → member account operation → daily runs. A Persona Plan owns one Persona
 and shared creative direction; account-operation submits pool accounts into that active Plan and
 is the managed execution layer, not a parallel top-level workflow. Proposals evolve plans;
-confirmed rollouts bind changes to schedules. See [campaign-lifecycle.md](references/campaign-lifecycle.md)
-and [member-account-operations.md](references/member-account-operations.md).
+confirmed rollouts bind changes to schedules. See [campaign-lifecycle.md](references/campaign-lifecycle.md),
+[member-account-operations.md](references/member-account-operations.md), and
+[fulfillment-issue-recovery.md](references/fulfillment-issue-recovery.md).
 
 ## Shortcuts
 
@@ -33,6 +34,8 @@ and [member-account-operations.md](references/member-account-operations.md).
 | Read whole-fleet health | `museoncli account-operation +ops-status` |
 | Check exact account membership | `museoncli account-operation +ops-status-accounts` |
 | Read one-day publish roster | `museoncli account-operation +daily-roster` |
+| Resolve one account's exact managed state | `museoncli account-operation +resolve` |
+| Recover daily-fulfillment Issues | `museoncli agentic-campaign +issues-pull` |
 
 ## DON'T
 
@@ -45,6 +48,7 @@ and [member-account-operations.md](references/member-account-operations.md).
 - **DON'T** assume replacement enrollment retires originals; stopping is a separate terminal action.
 - **DON'T** resend a conflicted proposal unchanged; revise or withdraw the named blocker.
 - **DON'T** confirm a rollout without a matching current preflight.
+- **DON'T** pull a second Issue batch in one pass, or let a claimed Issue expire unreported.
 
 ## Relationships
 

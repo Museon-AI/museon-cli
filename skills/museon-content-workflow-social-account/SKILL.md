@@ -15,7 +15,10 @@ metadata:
 ## Mental model
 
 A social account has connection state, publish configuration, bindings, schedule, profile, and performance.
-This Skill owns precise one-account work; batch plans belong to account-publish. Preserve performance provenance. See [account-state.md](references/account-state.md).
+This Skill owns precise one-account work plus its own same-domain batch interfaces (config,
+profile, avatar); multi-account pools and schedule plans belong to account-publish. Preserve
+performance provenance. See [account-state.md](references/account-state.md) and
+[batch-account-edits.md](references/batch-account-edits.md).
 
 ## Shortcuts
 
@@ -29,6 +32,7 @@ This Skill owns precise one-account work; batch plans belong to account-publish.
 | Read schedule item | `museoncli social-account +schedule-get` |
 | Read performance | `museoncli social-account +performance-get` |
 | Draft profile changes | `museoncli social-account +profile-edit-draft` |
+| Edit two or more accounts (config/profile/avatar) | `museoncli social-account +config-batch-update` |
 
 ## Account-bound Android session
 
@@ -43,7 +47,9 @@ This Skill owns precise one-account work; batch plans belong to account-publish.
 
 - **DON'T** concatenate handles or page-scan account lists when resolving several known handles.
 - **DON'T** expect `+list` to contain publish asset bindings; read the owning asset surface.
-- **DON'T** loop one-account asset/config writes for a multi-account change.
+- **DON'T** loop one-account writes, or fan out one process per account, for a batch change.
+- **DON'T** block or poll in-turn on a large asynchronous batch; hand back its task id instead.
+- **DON'T** claim an account-level hashtag write changed already-scheduled items.
 - **DON'T** alter a fully-managed account's assets without relaying impact and obtaining approval.
 - **DON'T** describe public-data fallback as official analytics or an API delay.
 - **DON'T** ask users for social-platform passwords; return the authorization link.

@@ -25,3 +25,19 @@ Persona Plan ownership is stronger than an ordinary reference: a live plan can b
 ## Relationships
 
 Move to generation after inputs are reviewed, account-publish for pool binding, or Agentic Campaign to change a Persona held by a live plan.
+
+## Batch Topic creation
+
+Creating several Topics is one create call carrying one top-level `topics` array. Each Topic uses
+the canonical write contract: `title` for the name, `narrative` for its content direction, `tags`
+for the tag strings — never `name` or `description` in their place.
+
+User-authored Topic text routinely contains quotes and other shell-sensitive characters, so the
+payload is never hand-built or interpolated into a shell string. Serialize a native structure to
+JSON (`ensure_ascii=False`) and pass the serialized string as a single argv element. That
+serializer wrapper is the only scripting allowed here; item-by-item shell or Python loops are not,
+and a temporary payload file is never written, inspected, or repaired.
+
+When the response returns one result per requested Topic with canonical ids or refs, those are the
+verification — no per-Topic read-back. Other asset types stay separately managed and must not be
+folded into this batch.
