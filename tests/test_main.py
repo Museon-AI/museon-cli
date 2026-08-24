@@ -2792,6 +2792,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "social-account.list",
         "social-account.get",
         "social-account.adb-connect",
+        "social-account.stream-url",
         "social-account.connect-link-create",
         "social-account.connect-link-status",
         "social-account.performance-get",
