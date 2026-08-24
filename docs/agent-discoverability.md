@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-154 commands across 14 domains (source of truth: `museoncli schema`).
+155 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -85,6 +85,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `social-account +list` | read | — | — | direct | List managed social accounts with account-operation filters. For multiple known handles, repeat --search-term (max 100) in one request; do not concatenate handles into --search or page-scan the account list. The list payload does not include publish asset refs; use +assets-get for persona/product/format/topic bindings. |
 | `social-account +get` | read | — | — | direct | Read one workspace social account. |
 | `social-account +adb-connect` | write | yes | — | direct | Connect the current sandbox to this account's cloud phone over ADB. After success, use native adb or u2cli with the returned serial; the temporary connection password is never printed. |
+| `social-account +stream-url` | read | — | — | direct | Return this account's cloud-phone live-stream URL. The sandbox stream sidecar renders it to capture fast motion the u2cli clip command needs; the URL views the same phone adb-connect controls. |
 | `social-account +connect-link-create` | write | yes | — | direct | Create a workspace self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, LinkedIn, and X. |
 | `social-account +connect-link-status` | read | — | — | direct | Read or wait for the authorization result of a social account connect link. |
 | `social-account +performance-get` | read | — | — | direct | Live-read performance for one social account: authorized channels first, with automatic public-data fallback when authorization is missing/expired or the platform exposes no history. Payload `source` marks provenance (official/managed analytics vs public_data) — relay that difference to customers and never show internal retrieval details. First page includes the profile block; posts paginate via --cursor. |

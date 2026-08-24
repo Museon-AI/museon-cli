@@ -2,29 +2,14 @@
 
 from __future__ import annotations
 
-from museoncli.domains._shared import dekebab, kebab_choices
-
+import argparse
 import asyncio
 import json
 import time
-from museoncli.config import Config
-from museoncli.envelopes import _profile_edit_task_id
-from museoncli.execution import (
-    _dict_argument,
-    agent_domain_result,
-    api_data,
-    compact_params,
-    routine_turn_context,
-)
-
-from museoncli.execution import (
-    CommandContext,
-    direct_enveloped,
-)
-
-import argparse
 from pathlib import Path
 from typing import Any
+
+from museoncli.config import Config
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import (
     _UUID_ID_DESCRIPTION,
@@ -38,8 +23,19 @@ from museoncli.domains._shared import (
     _reject_server_controlled_fields,
     _uuid_id_schema,
     _without_none,
+    dekebab,
+    kebab_choices,
 )
-
+from museoncli.envelopes import _profile_edit_task_id
+from museoncli.execution import (
+    CommandContext,
+    _dict_argument,
+    agent_domain_result,
+    api_data,
+    compact_params,
+    direct_enveloped,
+    routine_turn_context,
+)
 
 SOCIAL_ACCOUNT_PLAN_STATUS_CHOICES = ["all", "with-plan", "without-plan"]
 
@@ -1811,6 +1807,25 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
+            shortcut="+stream-url",
+            summary=(
+                "Return this account's cloud-phone live-stream URL. The sandbox stream "
+                "sidecar renders it to capture fast motion the u2cli clip command needs; "
+                "the URL views the same phone adb-connect controls."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="social_account_stream_url",
+            input_schema=_social_account_get_input_schema(),
+            output_schema=_direct_output_schema(
+                "Cloud-phone remote stream URL and its phone id."
+            ),
+            examples=["museoncli social-account +stream-url --id <pool_account_id>"],
+            add_arguments=_add_social_account_id_arguments,
+            build_arguments=_build_social_account_id_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+connect-link-create",
             summary=(
                 "Create a workspace self-authorization link to connect a user-owned "
@@ -2716,6 +2731,27 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
     return result
 
 
+async def _execute_stream_url(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    command_name = ctx.spec.schema_name
+    api_data = ctx.api_data
+    account_id = str(arguments.get("account_id") or "")
+    if not account_id:
+        raise RuntimeError(f"{command_name} requires account_id")
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    return agent_domain_result(
+        await api_data(
+            cfg,
+            "POST",
+            f"/agent-cli/social-accounts/{account_id}/stream-url",
+            params={"workspace_id": workspace_id},
+        )
+    )
+
+
 async def _connect_adb(connection: dict[str, Any]) -> dict[str, Any]:
     serial = str(connection.get("serial") or "").strip()
     password = str(connection.get("password") or "").strip()
@@ -3248,6 +3284,7 @@ EXECUTORS = {
     "social-account.connect-link-create": direct_enveloped(_execute_connect_link_create),
     "social-account.connect-link-status": direct_enveloped(_execute_connect_link_status),
     "social-account.adb-connect": direct_enveloped(_execute_adb_connect),
+    "social-account.stream-url": direct_enveloped(_execute_stream_url),
     "social-account.get": direct_enveloped(_execute_get),
     "social-account.performance-get": direct_enveloped(_execute_performance_get),
     "social-account.list": direct_enveloped(_execute_list),
