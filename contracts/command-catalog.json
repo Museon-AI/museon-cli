@@ -6418,7 +6418,7 @@
       "product"
     ]
   },
-  "contract_revision": "0.5.23",
+  "contract_revision": "0.5.24",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
