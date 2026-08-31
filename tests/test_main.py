@@ -1148,6 +1148,8 @@ def test_content_analysis_run_parser() -> None:
             "reverse-ai-prompt",
             "--url",
             "https://www.instagram.com/reel/ABC123/",
+            "--skill-name",
+            "chocolate-color-strategy",
             "--wait",
             "--timeout",
             "120",
@@ -1160,6 +1162,7 @@ def test_content_analysis_run_parser() -> None:
     assert main_module.command_payload(args) == {
         "type": "reverse-ai-prompt",
         "url": "https://www.instagram.com/reel/ABC123/",
+        "skill_name": "chocolate-color-strategy",
         "force_reanalysis": False,
         "wait": True,
         "wait_timeout_seconds": 120,
@@ -2884,6 +2887,8 @@ def test_content_analysis_run_schema_exposes_source_and_wait_contract() -> None:
     assert properties["type"]["enum"] == ["content-analysis", "reverse-ai-prompt"]
     assert properties["media_type"]["enum"] == ["video"]
     assert properties["media_type"]["default"] == "video"
+    assert properties["skill_name"]["pattern"] == "^[a-z0-9][a-z0-9_-]{0,79}$"
+    assert properties["skill_name"]["maxLength"] == 80
     assert input_schema["oneOf"] == [
         {"required": ["url"]},
         {"required": ["media_id"]},
@@ -4501,6 +4506,8 @@ def test_dispatch_content_analysis_run_uses_agent_api(
             "content-analysis",
             "--media-id",
             "3ed10000-0000-4000-8000-000000000001",
+            "--skill-name",
+            "chocolate-color-strategy",
         ]
     )
     result = asyncio.run(main_module.dispatch(args))
@@ -4527,6 +4534,7 @@ def test_dispatch_content_analysis_run_uses_agent_api(
                 "payload": {
                     "type": "content-analysis",
                     "media_id": "3ed10000-0000-4000-8000-000000000001",
+                    "skill_name": "chocolate-color-strategy",
                     "force_reanalysis": False,
                     "wait": False,
                     "wait_timeout_seconds": 60,

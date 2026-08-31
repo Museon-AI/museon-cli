@@ -45,7 +45,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `content-analysis +run` | write | yes | — | async_run | Run video-only Content Analyzer for a platform URL, uploaded Museon media ID, or local video file upload. |
+| `content-analysis +run` | write | yes | — | async_run | Run Content Analyzer for supported platform content (including Xiaohongshu image notes), uploaded video media, or local video files, optionally using a workspace Business Skill. |
 | `content-analysis +get` | read | — | — | direct | Read one Content Analyzer run by ID. |
 | `content-analysis +list` | read | — | — | direct | List Content Analyzer runs in the selected workspace. |
 
