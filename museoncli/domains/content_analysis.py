@@ -43,6 +43,7 @@ def _add_content_analysis_run_arguments(parser: argparse.ArgumentParser) -> None
     )
     parser.add_argument("--title")
     parser.add_argument("--description")
+    parser.add_argument("--skill-name")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--wait", action="store_true")
     parser.add_argument("--timeout", type=int, default=60)
@@ -71,6 +72,7 @@ def _build_content_analysis_run_arguments(args: argparse.Namespace) -> dict[str,
                 "media_type": args.media_type if args.file else None,
                 "title": args.title,
                 "description": args.description,
+                "skill_name": args.skill_name,
                 "force_reanalysis": args.force,
                 "wait": args.wait,
                 "wait_timeout_seconds": args.timeout,
@@ -139,12 +141,21 @@ def _content_analysis_run_input_schema() -> dict[str, Any]:
                 "enum": CONTENT_ANALYSIS_MEDIA_TYPE_CHOICES,
                 "default": "video",
                 "description": (
-                    "Agent CLI Content Analyzer only supports video. Use format/topic "
-                    "asset workflows for image, carousel, slideshow, or static post analysis."
+                    "Local uploads and media_id sources currently support video. "
+                    "Xiaohongshu URL sources may be video or multi-image notes."
                 ),
             },
             "title": {"type": ["string", "null"]},
             "description": {"type": ["string", "null"]},
+            "skill_name": {
+                "type": ["string", "null"],
+                "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$",
+                "maxLength": 80,
+                "description": (
+                    "Optional active Business Skill name. The server resolves it only when it "
+                    "is public or belongs to the selected workspace; raw prompt text is not accepted."
+                ),
+            },
             "force_reanalysis": {"type": "boolean", "default": False},
             "wait": {"type": "boolean", "default": False},
             "wait_timeout_seconds": {
@@ -202,8 +213,9 @@ def specs() -> list[CommandSpec]:
             domain=Domain.CONTENT_ANALYSIS,
             shortcut="+run",
             summary=(
-                "Run video-only Content Analyzer for a platform URL, uploaded Museon media ID, "
-                "or local video file upload."
+                "Run Content Analyzer for supported platform content (including Xiaohongshu "
+                "image notes), uploaded video media, or local video files, optionally using a "
+                "workspace Business Skill."
             ),
             risk_level="write",
             execution="async_run",
@@ -217,6 +229,11 @@ def specs() -> list[CommandSpec]:
                 (
                     "museoncli content-analysis +run --type content-analysis "
                     "--url https://www.tiktok.com/@creator/video/123"
+                ),
+                (
+                    "museoncli content-analysis +run --type content-analysis "
+                    "--url https://www.xiaohongshu.com/explore/NOTE_ID "
+                    "--skill-name chocolate-color-strategy --wait"
                 ),
                 (
                     "museoncli content-analysis +run --type reverse-ai-prompt "

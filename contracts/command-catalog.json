@@ -3240,7 +3240,7 @@
           "risk_level": "write",
           "shortcut": "+run",
           "stability": "stable",
-          "summary": "Run video-only Content Analyzer for a platform URL, uploaded Museon media ID, or local video file upload.",
+          "summary": "Run Content Analyzer for supported platform content (including Xiaohongshu image notes), uploaded video media, or local video files, optionally using a workspace Business Skill.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -19485,6 +19485,7 @@
       "domain": "content-analysis",
       "examples": [
         "museoncli content-analysis +run --type content-analysis --url https://www.tiktok.com/@creator/video/123",
+        "museoncli content-analysis +run --type content-analysis --url https://www.xiaohongshu.com/explore/NOTE_ID --skill-name chocolate-color-strategy --wait",
         "museoncli content-analysis +run --type reverse-ai-prompt --file ./creative.mp4 --media-type video --wait",
         "museoncli content-analysis +run --type content-analysis --media-id <media_id> --force"
       ],
@@ -19563,7 +19564,7 @@
           },
           "media_type": {
             "default": "video",
-            "description": "Agent CLI Content Analyzer only supports video. Use format/topic asset workflows for image, carousel, slideshow, or static post analysis.",
+            "description": "Local uploads and media_id sources currently support video. Xiaohongshu URL sources may be video or multi-image notes.",
             "enum": [
               "video"
             ],
@@ -19574,6 +19575,15 @@
             "maximum": 10,
             "minimum": 0.25,
             "type": "number"
+          },
+          "skill_name": {
+            "description": "Optional active Business Skill name. The server resolves it only when it is public or belongs to the selected workspace; raw prompt text is not accepted.",
+            "maxLength": 80,
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "title": {
             "type": [
@@ -19670,7 +19680,7 @@
       "risk_level": "write",
       "shortcut": "+run",
       "stability": "stable",
-      "summary": "Run video-only Content Analyzer for a platform URL, uploaded Museon media ID, or local video file upload.",
+      "summary": "Run Content Analyzer for supported platform content (including Xiaohongshu image notes), uploaded video media, or local video files, optionally using a workspace Business Skill.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
