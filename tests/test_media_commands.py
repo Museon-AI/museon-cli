@@ -93,6 +93,37 @@ def multipart(request):
     }
 
 
+def test_artifact_upload_uses_artifact_endpoint_and_public_form_contract(monkeypatch, tmp_path):
+    report = tmp_path / "delivery.md"
+    report.write_text("# Delivery\n", encoding="utf-8")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/api/v1/agent-cli/artifacts/upload"
+        parts = multipart(request)
+        assert parts["workspace_id"] == WORKSPACE.encode()
+        assert parts["artifact_type"] == b"file"
+        assert parts["public"] == b"true"
+        assert parts["title"] == b"Release acceptance"
+        assert "file_id" not in parts
+        assert parts["file"] == b"# Delivery\n"
+        return httpx.Response(200, json={"success": True, "data": {"public_url": "https://x"}})
+
+    transport_fixture(monkeypatch, handler)
+    result = asyncio.run(
+        cli.upload_artifact_file(
+            cli.load_config(),
+            workspace_id=WORKSPACE,
+            arguments={
+                "file": str(report),
+                "artifact_type": "file",
+                "title": "Release acceptance",
+                "public": True,
+            },
+        )
+    )
+    assert result == {"public_url": "https://x"}
+
+
 @pytest.mark.parametrize(
     "media_type,suffix", [("video", "mp4"), ("audio", "mp3"), ("image", "png")]
 )
