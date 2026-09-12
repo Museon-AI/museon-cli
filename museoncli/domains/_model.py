@@ -33,18 +33,14 @@ ROUTINES_DOMAIN = "routines"
 class Domain(str, Enum):
     RESEARCH = "research"
     CONTENT_ANALYSIS = "content-analysis"
-    ASSET = "asset"
     ARTIFACTS = "artifacts"
-    GENERATION = "generation"
+    MEDIA = "media"
     SOCIAL_ACCOUNT = "social-account"
-    ACCOUNT_PUBLISH = "account-publish"
+    HIRE_AI_CREATOR = "hireaicreator"
+    AI_SLIDESHOW = "ai-slideshow"
     CAMPAIGN_MONITOR = "campaign-monitor"
     SKILLS = "skills"
-    EVALUATOR = "evaluator"
     ROUTINES = ROUTINES_DOMAIN
-    ACCOUNT_OPERATION = "account-operation"
-    AGENTIC_CAMPAIGN = "agentic-campaign"
-    PRODUCT = "product"
 
 
 @dataclass(frozen=True, slots=True)

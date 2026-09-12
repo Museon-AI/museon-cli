@@ -38,7 +38,6 @@ from museoncli.domains import (
     get_command_spec,
     schema_payload,
 )
-from museoncli.domains.asset import validate_asset_write_arguments
 from museoncli.envelopes import (
     domain_command_dry_run_envelope,
 )
@@ -232,7 +231,7 @@ def command_uses_network(args: argparse.Namespace) -> bool:
             return False
         if not getattr(args, "dry_run", False):
             return True
-        return spec.schema_name == "asset.create" and getattr(args, "asset_type", None) == "product"
+        return False
     return False
 
 
@@ -451,6 +450,7 @@ async def api_data(
     json_body: dict[str, Any] | None = None,
     params: dict[str, Any] | None = None,
     unwrap_success: bool = True,
+    idempotency_key: str | None = None,
 ) -> Any:
     return await _api_request(
         cfg,
@@ -459,6 +459,7 @@ async def api_data(
         json_body=json_body,
         params=params,
         unwrap_success=unwrap_success,
+        **({"idempotency_key": idempotency_key} if idempotency_key is not None else {}),
     )
 
 
@@ -522,10 +523,14 @@ async def _api_request(
     json_body: dict[str, Any] | None,
     params: dict[str, Any] | None,
     unwrap_success: bool,
+    idempotency_key: str | None = None,
 ) -> Any:
     if not auth_headers(cfg):
         raise RuntimeError("missing_auth")
-    response = await _api_send(cfg, method, url, json_body=json_body, params=params)
+    response = await _api_send(
+        cfg, method, url, json_body=json_body, params=params,
+        **({"idempotency_key": idempotency_key} if idempotency_key is not None else {}),
+    )
     if response.status_code == 401:
         raise RuntimeError("unauthorized")
     if response.status_code == 403:
@@ -549,6 +554,7 @@ async def _api_send(
     *,
     json_body: dict[str, Any] | None,
     params: dict[str, Any] | None,
+    idempotency_key: str | None = None,
 ) -> httpx.Response:
     last_error: httpx.ConnectError | httpx.ConnectTimeout | None = None
     for attempt in range(1, _API_CONNECT_MAX_ATTEMPTS + 1):
@@ -557,7 +563,7 @@ async def _api_send(
                 return await client.request(
                     method,
                     url,
-                    headers=_request_headers(cfg),
+                    headers={**_request_headers(cfg), **({"Idempotency-Key": idempotency_key} if idempotency_key is not None else {})},
                     json=json_body,
                     params=params,
                 )
@@ -587,6 +593,7 @@ async def api_data_v2(
     json_body: dict[str, Any] | None = None,
     params: dict[str, Any] | None = None,
     unwrap_success: bool = True,
+    idempotency_key: str | None = None,
 ) -> Any:
     return await _api_request(
         cfg,
@@ -595,6 +602,7 @@ async def api_data_v2(
         json_body=json_body,
         params=params,
         unwrap_success=unwrap_success,
+        **({"idempotency_key": idempotency_key} if idempotency_key is not None else {}),
     )
 
 
@@ -740,8 +748,21 @@ async def upload_media_file(
     if response.status_code == 403:
         raise RuntimeError(forbidden_error_message(response))
     if response.status_code >= 400:
-        raise RuntimeError(f"HTTP {response.status_code}: {response.text[:500]}")
-    return response.json()
+        raise ApiRequestError(response.status_code, response_error_payload(response))
+    receipt = response.json()
+    if not isinstance(receipt, dict) or receipt.get("success") is not True:
+        raise RuntimeError("media_upload_failed")
+    data = receipt.get("data")
+    asset = data.get("asset") if isinstance(data, dict) else None
+    media_id = asset.get("media_id") if isinstance(asset, dict) else None
+    try:
+        UUID(str(media_id))
+    except (ValueError, TypeError, AttributeError):
+        raise RuntimeError(
+            "media_upload_unverified: receipt has no valid media_id; "
+            "do not retry the write blindly"
+        ) from None
+    return receipt
 
 
 async def upload_artifact_file(
@@ -756,34 +777,16 @@ async def upload_artifact_file(
     if not path.is_file():
         raise RuntimeError(f"artifact file not found: {path}")
     content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-    form_data: dict[str, str] = {
-        "workspace_id": workspace_id,
-        "artifact_type": str(arguments.get("artifact_type") or "file"),
-        "source_file_path": str(arguments.get("file") or path.name),
-        # Markdown customer deliverables are public by default; explicit false opts out.
-        "public": "true" if bool(arguments.get("public", True)) else "false",
-    }
-    for form_key, argument_key in (
-        ("artifact_id", "artifact_id"),
-        ("title", "title"),
-    ):
-        value = arguments.get(argument_key)
-        if value is not None:
-            form_data[form_key] = str(value)
-    for form_key, argument_key in (
-        ("runtime_context_json", "runtime_context"),
-        ("metadata_json", "metadata"),
-    ):
-        value = arguments.get(argument_key)
-        if isinstance(value, dict):
-            form_data[form_key] = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    form_data = {"workspace_id": workspace_id, "file_id": str(arguments["file_id"])}
+    if arguments.get("title") is not None:
+        form_data["title"] = str(arguments["title"])
     if not auth_headers(cfg):
         raise RuntimeError("missing_auth")
     with path.open("rb") as handle:
         files = {"file": (path.name, handle, content_type)}
         async with httpx.AsyncClient(timeout=None) as client:
             response = await client.post(
-                f"{cfg.api_base_url.rstrip()}/agent-cli/artifacts/upload",
+                f"{cfg.api_base_url.rstrip()}/media/files",
                 headers=_request_headers(cfg),
                 data=form_data,
                 files=files,
@@ -928,22 +931,18 @@ def emit(payload: dict[str, Any], *, command_hint: str | None = None) -> bool:
 async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict[str, Any]:
     spec = get_command_spec(args.domain_command)
     arguments = command_payload(args)
-    validate_uuid_arguments(arguments)
+    # HireAICreator validates declared UUID fields in its strict recursive schema.
+    # Its account_id is an API string, and public collection tokens are not UUIDs.
+    if spec.domain.value != "hireaicreator":
+        validate_uuid_arguments(arguments)
     workspace_id = workspace_id_arg_or_selected(args, cfg)
-    server_validated_dry_run = getattr(args, "dry_run", False) and (
-        spec.schema_name == "asset.create" and arguments.get("type") == "brand_product"
-    )
-    if getattr(args, "dry_run", False) and not server_validated_dry_run:
+    if spec.domain.value == "hireaicreator":
+        workspace_id = (arguments.get("workspace_id") or workspace_id) if "workspace_id" in spec.input_schema["properties"] else None
+    if getattr(args, "dry_run", False):
         if spec.schema_name.startswith("skills."):
             dry_run_workspace_id = workspace_id if spec.schema_name == "skills.create" else None
             return domain_command_dry_run_envelope(
                 spec.schema_name, dry_run_workspace_id, arguments
-            )
-        if spec.schema_name in {"asset.create", "asset.update"}:
-            validate_asset_write_arguments(
-                workspace_id=workspace_id,
-                arguments=arguments,
-                command_name=spec.schema_name,
             )
         return domain_command_dry_run_envelope(spec.schema_name, workspace_id, arguments)
     if spec.requires_confirmation and not getattr(args, "yes", False):

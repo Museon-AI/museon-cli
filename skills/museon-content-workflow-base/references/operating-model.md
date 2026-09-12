@@ -2,7 +2,7 @@
 
 ## Mental model
 
-Read state before proposing change. Read commands may directly serve the task; writes and destructive actions remain proposals until separately approved. Async work has a returned handle, a matching status command, and server-owned wakeup guidance. A returned `ref` is an opaque presentation object, not a URL template.
+Read state before changing it. A user request or existing authorization is sufficient within its stated scope; ask only when a necessary target or authorization is missing. Honor command-specific confirmation requirements and never supply confirmation on the user's behalf. Async work has a returned handle, a matching status command, and server-owned wakeup guidance. A returned `ref` is an opaque presentation object, not a URL template.
 
 Runtime Business Skills are workspace-visible strategy/methodology. List them before strategic, research, audit, review, onboarding, or operating-plan work; load every directly relevant one. Bundled workflow Skills instead teach the host Agent how to operate the CLI.
 

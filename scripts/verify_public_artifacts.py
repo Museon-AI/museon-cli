@@ -12,12 +12,11 @@ from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
 MANAGED_SKILLS = (
-    "museon-research", "museon-content-workflow-base", "museon-content-workflow-assets",
-    "museon-content-workflow-generation", "museon-content-workflow-social-account",
-    "museon-content-workflow-account-publish", "museon-content-workflow-campaign-monitor",
-    "museon-content-workflow-routines",
-    "museon-content-workflow-artifacts", "museon-content-workflow-agentic-campaign",
-    "museon-content-workflow-evaluator", "social-media-hook-analyze",
+    "museon-research",
+    "museon-content-workflow-base",
+    "museon-content-workflow-hireaicreator",
+    "museon-content-workflow-ai-slideshow",
+    "museon-content-workflow-campaign-monitor",
 )
 PRIVATE_REFERENCES = (
     b"apps/museoncli",
@@ -155,6 +154,13 @@ def verify_dist(dist_dir: Path) -> None:
     wheel = wheels[0]
     wheel_entries = _wheel_entries(wheel)
     _assert_no_forbidden_paths(wheel_entries, artifact=wheel)
+    bundled_skills = {
+        entry.name.split("/")[2]
+        for entry in wheel_entries
+        if entry.name.startswith("museoncli/bundled_skills/") and entry.name.count("/") >= 3
+    }
+    if bundled_skills != set(MANAGED_SKILLS):
+        raise RuntimeError(f"wheel skill set differs from the managed surface: {sorted(bundled_skills)}")
     for skill_name in MANAGED_SKILLS:
         _assert_complete_skill(
             wheel_entries,

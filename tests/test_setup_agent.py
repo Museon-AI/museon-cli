@@ -18,17 +18,17 @@ def test_setup_agent_installs_and_verifies_codex_skill(
 
     destination = codex_home / "skills" / "museon-content-workflow-base"
     research_destination = codex_home / "skills" / "museon-research"
-    campaign_destination = codex_home / "skills" / "museon-content-workflow-agentic-campaign"
-    hook_destination = codex_home / "skills" / "social-media-hook-analyze"
+    slideshow_destination = codex_home / "skills" / "museon-content-workflow-ai-slideshow"
+    campaign_destination = codex_home / "skills" / "museon-content-workflow-campaign-monitor"
     assert first["agents"][0]["status"] == "installed"
     assert second["agents"][0]["status"] == "current"
     assert destination.joinpath("SKILL.md").is_file()
     assert destination.joinpath("agents", "openai.yaml").is_file()
     assert research_destination.joinpath("SKILL.md").is_file()
-    assert campaign_destination.joinpath("references", "member-account-operations.md").is_file()
+    assert campaign_destination.joinpath("references", "monitor-store.md").is_file()
     assert not (codex_home / "skills" / "museon-content-workflow-account-operation").exists()
-    assert hook_destination.joinpath("SKILL.md").is_file()
-    assert hook_destination.joinpath("scripts", "rank_hooks.py").is_file()
+    assert slideshow_destination.joinpath("SKILL.md").is_file()
+    assert research_destination.joinpath("scripts", "rank_hooks.py").is_file()
     assert first["skills"] == list(MANAGED_SKILLS)
     assert [item["name"] for item in first["agents"][0]["skills"]] == list(MANAGED_SKILLS)
     assert first["agents"][0]["digest"] == second["agents"][0]["digest"]
@@ -124,7 +124,7 @@ def test_setup_agent_preflights_all_skill_destinations_before_writing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     codex_home = tmp_path / "codex"
-    unmanaged = codex_home / "skills" / "social-media-hook-analyze"
+    unmanaged = codex_home / "skills" / "museon-content-workflow-ai-slideshow"
     unmanaged.mkdir(parents=True)
     unmanaged.joinpath("SKILL.md").write_text("name: local-custom-skill\n", encoding="utf-8")
     monkeypatch.setenv("CODEX_HOME", str(codex_home))

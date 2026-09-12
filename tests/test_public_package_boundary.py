@@ -40,12 +40,6 @@ def test_generated_contract_hides_monorepo_implementation_paths() -> None:
         assert private_reference not in serialized
 
 
-def test_agent_skill_is_available_before_cli_installation() -> None:
-    skill = ROOT / "skills" / "museon-content-workflow-base" / "SKILL.md"
-    assert skill.is_file()
-    assert "Install the CLI when needed" in skill.read_text(encoding="utf-8")
-
-
 def test_public_auth_surface_only_persists_scoped_api_keys() -> None:
     assert set(AuthState.__dataclass_fields__) == {
         "expires_at",
@@ -74,9 +68,7 @@ def test_release_workflow_rejects_commits_outside_main() -> None:
 
 
 def test_release_workflow_uses_short_lived_credentials() -> None:
-    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
 
     assert "actions/create-github-app-token@" in workflow
     assert "MUSEON_RUNTIME_APP_ID" in workflow
@@ -86,9 +78,7 @@ def test_release_workflow_uses_short_lived_credentials() -> None:
 
 
 def test_release_workflow_builds_one_wheel_before_privileged_publication() -> None:
-    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
     build, publish = workflow.split("\n  publish:\n", 1)
 
     assert "uv build --wheel" in build
@@ -101,9 +91,7 @@ def test_release_workflow_builds_one_wheel_before_privileged_publication() -> No
 
 
 def test_release_workflow_publishes_deterministic_skills_asset(tmp_path: Path) -> None:
-    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
     first = tmp_path / "first.tar.gz"
     second = tmp_path / "second.tar.gz"
     command = [sys.executable, str(ROOT / "scripts" / "build_skills_archive.py")]
@@ -111,9 +99,9 @@ def test_release_workflow_publishes_deterministic_skills_asset(tmp_path: Path) -
     subprocess.run([*command, "--output", str(first)], check=True)
     subprocess.run([*command, "--output", str(second)], check=True)
 
-    assert hashlib.sha256(first.read_bytes()).digest() == hashlib.sha256(
-        second.read_bytes()
-    ).digest()
+    assert (
+        hashlib.sha256(first.read_bytes()).digest() == hashlib.sha256(second.read_bytes()).digest()
+    )
     with tarfile.open(first, "r:gz") as archive:
         members = archive.getmembers()
     top_level_skills = {
@@ -121,21 +109,22 @@ def test_release_workflow_publishes_deterministic_skills_asset(tmp_path: Path) -
         for member in members
         if member.name.startswith("skills/") and member.name.count("/") >= 1
     }
-    assert len(top_level_skills) == 13
-    assert "skills/museon-content-workflow-base/SKILL.md" in {
-        member.name for member in members
+    assert top_level_skills == {
+        "museon-content-workflow-base",
+        "museon-research",
+        "museon-content-workflow-hireaicreator",
+        "museon-content-workflow-ai-slideshow",
+        "museon-content-workflow-campaign-monitor",
     }
+    assert "skills/museon-content-workflow-base/SKILL.md" in {member.name for member in members}
     assert "skills/museon-research/SKILL.md" in {member.name for member in members}
-    assert "skills/experiment-brain/SKILL.md" in {member.name for member in members}
-    assert "skills/social-media-hook-analyze/SKILL.md" in {
+    assert "skills/experiment-brain/SKILL.md" not in {member.name for member in members}
+    assert "skills/museon-content-workflow-ai-slideshow/SKILL.md" in {
         member.name for member in members
     }
-    assert "skills/social-media-hook-analyze/scripts/rank_hooks.py" in {
-        member.name for member in members
-    }
+    assert "skills/museon-research/scripts/rank_hooks.py" in {member.name for member in members}
     assert not any(
-        "__pycache__" in member.name or member.name.endswith((".pyc", ".pyo"))
-        for member in members
+        "__pycache__" in member.name or member.name.endswith((".pyc", ".pyo")) for member in members
     )
     assert all(
         member.mtime == 0

@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "skills/social-media-hook-analyze/scripts/rank_hooks.py"
-CARD_SCRIPT = ROOT / "skills/social-media-hook-analyze/scripts/prepare_lark_card.py"
-UPLOAD_SCRIPT = ROOT / "skills/social-media-hook-analyze/scripts/upload_lark_media.py"
-SETUP_SCRIPT = ROOT / "skills/social-media-hook-analyze/scripts/check_setup.py"
+SCRIPT = ROOT / "skills/museon-research/scripts/rank_hooks.py"
+CARD_SCRIPT = ROOT / "skills/museon-research/scripts/prepare_lark_card.py"
+UPLOAD_SCRIPT = ROOT / "skills/museon-research/scripts/upload_lark_media.py"
+SETUP_SCRIPT = ROOT / "skills/museon-research/scripts/check_setup.py"
 
 
 def _analysis_payload() -> dict[str, Any]:
@@ -228,7 +228,7 @@ def test_lark_card_groups_only_recommended_hooks_with_clickable_video(tmp_path: 
     assert open_button["behaviors"] == [
         {
             "type": "open_url",
-            "default_url": "https://museon-ai-hook.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=batch-1&recommended_item_ids=item-1",
+            "default_url": "https://museon-hireaicreator.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=batch-1&recommended_item_ids=item-1",
         }
     ]
     save_all_button = open_area["columns"][1]["elements"][0]
@@ -239,7 +239,7 @@ def test_lark_card_groups_only_recommended_hooks_with_clickable_video(tmp_path: 
     assert save_all_button["behaviors"] == [
         {
             "type": "open_url",
-            "default_url": "https://museon-ai-hook.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=batch-1&recommended_item_ids=item-1&auto_save=1",
+            "default_url": "https://museon-hireaicreator.vercel.app/hook-format/social-analysis?source=social-hook-analysis&analysis_id=batch-1&recommended_item_ids=item-1&auto_save=1",
         }
     ]
     assert open_area["element_id"] == "batch_open_area"

@@ -15,12 +15,11 @@ from museoncli import __version__
 
 SUPPORTED_AGENTS = ("codex", "claude-code", "cursor")
 MANAGED_SKILLS = (
-    "museon-research", "museon-content-workflow-base", "museon-content-workflow-assets",
-    "museon-content-workflow-generation", "museon-content-workflow-social-account",
-    "museon-content-workflow-account-publish", "museon-content-workflow-campaign-monitor",
-    "museon-content-workflow-routines",
-    "museon-content-workflow-artifacts", "museon-content-workflow-agentic-campaign",
-    "museon-content-workflow-evaluator", "social-media-hook-analyze",
+    "museon-research",
+    "museon-content-workflow-base",
+    "museon-content-workflow-hireaicreator",
+    "museon-content-workflow-ai-slideshow",
+    "museon-content-workflow-campaign-monitor",
 )
 
 
@@ -56,7 +55,7 @@ def install_agent_skill(agent: str, *, force: bool = False) -> dict[str, Any]:
         "next_steps": [
             "Restart the host Agent so it reloads installed Skills.",
             "Install and complete onboarding for ego lite when Instagram browsing is needed; "
-            "the social-media-hook-analyze Skill checks the ego-browser command before use.",
+            "the Museon research Skill checks the ego-browser command before use.",
             "Run `museoncli auth start`, approve access in the browser, then run "
             "`museoncli auth finish --wait` (waits up to five minutes by default).",
             "After authentication, run `museoncli skills +list` to discover the "

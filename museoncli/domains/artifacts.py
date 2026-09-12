@@ -229,12 +229,9 @@ def specs() -> list[CommandSpec]:
                 "exist: data.public_url (public share link, anyone with the link) and data.url "
                 "(workspace/private link, logged-in workspace members). Use --no-public only when "
                 "the user explicitly wants a private artifact (then only data.url). To embed "
-                "resources inside markdown, paste their ready-made ref "
-                "([name](https://www.museon.ai/section/id)) from asset +get/+list, "
-                "generation +get/+list/+create, or routines +get/+list verbatim. "
-                "For generation batch/summary artifacts, paste each generation ref alone on "
-                "its own line so it renders as a card; do not hand-write generation links, "
-                "file names, local paths, or storage paths as links. You can also paste a raw "
+                "resources inside markdown, paste ready-made refs returned by retained domains "
+                "such as routines verbatim. Do not hand-write resource links, file names, local "
+                "paths, or storage paths as links. You can also paste a raw "
                 "TikTok, Instagram, or YouTube URL on its own line to embed a player."
             ),
             risk_level="write",

@@ -23,38 +23,30 @@ from museoncli.domains.routines import ROUTINE_INSTRUCTION_MAX_LENGTH
 from museoncli.domains import (
     research,
     content_analysis,
-    asset,
     artifacts,
-    generation,
+    media,
     social_account,
-    account_publish,
+    hireaicreator,
+    ai_slideshow,
     campaign_monitor,
     social_media,
     skills,
-    evaluator,
     routines,
-    account_operation,
-    agentic_campaign,
-    product,
 )
 
 
 _DOMAIN_MODULES = (
     research,
     content_analysis,
-    asset,
     artifacts,
-    generation,
+    media,
     social_account,
-    account_publish,
+    hireaicreator,
+    ai_slideshow,
     campaign_monitor,
     social_media,
     skills,
-    evaluator,
     routines,
-    account_operation,
-    agentic_campaign,
-    product,
 )
 
 
