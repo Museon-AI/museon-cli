@@ -24,4 +24,4 @@ XHS `xhslink.cn` / `xhslink.com` links are first-class inputs for post, profile,
 
 ## Relationships
 
-This reference selects research inputs only. Asset creation, generation, monitoring, and reporting move to their owning Skills after evidence is collected.
+This reference selects research inputs only. Use media for file inputs and campaign-monitor for continued monitoring. Do not infer production or delivery status from research results.

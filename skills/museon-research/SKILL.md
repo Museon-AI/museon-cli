@@ -19,6 +19,10 @@ objects, community discussion, public web, ad-library snapshot, visual interpret
 video Content Analyzer run. Facts, model interpretation, business inference, and confidence remain
 separate. See [evidence-model.md](references/evidence-model.md) and
 [platform-boundaries.md](references/platform-boundaries.md).
+Read [research-reporting.md](references/research-reporting.md) for evidence claims, ads comparisons, and durable report delivery.
+
+For the Instagram Hook comparison workflow, begin with [setup.md](references/setup.md), then read
+[post-classification.md](references/post-classification.md), [vmos-natural-reels.md](references/vmos-natural-reels.md), or [result-contract.md](references/result-contract.md) only when that phase applies. Reuse the scripts in this skill's `scripts/` directory.
 
 ## Shortcuts
 
@@ -29,7 +33,6 @@ separate. See [evidence-model.md](references/evidence-model.md) and
 | Public page or official asset | `museoncli research +web-research` |
 | Meta/TikTok ad evidence | `museoncli research +creative-search-ads` |
 | Image/video visual question | `museoncli research +visual-analyze` |
-| Durable video analysis | `museoncli content-analysis +run` |
 
 ## DON'T
 
@@ -37,11 +40,9 @@ separate. See [evidence-model.md](references/evidence-model.md) and
 - **DON'T** treat campaign-monitor data as a live public-platform search.
 - **DON'T** resolve or scrape XHS short links in the shell; pass them directly.
 - **DON'T** infer causality, conversion, growth, competition, or geography from one ads snapshot.
-- **DON'T** run video-only Content Analyzer on static images, carousels, or slideshows.
 - **DON'T** lose returned pagination cursors or rewrite opaque cursor values.
 
 ## Relationships
 
-Convert evidence into assets with `museon-content-workflow-assets`, evaluate an output with
-`museon-content-workflow-evaluator`, inspect stored campaign history with campaign-monitor, and
-publish a durable synthesis with artifacts.
+Use base media and content-analysis references for inputs and durable video analysis; use the campaign-monitor skill for stored creator/post history.
+Preserve a synthesis as a local report; business creation and delivery require their owning API.

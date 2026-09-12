@@ -330,7 +330,7 @@ wheels = [
 
 [[package]]
 name = "museoncli"
-version = "0.5.25"
+version = "0.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

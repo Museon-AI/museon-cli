@@ -53,25 +53,17 @@ https://www.museon.ai/cli/install.md
 
 ## Agent 可以做什么
 
-- **找到真实的内容机会：** 调研不同平台、创作者、帖子、评论、社区和公开网页。
-- **了解内容为什么有效：** 把内容结构与账号、帖子的真实表现放在一起分析。
-- **把发现变成内容：** 生成图片内容和多页图文，而不是停留在一份文字建议里。
-- **连接账号并推进排期：** 安排内容、准备发布，同时保留必要的人工确认。
-- **复盘并积累有效经验：** 把结果带回下一份 Brief、定期任务、报告或创作方向。
+当前工作树准备 CLI 2.0 命令面；下方固定安装链接仍指向最近已发布版本，发布另行执行。
 
-Museon 关注的是完整循环：**调研 → 判断 → 创作 → 确认 → 发布 → 复盘 → 复用**。
+保留 `research`、`campaign-monitor`、`content-analysis`、`routines`、`skills`，
+新增 `hireaicreator` 领域，围绕既有 API 执行查询、规划、版本化编辑与交付回读。
+新增 `media` 的本地文件上传、图片 URL 导入和媒体回读，并恢复 `artifacts` 的本地校验、
+托管和分享；`social-account` 精确保留账号连接、读取、云手机、表现和资料编辑；
+`ai-slideshow` 保留素材、独立生成与旧 slideshow 发布。五个集成 skill 分别承载基础原子能力、研究、HireAICreator、slideshow 与 campaign-monitor 流程。Agent 使用这些原子命令编排工作流。
+写入后必须回读所属业务状态，不能把请求成功当成任务完成。
 
-## Skill、CLI 和 Museon 分别做什么
-
-它们共同组成 Agent 的社媒工作能力：
-
-- **Museon workflow Skills** 按 11 类任务结果组织能力；Agentic Campaign 同时覆盖
-  Persona Plan、成员账号运营和 runs，并告诉 Agent 怎样安全地使用工具。
-- **Museon CLI** 是 Agent 在自己环境里调用 Museon 能力的连接方式。
-- **Museon** 在服务端完成调研、生成、账号、排期、发布和表现分析等工作。
-
-CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用户、工作区成员关系、
-角色和目标资源。
+升级前请阅读[迁移说明](docs/cli-2-migration.md)。HireAICreator 业务域已包含在这个未发布候选中。
+后端能力和数据没有随命令面退役而删除；权限仍由后端按用户、工作区和资源检查。
 
 ## 重要操作仍由你决定
 
@@ -88,7 +80,7 @@ CLI 本身不会绕过权限。Museon 会在每次操作时检查当前登录用
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.25/museoncli-0.5.25-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.6.0/museoncli-0.6.0-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：

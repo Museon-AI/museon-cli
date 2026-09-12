@@ -959,8 +959,8 @@ def _social_account_list_input_schema() -> dict[str, Any]:
                     "Batch exact handle terms. Matches normalized handles against pool "
                     "account handles and linked creator username/nickname. Repeat "
                     "--search-term in CLI; leading @ or TikTok profile URLs are accepted. "
-                    "Use this when resolving many known handles before account-operation "
-                    "+submit-batch; do not scan pages."
+                    "Use this when resolving many known handles in one request; do not "
+                    "scan pages."
                 ),
             },
             "automation_status": {
@@ -982,8 +982,7 @@ def _social_account_list_input_schema() -> dict[str, Any]:
             "tag": {
                 "type": ["string", "null"],
                 "description": (
-                    "Filter by workspace tag (single value). Tags are set via "
-                    "+assets-set --tag and are private to the workspace."
+                    "Filter by workspace-private tag (single value)."
                 ),
             },
             "group_name": {"type": ["string", "null"]},
@@ -1736,16 +1735,15 @@ def _social_account_performance_get_input_schema() -> dict[str, Any]:
 
 
 def specs() -> list[CommandSpec]:
-    return [
+    all_specs = [
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+list",
             summary=(
-                "List managed social accounts with account-operation filters. For "
+                "List social accounts available to the current workspace. For "
                 "multiple known handles, repeat --search-term (max 100) "
                 "in one request; do not concatenate handles into --search or page-scan "
-                "the account list. The list payload does not include publish asset refs; use "
-                "+assets-get for persona/product/format/topic bindings."
+                "the account list."
             ),
             risk_level="read",
             execution="direct",
@@ -1817,9 +1815,7 @@ def specs() -> list[CommandSpec]:
             execution="direct",
             adapter_tool_name="social_account_stream_url",
             input_schema=_social_account_get_input_schema(),
-            output_schema=_direct_output_schema(
-                "Cloud-phone remote stream URL and its phone id."
-            ),
+            output_schema=_direct_output_schema("Cloud-phone remote stream URL and its phone id."),
             examples=["museoncli social-account +stream-url --id <pool_account_id>"],
             add_arguments=_add_social_account_id_arguments,
             build_arguments=_build_social_account_id_arguments,
@@ -2375,6 +2371,22 @@ def specs() -> list[CommandSpec]:
             build_arguments=_build_social_account_avatar_generate_status_arguments,
         ),
     ]
+    retained_shortcuts = {
+        "+list",
+        "+get",
+        "+adb-connect",
+        "+stream-url",
+        "+connect-link-create",
+        "+connect-link-status",
+        "+performance-get",
+        "+profile-edit-draft",
+        "+profile-edit-submit",
+        "+profile-edit-batch-submit",
+        "+profile-edit-status",
+        "+avatar-generate-batch",
+        "+avatar-generate-status",
+    }
+    return [spec for spec in all_specs if spec.shortcut in retained_shortcuts]
 
 
 # ---- executors (generated from main.py direct_* chains) ----
@@ -3306,6 +3318,26 @@ EXECUTORS = {
     "social-account.version-create": direct_enveloped(_execute_version_create),
     "social-account.version-get": direct_enveloped(_execute_version_get),
     "social-account.version-list": direct_enveloped(_execute_version_list),
+}
+EXECUTORS = {
+    name: executor
+    for name, executor in EXECUTORS.items()
+    if name.removeprefix("social-account.")
+    in {
+        "list",
+        "get",
+        "adb-connect",
+        "stream-url",
+        "connect-link-create",
+        "connect-link-status",
+        "performance-get",
+        "profile-edit-draft",
+        "profile-edit-submit",
+        "profile-edit-batch-submit",
+        "profile-edit-status",
+        "avatar-generate-batch",
+        "avatar-generate-status",
+    }
 }
 
 

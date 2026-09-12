@@ -708,9 +708,10 @@ def _add_visual_analyze_arguments(parser: argparse.ArgumentParser) -> None:
         action="append",
         dest="media_urls",
         help=(
-            "Image/video URL to analyze. For TikTok or signed CDN URLs that fail "
-            "direct preparation, first run `asset +create --type media --url ...` "
-            "and retry with the returned media_url or permanent_media_url."
+            "Image/video URL to analyze. If direct image preparation fails, import the image "
+            "with `media +import --url ...`. For video, upload a local file with "
+            "`media +upload --file ... --media-type video`. Read the returned media record "
+            "and retry with its usable URL; image import cannot ingest video."
         ),
     )
     parser.add_argument("--media-json")
@@ -1578,8 +1579,8 @@ def specs() -> list[CommandSpec]:
                     "https://example.com/image.png --prompt 'Assess visual style.'"
                 ),
                 (
-                    "museoncli asset +create --type media --url "
-                    "https://p16-sign.tiktokcdn-us.com/... && "
+                    "museoncli media +import --url "
+                    "https://example.com/reference.jpg && "
                     "museoncli research +visual-analyze --media <media_url> "
                     "--prompt 'Assess visual style.'"
                 ),

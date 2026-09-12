@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://www.museon.ai/cli">Website</a> ·
   <a href="./skills/museon-content-workflow-base/SKILL.md">Workflow Skills</a> ·
-  <a href="./skills/social-media-hook-analyze/SKILL.md">Hook Analysis Skill</a> ·
+  <a href="./skills/museon-research/SKILL.md">Research Skill</a> ·
   <a href="./README.zh-CN.md">简体中文</a>
 </p>
 
@@ -57,46 +57,30 @@ Explain the repeated hooks and audience questions, then propose three carousel
 ideas for our product. Do not publish anything until I approve it.
 ```
 
-## What your Agent can do
+## Agent capabilities
 
-- **Find real content signals** across social platforms, creators, posts,
-  comments, communities, and the public web.
-- **Understand why content works** by comparing creative structure with account
-  and post performance.
-- **Turn findings into content** such as image posts and multi-page slideshows.
-- **Connect accounts and keep a schedule moving** while leaving approval gates
-  in place for publishing and other important changes.
-- **Review results and reuse what worked** in the next brief, routine, report,
-  or creative direction.
-
-Museon is designed for the full loop: **research → decide → create → approve →
-publish → review → reuse**.
-
-## Skill, CLI, and Museon
-
-These three parts work together:
-
-- **Museon workflow Skills** split 11 task-result areas. Agentic Campaign includes its
-  Persona Plans, member-account operations, and runs; the Skills also teach safe tool use.
-- **Museon CLI** is the connection the Agent uses to take action from its own
-  environment.
-- **Museon** runs the hosted research, generation, account, scheduling,
-  publishing, and performance workflows behind that connection.
-
-The CLI never grants access by itself. Museon checks the signed-in user,
-workspace membership, role, and target resource for every operation.
+This working tree prepares the CLI 2.0 surface; the pinned installation below remains
+at the last published release until a separate release is approved.
 
 | Outcome | Domains |
 | --- | --- |
-| Find market, creator, post, community, and visual evidence | `research`, `campaign-monitor` |
-| Analyze content and preserve reusable knowledge | `content-analysis`, `asset`, `artifacts`, `skills` |
-| Create images and slideshows | `generation` |
-| Connect accounts, configure publish pools, schedule work, publish, and review results | `social-account`, `account-publish` |
-| Operate campaigns, Persona Plans, member accounts, and runs | `agentic-campaign`, `account-operation` |
-| Run recurring or one-off operating loops | `routines`, `evaluator` |
+| Research public content and Hooks | `research` |
+| Plan, inspect, edit and verify HireAICreator content | `hireaicreator` |
+| Track creators, posts and performance | `campaign-monitor` |
+| Analyze video content | `content-analysis` |
+| Upload files, import image URLs and read media records | `media` |
+| Validate, host and share durable reports | `artifacts` |
+| Connect and inspect accounts, use bound phones, read performance and edit profiles | `social-account` |
+| Schedule Agent work and retain run memory | `routines` |
+| Discover workspace methodology | `skills` |
 
-The generated contract snapshot is the reviewed source of truth for the public
-command set. Use the live schema rather than copying flags from an old transcript.
+Eight bundled Skills teach discovery, research, durable artifacts, account access, Hook analysis, monitoring and routines.
+The CLI executes atomic operations; the Agent composes workflows. Museon checks user,
+workspace membership, role and resource access for every request. Verify writes with
+readback from the owning domain, not with a request receipt alone.
+
+See [the migration guide](docs/cli-2-migration.md) before replacing an older CLI.
+The HireAICreator domain is included in this unpublished candidate.
 
 ## You stay in control
 
@@ -117,7 +101,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.5.25/museoncli-0.5.25-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.6.0/museoncli-0.6.0-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:

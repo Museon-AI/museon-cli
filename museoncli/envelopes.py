@@ -94,9 +94,9 @@ def direct_api_envelope(
         run = _profile_edit_run_from_data(data)
     elif command_name == "social-account.avatar-generate-batch":
         run = _avatar_generate_run_from_data(data)
-    elif command_name == "account-publish.asset-pools-batch-set":
+    elif command_name == "ai-slideshow.publish-asset-pools-batch-set":
         run = _asset_pools_batch_run_from_data(data)
-    elif command_name == "account-publish.schedule-plan-batch":
+    elif command_name == "ai-slideshow.publish-schedule-plan-batch":
         run = _schedule_plan_run_from_data(data)
     else:
         run = None
@@ -568,7 +568,7 @@ def _schedule_plan_run_from_data(data: Any) -> dict[str, Any] | None:
         "id": job_id,
         "type": "account_publish_schedule_plan",
         "status": job.get("status") or data.get("status"),
-        "watch_command": f"museoncli account-publish +schedule-plan-status --id {job_id}",
+        "watch_command": f"museoncli ai-slideshow publish +schedule-plan-status --id {job_id}",
     }
     delay = job.get("recommended_wakeup_delay_seconds") or data.get(
         "recommended_wakeup_delay_seconds"
@@ -590,7 +590,7 @@ def _asset_pools_batch_run_from_data(data: Any) -> dict[str, Any] | None:
         "id": job_id,
         "type": "account_publish_asset_pools_batch",
         "status": job.get("status") or data.get("status"),
-        "watch_command": f"museoncli account-publish +asset-pools-batch-status --id {job_id}",
+        "watch_command": f"museoncli ai-slideshow publish +asset-pools-batch-status --id {job_id}",
     }
     delay = job.get("recommended_wakeup_delay_seconds") or data.get(
         "recommended_wakeup_delay_seconds"
@@ -675,7 +675,7 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
                     f"{watch_command}"
                 ]
             return [f"Poll only with: {watch_command}"]
-        return ["Poll the returned job id with account-publish +schedule-plan-status."]
+        return ["Poll the returned job id with ai-slideshow publish +schedule-plan-status."]
     if run.get("type") == "account_publish_asset_pools_batch":
         watch_command = run.get("watch_command")
         wakeup_delay = run.get("recommended_wakeup_delay_seconds")
@@ -686,7 +686,7 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
                     f"{watch_command}"
                 ]
             return [f"Poll only with: {watch_command}"]
-        return ["Poll the returned job id with account-publish +asset-pools-batch-status."]
+        return ["Poll the returned job id with ai-slideshow publish +asset-pools-batch-status."]
     return _generation_next_steps(run)
 
 

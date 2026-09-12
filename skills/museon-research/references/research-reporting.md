@@ -1,0 +1,7 @@
+# Evidence and report delivery
+
+Keep observed facts, model interpretation, business inference, and recommendations distinct. Every customer-facing finding needs a resolvable locator such as a full URL, account/post identifier with URL, file path, command result row id, or durable resource id. State sampling limits, missing fields, blocked sources, and degraded fallbacks.
+
+For ads, treat each result as one sampled row. State the query, platforms, sample size, relevance or mismatch count, and missing advertiser or metric coverage. `first_seen_at` and `last_seen_at` bound observation; they do not prove continuous delivery, spend, current activity, profitability, CAC, LTV, or ROI. CTR is not conversion. Do not merge ads across platforms without advertiser identity. Claims about scenes, hooks, on-screen text, editing, or opening seconds require visual-analysis evidence. Scope superlatives to the returned sample and name the comparison metric. Prefer the result row id plus `external_url`; use thumbnails only when their status is available and never expose provider CDN media URLs.
+
+For a durable report, write the complete Markdown draft before returning a compact summary. Put citations beside load-bearing claims. Validate the draft through the artifact workflow described by the base skill; uploading or sharing remains a separately authorized write. Return the report path so the caller does not need to reconstruct the evidence.

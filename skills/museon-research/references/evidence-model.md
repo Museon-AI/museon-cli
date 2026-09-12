@@ -24,4 +24,4 @@ Content Analyzer creates a durable video analysis run from a supported platform 
 
 ## Relationships
 
-Assets preserve reusable creative structure; campaign-monitor preserves monitored history; artifacts preserve a shareable synthesis.
+Media preserves input files; campaign-monitor preserves monitored history. Keep the synthesis in a local report with evidence links.

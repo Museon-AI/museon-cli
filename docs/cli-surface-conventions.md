@@ -12,16 +12,14 @@ museoncli <domain> +<shortcut> [flags]
 - Domains come from the fixed `Domain` enum (`museoncli/domains/_model.py`).
 - Shortcuts always carry the `+` sigil. No bare aliases.
 - Verbs: `list / get / create / update / delete / cancel` plus domain verbs that
-  the spec `summary` explains (e.g. `schedule-generate`, `version-activate`).
+  the spec `summary` explains (e.g. `upload`, `import`, `pause`).
 
 ## Identifiers
 
 - The id of the entity a command returns or acts on is always `--id`.
-  (`routines +get --id`, `content-analysis +get --id`,
-  `social-account +connect-link-status --id`)
+  (`routines +get --id`, `content-analysis +get --id`, `media +get --id`)
 - Write commands scoped inside a parent entity use `--id` for the parent and
-  qualified flags for children (`social-account +schedule-update --id <account>
-  --schedule-item-id <item>`, `campaign-monitor +content-remove --id <campaign>
+  qualified flags for children (`campaign-monitor +content-remove --id <campaign>
   --collection-content-id <content>`).
 - Foreign references are always qualified: `--<entity>-id`.
 - Positional IDs are forbidden. The only allowed positional is a mode selector
@@ -34,12 +32,12 @@ museoncli <domain> +<shortcut> [flags]
   `--limit` for paging.
 - Cursor-paged lists: `--cursor` (pass back `pagination` tokens from responses).
 - `--limit` exists only as a true "top N" cap where the server has no paging
-  (research searches, performance series, evaluator lists).
+  (research searches, performance series, content windows).
 
 ## Enum flag values
 
 - All choice values are kebab-case on the CLI (`--intent keyword-search`,
-  `--decided-by auto-timeout`, `--type topic-direction`).
+  `--type content-analysis`).
 - Builders convert to server contract values with `dekebab`; payloads stay
   snake_case. Schemas (`museoncli schema`) advertise the kebab forms.
 

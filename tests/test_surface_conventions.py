@@ -15,23 +15,18 @@ from museoncli.domains import command_specs
 
 # commands where --limit is a true "top N" cap (server has no offset paging)
 LIMIT_CAP_COMMANDS = {
-    "agentic-campaign.issues-pull",
     "research.creative-search-ads",
     "research.web-research",
     "research.social-media-search",
     "research.community-search",
     "campaign-monitor.creator-performance-get",
     "campaign-monitor.post-performance-get",
-    "evaluator.kind-list",
-    "evaluator.list",
-    "evaluator.run-list",
-    "account-operation.runs",
 }
+ADMIN_OR_STAFF_COMMANDS = set()
 # positional mode selectors (never IDs)
 ALLOWED_POSITIONALS = {"routines.record": ["kind"]}
 # skills.get windows file content by offset/limit chars — not list pagination
 CONTENT_WINDOW_COMMANDS = {"skills.get"}
-ADMIN_OR_STAFF_COMMANDS = {"evaluator.create", "evaluator.update"}
 
 
 def _parser_for(spec):
@@ -208,7 +203,10 @@ def test_public_schema_does_not_expose_server_model_controls() -> None:
     forbidden = {"model", "text_model", "image_model", "slice_model", "analysis_model"}
     for spec in command_specs():
         properties = spec.input_schema.get("properties", {})
-        assert forbidden.isdisjoint(properties), spec.schema_name
+        # Prompt-media generation explicitly exposes its three supported product models;
+        # unrelated business workflows continue to hide server routing controls.
+        blocked = forbidden - {"model"} if spec.schema_name == "media.generate" else forbidden
+        assert blocked.isdisjoint(properties), spec.schema_name
         for value in properties.values():
             if isinstance(value, dict):
                 nested = value.get("properties", {})
@@ -229,4 +227,5 @@ def test_public_parser_does_not_expose_server_model_controls() -> None:
         flags = {
             option for action in _parser_for(spec)._actions for option in action.option_strings
         }
-        assert forbidden.isdisjoint(flags), spec.schema_name
+        blocked = forbidden - {"--model"} if spec.schema_name == "media.generate" else forbidden
+        assert blocked.isdisjoint(flags), spec.schema_name

@@ -24,4 +24,4 @@ Review compares planned, generated, and published work with observed outcomes, s
 
 ## Relationships
 
-Use research for live discovery and artifacts for a retained review. Use social-account when provenance must come from the connected account itself.
+Use research for live discovery and local files for retained reviews. Preserve the returned data provenance; do not present public monitoring as connected-account analytics.
