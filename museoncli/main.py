@@ -777,8 +777,32 @@ async def upload_artifact_file(
     if not path.is_file():
         raise RuntimeError(f"artifact file not found: {path}")
     content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-    form_data = {"workspace_id": workspace_id, "file_id": str(arguments["file_id"])}
-    if arguments.get("title") is not None:
+    private_media_file = arguments.get("media_type") == "file"
+    form_data: dict[str, str] = {"workspace_id": workspace_id}
+    if private_media_file:
+        form_data["file_id"] = str(arguments["file_id"])
+    else:
+        form_data.update(
+            {
+                "artifact_type": str(arguments.get("artifact_type") or "file"),
+                "source_file_path": str(arguments.get("file") or path.name),
+                "public": "true" if bool(arguments.get("public", True)) else "false",
+            }
+        )
+        for form_key, argument_key in (("artifact_id", "artifact_id"), ("title", "title")):
+            value = arguments.get(argument_key)
+            if value is not None:
+                form_data[form_key] = str(value)
+        for form_key, argument_key in (
+            ("runtime_context_json", "runtime_context"),
+            ("metadata_json", "metadata"),
+        ):
+            value = arguments.get(argument_key)
+            if isinstance(value, dict):
+                form_data[form_key] = json.dumps(
+                    value, ensure_ascii=False, separators=(",", ":")
+                )
+    if private_media_file and arguments.get("title") is not None:
         form_data["title"] = str(arguments["title"])
     if not auth_headers(cfg):
         raise RuntimeError("missing_auth")
@@ -786,7 +810,11 @@ async def upload_artifact_file(
         files = {"file": (path.name, handle, content_type)}
         async with httpx.AsyncClient(timeout=None) as client:
             response = await client.post(
-                f"{cfg.api_base_url.rstrip()}/media/files",
+                (
+                    f"{cfg.api_base_url.rstrip()}/media/files"
+                    if private_media_file
+                    else f"{cfg.api_base_url.rstrip()}/agent-cli/artifacts/upload"
+                ),
                 headers=_request_headers(cfg),
                 data=form_data,
                 files=files,
