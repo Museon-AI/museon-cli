@@ -35,7 +35,7 @@ museoncli = "museoncli.main:main"
 museon = "museoncli.main:main"
 
 [project.urls]
-Homepage = "https://www.museon.ai/cli"
+Homepage = "https://www.museon.ai/mel#cli"
 Repository = "https://github.com/Museon-AI/museon-cli"
 Issues = "https://github.com/Museon-AI/museon-cli/issues"
 Documentation = "https://github.com/Museon-AI/museon-cli#readme"

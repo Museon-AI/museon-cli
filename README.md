@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.museon.ai/cli">Website</a> ·
+  <a href="https://www.museon.ai/mel#cli">Website</a> ·
   <a href="./skills/museon-content-workflow-base/SKILL.md">Workflow Skills</a> ·
   <a href="./skills/museon-research/SKILL.md">Research Skill</a> ·
   <a href="./README.zh-CN.md">简体中文</a>
@@ -22,6 +22,11 @@ approval, and learn from real performance.
 
 You keep working with your Agent. Museon gives it the social-media capabilities
 needed to move from an idea to real work.
+
+The bundled base Skill defines **Mel**, your AI social-media operator. For Museon
+work, it guides your Agent to own the goal, execute through Museon CLI, verify
+results, and use real performance to improve the next round. This positioning is
+included in the CLI package and installed by `museoncli setup`.
 
 ## Give this to your Agent
 

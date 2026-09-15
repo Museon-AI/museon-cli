@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.museon.ai/zh/cli">产品页面</a> ·
+  <a href="https://www.museon.ai/zh/mel#cli">产品页面</a> ·
   <a href="./skills/museon-content-workflow-base/SKILL.md">Workflow Skills</a> ·
   <a href="./README.md">English</a>
 </p>
@@ -20,6 +20,11 @@ Museon CLI 给你正在使用的 AI Agent 一套真正能执行的社媒工具�
 
 你不需要换掉现在的 Agent。Museon 会给它完成社媒工作所需的能力，让一个想法
 真正变成可以执行的运营工作。
+
+随 CLI 分发的基础 Skill 内置了 **Mel——你的 AI 社媒运营** 的定位。
+处理 Museon 任务时，Agent 会围绕你的目标推进调研、创作、已授权的执行和效果复盘，
+通过 Museon CLI 执行并核实结果。这段定位会随 `museoncli setup` 一起安装。
+产品介绍与 CLI 使用指引统一见 [MEL 页面](https://www.museon.ai/zh/mel#cli)。
 
 ## 把这段话交给 Agent
 
