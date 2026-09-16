@@ -28,7 +28,7 @@ On a timeout, the write outcome is unknown. Reuse the original key only when the
 
 ## Relationships
 
-Test Group listing requires a Test Plan ID. `test-plan +ensure` may create the workspace's default plan even though the underlying request is GET: treat it as a write. For read-only diagnosis, use already established group/plan identities instead of silently ensuring a new plan. Resource-bound reads/writes may have no workspace flag; verify the returned object's workspace rather than attaching a guessed default.
+Use `test-group +list` for a read-only workspace inventory; it resolves the current Test Plan without creating one, and `plan_id` is optional when already known. Complete pagination before calling the result exhaustive. For new Actors, choose an existing Persona and either create from one workspace image or use `actor +batch-create → +batch-get/+batch-items → +batch-select`; a generated candidate is not yet an Actor. Resource-bound reads/writes may have no workspace flag; verify the returned object's workspace rather than attaching a guessed default.
 
 ## 1. Find and reuse creative resources
 
@@ -58,7 +58,7 @@ Test Group listing requires a Test Plan ID. `test-plan +ensure` may create the w
 
 `start_generation=false` does not make creation read-only: a supplied schedule can occupy publishing slots, and a Clip composition can reserve Clips. Replaying an existing key returns the original plan, whose generation may already have started; inspect its persisted intent and child states.
 
-**Unknown/limits:** Explain skipped allocations and incomplete components. Do not substitute a Persona ID for Actor ID or silently select an alternative account. Creative quality and visual identity need media inspection; a completed task status alone proves neither. The CLI does not add new composition modes or create/edit Actor and Persona unless their live commands explicitly support it.
+**Unknown/limits:** Explain skipped allocations and incomplete components. Do not substitute a Persona ID for Actor ID or silently select an alternative account. Creative quality and visual identity need media inspection; a completed task status alone proves neither. Actor creation requires an existing Persona and explicit candidate selection; these commands do not create Personas or bind Actors to accounts.
 
 ## 3. Find exact accounts and check eligibility
 

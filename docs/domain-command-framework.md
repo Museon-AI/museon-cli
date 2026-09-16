@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-147 commands across 10 domains (source of truth: `museoncli schema`).
+151 commands across 10 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -110,6 +110,11 @@ The tables below are generated — edit code, then run
 | `hireaicreator account +eligibility` | read | — | — | direct | Read eligibility and blockers for an explicit account set. |
 | `hireaicreator actor +list` | read | — | — | direct | List Actors (independent identities), optionally by source Persona. |
 | `hireaicreator actor +get` | read | — | — | direct | Read one Actor; its ID is not a Persona ID. |
+| `hireaicreator actor +from-persona` | write | yes | — | direct | Create one Actor from an existing Persona and one workspace image. |
+| `hireaicreator actor +batch-create` | write | yes | — | direct | Start Persona-based Actor generation. Generated images remain candidates until selected. |
+| `hireaicreator actor +batch-get` | read | — | — | direct | Read the status and counts of one Actor generation batch. |
+| `hireaicreator actor +batch-items` | read | — | — | direct | Page through generated Actor candidates and their image/status details. |
+| `hireaicreator actor +batch-select` | write | yes | — | direct | Turn explicitly chosen successful candidates into Actors. |
 | `hireaicreator persona +list` | read | — | — | direct | List Personas and their actual identities. |
 | `hireaicreator persona +get` | read | — | — | direct | Read a Persona through resource access control; no workspace override. |
 | `hireaicreator format +list` | read | — | — | direct | List HireAICreator Formats, distinct from slideshow Formats. |
@@ -139,8 +144,7 @@ The tables below are generated — edit code, then run
 | `hireaicreator plan +capacity` | read | — | — | direct | Read account capacity for a bounded date range. |
 | `hireaicreator plan +create` | write | yes | — | direct | Create a plan with a stable idempotency key. Server defaults start_generation to false; creation is not a finished video. |
 | `hireaicreator plan +get` | read | — | — | direct | Read a persistent video plan and its state. |
-| `hireaicreator test-plan +ensure` | write | yes | — | direct | Get or create the workspace default test plan. Although HTTP GET, this can write and is not a read-only discovery call. |
-| `hireaicreator test-group +list` | read | — | — | direct | List test groups in a known test plan. |
+| `hireaicreator test-group +list` | read | — | — | direct | List workspace Test Groups without creating a plan; optional plan_id narrows to a known plan. |
 | `hireaicreator test-group +get` | read | — | — | direct | Read current group members and schedule state; does not migrate accounts. |
 | `hireaicreator test-group +preview` | read | — | — | direct | Preview the persisted test group schedule and inventory gaps, without confirming a rollout. |
 | `hireaicreator warmup +list` | read | — | — | direct | Read warmup strategies; does not change account stage. |

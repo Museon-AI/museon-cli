@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.6.1
+
+- Removed the low-level `hireaicreator test-plan +ensure` command and made Test Group listing work without a Plan ID.
+- Added Persona-based Actor creation and generation batch commands, including candidate selection.
+
 ## 0.6.0
 
 - Replaced the former AI Hook public domain with `hireaicreator`, exposing 45 commands including read-only item and batch history queries.

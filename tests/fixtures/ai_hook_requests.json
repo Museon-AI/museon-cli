@@ -117,6 +117,111 @@
     }
   },
   {
+    "name": "actor-from-persona",
+    "method": "POST",
+    "path": "/api/v2/actors/from-persona",
+    "input": {
+      "persona_id": "30000000-0000-4000-8000-000000000003",
+      "name": "Maya",
+      "bio": "A practical educator",
+      "presentation_gender": "female",
+      "apparent_age_group": "25-34",
+      "image_media_ids": [
+        "70000000-0000-4000-8000-000000000007"
+      ],
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "body": {
+      "persona_id": "30000000-0000-4000-8000-000000000003",
+      "name": "Maya",
+      "bio": "A practical educator",
+      "presentation_gender": "female",
+      "apparent_age_group": "25_34",
+      "image_media_ids": [
+        "70000000-0000-4000-8000-000000000007"
+      ],
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  },
+  {
+    "name": "actor-batch-create",
+    "method": "POST",
+    "path": "/api/v2/actors/generation-batches",
+    "input": {
+      "items": [
+        {
+          "persona_id": "30000000-0000-4000-8000-000000000003",
+          "presentation_gender": "female",
+          "apparent_age_group": "25-34",
+          "name": "Maya",
+          "bio": "A practical educator",
+          "prompt": "Friendly studio portrait",
+          "actor_count": 5
+        }
+      ],
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "idempotency_key": "actor-batch-key-001"
+    },
+    "body": {
+      "items": [
+        {
+          "persona_id": "30000000-0000-4000-8000-000000000003",
+          "presentation_gender": "female",
+          "apparent_age_group": "25_34",
+          "name": "Maya",
+          "bio": "A practical educator",
+          "prompt": "Friendly studio portrait",
+          "actor_count": 5
+        }
+      ],
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "header": {
+      "Idempotency-Key": "actor-batch-key-001"
+    }
+  },
+  {
+    "name": "actor-batch-get",
+    "method": "GET",
+    "path": "/api/v2/actors/generation-batches/40000000-0000-4000-8000-000000000004",
+    "input": {
+      "batch_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "query": {}
+  },
+  {
+    "name": "actor-batch-items",
+    "method": "GET",
+    "path": "/api/v2/actors/generation-batches/40000000-0000-4000-8000-000000000004/items",
+    "input": {
+      "batch_id": "40000000-0000-4000-8000-000000000004",
+      "page": 2,
+      "page_size": 20,
+      "status": "succeeded"
+    },
+    "query": {
+      "page": 2,
+      "page_size": 20,
+      "status": "succeeded"
+    }
+  },
+  {
+    "name": "actor-batch-select",
+    "method": "POST",
+    "path": "/api/v2/actors/generation-batches/40000000-0000-4000-8000-000000000004/select",
+    "input": {
+      "batch_id": "40000000-0000-4000-8000-000000000004",
+      "item_ids": [
+        "50000000-0000-4000-8000-000000000005"
+      ]
+    },
+    "body": {
+      "item_ids": [
+        "50000000-0000-4000-8000-000000000005"
+      ]
+    }
+  },
+  {
     "name": "persona-list",
     "method": "GET",
     "path": "/api/v1/personas",
@@ -932,17 +1037,6 @@
       "id": "1e1ed7af-abab-52e4-aecd-4b51e5abf0f8"
     },
     "query": {}
-  },
-  {
-    "name": "test-plan-ensure",
-    "method": "GET",
-    "path": "/api/v2/ai-hook-test-plans",
-    "input": {
-      "workspace_id": "16cfb61c-7a65-5f24-bccb-84a991762f82"
-    },
-    "query": {
-      "workspace_id": "16cfb61c-7a65-5f24-bccb-84a991762f82"
-    }
   },
   {
     "name": "test-group-list",
