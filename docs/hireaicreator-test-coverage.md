@@ -47,7 +47,7 @@
 | video +readiness | id | 1 | 返回video_id与同一视频相等，阶段阻碍另列 |
 | video +update | id、expected_version、caption | 3 | 新建隔离草稿版本1→2，receipt与get一致且caption等于输入；旧版本1再次PATCH返回409，get证实版本和caption均未变 |
 | plan +get | id | 1 | 返回持久plan身份与视频关联plan相等 |
-| test-plan +ensure | workspace_id | 1 | 两次ensure返回同一ID且工作区相符，不推断发生新建 |
+| test-plan +ensure（历史命令，现已下线） | workspace_id | 1 | 当时两次ensure返回同一ID且工作区相符，不推断发生新建 |
 | dashboard +get | workspace_id、campaign_id、date_from、date_to、timezone | 5 | 返回归属、窗口与时区逐项等于输入；空表现指标保留null |
 
 这些36项不能用于声称所有已实际调用参数均生效。例如Clip分配返回500，expected_version虽已发送，仍不记为真实成功参数；准确错误契约也尚未通过。字段范围为本次验收的可复查脱敏记录，不包含私人ID、原始工作区payload或凭据。
@@ -101,7 +101,7 @@
 | hireaicreator.plan-capacity | 已实际执行 | 接口成功；场景后置条件另列 | 有区分度样本 |
 | hireaicreator.plan-create | 未执行 | 阻塞：目标账号均未绑定Actor，preview已拒绝 | get与video membership；start_generation显式 |
 | hireaicreator.plan-get | 已实际执行 | 接口成功；场景后置条件另列 | 持久计划 |
-| hireaicreator.test-plan-ensure | 已实际执行 | 两次同ID及目标workspace；不声称创建了新计划 | GET实际可能创建 |
+| hireaicreator.test-plan-ensure（历史命令，现已下线） | 已实际执行 | 两次同ID及目标workspace；不声称创建了新计划 | GET实际可能创建 |
 | hireaicreator.test-group-list | 已实际执行 | 接口成功；场景后置条件另列 | 已知test plan ID |
 | hireaicreator.test-group-get | 未执行 | 阻塞：工作区无Test Group对象 | 持久组 |
 | hireaicreator.test-group-preview | 未执行 | 阻塞：工作区无Test Group对象 | 已有组驱动的预览 |

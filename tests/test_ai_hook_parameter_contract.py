@@ -165,6 +165,27 @@ def test_every_declared_field_and_flag_has_an_independent_request_case():
         )
 
 
+def test_test_group_list_needs_no_plan_id_or_write(monkeypatch):
+    requests = []
+    attach_transport(
+        monkeypatch,
+        lambda request: (
+            requests.append(request)
+            or httpx.Response(200, json={"items": [], "total": 0, "has_more": False})
+        ),
+    )
+
+    dispatch(["hireaicreator", "test-group", "+list", "--search", "pilot"])
+
+    assert len(requests) == 1
+    assert requests[0].method == "GET"
+    assert requests[0].url.path == "/api/v2/ai-hook-test-groups"
+    assert dict(requests[0].url.params) == {
+        "workspace_id": BASE_WORKSPACE,
+        "search": "pilot",
+    }
+
+
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c["name"])
 def test_unknown_json_fields_and_source_conflicts_fail_before_http(monkeypatch, tmp_path, case):
     attach_transport(monkeypatch, lambda _: pytest.fail("invalid input reached network"))

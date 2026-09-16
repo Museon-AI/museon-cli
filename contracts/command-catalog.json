@@ -2258,6 +2258,131 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "hireaicreator.actor-from-persona",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-from-persona",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+from-persona",
+          "stability": "stable",
+          "summary": "Create one Actor from an existing Persona and one workspace image.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.actor-batch-create",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-batch-create",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+batch-create",
+          "stability": "stable",
+          "summary": "Start Persona-based Actor generation. Generated images remain candidates until selected.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.actor-batch-get",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-batch-get",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+batch-get",
+          "stability": "stable",
+          "summary": "Read the status and counts of one Actor generation batch.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.actor-batch-items",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-batch-items",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+batch-items",
+          "stability": "stable",
+          "summary": "Page through generated Actor candidates and their image/status details.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.actor-batch-select",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-batch-select",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+batch-select",
+          "stability": "stable",
+          "summary": "Turn explicitly chosen successful candidates into Actors.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "hireaicreator.persona-list",
           "domain": "hireaicreator",
           "execution": "direct",
@@ -2983,31 +3108,6 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
-          "capability_key": "hireaicreator.test-plan-ensure",
-          "domain": "hireaicreator",
-          "execution": "direct",
-          "name": "hireaicreator.test-plan-ensure",
-          "requires_confirmation": false,
-          "risk_level": "write",
-          "shortcut": "+ensure",
-          "stability": "stable",
-          "summary": "Get or create the workspace default test plan. Although HTTP GET, this can write and is not a read-only discovery call.",
-          "supports_dry_run": true,
-          "transport": "agent_cli_api"
-        },
-        {
-          "authorization": {
-            "authentication_required": true,
-            "enforcement": "museon_server",
-            "required_roles": [
-              "workspace_member"
-            ],
-            "required_scopes": [
-              "agent_cli.access"
-            ],
-            "resource_policy": "server_evaluated_workspace_and_resource_access",
-            "workspace_bound": true
-          },
           "capability_key": "hireaicreator.test-group-list",
           "domain": "hireaicreator",
           "execution": "direct",
@@ -3016,7 +3116,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List test groups in a known test plan.",
+          "summary": "List workspace Test Groups without creating a plan; optional plan_id narrows to a known plan.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5075,7 +5175,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.6.0",
+  "contract_revision": "0.6.1",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -14704,6 +14804,634 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "hireaicreator.actor-batch-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-batch-create",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-batch-create"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 8,
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "actor_count": {
+                  "maximum": 100,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "apparent_age_group": {
+                  "enum": [
+                    "18-24",
+                    "25-34",
+                    "35-44",
+                    "45-54",
+                    "55-64",
+                    "65-plus"
+                  ],
+                  "type": "string"
+                },
+                "bio": {
+                  "maxLength": 2000,
+                  "minLength": 1,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "persona_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "presentation_gender": {
+                  "enum": [
+                    "female",
+                    "male",
+                    "androgynous"
+                  ],
+                  "type": "string"
+                },
+                "prompt": {
+                  "maxLength": 4000,
+                  "minLength": 1,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "persona_id",
+                "presentation_gender",
+                "apparent_age_group"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-batch-create",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Use actor +batch-get and actor +batch-items until candidates settle; select approved item IDs with actor +batch-select.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+batch-create",
+      "stability": "stable",
+      "summary": "Start Persona-based Actor generation. Generated images remain candidates until selected.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.actor-batch-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-batch-get",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-batch-get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "batch_id"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-batch-get",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+batch-get",
+      "stability": "stable",
+      "summary": "Read the status and counts of one Actor generation batch.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.actor-batch-items": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-batch-items",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-batch-items"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "processing",
+              "succeeded",
+              "failed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "batch_id"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-batch-items",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+batch-items",
+      "stability": "stable",
+      "summary": "Page through generated Actor candidates and their image/status details.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.actor-batch-select": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-batch-select",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-batch-select"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "item_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "batch_id",
+          "item_ids"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-batch-select",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read every returned Actor ID with actor +get. Reconcile an unknown outcome before retrying selection.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+batch-select",
+      "stability": "stable",
+      "summary": "Turn explicitly chosen successful candidates into Actors.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.actor-from-persona": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-from-persona",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-from-persona"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "apparent_age_group": {
+            "enum": [
+              "18-24",
+              "25-34",
+              "35-44",
+              "45-54",
+              "55-64",
+              "65-plus"
+            ],
+            "type": "string"
+          },
+          "bio": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image_media_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 1,
+            "minItems": 1,
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "persona_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "presentation_gender": {
+            "enum": [
+              "female",
+              "male",
+              "androgynous"
+            ],
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "persona_id",
+          "presentation_gender",
+          "apparent_age_group",
+          "image_media_ids"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-from-persona",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read the returned Actor ID with actor +get. On an unknown outcome, reconcile before retrying because this endpoint has no idempotency key.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+from-persona",
+      "stability": "stable",
+      "summary": "Create one Actor from an existing Persona and one workspace image.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "hireaicreator.actor-get": {
       "authorization": {
         "authentication_required": true,
@@ -19032,9 +19760,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "plan_id"
-        ],
+        "required": [],
         "type": "object"
       },
       "name": "hireaicreator.test-group-list",
@@ -19096,7 +19822,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List test groups in a known test plan.",
+      "summary": "List workspace Test Groups without creating a plan; optional plan_id narrows to a known plan.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -19204,99 +19930,6 @@
       "stability": "stable",
       "summary": "Preview the persisted test group schedule and inventory gaps, without confirming a rollout.",
       "supports_dry_run": false,
-      "transport": "agent_cli_api"
-    },
-    "hireaicreator.test-plan-ensure": {
-      "authorization": {
-        "authentication_required": true,
-        "enforcement": "museon_server",
-        "required_roles": [
-          "workspace_member"
-        ],
-        "required_scopes": [
-          "agent_cli.access"
-        ],
-        "resource_policy": "server_evaluated_workspace_and_resource_access",
-        "workspace_bound": true
-      },
-      "capability_key": "hireaicreator.test-plan-ensure",
-      "domain": "hireaicreator",
-      "examples": [
-        "museoncli schema hireaicreator.test-plan-ensure"
-      ],
-      "execution": "direct",
-      "input_schema": {
-        "additionalProperties": false,
-        "properties": {
-          "workspace_id": {
-            "format": "uuid",
-            "type": "string"
-          }
-        },
-        "required": [],
-        "type": "object"
-      },
-      "name": "hireaicreator.test-plan-ensure",
-      "output_schema": {
-        "description": "Unmodified API resource or receipt. Returned plan ID identifies the workspace test plan; use hireaicreator test-group +list --plan-id to inspect groups.",
-        "properties": {
-          "command": {
-            "type": "string"
-          },
-          "data": {
-            "type": [
-              "object",
-              "array",
-              "string",
-              "number",
-              "boolean",
-              "null"
-            ]
-          },
-          "next_steps": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "ok": {
-            "type": "boolean"
-          },
-          "run": {
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "warnings": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "workspace": {
-            "type": [
-              "object",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "ok",
-          "command",
-          "data",
-          "run",
-          "warnings",
-          "next_steps"
-        ],
-        "type": "object"
-      },
-      "requires_confirmation": false,
-      "risk_level": "write",
-      "shortcut": "+ensure",
-      "stability": "stable",
-      "summary": "Get or create the workspace default test plan. Although HTTP GET, this can write and is not a read-only discovery call.",
-      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "hireaicreator.video-bulk-schedule": {

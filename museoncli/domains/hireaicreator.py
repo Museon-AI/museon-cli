@@ -55,6 +55,20 @@ def enum(*values: str) -> dict[str, Any]:
 
 PAGE = {"page": POSITIVE_INT, "page_size": {"type": "integer", "minimum": 1, "maximum": 100}}
 SEARCH_PAGE = {**PAGE, "search": S}
+ACTOR_GENDER = enum("female", "male", "androgynous")
+ACTOR_AGE = enum("18-24", "25-34", "35-44", "45-54", "55-64", "65-plus")
+ACTOR_GENERATION_ITEM = obj(
+    {
+        "persona_id": U,
+        "presentation_gender": ACTOR_GENDER,
+        "apparent_age_group": ACTOR_AGE,
+        "name": nullable({"type": "string", "minLength": 1, "maxLength": 200}),
+        "bio": nullable({"type": "string", "minLength": 1, "maxLength": 2000}),
+        "prompt": nullable({"type": "string", "minLength": 1, "maxLength": 4000}),
+        "actor_count": {"type": "integer", "minimum": 1, "maximum": 100},
+    },
+    ("persona_id", "presentation_gender", "apparent_age_group"),
+)
 DIRECTIONS = obj({"pov": nullable(S), "text_overlay": nullable(S), "caption": nullable(S)})
 CLIP_RULE = obj(
     {
@@ -448,6 +462,76 @@ def specs() -> list[CommandSpec]:
             summary="Read one Actor; its ID is not a Persona ID.",
         ),
         _command(
+            "actor",
+            "from-persona",
+            "POST",
+            "/actors/from-persona",
+            {
+                "persona_id": U,
+                "name": nullable({"type": "string", "minLength": 1, "maxLength": 200}),
+                "bio": nullable({"type": "string", "minLength": 1, "maxLength": 2000}),
+                "presentation_gender": ACTOR_GENDER,
+                "apparent_age_group": ACTOR_AGE,
+                "image_media_ids": arr(U, 1, 1),
+            },
+            required=(
+                "persona_id",
+                "presentation_gender",
+                "apparent_age_group",
+                "image_media_ids",
+            ),
+            workspace="body",
+            write=True,
+            summary="Create one Actor from an existing Persona and one workspace image.",
+            readback="Read the returned Actor ID with actor +get. On an unknown outcome, reconcile before retrying because this endpoint has no idempotency key.",
+        ),
+        _command(
+            "actor",
+            "batch-create",
+            "POST",
+            "/actors/generation-batches",
+            {"items": arr(ACTOR_GENERATION_ITEM, 1, 100)},
+            required=("items",),
+            workspace="body",
+            write=True,
+            idempotent=True,
+            summary="Start Persona-based Actor generation. Generated images remain candidates until selected.",
+            readback="Use actor +batch-get and actor +batch-items until candidates settle; select approved item IDs with actor +batch-select.",
+        ),
+        _command(
+            "actor",
+            "batch-get",
+            "GET",
+            "/actors/generation-batches/{batch_id}",
+            {},
+            workspace="resource",
+            path_key="batch_id",
+            summary="Read the status and counts of one Actor generation batch.",
+        ),
+        _command(
+            "actor",
+            "batch-items",
+            "GET",
+            "/actors/generation-batches/{batch_id}/items",
+            {**PAGE, "status": enum("queued", "processing", "succeeded", "failed")},
+            workspace="resource",
+            path_key="batch_id",
+            summary="Page through generated Actor candidates and their image/status details.",
+        ),
+        _command(
+            "actor",
+            "batch-select",
+            "POST",
+            "/actors/generation-batches/{batch_id}/select",
+            {"item_ids": arr(U, 1, 100)},
+            required=("item_ids",),
+            workspace="resource",
+            path_key="batch_id",
+            write=True,
+            summary="Turn explicitly chosen successful candidates into Actors.",
+            readback="Read every returned Actor ID with actor +get. Reconcile an unknown outcome before retrying selection.",
+        ),
+        _command(
             "persona",
             "list",
             "GET",
@@ -810,23 +894,12 @@ def specs() -> list[CommandSpec]:
             summary="Read a persistent video plan and its state.",
         ),
         _command(
-            "test-plan",
-            "ensure",
-            "GET",
-            "/ai-hook-test-plans",
-            {},
-            write=True,
-            summary="Get or create the workspace default test plan. Although HTTP GET, this can write and is not a read-only discovery call.",
-            readback="Returned plan ID identifies the workspace test plan; use hireaicreator test-group +list --plan-id to inspect groups.",
-        ),
-        _command(
             "test-group",
             "list",
             "GET",
             "/ai-hook-test-groups",
             {**SEARCH_PAGE, "plan_id": U},
-            required=("plan_id",),
-            summary="List test groups in a known test plan.",
+            summary="List workspace Test Groups without creating a plan; optional plan_id narrows to a known plan.",
         ),
         _command(
             "test-group",
