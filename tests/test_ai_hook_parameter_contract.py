@@ -186,6 +186,35 @@ def test_test_group_list_needs_no_plan_id_or_write(monkeypatch):
     }
 
 
+@pytest.mark.parametrize("action", ["assets-get", "actor-set", "persona-set"])
+@pytest.mark.parametrize("override", [None, "50000000-0000-4000-8000-000000000005"])
+def test_account_bindings_resolve_workspace_and_preserve_approval_omission(
+    monkeypatch, action, override
+):
+    requests = []
+    attach_transport(monkeypatch, lambda r: requests.append(r) or httpx.Response(200, json={}))
+    argv = [
+        "hireaicreator",
+        "account",
+        "+" + action,
+        "--id",
+        "10000000-0000-4000-8000-000000000001",
+    ]
+    if action != "assets-get":
+        argv += ["--" + action.removesuffix("-set") + "-id", "30000000-0000-4000-8000-000000000003"]
+    if override:
+        argv += ["--workspace-id", override]
+    result = dispatch(argv)
+    assert len(requests) == 1
+    sent = (
+        dict(requests[0].url.params) if action == "assets-get" else json.loads(requests[0].content)
+    )
+    assert sent["workspace_id"] == (override or BASE_WORKSPACE)
+    assert "managed_operation_approved" not in sent
+    assert "approval_note" not in sent
+    assert result["workspace"] == {"id": override or BASE_WORKSPACE}
+
+
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c["name"])
 def test_unknown_json_fields_and_source_conflicts_fail_before_http(monkeypatch, tmp_path, case):
     attach_transport(monkeypatch, lambda _: pytest.fail("invalid input reached network"))
