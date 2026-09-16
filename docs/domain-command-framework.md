@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-154 commands across 10 domains (source of truth: `museoncli schema`).
+155 commands across 10 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -137,6 +137,7 @@ The tables below are generated — edit code, then run
 | `hireaicreator clip +get` | read | — | — | direct | Read one Clip including version, media and publishing account. |
 | `hireaicreator clip +batch-create` | write | yes | — | direct | Register Clips with client_key/mapping_version identity; initial needs_account is not usable assigned stock. |
 | `hireaicreator clip +assign-account` | write | yes | — | direct | Assign Clips with explicit expected versions and account IDs. |
+| `hireaicreator video +create` | write | yes | — | direct | Create one manual Actor video from a Format or reference Hook, without account binding or scheduling. Requires composition-source hook-only. Creation does not start generation. |
 | `hireaicreator video +list` | read | — | — | direct | List videos and their version/state; paginate explicitly. |
 | `hireaicreator video +get` | read | — | — | direct | Read persisted video configuration, version, component/render/publish facts. |
 | `hireaicreator video +readiness` | read | — | — | direct | Read blockers and stage eligibility; readiness does not prove generation completion. |

@@ -20,6 +20,14 @@ Read the relevant section of [the ten scenarios](references/top-10-scenarios.md)
 
 For historical generated footage or generation batch progress, read [history and batches](references/history-and-batches.md).
 
+## Manual video delivery
+
+For downloadable videos or a manual publishing link, use `video +create` with an observed Actor and Persona, `--composition-source hook-only`, and `--format-id` or `--reference-hook-id`. If the user names an account, read its `account +assets-get` bindings first; preserve those Actor and Persona IDs without binding or scheduling the new video. Create one video per chosen Format with a stable idempotency key per item. Read back each video, then `video +generate` with the observed version, poll `video +get`, and finish with verified `delivery +export` / `+export-get` and an authorized share. Record partial results and resume existing IDs; do not create duplicates after an ambiguous response. `plan +create` is not required for manual delivery.
+
+Pass explicit `--workspace-id` on every workspace-scoped command after resolving the user's workspace; resource-scoped commands do not accept that flag. Do not rely on a workspace selection surviving a new agent turn. If a result is offloaded, read `raw_result.path` (or the local path supplied in the large-result manifest) before interpreting `data: null` as empty data.
+
+A 422 validation error or a 404 response does not prove write permission or end-to-end success. Do not probe unrelated write routes to infer a permissions map. Report the actual command and response; for host-managed authentication, do not promise an `auth start` / login switch that the host prohibits. Read schema again when a command is unavailable, and report a release mismatch rather than inventing a command.
+
 ## Mental model
 
 - Actor is an on-camera identity; Persona is a separate content/personality resource. They have separate IDs. An account binding is evidence of their relationship, not permission to interchange them.

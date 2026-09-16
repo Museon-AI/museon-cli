@@ -370,3 +370,31 @@ def test_delivery_preview_cannot_claim_explicit_id_snapshot(monkeypatch):
     ]:
         with pytest.raises(ValueError):
             dispatch(["hireaicreator", "delivery", "+preview", "--args-json", json.dumps(payload)])
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("publishing_account_id", BASE_WORKSPACE),
+        ("scheduled_at", "2030-01-01T00:00:00Z"),
+        ("composition_source", "clips"),
+    ],
+)
+def test_manual_video_create_rejects_account_and_schedule_before_http(monkeypatch, field, value):
+    case = next(c for c in CASES if c["name"] == "video-create")
+    payload = {**case["input"], field: value}
+    attach_transport(monkeypatch, lambda request: pytest.fail("invalid write reached HTTP"))
+    with pytest.raises(ValueError):
+        dispatch([*command(case), "--args-json", json.dumps(payload)])
+
+
+def test_manual_video_create_requires_source_and_dry_run_never_writes(monkeypatch):
+    case = next(c for c in CASES if c["name"] == "video-create")
+    payload = dict(case["input"])
+    attach_transport(monkeypatch, lambda request: pytest.fail("dry run reached HTTP"))
+    result = dispatch([*command(case), "--args-json", json.dumps(payload), "--dry-run"])
+    assert result["data"]["dry_run"] is True
+    payload.pop("format_id")
+    payload.pop("reference_hook_id")
+    with pytest.raises(ValueError, match="requires format_id or reference_hook_id"):
+        dispatch([*command(case), "--args-json", json.dumps(payload)])

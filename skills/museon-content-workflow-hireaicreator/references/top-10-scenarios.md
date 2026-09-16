@@ -50,7 +50,9 @@ Use `test-group +list` for a read-only workspace inventory; it resolves the curr
 
 **Inputs:** Exact accounts, their independently resolved Actor and Persona bindings, actual creative resource IDs, supported composition mode, requested quantity or schedule, and any generation directions.
 
-**Flow:** Resolve account/Actor/Persona and resources → plan preview/capacity → preserve the intended composition → create the plan → get the plan and list its videos → explicitly trigger generation when requested → read each video's stage and output facts.
+**Manual delivery flow:** Read the named account's Actor and Persona bindings, then create one unbound video per selected Format using `video +create --workspace-id <observed-workspace-id> --actor-id <observed-actor-id> --persona-id <observed-persona-id> --format-id <observed-format-id> --composition-source hook-only --idempotency-key <stable-item-key>`. These placeholders describe required evidence, not runnable IDs. Read each returned video and verify its identity and absent schedule/account before `video +generate`; read generation status, then export and verify the finished output. A plan is not required for this flow. Keep the same item key after an unknown create outcome and resume known video IDs instead of recreating them.
+
+**Account plan flow:** For an explicitly requested account plan or schedule, resolve account/Actor/Persona and resources → plan preview/capacity → preserve the intended composition → create the plan → get the plan and list its videos → explicitly trigger generation when requested → read each video's stage and output facts. A capability rejection on this flow does not establish that manual Actor video creation is unavailable.
 
 **Ground truth:** Service preview allocations and blockers, created plan ID, video membership (`plan_id`), component generation states, Hook item ID, render revision and the relevant output record. Preview is advice at one moment, not an unchangeable allocation reservation.
 

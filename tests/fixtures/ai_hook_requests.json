@@ -1325,5 +1325,42 @@
       "managed_operation_approved": false,
       "approval_note": "Explicit operator note"
     }
+  },
+  {
+    "name": "video-create",
+    "input": {
+      "workspace_id": "10000000-0000-4000-8000-000000000001",
+      "actor_id": "10000000-0000-4000-8000-000000000001",
+      "persona_id": "10000000-0000-4000-8000-000000000001",
+      "campaign_id": "10000000-0000-4000-8000-000000000001",
+      "format_id": "10000000-0000-4000-8000-000000000001",
+      "reference_hook_id": "10000000-0000-4000-8000-000000000001",
+      "composition_source": "hook-only",
+      "include_bgm": false,
+      "composition_bgm_id": "10000000-0000-4000-8000-000000000001",
+      "hook_resolution": "original",
+      "pov_text": "Office reaction",
+      "caption": "A new day.",
+      "idempotency_key": "manual-video-test-1"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-videos",
+    "body": {
+      "workspace_id": "10000000-0000-4000-8000-000000000001",
+      "actor_id": "10000000-0000-4000-8000-000000000001",
+      "persona_id": "10000000-0000-4000-8000-000000000001",
+      "campaign_id": "10000000-0000-4000-8000-000000000001",
+      "format_id": "10000000-0000-4000-8000-000000000001",
+      "reference_hook_id": "10000000-0000-4000-8000-000000000001",
+      "composition_source": "hook_only",
+      "include_bgm": false,
+      "composition_bgm_id": "10000000-0000-4000-8000-000000000001",
+      "hook_resolution": "original",
+      "pov_text": "Office reaction",
+      "caption": "A new day."
+    },
+    "header": {
+      "Idempotency-Key": "manual-video-test-1"
+    }
   }
 ]

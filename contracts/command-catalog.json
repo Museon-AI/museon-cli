@@ -2933,6 +2933,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "hireaicreator.video-create",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.video-create",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Create one manual Actor video from a Format or reference Hook, without account binding or scheduling. Requires composition-source hook-only. Creation does not start generation.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "hireaicreator.video-list",
           "domain": "hireaicreator",
           "execution": "direct",
@@ -20449,6 +20474,158 @@
       "shortcut": "+bulk-schedule",
       "stability": "stable",
       "summary": "Schedule explicit video/version/account/time tuples; retain succeeded/conflicted/failures.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.video-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.video-create",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.video-create"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "campaign_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "caption": {
+            "maxLength": 2200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "composition_bgm_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "composition_source": {
+            "enum": [
+              "hook-only"
+            ],
+            "type": "string"
+          },
+          "format_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "hook_resolution": {
+            "enum": [
+              "original",
+              "480p"
+            ],
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 8,
+            "type": "string"
+          },
+          "include_bgm": {
+            "type": "boolean"
+          },
+          "persona_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "pov_text": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "reference_hook_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor_id",
+          "persona_id",
+          "composition_source",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.video-create",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read the returned ID with video +get; verify Actor/Persona and absent publishing_account_id/scheduled_at, then video +generate using its current version and a stable idempotency key. Export and verify before sharing.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Create one manual Actor video from a Format or reference Hook, without account binding or scheduling. Requires composition-source hook-only. Creation does not start generation.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

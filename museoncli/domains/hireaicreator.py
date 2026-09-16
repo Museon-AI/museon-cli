@@ -357,6 +357,9 @@ def _command(
                 raise ValueError(
                     "test_group_id and test_group_assignment_state must be supplied together"
                 )
+        if resource == "video" and action == "create":
+            if not payload.get("format_id") and not payload.get("reference_hook_id"):
+                raise ValueError("video create requires format_id or reference_hook_id")
         return payload
 
     async def execute(ctx: CommandContext) -> dict[str, Any]:
@@ -776,6 +779,31 @@ def specs() -> list[CommandSpec]:
             write=True,
             summary="Assign Clips with explicit expected versions and account IDs.",
             readback="hireaicreator clip +get each ID; verify publishing_account_id and the returned version; preserve conflicts.",
+        ),
+        _command(
+            "video",
+            "create",
+            "POST",
+            "/ai-hook-videos",
+            {
+                "actor_id": U,
+                "persona_id": U,
+                "campaign_id": U,
+                "format_id": U,
+                "reference_hook_id": U,
+                "composition_source": enum("hook-only"),
+                "include_bgm": B,
+                "composition_bgm_id": U,
+                "hook_resolution": enum("original", "480p"),
+                "pov_text": S,
+                "caption": {"type": "string", "minLength": 1, "maxLength": 2200},
+            },
+            required=("actor_id", "persona_id", "composition_source"),
+            workspace="body",
+            write=True,
+            idempotent=True,
+            summary="Create one manual Actor video from a Format or reference Hook, without account binding or scheduling. Requires composition-source hook-only. Creation does not start generation.",
+            readback="Read the returned ID with video +get; verify Actor/Persona and absent publishing_account_id/scheduled_at, then video +generate using its current version and a stable idempotency key. Export and verify before sharing.",
         ),
         _command(
             "video",
