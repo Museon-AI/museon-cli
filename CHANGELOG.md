@@ -2,6 +2,13 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.6.3
+
+- Add complete HireAICreator Test Group, warmup, video review and scheduling, Format, and Clip operations for Codex and Mel.
+- Preserve workspace authorization, optimistic concurrency, explicit confirmations, and endpoint-supported idempotency.
+- Treat successful HTTP 204 deletion responses as success.
+- Include manual Actor video creation and publish matching workflow skills and command discovery.
+
 ## 0.6.2
 
 - Added HireAICreator account Actor and Persona binding commands with publish asset readback, workspace selection, and dry-run validation.

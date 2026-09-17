@@ -687,7 +687,24 @@
       "schedule_timezone": "Asia/Shanghai",
       "pov_text": "new POV",
       "caption": "new caption",
-      "id": "a531194b-2450-5574-91ec-ce8893dd06b2"
+      "id": "a531194b-2450-5574-91ec-ce8893dd06b2",
+      "composition_kind": "legacy-demo",
+      "hook_timing": {
+        "mode": "trim",
+        "target_duration_ms": 3000
+      },
+      "demo_clip_overlays": [
+        {
+          "clip_id": "10000000-0000-4000-8000-000000000001",
+          "source_video_media_id": "10000000-0000-4000-8000-000000000001",
+          "position": 0,
+          "description": "Demo action",
+          "overlay_text": "Try this",
+          "duration_ms": 3000,
+          "text_overlay_enabled": true,
+          "text_overlay_input_mode": "draft-copy"
+        }
+      ]
     },
     "body": {
       "expected_version": 17,
@@ -700,7 +717,24 @@
       "scheduled_at": "2026-10-01T11:12:00+08:00",
       "schedule_timezone": "Asia/Shanghai",
       "pov_text": "new POV",
-      "caption": "new caption"
+      "caption": "new caption",
+      "composition_kind": "legacy_demo",
+      "hook_timing": {
+        "mode": "trim",
+        "target_duration_ms": 3000
+      },
+      "demo_clip_overlays": [
+        {
+          "clip_id": "10000000-0000-4000-8000-000000000001",
+          "source_video_media_id": "10000000-0000-4000-8000-000000000001",
+          "position": 0,
+          "description": "Demo action",
+          "overlay_text": "Try this",
+          "duration_ms": 3000,
+          "text_overlay_enabled": true,
+          "text_overlay_input_mode": "draft_copy"
+        }
+      ]
     }
   },
   {
@@ -1039,52 +1073,6 @@
     "query": {}
   },
   {
-    "name": "test-group-list",
-    "method": "GET",
-    "path": "/api/v2/ai-hook-test-groups",
-    "input": {
-      "page": 3,
-      "page_size": 7,
-      "search": "needle",
-      "plan_id": "8bbadccc-1310-5a3b-859f-f75af6a2700f",
-      "workspace_id": "d2154d0d-3776-5327-b1c7-494d0627b4ac"
-    },
-    "query": {
-      "page": 3,
-      "page_size": 7,
-      "search": "needle",
-      "plan_id": "8bbadccc-1310-5a3b-859f-f75af6a2700f",
-      "workspace_id": "d2154d0d-3776-5327-b1c7-494d0627b4ac"
-    }
-  },
-  {
-    "name": "test-group-get",
-    "method": "GET",
-    "path": "/api/v2/ai-hook-test-groups/cb94ec77-c46b-5a7a-81e3-234bf5fa749f",
-    "input": {
-      "id": "cb94ec77-c46b-5a7a-81e3-234bf5fa749f",
-      "workspace_id": "706bdb8d-a5e6-50ee-82df-05df8786309e"
-    },
-    "query": {
-      "workspace_id": "706bdb8d-a5e6-50ee-82df-05df8786309e"
-    }
-  },
-  {
-    "name": "test-group-preview",
-    "method": "POST",
-    "path": "/api/v2/ai-hook-test-groups/preview",
-    "input": {
-      "test_group_id": "f4187b4e-3c48-5005-9cb4-187a3bafb098",
-      "campaign_id": "148b8490-51d3-568e-a3c9-9e601fd74dfc",
-      "workspace_id": "64cf45fa-e672-5e6b-b03e-c8825302ba1b"
-    },
-    "body": {
-      "test_group_id": "f4187b4e-3c48-5005-9cb4-187a3bafb098",
-      "campaign_id": "148b8490-51d3-568e-a3c9-9e601fd74dfc",
-      "workspace_id": "64cf45fa-e672-5e6b-b03e-c8825302ba1b"
-    }
-  },
-  {
     "name": "warmup-list",
     "method": "GET",
     "path": "/api/v2/pool-account-warmup/strategies",
@@ -1324,6 +1312,119 @@
       "persona_id": "30000000-0000-4000-8000-000000000003",
       "managed_operation_approved": false,
       "approval_note": "Explicit operator note"
+    }
+  },
+  {
+    "name": "video-create",
+    "input": {
+      "workspace_id": "10000000-0000-4000-8000-000000000001",
+      "actor_id": "10000000-0000-4000-8000-000000000001",
+      "persona_id": "10000000-0000-4000-8000-000000000001",
+      "campaign_id": "10000000-0000-4000-8000-000000000001",
+      "format_id": "10000000-0000-4000-8000-000000000001",
+      "reference_hook_id": "10000000-0000-4000-8000-000000000001",
+      "composition_source": "hook-only",
+      "include_bgm": true,
+      "composition_bgm_id": "10000000-0000-4000-8000-000000000001",
+      "hook_resolution": "original",
+      "pov_text": "Office reaction",
+      "caption": "A new day.",
+      "idempotency_key": "manual-video-test-1"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-videos",
+    "body": {
+      "workspace_id": "10000000-0000-4000-8000-000000000001",
+      "actor_id": "10000000-0000-4000-8000-000000000001",
+      "persona_id": "10000000-0000-4000-8000-000000000001",
+      "campaign_id": "10000000-0000-4000-8000-000000000001",
+      "format_id": "10000000-0000-4000-8000-000000000001",
+      "reference_hook_id": "10000000-0000-4000-8000-000000000001",
+      "composition_source": "hook_only",
+      "include_bgm": true,
+      "composition_bgm_id": "10000000-0000-4000-8000-000000000001",
+      "hook_resolution": "original",
+      "pov_text": "Office reaction",
+      "caption": "A new day."
+    },
+    "header": {
+      "Idempotency-Key": "manual-video-test-1"
+    }
+  },
+  {
+    "name": "video-create",
+    "method": "POST",
+    "path": "/api/v2/ai-hook-videos",
+    "header": {
+      "Idempotency-Key": "scheduled-account-example"
+    },
+    "input": {
+      "workspace_id": "10000000-0000-4000-8000-000000000001",
+      "publishing_account_id": "account-example",
+      "campaign_id": "10000000-0000-4000-8000-000000000001",
+      "reference_hook_id": "10000000-0000-4000-8000-000000000001",
+      "ai_hook_item_id": "10000000-0000-4000-8000-000000000001",
+      "composition_source": "clips",
+      "include_bgm": false,
+      "clip_rules": [
+        {
+          "position": 1,
+          "tag_ids": [
+            "10000000-0000-4000-8000-000000000001"
+          ],
+          "selection_mode": "manual",
+          "clip_id": "10000000-0000-4000-8000-000000000001"
+        }
+      ],
+      "scheduled_at": "2030-01-01T12:00:00+08:00",
+      "schedule_timezone": "Asia/Shanghai",
+      "pov_id": "10000000-0000-4000-8000-000000000001",
+      "idempotency_key": "scheduled-account-example"
+    },
+    "body": {
+      "workspace_id": "10000000-0000-4000-8000-000000000001",
+      "publishing_account_id": "account-example",
+      "campaign_id": "10000000-0000-4000-8000-000000000001",
+      "reference_hook_id": "10000000-0000-4000-8000-000000000001",
+      "ai_hook_item_id": "10000000-0000-4000-8000-000000000001",
+      "composition_source": "clips",
+      "include_bgm": false,
+      "clip_rules": [
+        {
+          "position": 1,
+          "tag_ids": [
+            "10000000-0000-4000-8000-000000000001"
+          ],
+          "selection_mode": "manual",
+          "clip_id": "10000000-0000-4000-8000-000000000001"
+        }
+      ],
+      "scheduled_at": "2030-01-01T12:00:00+08:00",
+      "schedule_timezone": "Asia/Shanghai",
+      "pov_id": "10000000-0000-4000-8000-000000000001"
+    }
+  },
+  {
+    "name": "video-create",
+    "method": "POST",
+    "path": "/api/v2/ai-hook-videos",
+    "header": {
+      "Idempotency-Key": "scheduled-account-example"
+    },
+    "input": {
+      "workspace_id": "10000000-0000-4000-8000-000000000001",
+      "publishing_account_id": "account-example",
+      "composition_source": "demo-only",
+      "include_bgm": false,
+      "demo_id": "10000000-0000-4000-8000-000000000001",
+      "idempotency_key": "scheduled-account-example"
+    },
+    "body": {
+      "workspace_id": "10000000-0000-4000-8000-000000000001",
+      "publishing_account_id": "account-example",
+      "composition_source": "demo_only",
+      "include_bgm": false,
+      "demo_id": "10000000-0000-4000-8000-000000000001"
     }
   }
 ]

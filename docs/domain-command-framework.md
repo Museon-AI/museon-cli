@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-154 commands across 10 domains (source of truth: `museoncli schema`).
+228 commands across 10 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -137,6 +137,7 @@ The tables below are generated — edit code, then run
 | `hireaicreator clip +get` | read | — | — | direct | Read one Clip including version, media and publishing account. |
 | `hireaicreator clip +batch-create` | write | yes | — | direct | Register Clips with client_key/mapping_version identity; initial needs_account is not usable assigned stock. |
 | `hireaicreator clip +assign-account` | write | yes | — | direct | Assign Clips with explicit expected versions and account IDs. |
+| `hireaicreator video +create` | write | yes | — | direct | Create an Actor/Persona video or an account-bound video with optional scheduling. Creation does not start generation. |
 | `hireaicreator video +list` | read | — | — | direct | List videos and their version/state; paginate explicitly. |
 | `hireaicreator video +get` | read | — | — | direct | Read persisted video configuration, version, component/render/publish facts. |
 | `hireaicreator video +readiness` | read | — | — | direct | Read blockers and stage eligibility; readiness does not prove generation completion. |
@@ -147,9 +148,6 @@ The tables below are generated — edit code, then run
 | `hireaicreator plan +capacity` | read | — | — | direct | Read account capacity for a bounded date range. |
 | `hireaicreator plan +create` | write | yes | — | direct | Create a plan with a stable idempotency key. Server defaults start_generation to false; creation is not a finished video. |
 | `hireaicreator plan +get` | read | — | — | direct | Read a persistent video plan and its state. |
-| `hireaicreator test-group +list` | read | — | — | direct | List workspace Test Groups without creating a plan; optional plan_id narrows to a known plan. |
-| `hireaicreator test-group +get` | read | — | — | direct | Read current group members and schedule state; does not migrate accounts. |
-| `hireaicreator test-group +preview` | read | — | — | direct | Preview the persisted test group schedule and inventory gaps, without confirming a rollout. |
 | `hireaicreator warmup +list` | read | — | — | direct | Read warmup strategies; does not change account stage. |
 | `hireaicreator warmup +journeys` | read | — | — | direct | Read warmup journey state and current participation. |
 | `hireaicreator dashboard +get` | read | — | — | direct | Read campaign performance with explicit dates; preserve freshness and missing-data distinctions. |
@@ -158,6 +156,82 @@ The tables below are generated — edit code, then run
 | `hireaicreator delivery +get` | read | — | — | direct | Read a public collection by its opaque token. Paginate with total/items; no has_more is promised. |
 | `hireaicreator delivery +export` | write | yes | — | direct | Request an export bound to video version; preserve the idempotency key on retry. |
 | `hireaicreator delivery +export-get` | read | — | — | direct | Read actual export status, version/revision, error and download URL. |
+| `hireaicreator test-plan +ensure` | write | yes | — | direct | Get or create the workspace Test Plan. |
+| `hireaicreator test-plan +update` | write | yes | — | direct | Update workspace Test Plan defaults. |
+| `hireaicreator content-group +list` | read | — | — | direct | List reusable content groups; complete pagination. |
+| `hireaicreator content-group +create` | write | yes | — | direct | Create a reusable Hook, Recipe, BGM or POV group. |
+| `hireaicreator content-group +update` | write | yes | — | direct | Replace reusable content group name and resource selection. |
+| `hireaicreator content-group +delete` | destructive | yes | `--yes` | direct | Delete a reusable content group; review references before execution. |
+| `hireaicreator test-group +list` | read | — | — | direct | List Test Groups with execution filters and optional plan scope. |
+| `hireaicreator test-group +get` | read | — | — | direct | Read group, content selection, account assignments and runs. |
+| `hireaicreator test-group +overview` | read | — | — | direct | Read operational totals for a Test Plan. |
+| `hireaicreator test-group +create` | write | yes | — | direct | Create groups from explicit content combinations; retain the idempotency key on retries. |
+| `hireaicreator test-group +delete` | destructive | yes | `--yes` | direct | Delete a group. Force also cancels unpublished work; requires explicit user intent. |
+| `hireaicreator test-group +rename` | write | yes | — | direct | Rename a Test Group. |
+| `hireaicreator test-group +category-requirements` | read | — | — | direct | Read required category keys for recipe groups. |
+| `hireaicreator test-group +category-options` | read | — | — | direct | Read paginated category tag options. |
+| `hireaicreator test-group +category-set` | write | yes | — | direct | Replace category selections; empty selections clear them. |
+| `hireaicreator test-group +hook-target` | read | — | — | direct | Read Hook append target and constraints. |
+| `hireaicreator test-group +append-hooks` | write | yes | — | direct | Append Hooks for the next run; existing runs retain their selection. |
+| `hireaicreator test-group +content-set` | write | yes | — | direct | Replace content source using the last read updated_at; refresh after conflicts. |
+| `hireaicreator test-group +content-group-set` | write | yes | — | direct | Replace one content group used by a Test Group. |
+| `hireaicreator test-group +accounts` | read | — | — | direct | Read assigned publishing account identities. |
+| `hireaicreator test-group +accounts-set` | write | yes | `--yes` | direct | Replace or append assigned accounts; an empty replacement unassigns all. |
+| `hireaicreator test-group +accounts-transfer` | write | yes | `--yes` | direct | Transfer selected accounts into this group; read eligibility and affected groups first. |
+| `hireaicreator test-group +accounts-assign` | write | yes | `--yes` | direct | Assign an explicit account set across selected Test Groups. |
+| `hireaicreator test-group +schedule-set` | write | yes | — | direct | Set group schedule; use read updated_at and explicit timezone, then preview before confirming. |
+| `hireaicreator test-group +preview` | read | — | — | direct | Read schedule preview, blockers and match_fingerprint without publishing. |
+| `hireaicreator test-run +confirm` | write | yes | `--yes` | direct | Confirm a preview into a scheduled run; use preview fingerprint and explicit publication authorization. |
+| `hireaicreator test-run +cancel` | write | yes | `--yes` | direct | Cancel a run's remaining scheduled work; published posts are not undone. |
+| `hireaicreator test-group +cancel-schedule` | write | yes | `--yes` | direct | Cancel remaining group schedule; read publication state afterward. |
+| `hireaicreator test-group +publishing` | read | — | — | direct | Read publication totals and failures, optionally for one run. |
+| `hireaicreator test-group +publishing-accounts` | read | — | — | direct | Read per-account publishing results and failures; complete pagination. |
+| `hireaicreator warmup +get` | read | — | — | direct | Read a warmup strategy and its current version. |
+| `hireaicreator warmup +create` | write | yes | — | direct | Create a draft warmup strategy. No server idempotency key is supported; reconcile before retrying. |
+| `hireaicreator warmup +replace` | write | yes | — | direct | Replace a strategy using its current version; sends the full configuration and account set. |
+| `hireaicreator warmup +configure` | write | yes | — | direct | Replace warmup configuration without replacing account membership; provide all required configuration fields. |
+| `hireaicreator warmup +accounts` | read | — | — | direct | Page through warmup accounts, journey states and reset blockers. Compare total with collected items. |
+| `hireaicreator warmup +add-accounts` | write | yes | — | direct | Add account/timezone assignments with optimistic version control. |
+| `hireaicreator warmup +remove-accounts` | write | yes | `--yes` | direct | Remove selected account memberships from warmup; requires --yes. |
+| `hireaicreator warmup +account-stats` | read | — | — | direct | Read selected accounts' published counts and measured performance; preserve missing values. |
+| `hireaicreator warmup +readiness` | read | — | — | direct | Check Actor/Persona and account readiness without creating or starting a strategy. |
+| `hireaicreator warmup +preview` | read | — | — | direct | Inspect candidates, current format revisions and activation blockers without starting warmup. |
+| `hireaicreator warmup +check-and-start` | write | yes | `--yes` | direct | Check readiness and activate when ready; may start automated generation/publication. Requires --yes. Read started and blockers. |
+| `hireaicreator warmup +reset` | write | yes | `--yes` | direct | Reset selected journeys after checking reset blockers. No server version/idempotency key is supported; reconcile before retrying. Requires --yes. |
+| `hireaicreator warmup +journey-get` | read | — | — | direct | Read a journey and its cycles, receipts, evidence and blocker codes. |
+| `hireaicreator warmup +deletion-preview` | read | — | — | direct | Read deletion blockers and the current strategy version before deleting. |
+| `hireaicreator warmup +delete` | destructive | yes | `--yes` | direct | Delete a warmup strategy after deletion-preview; requires matching version and --yes. |
+| `hireaicreator warmup +activate` | write | yes | `--yes` | direct | Activate warmup with optimistic version control; requires --yes. May start automated generation/publication. |
+| `hireaicreator warmup +pause` | write | yes | `--yes` | direct | Pause warmup with optimistic version control; requires --yes. Read back paused state; already dispatched work may still complete. |
+| `hireaicreator warmup +resume` | write | yes | `--yes` | direct | Resume warmup with optimistic version control; requires --yes. May start automated generation/publication. |
+| `hireaicreator plan +list` | read | — | — | direct | List workspace video plans; complete pagination. |
+| `hireaicreator plan +generate` | write | yes | — | direct | Start generation for a plan with a stable retry key. |
+| `hireaicreator plan +cancel` | write | yes | `--yes` | direct | Cancel remaining plan work at the expected version; inspect skipped items. |
+| `hireaicreator video +review` | write | yes | `--yes` | direct | Approve or request changes at the reviewed version; approval can enable scheduled publication. |
+| `hireaicreator video +bulk-review` | write | yes | `--yes` | direct | Review explicit video versions; inspect succeeded, conflicted and failures independently. |
+| `hireaicreator video +delete` | destructive | yes | `--yes` | direct | Delete a video at its expected version; requires explicit destructive intent. |
+| `hireaicreator video +bulk-delete` | destructive | yes | `--yes` | direct | Delete explicit video versions; inspect per-item failures before retrying. |
+| `hireaicreator video +cancel` | write | yes | `--yes` | direct | Cancel one video at its current version. |
+| `hireaicreator video +cancel-generation` | write | yes | `--yes` | direct | Cancel selected generation components; omitted or null selects server defaults. |
+| `hireaicreator video +retry-render` | write | yes | — | direct | Retry failed rendering at the expected version; generation directions are accepted but not used by this endpoint. |
+| `hireaicreator video +render` | write | yes | — | direct | Request rendering for a video version; generation directions are accepted but not used by this endpoint. |
+| `hireaicreator video +render-get` | read | — | — | direct | Read actual rendering status, version, revision, URL and error. |
+| `hireaicreator video +candidates-commit` | write | yes | — | direct | Commit generated candidates only after inspecting them at the current version. |
+| `hireaicreator video +bulk-regenerate` | write | yes | — | direct | Regenerate selected text components across explicit versions; inspect accepted, conflicted and failures. |
+| `hireaicreator delivery +export-batch` | write | yes | — | direct | Export up to 50 unique video versions under a stable idempotency key. |
+| `hireaicreator calendar +month` | read | — | — | direct | Read campaign calendar day totals for an explicit timezone and interval. |
+| `hireaicreator calendar +day` | read | — | — | direct | Read a campaign day; inspect truncated before treating the result as complete. |
+| `hireaicreator video +ai-hook-regenerate` | write | yes | — | direct | Regenerate ai-hook at an explicit video version with a stable retry key. |
+| `hireaicreator video +pov-regenerate` | write | yes | — | direct | Regenerate pov at an explicit video version with a stable retry key. |
+| `hireaicreator video +text-overlay-regenerate` | write | yes | — | direct | Regenerate text-overlay at an explicit video version with a stable retry key. |
+| `hireaicreator video +caption-regenerate` | write | yes | — | direct | Regenerate caption at an explicit video version with a stable retry key. |
+| `hireaicreator video +ai-hook-candidate` | write | yes | — | direct | Generate a ai-hook candidate; inspect it before candidates-commit. |
+| `hireaicreator video +pov-candidate` | write | yes | — | direct | Generate a pov candidate; inspect it before candidates-commit. |
+| `hireaicreator format +tags` | read | — | — | direct | List the workspace's existing Format tags. |
+| `hireaicreator format +warmup-readiness` | read | — | — | direct | Read Format readiness, revisions and issues for warmup; does not start generation. |
+| `hireaicreator format +patch` | write | yes | — | direct | Edit Format name, BGM, POV or playbook. Supply the read version to detect stale edits. Empty playbook string clears its override; null does not clear links. |
+| `hireaicreator format +retry` | write | yes | `--yes` | direct | Retry one Format processing step; may incur generation work and requires --yes. No server version or idempotency key is supported. |
+| `hireaicreator format +delete` | destructive | yes | `--yes` | direct | Delete a Format from this workspace; requires --yes. Read current details first; no server version or idempotency key is supported. |
 
 ### ai-slideshow
 

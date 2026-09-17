@@ -539,6 +539,8 @@ async def _api_request(
         raise RuntimeError(f"cli_outdated: {response.text[:500]}")
     if response.status_code >= 400:
         raise ApiRequestError(response.status_code, response_error_payload(response))
+    if response.status_code == 204:
+        return None
     payload = response.json()
     if unwrap_success and isinstance(payload, dict) and "success" in payload:
         if not payload.get("success"):
