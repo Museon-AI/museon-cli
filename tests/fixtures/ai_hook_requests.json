@@ -1281,5 +1281,49 @@
       "id": "e60da085-1bb4-5f6c-bbc1-fab82a691830"
     },
     "query": {}
+  },
+  {
+    "name": "account-assets-get",
+    "method": "GET",
+    "path": "/api/v2/pool-accounts/10000000-0000-4000-8000-000000000001/publish-assets",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "20000000-0000-4000-8000-000000000002"
+    },
+    "query": {
+      "workspace_id": "20000000-0000-4000-8000-000000000002"
+    }
+  },
+  {
+    "name": "account-actor-set",
+    "method": "PUT",
+    "path": "/api/v2/pool-accounts/10000000-0000-4000-8000-000000000001/publish-assets/actor",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "20000000-0000-4000-8000-000000000002",
+      "actor_id": "30000000-0000-4000-8000-000000000003"
+    },
+    "body": {
+      "workspace_id": "20000000-0000-4000-8000-000000000002",
+      "actor_id": "30000000-0000-4000-8000-000000000003"
+    }
+  },
+  {
+    "name": "account-persona-set",
+    "method": "PUT",
+    "path": "/api/v2/pool-accounts/10000000-0000-4000-8000-000000000001/publish-assets/persona",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "20000000-0000-4000-8000-000000000002",
+      "persona_id": "30000000-0000-4000-8000-000000000003",
+      "managed_operation_approved": false,
+      "approval_note": "Explicit operator note"
+    },
+    "body": {
+      "workspace_id": "20000000-0000-4000-8000-000000000002",
+      "persona_id": "30000000-0000-4000-8000-000000000003",
+      "managed_operation_approved": false,
+      "approval_note": "Explicit operator note"
+    }
   }
 ]

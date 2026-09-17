@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-151 commands across 10 domains (source of truth: `museoncli schema`).
+154 commands across 10 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -107,6 +107,9 @@ The tables below are generated — edit code, then run
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
 | `hireaicreator account +list` | read | — | — | direct | Find exact account identities and current stage/assignment state; complete pagination before fixing a selection. |
+| `hireaicreator account +assets-get` | read | — | — | direct | Read an account's Actor, Persona and other publish asset bindings. |
+| `hireaicreator account +actor-set` | write | yes | — | direct | Bind an existing Actor to an account; use its exact ID to resolve duplicate names. |
+| `hireaicreator account +persona-set` | write | yes | — | direct | Bind an existing Persona to an account. Managed-operation approval must be explicit. |
 | `hireaicreator account +eligibility` | read | — | — | direct | Read eligibility and blockers for an explicit account set. |
 | `hireaicreator actor +list` | read | — | — | direct | List Actors (independent identities), optionally by source Persona. |
 | `hireaicreator actor +get` | read | — | — | direct | Read one Actor; its ID is not a Persona ID. |

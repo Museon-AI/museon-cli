@@ -2,6 +2,10 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.6.2
+
+- Added HireAICreator account Actor and Persona binding commands with publish asset readback, workspace selection, and dry-run validation.
+
 ## 0.6.1
 
 - Removed the low-level `hireaicreator test-plan +ensure` command and made Test Group listing work without a Plan ID.

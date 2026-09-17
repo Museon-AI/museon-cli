@@ -2183,6 +2183,81 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "hireaicreator.account-assets-get",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.account-assets-get",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+assets-get",
+          "stability": "stable",
+          "summary": "Read an account's Actor, Persona and other publish asset bindings.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.account-actor-set",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.account-actor-set",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+actor-set",
+          "stability": "stable",
+          "summary": "Bind an existing Actor to an account; use its exact ID to resolve duplicate names.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.account-persona-set",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.account-persona-set",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+persona-set",
+          "stability": "stable",
+          "summary": "Bind an existing Persona to an account. Managed-operation approval must be explicit.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "hireaicreator.account-eligibility",
           "domain": "hireaicreator",
           "execution": "direct",
@@ -5175,7 +5250,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.6.1",
+  "contract_revision": "0.6.2",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -14508,6 +14583,209 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "hireaicreator.account-actor-set": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.account-actor-set",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.account-actor-set"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "actor_id"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.account-actor-set",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read hireaicreator account +assets-get for the same account and workspace.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+actor-set",
+      "stability": "stable",
+      "summary": "Bind an existing Actor to an account; use its exact ID to resolve duplicate names.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.account-assets-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.account-assets-get",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.account-assets-get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.account-assets-get",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+assets-get",
+      "stability": "stable",
+      "summary": "Read an account's Actor, Persona and other publish asset bindings.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "hireaicreator.account-eligibility": {
       "authorization": {
         "authentication_required": true,
@@ -14802,6 +15080,120 @@
       "stability": "stable",
       "summary": "Find exact account identities and current stage/assignment state; complete pagination before fixing a selection.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.account-persona-set": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.account-persona-set",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.account-persona-set"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "approval_note": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "managed_operation_approved": {
+            "type": "boolean"
+          },
+          "persona_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "persona_id"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.account-persona-set",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read hireaicreator account +assets-get for the same account and workspace.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+persona-set",
+      "stability": "stable",
+      "summary": "Bind an existing Persona to an account. Managed-operation approval must be explicit.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "hireaicreator.actor-batch-create": {
