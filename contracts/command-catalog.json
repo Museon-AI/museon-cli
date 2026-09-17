@@ -7100,7 +7100,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.6.2",
+  "contract_revision": "0.6.3",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {

@@ -85,7 +85,7 @@ https://www.museon.ai/cli/install.md
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.6.2/museoncli-0.6.2-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.6.3/museoncli-0.6.3-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：
