@@ -42,7 +42,7 @@ Use `test-group +list` for a read-only workspace inventory; it resolves the curr
 
 **Done:** Each selected item is identifiable and its necessary dependencies are available for the next operation. If the next operation needs ready material, check its readiness/status instead of treating every search match as usable.
 
-**Unknown/limits:** Missing tags, absent descriptions and failed parsing remain missing facts. Do not claim semantic search when the API only searched text. A Format URL import is asynchronous: retain every returned ID and poll its detail until required extraction is ready or failed. Retry only through a supported action, not by repeatedly reimporting the same URL to disguise failure.
+**Unknown/limits:** Missing tags, absent descriptions and failed parsing remain missing facts. Do not claim semantic search when the API only searched text. A Format URL import is asynchronous: retain every returned ID and poll its detail until required extraction is ready or failed. Use `format +tags` for tag discovery and `+warmup-readiness` for revision/issue diagnostics. Repair links or the playbook with versioned `+patch`; retry only the affected processing step with `+retry`, then read the same Format again. Do not repeatedly reimport the URL to disguise failure.
 
 ## 2. Compose and generate content for accounts
 
@@ -50,17 +50,17 @@ Use `test-group +list` for a read-only workspace inventory; it resolves the curr
 
 **Inputs:** Exact accounts, their independently resolved Actor and Persona bindings, actual creative resource IDs, supported composition mode, requested quantity or schedule, and any generation directions.
 
-**Manual delivery flow:** Read the named account's Actor and Persona bindings, then create one unbound video per selected Format using `video +create --workspace-id <observed-workspace-id> --actor-id <observed-actor-id> --persona-id <observed-persona-id> --format-id <observed-format-id> --composition-source hook-only --idempotency-key <stable-item-key>`. These placeholders describe required evidence, not runnable IDs. Read each returned video and verify its identity and absent schedule/account before `video +generate`; read generation status, then export and verify the finished output. A plan is not required for this flow. Keep the same item key after an unknown create outcome and resume known video IDs instead of recreating them.
+**Manual delivery flow:** Resolve the workspace, selected Format/Hook and intended identity. For a named account, `video +create --publishing-account-id` derives its Actor/Persona; omit `scheduled_at`. For a standalone Actor, supply Actor and Persona instead, without a publishing account. Choose the composition matching the user’s materials. Create with a stable per-item key, read back each identity and version, then generate, inspect and export. A multi-video `fixed-count` plan without schedule slots is also supported; do not recreate existing videos to switch workflows.
 
-**Account plan flow:** For an explicitly requested account plan or schedule, resolve account/Actor/Persona and resources → plan preview/capacity → preserve the intended composition → create the plan → get the plan and list its videos → explicitly trigger generation when requested → read each video's stage and output facts. A capability rejection on this flow does not establish that manual Actor video creation is unavailable.
+**Account plan flow:** Resolve account/Actor/Persona and resources → plan preview/capacity → create with the requested composition and authorized schedule, if any → read the plan and child membership → `plan +generate` or individual `video +generate` with current versions and stable keys → inspect each output. Check `start_generation` in the submitted request and persisted state before deciding another generation action is needed. A route rejection is specific to the current command and managed identity; do not substitute credentials or claim every write is unavailable.
 
 **Ground truth:** Service preview allocations and blockers, created plan ID, video membership (`plan_id`), component generation states, Hook item ID, render revision and the relevant output record. Preview is advice at one moment, not an unchangeable allocation reservation.
 
-**Done:** Creating a plan is one milestone; all expected videos exist is another; requested generation and usable output are further milestones. `start_generation=false` creates without starting generation. If generation was not started at creation, use the available video generation action with current versions and stable keys. `accepted_count` is not a completion count.
+**Done:** Creating a plan is one milestone; all expected videos exist is another; requested generation and usable output are further milestones. `start_generation=false` creates without starting generation. If generation was not started at creation, use plan or individual video generation with the required current versions and stable keys. `accepted_count` is not a completion count.
 
 `start_generation=false` does not make creation read-only: a supplied schedule can occupy publishing slots, and a Clip composition can reserve Clips. Replaying an existing key returns the original plan, whose generation may already have started; inspect its persisted intent and child states.
 
-**Unknown/limits:** Explain skipped allocations and incomplete components. Do not substitute a Persona ID for Actor ID or silently select an alternative account. Creative quality and visual identity need media inspection; a completed task status alone proves neither. Actor creation requires an existing Persona and explicit candidate selection; these commands do not create Personas or bind Actors to accounts.
+**Unknown/limits:** Explain skipped allocations and incomplete components. Do not substitute a Persona ID for Actor ID or silently select an alternative account. Creative quality and visual identity need media inspection; a completed task status alone proves neither. Actor creation requires an existing Persona and explicit candidate selection. Account binding uses separate authorized `account +actor-set` / `+persona-set` commands and readback.
 
 ## 3. Find exact accounts and check eligibility
 
@@ -100,9 +100,9 @@ Use `test-group +list` for a read-only workspace inventory; it resolves the curr
 
 **Ground truth:** Current membership, active execution/occupancy, warmup participation ending versus historical outcome, and explicit eligibility reasons. A former warmup outcome is not necessarily the account's current stage.
 
-**Done:** Produce a bounded diagnosis naming affected accounts, current work and blockers; state whether the proposed operation is available.
+**Done:** For a diagnostic request, identify affected accounts, current work and blockers. For an authorized change, execute the supported operation and verify the intended membership, schedule or journey state on the same IDs; a diagnosis alone does not complete that request.
 
-**Unknown/limits:** First-version support is diagnosis. It does not promise uninterrupted active-account migration, reset a warmup assessment, change a whole group's future schedule, or move objects across workspaces. Do not implement those promises by composing cancel/remove/add/recreate calls.
+**Authorized actions:** Use `test-group +accounts-transfer`, `+accounts-set` or `+accounts-assign` for the intended membership operation; inspect eligibility and both affected groups before and after. Use `+schedule-set`, fresh `+preview` and `test-run +confirm` for a schedule change. Use `warmup +reset` for explicitly selected journeys after checking reset blockers. These actions can be rejected by live service rules; do not simulate a rejected migration with cancellation/recreation or promise uninterrupted execution. See [lifecycle operations](lifecycle-operations.md).
 
 ## 6. Import videos, register Clips and assign accounts
 

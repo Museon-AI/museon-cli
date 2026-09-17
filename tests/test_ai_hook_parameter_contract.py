@@ -20,7 +20,17 @@ from museoncli.config import AuthState, Config, WorkspaceState
 from museoncli.domains import command_specs, get_command_spec
 import museoncli.main as cli
 
-CASES = json.loads((Path(__file__).parent / "fixtures/ai_hook_requests.json").read_text())
+CASES = [
+    case
+    for filename in (
+        "ai_hook_requests.json",
+        "hireaicreator_test_group_requests.json",
+        "hireaicreator_warmup_requests.json",
+        "video_ops_requests.json",
+        "hireaicreator_format_requests.json",
+    )
+    for case in json.loads((Path(__file__).parent / "fixtures" / filename).read_text())
+]
 HTTP_CLIENT = httpx.AsyncClient
 BASE_WORKSPACE = "40000000-0000-4000-8000-000000000004"
 
@@ -80,10 +90,12 @@ def request_matches(request, case):
             for item in value if isinstance(value, list) else [value]:
                 expected.append((key, str(item).lower() if type(item) is bool else str(item)))
         assert sorted(request.url.params.multi_items()) == sorted(expected)
-        assert request.content == b""
     else:
         assert not request.url.query
+    if "body" in case:
         assert json.loads(request.content) == case["body"]
+    else:
+        assert request.content in (b"", b"{}")
     for key, value in case.get("header", {}).items():
         assert request.headers[key] == value
     if "header" not in case:
@@ -110,6 +122,8 @@ def test_real_argv_reaches_final_http_without_dropping_parameters(
         argv = [*command(case), "--args-file", str(path)]
     else:
         argv = [*command(case), "--args-json", json.dumps(case["input"])]
+    if get_command_spec("hireaicreator." + case["name"]).requires_confirmation:
+        argv.append("--yes")
     result = dispatch(argv)
     assert len(requests) == 1
     request_matches(requests[0], case)
@@ -150,11 +164,20 @@ def test_every_declared_field_and_flag_has_an_independent_request_case():
     assert set(specs) == {case["name"] for case in CASES}
     for case in CASES:
         spec = specs[case["name"]]
-        assert set(schema_paths(spec.input_schema)) <= set(value_paths(case["input"])), case["name"]
+        covered = set().union(
+            *(set(value_paths(other["input"])) for other in CASES if other["name"] == case["name"])
+        )
+        assert set(schema_paths(spec.input_schema)) <= covered, case["name"]
         parser = argparse.ArgumentParser(add_help=False)
         spec.add_arguments(parser)
         declared = {a.dest for a in parser._actions}
-        tested = set(vars(parser.parse_args(flag_argv(case)[3:])))
+        tested = set().union(
+            *(
+                set(vars(parser.parse_args(flag_argv(other)[3:])))
+                for other in CASES
+                if other["name"] == case["name"]
+            )
+        )
         # Explicit request cases below cover nullable collection IDs via flags.
         if case["name"] == "delivery-share":
             tested.add("collection_id")

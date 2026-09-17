@@ -1,0 +1,82 @@
+[
+  {
+    "name": "format-tags",
+    "input": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-formats/tags",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  },
+  {
+    "name": "format-warmup-readiness",
+    "input": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "format_ids": [
+        "10000000-0000-4000-8000-000000000001"
+      ]
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-formats/warmup-readiness",
+    "body": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "format_ids": [
+        "10000000-0000-4000-8000-000000000001"
+      ]
+    }
+  },
+  {
+    "name": "format-patch",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "expected_version": 2,
+      "name": "Reviewed Format",
+      "bgm_id": "10000000-0000-4000-8000-000000000001",
+      "pov_id": "10000000-0000-4000-8000-000000000001",
+      "viral_playbook_override": ""
+    },
+    "method": "PATCH",
+    "path": "/api/v2/ai-hook-formats/10000000-0000-4000-8000-000000000001",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "body": {
+      "expected_version": 2,
+      "name": "Reviewed Format",
+      "bgm_id": "10000000-0000-4000-8000-000000000001",
+      "pov_id": "10000000-0000-4000-8000-000000000001",
+      "viral_playbook_override": ""
+    }
+  },
+  {
+    "name": "format-retry",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "step": "viral"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-formats/10000000-0000-4000-8000-000000000001/retry",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "body": {
+      "step": "viral"
+    }
+  },
+  {
+    "name": "format-delete",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "DELETE",
+    "path": "/api/v2/ai-hook-formats/10000000-0000-4000-8000-000000000001",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  }
+]

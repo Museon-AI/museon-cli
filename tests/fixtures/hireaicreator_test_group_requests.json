@@ -1,0 +1,694 @@
+[
+  {
+    "name": "test-plan-ensure",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-plans",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111"
+    }
+  },
+  {
+    "name": "test-plan-update",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "name": "September Test Plan",
+      "start_date": "2026-09-18",
+      "end_date": "2026-09-20",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00",
+        "18:00"
+      ]
+    },
+    "method": "PUT",
+    "path": "/api/v2/ai-hook-test-plans",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "name": "September Test Plan",
+      "start_date": "2026-09-18",
+      "end_date": "2026-09-20",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00",
+        "18:00"
+      ]
+    }
+  },
+  {
+    "name": "content-group-list",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "kind": "hook",
+      "page": 2,
+      "page_size": 80,
+      "search": "hooks"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-content-groups",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "kind": "hook",
+      "page": 2,
+      "page_size": 80,
+      "search": "hooks"
+    }
+  },
+  {
+    "name": "content-group-create",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "kind": "hook",
+      "name": "Reviewed hooks",
+      "resource_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ]
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-content-groups",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "kind": "hook",
+      "name": "Reviewed hooks",
+      "resource_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ]
+    }
+  },
+  {
+    "name": "content-group-update",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "kind": "hook",
+      "name": "Reviewed hooks",
+      "resource_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "PATCH",
+    "path": "/api/v2/ai-hook-content-groups/22222222-2222-4222-8222-222222222222",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "kind": "hook",
+      "name": "Reviewed hooks",
+      "resource_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ]
+    }
+  },
+  {
+    "name": "content-group-delete",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "DELETE",
+    "path": "/api/v2/ai-hook-content-groups/22222222-2222-4222-8222-222222222222",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111"
+    }
+  },
+  {
+    "name": "test-group-list",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "plan_id": "33333333-3333-4333-8333-333333333333",
+      "page": 2,
+      "page_size": 70,
+      "search": "Sept",
+      "sort_by": "running-account-count",
+      "sort_direction": "desc",
+      "execution_states": [
+        "attention",
+        "running"
+      ]
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-groups",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "plan_id": "33333333-3333-4333-8333-333333333333",
+      "page": 2,
+      "page_size": 70,
+      "search": "Sept",
+      "sort_by": "running_account_count",
+      "sort_direction": "desc",
+      "execution_states": [
+        "attention",
+        "running"
+      ]
+    }
+  },
+  {
+    "name": "test-group-get",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111"
+    }
+  },
+  {
+    "name": "test-group-overview",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "plan_id": "33333333-3333-4333-8333-333333333333",
+      "timezone": "Asia/Shanghai"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-groups/operations-overview",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "plan_id": "33333333-3333-4333-8333-333333333333",
+      "timezone": "Asia/Shanghai"
+    }
+  },
+  {
+    "name": "test-group-create",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "plan_id": "33333333-3333-4333-8333-333333333333",
+      "combinations": [
+        {
+          "composition_kind": "recipe",
+          "name": "Manual recipe",
+          "hook_timing": {
+            "mode": "trim",
+            "target_duration_ms": 5000
+          },
+          "hook_group_id": "22222222-2222-4222-8222-222222222222",
+          "recipe_group_id": "44444444-4444-4444-8444-444444444444",
+          "bgm_group_id": "33333333-3333-4333-8333-333333333333",
+          "pov_group_id": "22222222-2222-4222-8222-222222222222",
+          "category_selections": [
+            {
+              "key_id": "33333333-3333-4333-8333-333333333333",
+              "tag_ids": [
+                "44444444-4444-4444-8444-444444444444"
+              ]
+            }
+          ]
+        },
+        {
+          "composition_kind": "format",
+          "name": "Format test",
+          "format_ids": [
+            "44444444-4444-4444-8444-444444444444"
+          ]
+        }
+      ],
+      "start_date": "2026-09-18",
+      "end_date": "2026-09-20",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00"
+      ],
+      "idempotency_key": "reviewed-test-group-key"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-test-groups",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "plan_id": "33333333-3333-4333-8333-333333333333",
+      "combinations": [
+        {
+          "composition_kind": "recipe",
+          "name": "Manual recipe",
+          "hook_timing": {
+            "mode": "trim",
+            "target_duration_ms": 5000
+          },
+          "hook_group_id": "22222222-2222-4222-8222-222222222222",
+          "recipe_group_id": "44444444-4444-4444-8444-444444444444",
+          "bgm_group_id": "33333333-3333-4333-8333-333333333333",
+          "pov_group_id": "22222222-2222-4222-8222-222222222222",
+          "category_selections": [
+            {
+              "key_id": "33333333-3333-4333-8333-333333333333",
+              "tag_ids": [
+                "44444444-4444-4444-8444-444444444444"
+              ]
+            }
+          ]
+        },
+        {
+          "composition_kind": "format",
+          "name": "Format test",
+          "format_ids": [
+            "44444444-4444-4444-8444-444444444444"
+          ]
+        }
+      ],
+      "start_date": "2026-09-18",
+      "end_date": "2026-09-20",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00"
+      ]
+    },
+    "header": {
+      "Idempotency-Key": "reviewed-test-group-key"
+    }
+  },
+  {
+    "name": "test-group-delete",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "force": true,
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "DELETE",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "force": true
+    }
+  },
+  {
+    "name": "test-group-rename",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "name": "Renamed group",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "PATCH",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "name": "Renamed group"
+    }
+  },
+  {
+    "name": "test-group-category-requirements",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "recipe_group_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ]
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-test-groups/category-requirements",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "recipe_group_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ]
+    }
+  },
+  {
+    "name": "test-group-category-options",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "key_id": "33333333-3333-4333-8333-333333333333",
+      "page": 2,
+      "page_size": 250,
+      "search": "travel"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-groups/category-tag-options",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "key_id": "33333333-3333-4333-8333-333333333333",
+      "page": 2,
+      "page_size": 250,
+      "search": "travel"
+    }
+  },
+  {
+    "name": "test-group-category-set",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "selections": [
+        {
+          "key_id": "33333333-3333-4333-8333-333333333333",
+          "tag_ids": [
+            "44444444-4444-4444-8444-444444444444"
+          ]
+        }
+      ],
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "PUT",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/category-tags",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "selections": [
+        {
+          "key_id": "33333333-3333-4333-8333-333333333333",
+          "tag_ids": [
+            "44444444-4444-4444-8444-444444444444"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "test-group-hook-target",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/hook-launch-target",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111"
+    }
+  },
+  {
+    "name": "test-group-append-hooks",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "campaign_id": "33333333-3333-4333-8333-333333333333",
+      "hook_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/append-hooks",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "campaign_id": "33333333-3333-4333-8333-333333333333",
+      "hook_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ]
+    }
+  },
+  {
+    "name": "test-group-content-set",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "expected_updated_at": "2026-09-17T08:00:00Z",
+      "source_kind": "manual",
+      "hook_timing": {
+        "mode": "speed",
+        "target_duration_ms": 5000
+      },
+      "format_ids": [],
+      "hook_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "pov_ids": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "bgm_ids": [
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "PUT",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/content-source",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "expected_updated_at": "2026-09-17T08:00:00Z",
+      "source_kind": "manual",
+      "hook_timing": {
+        "mode": "speed",
+        "target_duration_ms": 5000
+      },
+      "format_ids": [],
+      "hook_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "pov_ids": [
+        "33333333-3333-4333-8333-333333333333"
+      ],
+      "bgm_ids": [
+        "22222222-2222-4222-8222-222222222222"
+      ]
+    }
+  },
+  {
+    "name": "test-group-content-group-set",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "kind": "hook",
+      "name": "Reviewed hooks",
+      "resource_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "PUT",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/content-group",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "kind": "hook",
+      "name": "Reviewed hooks",
+      "resource_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ]
+    }
+  },
+  {
+    "name": "test-group-accounts",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "page": 2,
+      "page_size": 250,
+      "search": "account-17",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/publishing-accounts",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "page": 2,
+      "page_size": 250,
+      "search": "account-17"
+    }
+  },
+  {
+    "name": "test-group-accounts-set",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "publishing_account_ids": [
+        "real-account-17"
+      ],
+      "mode": "append",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "PUT",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/accounts",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "publishing_account_ids": [
+        "real-account-17"
+      ],
+      "mode": "append"
+    }
+  },
+  {
+    "name": "test-group-accounts-transfer",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "publishing_account_ids": [
+        "real-account-17"
+      ],
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/accounts/transfer",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "publishing_account_ids": [
+        "real-account-17"
+      ]
+    }
+  },
+  {
+    "name": "test-group-accounts-assign",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "test_group_ids": [
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "publishing_account_ids": [
+        "real-account-17"
+      ]
+    },
+    "method": "PUT",
+    "path": "/api/v2/ai-hook-test-groups/account-assignments",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "test_group_ids": [
+        "22222222-2222-4222-8222-222222222222"
+      ],
+      "publishing_account_ids": [
+        "real-account-17"
+      ]
+    }
+  },
+  {
+    "name": "test-group-schedule-set",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "start_date": "2026-09-18",
+      "end_date": "2026-09-20",
+      "expected_updated_at": "2026-09-17T08:00:00Z",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00"
+      ],
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "PUT",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/schedule",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "start_date": "2026-09-18",
+      "end_date": "2026-09-20",
+      "expected_updated_at": "2026-09-17T08:00:00Z",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00"
+      ]
+    }
+  },
+  {
+    "name": "test-group-preview",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "test_group_id": "22222222-2222-4222-8222-222222222222",
+      "campaign_id": "33333333-3333-4333-8333-333333333333",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00"
+      ]
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-test-groups/preview",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "test_group_id": "22222222-2222-4222-8222-222222222222",
+      "campaign_id": "33333333-3333-4333-8333-333333333333",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00"
+      ]
+    }
+  },
+  {
+    "name": "test-run-confirm",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "test_group_id": "22222222-2222-4222-8222-222222222222",
+      "campaign_id": "33333333-3333-4333-8333-333333333333",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00"
+      ],
+      "match_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "idempotency_key": "reviewed-test-group-key"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-test-runs",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "test_group_id": "22222222-2222-4222-8222-222222222222",
+      "campaign_id": "33333333-3333-4333-8333-333333333333",
+      "schedule_timezone": "Asia/Shanghai",
+      "publish_times": [
+        "09:00"
+      ],
+      "match_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "header": {
+      "Idempotency-Key": "reviewed-test-group-key"
+    }
+  },
+  {
+    "name": "test-run-cancel",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-test-runs/22222222-2222-4222-8222-222222222222/cancel",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111"
+    }
+  },
+  {
+    "name": "test-group-cancel-schedule",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "POST",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/cancel-schedule",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111"
+    }
+  },
+  {
+    "name": "test-group-publishing",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "run_id": "44444444-4444-4444-8444-444444444444",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/publishing",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "run_id": "44444444-4444-4444-8444-444444444444"
+    }
+  },
+  {
+    "name": "test-group-publishing-accounts",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "run_id": "44444444-4444-4444-8444-444444444444",
+      "page": 2,
+      "page_size": 180,
+      "sort": "published-desc",
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "GET",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/publishing/accounts",
+    "query": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "run_id": "44444444-4444-4444-8444-444444444444",
+      "page": 2,
+      "page_size": 180,
+      "sort": "published_desc"
+    }
+  },
+  {
+    "name": "test-group-content-set",
+    "input": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "expected_updated_at": "2026-09-17T08:00:00Z",
+      "source_kind": "format",
+      "hook_timing": null,
+      "format_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "hook_ids": [],
+      "pov_ids": [],
+      "bgm_ids": [],
+      "id": "22222222-2222-4222-8222-222222222222"
+    },
+    "method": "PUT",
+    "path": "/api/v2/ai-hook-test-groups/22222222-2222-4222-8222-222222222222/content-source",
+    "body": {
+      "workspace_id": "11111111-1111-4111-8111-111111111111",
+      "expected_updated_at": "2026-09-17T08:00:00Z",
+      "source_kind": "format",
+      "hook_timing": null,
+      "format_ids": [
+        "44444444-4444-4444-8444-444444444444"
+      ],
+      "hook_ids": [],
+      "pov_ids": [],
+      "bgm_ids": []
+    }
+  }
+]

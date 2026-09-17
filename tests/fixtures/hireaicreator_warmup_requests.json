@@ -1,0 +1,551 @@
+[
+  {
+    "name": "warmup-get",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "GET",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  },
+  {
+    "name": "warmup-create",
+    "input": {
+      "name": "Example warmup",
+      "content": {
+        "format_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "hook_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "pov_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "bgm_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "demo_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "recipe_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ]
+      },
+      "onboard_rule": {
+        "qualified_post_count": 3,
+        "views_strictly_greater_than": 100
+      },
+      "terminate_rule": {
+        "consecutive_low_view_days": 3,
+        "views_strictly_less_than": 10,
+        "max_action_days": 14,
+        "evidence_maturity_hours": 0,
+        "evidence_grace_hours": 72
+      },
+      "publish_time": "09:30",
+      "campaign_id": "30000000-0000-4000-8000-000000000003",
+      "confirm_demo_reuse_for_automation": false,
+      "accounts": [
+        {
+          "pool_account_id": "20000000-0000-4000-8000-000000000002",
+          "timezone": "Asia/Shanghai"
+        }
+      ],
+      "action_type": "ai-hook",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies",
+    "body": {
+      "name": "Example warmup",
+      "content": {
+        "format_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "hook_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "pov_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "bgm_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "demo_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "recipe_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ]
+      },
+      "onboard_rule": {
+        "qualified_post_count": 3,
+        "views_strictly_greater_than": 100
+      },
+      "terminate_rule": {
+        "consecutive_low_view_days": 3,
+        "views_strictly_less_than": 10,
+        "max_action_days": 14,
+        "evidence_maturity_hours": 0,
+        "evidence_grace_hours": 72
+      },
+      "publish_time": "09:30",
+      "campaign_id": "30000000-0000-4000-8000-000000000003",
+      "confirm_demo_reuse_for_automation": false,
+      "accounts": [
+        {
+          "pool_account_id": "20000000-0000-4000-8000-000000000002",
+          "timezone": "Asia/Shanghai"
+        }
+      ],
+      "action_type": "ai_hook",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  },
+  {
+    "name": "warmup-replace",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "name": "Example warmup",
+      "content": {
+        "format_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "hook_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "pov_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "bgm_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "demo_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "recipe_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ]
+      },
+      "onboard_rule": {
+        "qualified_post_count": 3,
+        "views_strictly_greater_than": 100
+      },
+      "terminate_rule": {
+        "consecutive_low_view_days": 3,
+        "views_strictly_less_than": 10,
+        "max_action_days": 14,
+        "evidence_maturity_hours": 0,
+        "evidence_grace_hours": 72
+      },
+      "publish_time": "09:30",
+      "campaign_id": "30000000-0000-4000-8000-000000000003",
+      "confirm_demo_reuse_for_automation": false,
+      "accounts": [
+        {
+          "pool_account_id": "20000000-0000-4000-8000-000000000002",
+          "timezone": "Asia/Shanghai"
+        }
+      ],
+      "action_type": "ai-hook",
+      "expected_version": 3,
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "PUT",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001",
+    "body": {
+      "name": "Example warmup",
+      "content": {
+        "format_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "hook_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "pov_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "bgm_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "demo_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "recipe_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ]
+      },
+      "onboard_rule": {
+        "qualified_post_count": 3,
+        "views_strictly_greater_than": 100
+      },
+      "terminate_rule": {
+        "consecutive_low_view_days": 3,
+        "views_strictly_less_than": 10,
+        "max_action_days": 14,
+        "evidence_maturity_hours": 0,
+        "evidence_grace_hours": 72
+      },
+      "publish_time": "09:30",
+      "campaign_id": "30000000-0000-4000-8000-000000000003",
+      "confirm_demo_reuse_for_automation": false,
+      "accounts": [
+        {
+          "pool_account_id": "20000000-0000-4000-8000-000000000002",
+          "timezone": "Asia/Shanghai"
+        }
+      ],
+      "action_type": "ai_hook",
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "expected_version": 3
+    }
+  },
+  {
+    "name": "warmup-configure",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "name": "Example warmup",
+      "content": {
+        "format_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "hook_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "pov_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "bgm_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "demo_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "recipe_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ]
+      },
+      "onboard_rule": {
+        "qualified_post_count": 3,
+        "views_strictly_greater_than": 100
+      },
+      "terminate_rule": {
+        "consecutive_low_view_days": 3,
+        "views_strictly_less_than": 10,
+        "max_action_days": 14,
+        "evidence_maturity_hours": 0,
+        "evidence_grace_hours": 72
+      },
+      "publish_time": "09:30",
+      "campaign_id": "30000000-0000-4000-8000-000000000003",
+      "confirm_demo_reuse_for_automation": false,
+      "expected_version": 4,
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "PATCH",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/configuration",
+    "body": {
+      "name": "Example warmup",
+      "content": {
+        "format_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "hook_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "pov_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "bgm_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "demo_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ],
+        "recipe_ids": [
+          "30000000-0000-4000-8000-000000000003"
+        ]
+      },
+      "onboard_rule": {
+        "qualified_post_count": 3,
+        "views_strictly_greater_than": 100
+      },
+      "terminate_rule": {
+        "consecutive_low_view_days": 3,
+        "views_strictly_less_than": 10,
+        "max_action_days": 14,
+        "evidence_maturity_hours": 0,
+        "evidence_grace_hours": 72
+      },
+      "publish_time": "09:30",
+      "campaign_id": "30000000-0000-4000-8000-000000000003",
+      "confirm_demo_reuse_for_automation": false,
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "expected_version": 4
+    }
+  },
+  {
+    "name": "warmup-accounts",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "status": [
+        "warming",
+        "terminated"
+      ],
+      "device_kind": "real-device",
+      "page": 2,
+      "page_size": 10,
+      "search": "example",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "GET",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/accounts",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "status": [
+        "warming",
+        "terminated"
+      ],
+      "device_kind": "real_device",
+      "page": 2,
+      "page_size": 10,
+      "search": "example"
+    }
+  },
+  {
+    "name": "warmup-add-accounts",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "accounts": [
+        {
+          "pool_account_id": "20000000-0000-4000-8000-000000000002",
+          "timezone": "Asia/Shanghai"
+        }
+      ],
+      "expected_version": 5,
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/accounts",
+    "body": {
+      "accounts": [
+        {
+          "pool_account_id": "20000000-0000-4000-8000-000000000002",
+          "timezone": "Asia/Shanghai"
+        }
+      ],
+      "expected_version": 5,
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  },
+  {
+    "name": "warmup-remove-accounts",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "pool_account_ids": [
+        "20000000-0000-4000-8000-000000000002"
+      ],
+      "expected_version": 6,
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/accounts/remove",
+    "body": {
+      "pool_account_ids": [
+        "20000000-0000-4000-8000-000000000002"
+      ],
+      "expected_version": 6,
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  },
+  {
+    "name": "warmup-account-stats",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "pool_account_ids": [
+        "20000000-0000-4000-8000-000000000002",
+        "30000000-0000-4000-8000-000000000003"
+      ],
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "GET",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/account-stats",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "pool_account_ids": [
+        "20000000-0000-4000-8000-000000000002",
+        "30000000-0000-4000-8000-000000000003"
+      ]
+    }
+  },
+  {
+    "name": "warmup-readiness",
+    "input": {
+      "pool_account_ids": [
+        "20000000-0000-4000-8000-000000000002"
+      ],
+      "action_type": "ai-hook",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/accounts/readiness",
+    "body": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "pool_account_ids": [
+        "20000000-0000-4000-8000-000000000002"
+      ],
+      "action_type": "ai_hook"
+    }
+  },
+  {
+    "name": "warmup-preview",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/preview",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "body": {}
+  },
+  {
+    "name": "warmup-check-and-start",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "expected_version": 7,
+      "expected_format_revisions": {
+        "30000000-0000-4000-8000-000000000003": "rev-2"
+      },
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "campaign_id": "30000000-0000-4000-8000-000000000003"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/check-and-start",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "body": {
+      "expected_version": 7,
+      "expected_format_revisions": {
+        "30000000-0000-4000-8000-000000000003": "rev-2"
+      },
+      "campaign_id": "30000000-0000-4000-8000-000000000003"
+    }
+  },
+  {
+    "name": "warmup-activate",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "expected_version": 8,
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "campaign_id": "30000000-0000-4000-8000-000000000003"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/activate",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "body": {
+      "expected_version": 8,
+      "campaign_id": "30000000-0000-4000-8000-000000000003"
+    }
+  },
+  {
+    "name": "warmup-pause",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "expected_version": 9,
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "campaign_id": "30000000-0000-4000-8000-000000000003"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/pause",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "body": {
+      "expected_version": 9,
+      "campaign_id": "30000000-0000-4000-8000-000000000003"
+    }
+  },
+  {
+    "name": "warmup-resume",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "expected_version": 10,
+      "campaign_id": "30000000-0000-4000-8000-000000000003",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/resume",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "body": {
+      "expected_version": 10,
+      "campaign_id": "30000000-0000-4000-8000-000000000003"
+    }
+  },
+  {
+    "name": "warmup-reset",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "pool_account_ids": [
+        "20000000-0000-4000-8000-000000000002"
+      ],
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "POST",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/journeys/reset",
+    "body": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "pool_account_ids": [
+        "20000000-0000-4000-8000-000000000002"
+      ]
+    }
+  },
+  {
+    "name": "warmup-journey-get",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "GET",
+    "path": "/api/v2/pool-account-warmup/journeys/10000000-0000-4000-8000-000000000001",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  },
+  {
+    "name": "warmup-deletion-preview",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "GET",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001/deletion",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    }
+  },
+  {
+    "name": "warmup-delete",
+    "input": {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "expected_version": 11,
+      "workspace_id": "40000000-0000-4000-8000-000000000004"
+    },
+    "method": "DELETE",
+    "path": "/api/v2/pool-account-warmup/strategies/10000000-0000-4000-8000-000000000001",
+    "query": {
+      "workspace_id": "40000000-0000-4000-8000-000000000004",
+      "expected_version": 11
+    }
+  }
+]

@@ -211,6 +211,7 @@ def _validate(value: Any, schema: dict[str, Any], field: str = "input") -> None:
         "array": isinstance(value, list),
         "string": isinstance(value, str),
         "integer": type(value) is int,
+        "number": type(value) in (int, float),
         "boolean": type(value) is bool,
     }[kind]
     if not valid:
@@ -218,24 +219,41 @@ def _validate(value: Any, schema: dict[str, Any], field: str = "input") -> None:
     if "enum" in schema and value not in schema["enum"]:
         raise ValueError(f"{field} must be one of {schema['enum']}")
     if kind == "object":
-        unknown = set(value) - set(schema["properties"])
-        missing = set(schema["required"]) - set(value)
+        properties = schema.get("properties", {})
+        additional = schema.get("additionalProperties", False)
+        unknown = set(value) - set(properties) if additional is False else set()
+        missing = set(schema.get("required", ())) - set(value)
+        if len(value) > schema.get("maxProperties", len(value)):
+            raise ValueError(f"{field} has too many properties")
         if unknown or missing:
             raise ValueError(
                 f"{field}: unknown fields {sorted(unknown)}; missing fields {sorted(missing)}"
             )
         for key, child in value.items():
-            _validate(child, schema["properties"][key], f"{field}.{key}")
+            if "propertyNames" in schema:
+                _validate(key, {"type": "string", **schema["propertyNames"]}, field)
+            child_schema = properties.get(key, additional)
+            if isinstance(child_schema, dict):
+                _validate(child, child_schema, f"{field}.{key}")
     elif kind == "array":
         if not schema.get("minItems", 0) <= len(value) <= schema.get("maxItems", len(value)):
             raise ValueError(f"{field} has an invalid item count")
+        if schema.get("uniqueItems") and len(
+            {json.dumps(item, sort_keys=True) for item in value}
+        ) != len(value):
+            raise ValueError(f"{field} must contain unique items")
         for child in value:
             _validate(child, schema["items"], f"{field}[]")
-    elif kind == "integer" and not schema.get("minimum", value) <= value <= schema.get(
+    elif kind in ("integer", "number") and not schema.get("minimum", value) <= value <= schema.get(
         "maximum", value
     ):
         raise ValueError(f"{field} is outside its allowed range")
+    elif kind in ("integer", "number") and "multipleOf" in schema:
+        if value % schema["multipleOf"] != 0:
+            raise ValueError(f"{field} must be a multiple of {schema['multipleOf']}")
     elif kind == "string":
+        if "pattern" in schema and re.search(schema["pattern"], value) is None:
+            raise ValueError(f"{field} does not match the required pattern")
         if len(value) < schema.get("minLength", 0) or len(value) > schema.get(
             "maxLength", len(value)
         ):
@@ -259,7 +277,12 @@ def _wire(value: Any, schema: dict[str, Any]) -> Any:
     if value is None:
         return None
     if isinstance(value, dict):
-        return {key: _wire(child, schema["properties"][key]) for key, child in value.items()}
+        return {
+            key: _wire(
+                child, schema.get("properties", {}).get(key, schema.get("additionalProperties", {}))
+            )
+            for key, child in value.items()
+        }
     if isinstance(value, list):
         return [_wire(child, schema["items"]) for child in value]
     return value.replace("-", "_") if "enum" in schema else value
@@ -307,13 +330,15 @@ def _command(
     readback: str = "",
     path_key: str = "id",
     flags: dict[str, str] | None = None,
+    query_fields: tuple[str, ...] = (),
+    requires_confirmation: bool = False,
+    destructive: bool = False,
 ) -> CommandSpec:
     props = dict(properties)
-    if "{" in path:
-        props[path_key] = (
-            {"type": "string", "minLength": 6, "maxLength": 100} if path_key == "token" else U
-        )
-        required = (path_key, *required)
+    path_keys = tuple(re.findall(r"\{([^}]+)\}", path))
+    for key in path_keys:
+        props[key] = {"type": "string", "minLength": 6, "maxLength": 100} if key == "token" else U
+        required = (key, *required)
     if workspace != "resource":
         props["workspace_id"] = U
     if idempotent:
@@ -340,11 +365,15 @@ def _command(
                 kwargs["action"] = "append"
             elif base == "integer":
                 kwargs["type"] = int
+            elif base == "number":
+                kwargs["type"] = float
             if "enum" in item:
                 kwargs["choices"] = [value for value in item["enum"] if value is not None]
             parser.add_argument(option, **kwargs)
         if write:
             parser.add_argument("--dry-run", action="store_true")
+        if requires_confirmation or destructive:
+            parser.add_argument("--yes", action="store_true")
 
     def build(args: argparse.Namespace) -> dict[str, Any]:
         payload = _load(args, props, required)
@@ -358,15 +387,58 @@ def _command(
                     "test_group_id and test_group_assignment_state must be supplied together"
                 )
         if resource == "video" and action == "create":
-            if not payload.get("format_id") and not payload.get("reference_hook_id"):
+            account, actor = (
+                bool(payload.get("publishing_account_id")),
+                bool(payload.get("actor_id")),
+            )
+            if account == actor:
+                raise ValueError("Provide exactly one of publishing_account_id or actor_id")
+            if account and payload.get("persona_id"):
+                raise ValueError("Account mode derives persona_id from its binding")
+            if actor and (not payload.get("persona_id") or payload.get("scheduled_at")):
+                raise ValueError("Actor mode requires persona_id and does not accept scheduled_at")
+            source = payload["composition_source"]
+            if (
+                source != "demo-only"
+                and not payload.get("format_id")
+                and not payload.get("reference_hook_id")
+            ):
                 raise ValueError("video create requires format_id or reference_hook_id")
+            if source == "clips" and (
+                not account
+                or not payload.get("campaign_id")
+                or not payload.get("clip_rules")
+                or payload.get("demo_id")
+            ):
+                raise ValueError(
+                    "Clip composition requires an account, campaign and clip_rules without demo_id"
+                )
+            if source == "hook-only" and (payload.get("demo_id") or payload.get("clip_rules")):
+                raise ValueError("Hook-only composition does not accept demo_id or clip_rules")
+            if source in ("demo", "demo-only") and (
+                not payload.get("demo_id") or payload.get("clip_rules")
+            ):
+                raise ValueError("Demo composition requires demo_id without clip_rules")
+            if source == "demo-only" and any(
+                payload.get(key)
+                for key in (
+                    "format_id",
+                    "reference_hook_id",
+                    "ai_hook_item_id",
+                    "pov_id",
+                    "pov_text",
+                )
+            ):
+                raise ValueError("Demo-only composition does not accept Hook or POV inputs")
+            if payload.get("format_id") and payload.get("ai_hook_item_id"):
+                raise ValueError("Format composition generates a new AI Hook")
         return payload
 
     async def execute(ctx: CommandContext) -> dict[str, Any]:
         arguments = dict(ctx.arguments)
         actual_path = path.format(**arguments)
-        if "{" in path:
-            arguments.pop(path_key)
+        for field in path_keys:
+            arguments.pop(field)
         key = arguments.pop("idempotency_key", None)
         scope = None
         if workspace != "resource":
@@ -380,7 +452,12 @@ def _command(
         if method == "GET":
             kwargs["params"] = wire
         else:
-            kwargs["json_body"] = wire
+            query_keys = (*query_fields, *(("workspace_id",) if workspace == "query" else ()))
+            params = {field: wire.pop(field) for field in query_keys if field in wire}
+            if params:
+                kwargs["params"] = params
+            if wire or method != "DELETE":
+                kwargs["json_body"] = wire
         if key is not None:
             kwargs["idempotency_key"] = key
         raw = await call(ctx.cfg, method, actual_path, **kwargs)
@@ -398,7 +475,7 @@ def _command(
         resource=resource,
         shortcut="+" + action,
         summary=summary,
-        risk_level="write" if write else "read",
+        risk_level="destructive" if destructive else ("write" if write else "read"),
         execution="direct",
         adapter_tool_name="ai_hook_" + resource.replace("-", "_") + "_" + action.replace("-", "_"),
         input_schema=schema,
@@ -407,11 +484,12 @@ def _command(
         add_arguments=add_arguments,
         build_arguments=build,
         supports_dry_run=write,
+        requires_confirmation=requires_confirmation or destructive,
     )
 
 
 def specs() -> list[CommandSpec]:
-    return [
+    commands = [
         _command(
             "account",
             "list",
@@ -786,24 +864,31 @@ def specs() -> list[CommandSpec]:
             "POST",
             "/ai-hook-videos",
             {
-                "actor_id": U,
-                "persona_id": U,
-                "campaign_id": U,
-                "format_id": U,
-                "reference_hook_id": U,
-                "composition_source": enum("hook-only"),
+                "actor_id": nullable(U),
+                "persona_id": nullable(U),
+                "campaign_id": nullable(U),
+                "format_id": nullable(U),
+                "reference_hook_id": nullable(U),
+                "ai_hook_item_id": nullable(U),
+                "composition_source": enum("demo", "clips", "hook-only", "demo-only"),
                 "include_bgm": B,
-                "composition_bgm_id": U,
+                "composition_bgm_id": nullable(U),
                 "hook_resolution": enum("original", "480p"),
-                "pov_text": S,
-                "caption": {"type": "string", "minLength": 1, "maxLength": 2200},
+                "demo_id": nullable(U),
+                "clip_rules": nullable(arr(CLIP_RULE, 1, 50)),
+                "publishing_account_id": nullable({**S, "maxLength": 200}),
+                "scheduled_at": nullable(DT),
+                "schedule_timezone": TZ,
+                "pov_id": nullable(U),
+                "pov_text": nullable(S),
+                "caption": nullable({**S, "maxLength": 2200}),
             },
-            required=("actor_id", "persona_id", "composition_source"),
+            required=("composition_source",),
             workspace="body",
             write=True,
             idempotent=True,
-            summary="Create one manual Actor video from a Format or reference Hook, without account binding or scheduling. Requires composition-source hook-only. Creation does not start generation.",
-            readback="Read the returned ID with video +get; verify Actor/Persona and absent publishing_account_id/scheduled_at, then video +generate using its current version and a stable idempotency key. Export and verify before sharing.",
+            summary="Create an Actor/Persona video or an account-bound video with optional scheduling. Creation does not start generation.",
+            readback="Read returned ID with video +get; verify identity, composition and schedule, then generate with its current version and stable idempotency key. Export and verify before sharing.",
         ),
         _command(
             "video",
@@ -871,7 +956,46 @@ def specs() -> list[CommandSpec]:
                 "scheduled_at": nullable(DT),
                 "schedule_timezone": nullable(TZ),
                 "pov_text": nullable(S),
-                "caption": nullable(S),
+                "caption": nullable({**S, "maxLength": 2200}),
+                "composition_kind": nullable(enum("legacy-demo", "hook-only")),
+                "hook_timing": nullable(
+                    obj(
+                        {
+                            "mode": enum("speed", "trim"),
+                            "target_duration_ms": {
+                                "type": "integer",
+                                "minimum": 100,
+                                "maximum": 3600000,
+                                "multipleOf": 10,
+                            },
+                        },
+                        ("mode", "target_duration_ms"),
+                    )
+                ),
+                "demo_clip_overlays": nullable(
+                    arr(
+                        obj(
+                            {
+                                "clip_id": U,
+                                "source_video_media_id": U,
+                                "position": {"type": "integer", "minimum": 0},
+                                "description": {**S, "maxLength": 240},
+                                "overlay_text": {"type": "string", "maxLength": 120},
+                                "duration_ms": nullable(POSITIVE_INT),
+                                "text_overlay_enabled": B,
+                                "text_overlay_input_mode": enum("direction", "draft-copy"),
+                            },
+                            (
+                                "clip_id",
+                                "source_video_media_id",
+                                "position",
+                                "description",
+                                "overlay_text",
+                            ),
+                        ),
+                        maximum=50,
+                    )
+                ),
             },
             required=("expected_version",),
             workspace="resource",
@@ -956,32 +1080,6 @@ def specs() -> list[CommandSpec]:
             {},
             workspace="resource",
             summary="Read a persistent video plan and its state.",
-        ),
-        _command(
-            "test-group",
-            "list",
-            "GET",
-            "/ai-hook-test-groups",
-            {**SEARCH_PAGE, "plan_id": U},
-            summary="List workspace Test Groups without creating a plan; optional plan_id narrows to a known plan.",
-        ),
-        _command(
-            "test-group",
-            "get",
-            "GET",
-            "/ai-hook-test-groups/{id}",
-            {},
-            summary="Read current group members and schedule state; does not migrate accounts.",
-        ),
-        _command(
-            "test-group",
-            "preview",
-            "POST",
-            "/ai-hook-test-groups/preview",
-            {"test_group_id": U, "campaign_id": nullable(U)},
-            required=("test_group_id",),
-            workspace="body",
-            summary="Preview the persisted test group schedule and inventory gaps, without confirming a rollout.",
         ),
         _command(
             "warmup",
@@ -1104,3 +1202,12 @@ def specs() -> list[CommandSpec]:
             summary="Read actual export status, version/revision, error and download URL.",
         ),
     ]
+
+    from .hireaicreator_test_groups import specs as test_group_specs
+    from .hireaicreator_warmup import specs as warmup_specs
+
+    from .hireaicreator_video_ops import specs as video_specs
+
+    from .hireaicreator_formats import specs as format_specs
+
+    return commands + test_group_specs() + warmup_specs() + video_specs() + format_specs()
