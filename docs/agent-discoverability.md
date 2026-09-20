@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-228 commands across 10 domains (source of truth: `museoncli schema`).
+232 commands across 11 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -283,6 +283,15 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `skills +get` | read | — | — | direct | Read one business skill by name. |
 | `skills +create` | write | yes | — | direct | Create one workspace-private Museon skill from Markdown content; --is-public requires organization admin permission. |
 | `skills +update` | write | yes | — | direct | Update a workspace-private Museon skill's Markdown content, description, reference, or active status; changing --is-public requires organization admin permission. |
+
+### staff-ops
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `staff-ops +code-read` | read | — | — | direct | Read a bounded line range from code packaged in the deployed API image. |
+| `staff-ops +code-search` | read | — | — | direct | Search deployed API source code with bounded results. |
+| `staff-ops +supabase-read` | read | — | — | direct | Run a structured, bounded, read-only Supabase table query. |
+| `staff-ops +log-search` | read | — | — | direct | Search Cloud Logging or the Agents per-turn timeline in a bounded window. |
 
 ### routines
 

@@ -21,8 +21,17 @@ LIMIT_CAP_COMMANDS = {
     "research.community-search",
     "campaign-monitor.creator-performance-get",
     "campaign-monitor.post-performance-get",
+    "staff-ops.code-search",
+    "staff-ops.supabase-read",
+    "staff-ops.log-search",
 }
 ADMIN_OR_STAFF_COMMANDS = set()
+STAFF_COMMANDS = {
+    "staff-ops.code-read",
+    "staff-ops.code-search",
+    "staff-ops.supabase-read",
+    "staff-ops.log-search",
+}
 # positional mode selectors (never IDs)
 ALLOWED_POSITIONALS = {"routines.record": ["kind"]}
 # skills.get windows file content by offset/limit chars — not list pagination
@@ -174,7 +183,9 @@ def test_command_specs_publish_auth_and_capability_metadata() -> None:
         else:
             assert spec.authentication_required is True
             assert spec.required_scopes == ("agent_cli.access",)
-            if spec.schema_name in ADMIN_OR_STAFF_COMMANDS:
+            if spec.schema_name in STAFF_COMMANDS:
+                assert spec.required_roles == ("staff",)
+            elif spec.schema_name in ADMIN_OR_STAFF_COMMANDS:
                 assert spec.required_roles == ("workspace_admin_or_staff",)
             else:
                 assert spec.required_roles == ("workspace_member",)

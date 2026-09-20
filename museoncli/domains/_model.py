@@ -40,6 +40,7 @@ class Domain(str, Enum):
     AI_SLIDESHOW = "ai-slideshow"
     CAMPAIGN_MONITOR = "campaign-monitor"
     SKILLS = "skills"
+    STAFF_OPS = "staff-ops"
     ROUTINES = ROUTINES_DOMAIN
 
 

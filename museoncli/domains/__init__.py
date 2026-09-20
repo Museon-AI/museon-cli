@@ -31,6 +31,7 @@ from museoncli.domains import (
     campaign_monitor,
     social_media,
     skills,
+    staff_ops,
     routines,
 )
 
@@ -46,6 +47,7 @@ _DOMAIN_MODULES = (
     campaign_monitor,
     social_media,
     skills,
+    staff_ops,
     routines,
 )
 
@@ -132,7 +134,9 @@ def add_domain_command_parsers(
 
         for resource, grouped_specs in resource_specs.items():
             resource_parser = shortcut_subparsers.add_parser(resource)
-            action_subparsers = resource_parser.add_subparsers(dest="resource_action", required=True)
+            action_subparsers = resource_parser.add_subparsers(
+                dest="resource_action", required=True
+            )
             for spec in grouped_specs:
                 add_command_parser(action_subparsers, spec, spec.shortcut)
 

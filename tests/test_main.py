@@ -1320,6 +1320,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "ai-slideshow",
         "campaign-monitor",
         "skills",
+        "staff-ops",
         "routines",
     ]
     assert [item["name"] for item in result["data"]["commands"]["research"]] == [

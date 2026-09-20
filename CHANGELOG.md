@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.7.0
+
+- Add staff-only, read-only operational commands for deployed API code, bounded
+  Supabase queries, Cloud Logging, and the Agents per-turn timeline.
+
 ## 0.6.3
 
 - Add complete HireAICreator Test Group, warmup, video review and scheduling, Format, and Clip operations for Codex and Mel.
