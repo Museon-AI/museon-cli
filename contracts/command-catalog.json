@@ -7085,6 +7085,108 @@
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         }
+      ],
+      "staff-ops": [
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "staff-ops.code-read",
+          "domain": "staff-ops",
+          "execution": "direct",
+          "name": "staff-ops.code-read",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+code-read",
+          "stability": "preview",
+          "summary": "Read a bounded line range from code packaged in the deployed API image.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "staff-ops.code-search",
+          "domain": "staff-ops",
+          "execution": "direct",
+          "name": "staff-ops.code-search",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+code-search",
+          "stability": "preview",
+          "summary": "Search deployed API source code with bounded results.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "staff-ops.supabase-read",
+          "domain": "staff-ops",
+          "execution": "direct",
+          "name": "staff-ops.supabase-read",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+supabase-read",
+          "stability": "preview",
+          "summary": "Run a structured, bounded, read-only Supabase table query.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "staff-ops.log-search",
+          "domain": "staff-ops",
+          "execution": "direct",
+          "name": "staff-ops.log-search",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+log-search",
+          "stability": "preview",
+          "summary": "Search Cloud Logging or the Agents per-turn timeline in a bounded window.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        }
       ]
     },
     "domains": [
@@ -7097,10 +7199,11 @@
       "ai-slideshow",
       "campaign-monitor",
       "skills",
+      "staff-ops",
       "routines"
     ]
   },
-  "contract_revision": "0.6.3",
+  "contract_revision": "0.7.0",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -39402,6 +39505,507 @@
       "shortcut": "+stream-url",
       "stability": "stable",
       "summary": "Return this account's cloud-phone live-stream URL. The sandbox stream sidecar renders it to capture fast motion the u2cli clip command needs; the URL views the same phone adb-connect controls.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "staff-ops.code-read": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "staff-ops.code-read",
+      "domain": "staff-ops",
+      "examples": [
+        "museoncli staff-ops +code-read --path app/main.py --start-line 1 --end-line 120"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "end_line": {
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "path": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          },
+          "start_line": {
+            "default": 1,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "staff-ops.code-read",
+      "output_schema": {
+        "description": "Bounded, redacted staff operations result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+code-read",
+      "stability": "preview",
+      "summary": "Read a bounded line range from code packaged in the deployed API image.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "staff-ops.code-search": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "staff-ops.code-search",
+      "domain": "staff-ops",
+      "examples": [
+        "museoncli staff-ops +code-search --query trace_id --path-prefix app"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "case_sensitive": {
+            "default": false,
+            "type": "boolean"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path_prefix": {
+            "default": "app",
+            "type": "string"
+          },
+          "query": {
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "staff-ops.code-search",
+      "output_schema": {
+        "description": "Bounded, redacted staff operations result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+code-search",
+      "stability": "preview",
+      "summary": "Search deployed API source code with bounded results.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "staff-ops.log-search": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "staff-ops.log-search",
+      "domain": "staff-ops",
+      "examples": [
+        "museoncli staff-ops +log-search --start-time 2026-09-20T00:00:00Z --end-time 2026-09-20T01:00:00Z --service museon-api-prod --identifiers-json '{\"trace_id\":\"TRACE_ID\"}'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "end_time": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "identifiers": {
+            "maxProperties": 6,
+            "type": "object"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "service": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "severity": {
+            "default": "INFO",
+            "type": "string"
+          },
+          "source": {
+            "default": "cloud-logging",
+            "enum": [
+              "cloud-logging",
+              "agents-timeline"
+            ],
+            "type": "string"
+          },
+          "start_time": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "text_query": {
+            "maxLength": 160,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "start_time",
+          "end_time"
+        ],
+        "type": "object"
+      },
+      "name": "staff-ops.log-search",
+      "output_schema": {
+        "description": "Bounded, redacted staff operations result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+log-search",
+      "stability": "preview",
+      "summary": "Search Cloud Logging or the Agents per-turn timeline in a bounded window.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "staff-ops.supabase-read": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "staff-ops.supabase-read",
+      "domain": "staff-ops",
+      "examples": [
+        "museoncli staff-ops +supabase-read --table agent_jobs --column id --column status --order-by created_at --filters-json '[{\"field\":\"status\",\"op\":\"eq\",\"value\":\"failed\"}]'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "ascending": {
+            "default": false,
+            "type": "boolean"
+          },
+          "columns": {
+            "items": {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+              "type": "string"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "type": "array"
+          },
+          "filters": {
+            "items": {
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "op": {
+                  "enum": [
+                    "eq",
+                    "neq",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "like",
+                    "ilike",
+                    "in",
+                    "is"
+                  ],
+                  "type": "string"
+                },
+                "value": {}
+              },
+              "required": [
+                "field",
+                "op",
+                "value"
+              ],
+              "type": "object"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "limit": {
+            "default": 25,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "order_by": {
+            "type": "string"
+          },
+          "table": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "table",
+          "columns",
+          "order_by"
+        ],
+        "type": "object"
+      },
+      "name": "staff-ops.supabase-read",
+      "output_schema": {
+        "description": "Bounded, redacted staff operations result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+supabase-read",
+      "stability": "preview",
+      "summary": "Run a structured, bounded, read-only Supabase table query.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     }
