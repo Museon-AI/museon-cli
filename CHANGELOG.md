@@ -2,6 +2,12 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.7.1
+
+- 新增 Actor 批量权限与锁诊断、跨工作区复制和移动，以及实时操作预览。
+- 执行需要明确确认、匹配的预览与幂等键；保留服务端冲突，防止自动覆盖变化或重复复制。
+- 更新 Mel 工作流，说明共享编辑锁的复制解决方式与目标工作区回读。
+
 ## 0.7.0
 
 - Add staff-only, read-only operational commands for deployed API code, bounded

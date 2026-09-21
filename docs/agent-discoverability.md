@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-232 commands across 11 domains (source of truth: `museoncli schema`).
+235 commands across 11 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -95,6 +95,9 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `hireaicreator account +actor-set` | write | yes | — | direct | Bind an existing Actor to an account; use its exact ID to resolve duplicate names. |
 | `hireaicreator account +persona-set` | write | yes | — | direct | Bind an existing Persona to an account. Managed-operation approval must be explicit. |
 | `hireaicreator account +eligibility` | read | — | — | direct | Read eligibility and blockers for an explicit account set. |
+| `hireaicreator actor +access` | read | — | — | direct | Inspect Actor workspace access, binding locks and supported resolutions in one batch. A shared Actor can be copied; there is no force-unlock operation. |
+| `hireaicreator actor +assign-preview` | read | — | — | direct | Live-preview an atomic Actor copy or move across workspaces. Returns blockers and an opaque preview token. Move rejects bound Actors; copy preserves the face and leaves the source intact. This reads server state, unlike local --dry-run. |
+| `hireaicreator actor +assign` | write | yes | `--yes` | direct | Atomically copy or move the exact previewed Actor batch. Requires matching preview token, explicit confirmation and a stable idempotency key. State drift fails the entire batch; never automatically refresh a conflicting preview or retry an unknown outcome with a new key. |
 | `hireaicreator actor +list` | read | — | — | direct | List Actors (independent identities), optionally by source Persona. |
 | `hireaicreator actor +get` | read | — | — | direct | Read one Actor; its ID is not a Persona ID. |
 | `hireaicreator actor +from-persona` | write | yes | — | direct | Create one Actor from an existing Persona and one workspace image. |
