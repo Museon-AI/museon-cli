@@ -42,6 +42,12 @@ A 422 validation error or a 404 response does not prove write permission or end-
 
 Find accounts with `account +list` using exact handles and inspect all matching pages. Resolve Actors with `actor +list` / `actor +get`; use the Actor's `source_persona_id` to identify its Persona and disambiguate duplicate Actor names by ID and reference image. If `source_persona_id` is null (including reference Actors), inspect the named account’s current Persona or an explicit previously authorized binding. If the mapping remains ambiguous, ask the user; do not infer it from names or appearance. Read current bindings with `account +assets-get --id <pool-account-id>`. Apply `account +actor-set --id <pool-account-id> --actor-id <actor-id>` and `account +persona-set --id <pool-account-id> --persona-id <persona-id>` in the selected or explicit workspace, then read `account +assets-get` again to verify both IDs. The two writes are separate receipts; report any partial success. Only pass `--managed-operation-approved` when that additional change is explicitly authorized.
 
+## Actor 工作区分配与锁处理
+
+用 `actor +access --workspace-id <source> --actor-ids <id>` 批量读取权限、绑定锁和解决方式；多个 Actor 重复传 `--actor-ids`。复制或移动前调用 `actor +assign-preview`，明确源 `--workspace-id`、`--target-workspace-id` 与 `--mode copy|move`，检查所有 blockers。复制保留原人脸并创建独立 Actor；移动保留 Actor ID，有账号绑定或生成中的 Actor 不能直接移动。共享编辑锁通过复制后使用新 Actor 解决，不支持强制解锁。
+
+只对已授权且 `can_execute` 的预览执行 `actor +assign`，原样传回同一组参数和 `--preview-token`、稳定的 `--idempotency-key`，并用 `--yes` 记录确认。整批原子执行，状态漂移或幂等冲突应停止并说明，不能自动刷新预览覆盖变化，未知结果不能换新 key 重试。`--dry-run` 不读取服务端状态。执行后使用返回的 Actor IDs 在目标工作区调用 `actor +access` 验证；账号绑定另走 `account +actor-set`，复制不会自动迁移 Persona、成片或发布任务。
+
 ## DON'T
 
 Keep partial failures, missing pages and unknown outcomes visible. Do not refresh a conflicting version and silently overwrite, choose a new idempotency key for an ambiguous write, or cancel/recreate a group to simulate unsupported migration.

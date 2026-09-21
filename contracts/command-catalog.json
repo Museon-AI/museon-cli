@@ -2283,6 +2283,81 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "hireaicreator.actor-access",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-access",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+access",
+          "stability": "stable",
+          "summary": "Inspect Actor workspace access, binding locks and supported resolutions in one batch. A shared Actor can be copied; there is no force-unlock operation.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.actor-assign-preview",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-assign-preview",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+assign-preview",
+          "stability": "stable",
+          "summary": "Live-preview an atomic Actor copy or move across workspaces. Returns blockers and an opaque preview token. Move rejects bound Actors; copy preserves the face and leaves the source intact. This reads server state, unlike local --dry-run.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.actor-assign",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-assign",
+          "requires_confirmation": true,
+          "risk_level": "write",
+          "shortcut": "+assign",
+          "stability": "stable",
+          "summary": "Atomically copy or move the exact previewed Actor batch. Requires matching preview token, explicit confirmation and a stable idempotency key. State drift fails the entire batch; never automatically refresh a conflicting preview or retry an unknown outcome with a new key.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "hireaicreator.actor-list",
           "domain": "hireaicreator",
           "execution": "direct",
@@ -7203,7 +7278,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.7.0",
+  "contract_revision": "0.7.1",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -17147,6 +17222,355 @@
       "stability": "stable",
       "summary": "Bind an existing Persona to an account. Managed-operation approval must be explicit.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.actor-access": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-access",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-access"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor_ids"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-access",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+access",
+      "stability": "stable",
+      "summary": "Inspect Actor workspace access, binding locks and supported resolutions in one batch. A shared Actor can be copied; there is no force-unlock operation.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.actor-assign": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-assign",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-assign"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 8,
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "copy",
+              "move"
+            ],
+            "type": "string"
+          },
+          "preview_token": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "target_workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor_ids",
+          "target_workspace_id",
+          "mode",
+          "preview_token",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-assign",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read actor +access in the target workspace using the returned Actor IDs. Copy creates independent identities; move retains the existing IDs. Account bindings and publication are separate operations.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "risk_level": "write",
+      "shortcut": "+assign",
+      "stability": "stable",
+      "summary": "Atomically copy or move the exact previewed Actor batch. Requires matching preview token, explicit confirmation and a stable idempotency key. State drift fails the entire batch; never automatically refresh a conflicting preview or retry an unknown outcome with a new key.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.actor-assign-preview": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-assign-preview",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-assign-preview"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "copy",
+              "move"
+            ],
+            "type": "string"
+          },
+          "target_workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor_ids",
+          "target_workspace_id",
+          "mode"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-assign-preview",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+assign-preview",
+      "stability": "stable",
+      "summary": "Live-preview an atomic Actor copy or move across workspaces. Returns blockers and an opaque preview token. Move rejects bound Actors; copy preserves the face and leaves the source intact. This reads server state, unlike local --dry-run.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "hireaicreator.actor-batch-create": {

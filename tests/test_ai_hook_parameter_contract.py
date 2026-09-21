@@ -28,6 +28,7 @@ CASES = [
         "hireaicreator_warmup_requests.json",
         "video_ops_requests.json",
         "hireaicreator_format_requests.json",
+        "hireaicreator_actor_assignment_requests.json",
     )
     for case in json.loads((Path(__file__).parent / "fixtures" / filename).read_text())
 ]
