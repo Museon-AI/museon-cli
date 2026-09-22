@@ -290,6 +290,29 @@ def _build_campaign_monitor_summary_arguments(args: argparse.Namespace) -> dict[
     return payload
 
 
+def _add_campaign_monitor_period_performance_arguments(
+    parser: argparse.ArgumentParser,
+) -> None:
+    _add_campaign_monitor_id_arguments(parser)
+    parser.add_argument("--period-start", dest="current_period_start", required=True)
+    parser.add_argument("--period-end", dest="current_period_end", required=True)
+    parser.add_argument("--timezone", default="UTC")
+
+
+def _build_campaign_monitor_period_performance_arguments(
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    payload = _build_campaign_monitor_id_arguments(args)
+    payload.update(
+        {
+            "current_period_start": args.current_period_start,
+            "current_period_end": args.current_period_end,
+            "timezone": args.timezone,
+        }
+    )
+    return payload
+
+
 def _campaign_monitor_list_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -459,6 +482,33 @@ def _campaign_monitor_summary_input_schema() -> dict[str, Any]:
             "creator_id": {"type": ["string", "null"]},
         }
     )
+    return schema
+
+
+def _campaign_monitor_period_performance_input_schema() -> dict[str, Any]:
+    schema = _campaign_monitor_id_input_schema()
+    schema["properties"].update(
+        {
+            "current_period_start": {
+                "type": "string",
+                "format": "date",
+                "description": "Inclusive current-period publication start date.",
+            },
+            "current_period_end": {
+                "type": "string",
+                "format": "date",
+                "description": (
+                    "Inclusive current-period publication end date and performance snapshot cutoff."
+                ),
+            },
+            "timezone": {
+                "type": "string",
+                "default": "UTC",
+                "description": "IANA timezone used to interpret publication dates.",
+            },
+        }
+    )
+    schema["required"].extend(["current_period_start", "current_period_end"])
     return schema
 
 
@@ -689,7 +739,11 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
             shortcut="+summary",
-            summary="Read campaign monitor level performance summary.",
+            summary=(
+                "Read daily content-trend totals for a campaign monitor. This is not "
+                "the Campaign Analytics Period Performance comparison; use "
+                "+period-performance for period-end snapshots and previous-period deltas."
+            ),
             risk_level="read",
             execution="direct",
             adapter_tool_name="campaign_monitor_summary",
@@ -705,6 +759,32 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_campaign_monitor_summary_arguments,
             build_arguments=_build_campaign_monitor_summary_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.CAMPAIGN_MONITOR,
+            shortcut="+period-performance",
+            summary=(
+                "Read the Campaign Analytics Period Performance snapshot. The requested "
+                "period end is the current performance cutoff; Museon derives the "
+                "immediately preceding equal-length period and returns metric start/end "
+                "values, changes, comparison rates, trends, coverage, and scope metadata."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="campaign_monitor_period_performance",
+            input_schema=_campaign_monitor_period_performance_input_schema(),
+            output_schema=_direct_output_schema(
+                "Campaign period-performance snapshot returned by Museon API."
+            ),
+            examples=[
+                (
+                    "museoncli campaign-monitor +period-performance --id <campaign_id> "
+                    "--period-start 2026-09-14 --period-end 2026-09-20 "
+                    "--timezone Asia/Shanghai"
+                ),
+            ],
+            add_arguments=_add_campaign_monitor_period_performance_arguments,
+            build_arguments=_build_campaign_monitor_period_performance_arguments,
         ),
     ]
 
@@ -908,6 +988,29 @@ async def _execute_summary(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_period_performance(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    campaign_id = str(arguments.get("campaign_id") or "")
+    return agent_domain_result(
+        await api_data(
+            cfg,
+            "GET",
+            f"/agent-cli/campaign-monitors/{campaign_id}/period-performance",
+            params={
+                "workspace_id": workspace_id,
+                "current_period_start": arguments["current_period_start"],
+                "current_period_end": arguments["current_period_end"],
+                "timezone": arguments.get("timezone", "UTC"),
+            },
+        )
+    )
+
+
 async def _execute_creator_add(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -1001,5 +1104,6 @@ EXECUTORS = {
     "campaign-monitor.creator-remove": direct_enveloped(_execute_creator_remove),
     "campaign-monitor.get": direct_enveloped(_execute_get),
     "campaign-monitor.list": direct_enveloped(_execute_list),
+    "campaign-monitor.period-performance": direct_enveloped(_execute_period_performance),
     "campaign-monitor.summary": direct_enveloped(_execute_summary),
 }

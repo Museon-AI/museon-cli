@@ -1676,7 +1676,76 @@
           "risk_level": "read",
           "shortcut": "+summary",
           "stability": "stable",
-          "summary": "Read campaign monitor level performance summary.",
+          "summary": "Read daily content-trend totals for a campaign monitor. This is not the Campaign Analytics Period Performance comparison; use +period-performance for period-end snapshots and previous-period deltas.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.period-performance",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.period-performance",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+period-performance",
+          "stability": "stable",
+          "summary": "Read the Campaign Analytics Period Performance snapshot. The requested period end is the current performance cutoff; Museon derives the immediately preceding equal-length period and returns metric start/end values, changes, comparison rates, trends, coverage, and scope metadata.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -15439,6 +15508,161 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "campaign-monitor.period-performance": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.period-performance",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor +period-performance --id <campaign_id> --period-start 2026-09-14 --period-end 2026-09-20 --timezone Asia/Shanghai"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "current_period_end": {
+            "description": "Inclusive current-period publication end date and performance snapshot cutoff.",
+            "format": "date",
+            "type": "string"
+          },
+          "current_period_start": {
+            "description": "Inclusive current-period publication start date.",
+            "format": "date",
+            "type": "string"
+          },
+          "timezone": {
+            "default": "UTC",
+            "description": "IANA timezone used to interpret publication dates.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "current_period_start",
+          "current_period_end"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.period-performance",
+      "output_schema": {
+        "description": "Campaign period-performance snapshot returned by Museon API.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+period-performance",
+      "stability": "stable",
+      "summary": "Read the Campaign Analytics Period Performance snapshot. The requested period end is the current performance cutoff; Museon derives the immediately preceding equal-length period and returns metric start/end values, changes, comparison rates, trends, coverage, and scope metadata.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "campaign-monitor.post-get": {
       "authorization": {
         "authentication_required": true,
@@ -16106,7 +16330,7 @@
       "risk_level": "read",
       "shortcut": "+summary",
       "stability": "stable",
-      "summary": "Read campaign monitor level performance summary.",
+      "summary": "Read daily content-trend totals for a campaign monitor. This is not the Campaign Analytics Period Performance comparison; use +period-performance for period-end snapshots and previous-period deltas.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

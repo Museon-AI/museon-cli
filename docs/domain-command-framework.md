@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-235 commands across 11 domains (source of truth: `museoncli schema`).
+236 commands across 11 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -286,7 +286,8 @@ The tables below are generated — edit code, then run
 | `campaign-monitor +content-add` | write | yes | — | direct | Track individual posts in a campaign. --url imports new posts by public URL via a background task (response data.url_import_task); --content-id attaches posts already known to Museon. Verify with +content-list later. |
 | `campaign-monitor +content-remove` | destructive | yes | `--yes` | direct | Remove one content record from a campaign monitor. This only removes the collection record from the campaign monitor (soft delete), it does NOT delete the original social-platform post; explicit operator confirmation is required before running with --yes. The collection_content_id comes from the +content-list response, and the response includes removed / missing detail. |
 | `campaign-monitor +content-batch-remove` | destructive | yes | `--yes` | direct | Remove content records from a campaign monitor in batch. This only removes the collection record from the campaign monitor (soft delete), it does NOT delete the original social-platform post; explicit operator confirmation is required before running with --yes. Batch size <=100, split into multiple batches if exceeded; response includes removed / missing detail; collection_content_id comes from the +content-list response. |
-| `campaign-monitor +summary` | read | — | — | direct | Read campaign monitor level performance summary. |
+| `campaign-monitor +summary` | read | — | — | direct | Read daily content-trend totals for a campaign monitor. This is not the Campaign Analytics Period Performance comparison; use +period-performance for period-end snapshots and previous-period deltas. |
+| `campaign-monitor +period-performance` | read | — | — | direct | Read the Campaign Analytics Period Performance snapshot. The requested period end is the current performance cutoff; Museon derives the immediately preceding equal-length period and returns metric start/end values, changes, comparison rates, trends, coverage, and scope metadata. |
 | `campaign-monitor +creator-get` | read | — | — | direct | Read one workspace-visible social account profile from Museon's store. |
 | `campaign-monitor +post-list` | read | — | — | direct | List Museon-synced posts for one workspace-visible social account; not a live platform-history fetch. |
 | `campaign-monitor +creator-performance-get` | read | — | — | direct | Read local synced performance history for one workspace-visible social account. |
