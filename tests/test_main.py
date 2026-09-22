@@ -1183,6 +1183,7 @@ def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
         "campaign-monitor.content-remove",
         "campaign-monitor.content-batch-remove",
         "campaign-monitor.summary",
+        "campaign-monitor.period-performance",
         "campaign-monitor.creator-get",
         "campaign-monitor.post-list",
         "campaign-monitor.creator-performance-get",
@@ -1195,6 +1196,42 @@ def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
     assert properties["views_min"]["minimum"] == 0
     assert properties["likes_min"]["minimum"] == 0
     assert properties["likes_max"]["minimum"] == 0
+
+    period_performance = main_module.schema_payload("campaign-monitor.period-performance")
+    assert period_performance["input_schema"]["required"] == [
+        "campaign_id",
+        "current_period_start",
+        "current_period_end",
+    ]
+    assert "performance snapshot cutoff" in period_performance["input_schema"]["properties"][
+        "current_period_end"
+    ]["description"]
+    assert "Period Performance snapshot" in period_performance["summary"]
+
+
+def test_campaign_monitor_period_performance_parser() -> None:
+    args = parse(
+        [
+            "campaign-monitor",
+            "+period-performance",
+            "--id",
+            "campaign-1",
+            "--period-start",
+            "2026-09-14",
+            "--period-end",
+            "2026-09-20",
+            "--timezone",
+            "Asia/Shanghai",
+        ]
+    )
+
+    assert args.domain_command == "campaign-monitor.period-performance"
+    assert main_module.command_payload(args) == {
+        "campaign_id": "campaign-1",
+        "current_period_start": "2026-09-14",
+        "current_period_end": "2026-09-20",
+        "timezone": "Asia/Shanghai",
+    }
 
 
 def test_skills_get_parser() -> None:
@@ -1355,6 +1392,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "campaign-monitor.content-remove",
         "campaign-monitor.content-batch-remove",
         "campaign-monitor.summary",
+        "campaign-monitor.period-performance",
         "campaign-monitor.creator-get",
         "campaign-monitor.post-list",
         "campaign-monitor.creator-performance-get",
