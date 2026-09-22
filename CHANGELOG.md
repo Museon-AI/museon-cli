@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.7.2
+
+- Add `campaign-monitor +period-performance` for frontend-aligned period-end snapshot comparisons.
+- Clarify that `campaign-monitor +summary` reports daily content-trend totals rather than Period Performance snapshots.
+
 ## 0.7.1
 
 - 新增 Actor 批量权限与锁诊断、跨工作区复制和移动，以及实时操作预览。
