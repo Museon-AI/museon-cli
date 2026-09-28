@@ -2477,6 +2477,31 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "hireaicreator.actor-resolve",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.actor-resolve",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+resolve",
+          "stability": "stable",
+          "summary": "Read up to 200 Actors with their reference and profile image URLs in one call. Take actor_id from account +list instead of reading accounts one by one.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "hireaicreator.actor-from-persona",
           "domain": "hireaicreator",
           "execution": "direct",
@@ -2636,6 +2661,31 @@
           "shortcut": "+get",
           "stability": "stable",
           "summary": "Read a Persona through resource access control; no workspace override.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.product-list",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.product-list",
+          "requires_confirmation": false,
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List workspace products with description, selling points, target audiences and every image asset (logo, product image, website and app screenshots); complete pagination.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -3236,6 +3286,31 @@
           "shortcut": "+bulk-schedule",
           "stability": "stable",
           "summary": "Schedule explicit video/version/account/time tuples; retain succeeded/conflicted/failures.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.video-from-upload",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.video-from-upload",
+          "requires_confirmation": false,
+          "risk_level": "write",
+          "shortcut": "+from-upload",
+          "stability": "stable",
+          "summary": "Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok or Instagram, at most one account per platform per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -18634,6 +18709,110 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "hireaicreator.actor-resolve": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.actor-resolve",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.actor-resolve"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "actor_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor_ids"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.actor-resolve",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+resolve",
+      "stability": "stable",
+      "summary": "Read up to 200 Actors with their reference and profile image URLs in one call. Take actor_id from account +list instead of reading accounts one by one.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "hireaicreator.batch-get": {
       "authorization": {
         "authentication_required": true,
@@ -24109,6 +24288,116 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "hireaicreator.product-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.product-list",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.product-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "tag": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "hireaicreator.product-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List workspace products with description, selling points, target audiences and every image asset (logo, product image, website and app screenshots); complete pagination.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "hireaicreator.recipe-get": {
       "authorization": {
         "authentication_required": true,
@@ -29051,6 +29340,177 @@
       "shortcut": "+delete",
       "stability": "stable",
       "summary": "Delete a video at its expected version; requires explicit destructive intent.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.video-from-upload": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.video-from-upload",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli schema hireaicreator.video-from-upload"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 8,
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "caption": {
+                  "maxLength": 2200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "media_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "publishing_account_ids": {
+                  "items": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "maxItems": 2,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "schedule_timezone": {
+                  "format": "timezone",
+                  "type": "string"
+                },
+                "scheduled_at": {
+                  "format": "date-time",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "media_id",
+                "publishing_account_ids",
+                "caption"
+              ],
+              "type": "object"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "required_hashtags": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 0,
+            "type": "array"
+          },
+          "required_mentions": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 0,
+            "type": "array"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.video-from-upload",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read each returned video ID with hireaicreator video +get; change caption or time with video +update or video +bulk-schedule.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "shortcut": "+from-upload",
+      "stability": "stable",
+      "summary": "Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok or Instagram, at most one account per platform per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

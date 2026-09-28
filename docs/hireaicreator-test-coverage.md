@@ -77,8 +77,10 @@
 | hireaicreator.account-eligibility | 已实际执行 | 接口成功；场景后置条件另列 | 需要真实目标组/账号样本 |
 | hireaicreator.actor-list | 已实际执行 | 接口成功；场景后置条件另列 | Actor不等同Persona |
 | hireaicreator.actor-get | 已实际执行 | 接口成功；场景后置条件另列 | 读取已确定Actor ID |
+| hireaicreator.actor-resolve | 未执行 | 待真实Actor ID样本 | 只读批量 |
 | hireaicreator.persona-list | 已实际执行 | 接口成功；场景后置条件另列 | v1 API |
 | hireaicreator.persona-get | 已实际执行 | 接口成功；场景后置条件另列 | 按资源鉴权 |
+| hireaicreator.product-list | 未执行 | 待真实产品样本 | v1 API，只读 |
 | hireaicreator.format-list | 已实际执行 | 接口成功；场景后置条件另列 | 实际status枚举需契约对齐 |
 | hireaicreator.format-get | 未执行 | 阻塞：工作区无Format对象 | 异步子资源状态 |
 | hireaicreator.format-import-urls | 未执行 | 阻塞：未触发外部URL下载/解析任务 | 导入后get核验，不只202 |
@@ -97,6 +99,7 @@
 | hireaicreator.video-update | 已实际执行 | 新合成草稿caption目标成立，版本1→2；旧版本409且回读未变 | before→receipt→after；无生成/渲染/发布任务 |
 | hireaicreator.video-generate | 未执行 | 阻塞：缺少合法新计划，且会启动外部生成 | 受理与最终组件完成分开 |
 | hireaicreator.video-bulk-schedule | 未执行 | 阻塞：会产生可被后台认领的发布排期 | 需后台无外部副作用前置证明 |
+| hireaicreator.video-from-upload | 未执行 | 阻塞：会产生可被后台认领的发布任务 | 需已上传成片；幂等键重试须得同一批任务 |
 | hireaicreator.plan-preview | 已实际执行 | 阻塞：账号未配置Actor | 真实组合与阻塞 |
 | hireaicreator.plan-capacity | 已实际执行 | 接口成功；场景后置条件另列 | 有区分度样本 |
 | hireaicreator.plan-create | 未执行 | 阻塞：目标账号均未绑定Actor，preview已拒绝 | get与video membership；start_generation显式 |

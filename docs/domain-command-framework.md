@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-236 commands across 11 domains (source of truth: `museoncli schema`).
+239 commands across 11 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -116,6 +116,7 @@ The tables below are generated — edit code, then run
 | `hireaicreator actor +assign` | write | yes | `--yes` | direct | Atomically copy or move the exact previewed Actor batch. Requires matching preview token, explicit confirmation and a stable idempotency key. State drift fails the entire batch; never automatically refresh a conflicting preview or retry an unknown outcome with a new key. |
 | `hireaicreator actor +list` | read | — | — | direct | List Actors (independent identities), optionally by source Persona. |
 | `hireaicreator actor +get` | read | — | — | direct | Read one Actor; its ID is not a Persona ID. |
+| `hireaicreator actor +resolve` | read | — | — | direct | Read up to 200 Actors with their reference and profile image URLs in one call. Take actor_id from account +list instead of reading accounts one by one. |
 | `hireaicreator actor +from-persona` | write | yes | — | direct | Create one Actor from an existing Persona and one workspace image. |
 | `hireaicreator actor +batch-create` | write | yes | — | direct | Start Persona-based Actor generation. Generated images remain candidates until selected. |
 | `hireaicreator actor +batch-get` | read | — | — | direct | Read the status and counts of one Actor generation batch. |
@@ -123,6 +124,7 @@ The tables below are generated — edit code, then run
 | `hireaicreator actor +batch-select` | write | yes | — | direct | Turn explicitly chosen successful candidates into Actors. |
 | `hireaicreator persona +list` | read | — | — | direct | List Personas and their actual identities. |
 | `hireaicreator persona +get` | read | — | — | direct | Read a Persona through resource access control; no workspace override. |
+| `hireaicreator product +list` | read | — | — | direct | List workspace products with description, selling points, target audiences and every image asset (logo, product image, website and app screenshots); complete pagination. |
 | `hireaicreator format +list` | read | — | — | direct | List HireAICreator Formats, distinct from slideshow Formats. |
 | `hireaicreator format +get` | read | — | — | direct | Read Format processing state and source resources. |
 | `hireaicreator format +import-urls` | write | yes | — | direct | Import Format source URLs asynchronously; acceptance is not ready content. |
@@ -147,6 +149,7 @@ The tables below are generated — edit code, then run
 | `hireaicreator video +update` | write | yes | — | direct | Patch only supplied video fields using the observed expected_version; do not auto-retry conflicts. |
 | `hireaicreator video +generate` | write | yes | — | direct | Request video generation with a stable idempotency key; response is acceptance only. |
 | `hireaicreator video +bulk-schedule` | write | yes | — | direct | Schedule explicit video/version/account/time tuples; retain succeeded/conflicted/failures. |
+| `hireaicreator video +from-upload` | write | yes | — | direct | Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok or Instagram, at most one account per platform per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries. |
 | `hireaicreator plan +preview` | read | — | — | direct | Read server allocation and blockers for a proposed plan; does not create the plan. |
 | `hireaicreator plan +capacity` | read | — | — | direct | Read account capacity for a bounded date range. |
 | `hireaicreator plan +create` | write | yes | — | direct | Create a plan with a stable idempotency key. Server defaults start_generation to false; creation is not a finished video. |

@@ -9,9 +9,11 @@ Q 表示 workspace_id 位于 query，B 表示位于 body，R 表示后端按资�
 | account +list | GET v2 /pool-accounts/workspace-accounts | Q；分页、精确 search_terms/search_match、阶段/设备/Actor/Persona/测试组筛选 | 原始账号分页；不可把第一页当完整名单 |
 | account +eligibility | POST v2 /ai-hook-test-groups/account-eligibility | B；明确账号ID集合、可选test_group_id | items[].eligible/code，逐账号保留原因 |
 | actor +list / +get | GET v2 /actors / /actors/{id} | Q；列表分页/search/source_persona_id；get路径id | creative_actors 身份、source_persona_id，不等同Persona |
+| actor +resolve | POST v2 /actors/batch-resolve | B；actor_ids 1–200 | 每个Actor含images[]/profile_image的media_url、permanent_media_url、thumbnail_url；actor_id取自account +list，不逐账号读取 |
 | actor +from-persona | POST v2 /actors/from-persona | B；已有Persona、性别/年龄段及一张工作区图片 | 返回Actor ID→actor +get；无幂等键，未知结果先核对再重试 |
 | actor +batch-create / +batch-get / +batch-items / +batch-select | POST/GET v2 /actors/generation-batches | 创建要求Persona、性别/年龄段、数量和幂等键；候选选择要求明确item_ids | 批次生成的是候选，选择成功候选后才形成Actor；分页读取item状态并回读Actor |
 | persona +list / +get | GET v1 /personas / /personas/{id} | list Q；get R | personas 身份及资源；不得当Actor ID |
+| product +list | GET v1 /products | Q；分页/search/tag | 产品描述、卖点、目标人群及logo/产品图/网站截图/App截图；须翻完分页 |
 | format +list / +get | GET v2 /ai-hook-formats / /ai-hook-formats/{id} | Q；分页/search/status/tag | 真实Format ID、分析/处理状态 |
 | format +import-urls | POST v2 /ai-hook-formats/from-urls | B；urls/tags/extract_bgm | 返回items；逐个format +get确认ready/failed，不把202当完成 |
 | hook +list | GET v1 /ai-hooks | Q；分页/search/status/source/tag | 可复用Hook列表，与生成item ID分开 |
@@ -26,6 +28,7 @@ Q 表示 workspace_id 位于 query，B 表示位于 body，R 表示后端按资�
 | video +update | PATCH v2 /ai-hook-videos/{id} | R；expected_version及显式patch字段 | video +get核对目标字段/版本；新成片另看export revision |
 | video +generate | POST v2 /ai-hook-videos/{id}/generate | R；expected_version/generation_directions；Idempotency-Key header | accepted→video +get；任务完成与成片分别核验 |
 | video +bulk-schedule | POST v2 /ai-hook-videos/bulk-schedule | R；items含版本/账号/带偏移时间/时区 | succeeded/conflicted/failures，逐video +get核对；非测试组增量重排 |
+| video +from-upload | POST v2 /ai-hook-videos/from-upload | B；幂等键；items 1–50，每条media_id(media +upload)、1–2个账号、caption、可选带偏移scheduled_at | 每账号一条发布任务；TikTok/Instagram、每平台最多1个；无需POV/叠字/渲染，按账号的发布方式发布；逐video +get核对 |
 | plan +preview / +capacity | POST v2 /ai-hook-video-plans/preview / /capacity | B；组合计划 / 账号日期时区 | preview分配与阻塞 / account-capacity，不写入 |
 | plan +create | POST v2 /ai-hook-video-plans | B；计划组合，显式start_generation；Idempotency-Key header | plan ID→plan +get；默认不生成，video +list --plan-id再核验 |
 | plan +get | GET v2 /ai-hook-video-plans/{id} | R | 持久计划及生成状态，不把记录存在当成片 |
