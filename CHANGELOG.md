@@ -2,6 +2,13 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.7.3
+
+- 新增 `hireaicreator actor +resolve`：一次最多读取 200 个 Actor 及其参考图 URL。
+- 新增 `hireaicreator product +list`：一次读取工作区产品的描述、卖点、目标人群和全部图片素材。
+- 新增 `hireaicreator video +from-upload`：把 `media +upload` 上传的外部成片登记为发布任务，带文案和排期，支持幂等重试。
+- 新增外部生成视频上传与排期发布的 best practice（HireAICreator skill 参考文档），要求每条视频只发给同一个 Actor 名下的账号。
+
 ## 0.7.2
 
 - Add `campaign-monitor +period-performance` for frontend-aligned period-end snapshot comparisons.
