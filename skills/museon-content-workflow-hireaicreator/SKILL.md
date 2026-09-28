@@ -20,6 +20,8 @@ Read the relevant section of [the ten scenarios](references/top-10-scenarios.md)
 
 For historical generated footage or generation batch progress, read [history and batches](references/history-and-batches.md).
 
+For videos generated outside Museon that must be uploaded and scheduled on accounts, follow [external video publishing](references/external-video-publishing.md). It needs no POV, overlay or render and publishes like any video on the account.
+
 ## Choose the requested workflow
 
 For downloadable videos, choose between an unbound Actor/Persona video and an account-bound unscheduled video using `video +create`. If an account is named, read `account +assets-get` first; account mode derives Actor/Persona from that binding. Actor mode takes explicit Actor and Persona IDs. Preserve the user's requested composition (`hook-only`, `demo`, `clips`, or `demo-only`) instead of reducing every request to Hook-only. Manual delivery omits `scheduled_at`; selecting an account does not itself authorize publishing. Multiple account-bound videos can also use a `fixed-count` plan without schedule slots. Neither creating a video nor creating a plan without `start_generation` proves generation started.
