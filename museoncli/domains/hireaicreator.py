@@ -161,6 +161,16 @@ BULK_SLOT = obj(
     },
     ("video_id", "expected_version", "publishing_account_id", "scheduled_at"),
 )
+UPLOADED_VIDEO_ITEM = obj(
+    {
+        "media_id": U,
+        "publishing_account_ids": arr(S, 1, 2),
+        "caption": {"type": "string", "minLength": 1, "maxLength": 2200},
+        "scheduled_at": nullable(DT),
+        "schedule_timezone": TZ,
+    },
+    ("media_id", "publishing_account_ids", "caption"),
+)
 FILTER = obj(
     {
         "time_zone": nullable(TZ),
@@ -623,6 +633,16 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "actor",
+            "resolve",
+            "POST",
+            "/actors/batch-resolve",
+            {"actor_ids": arr(U, 1, 200)},
+            required=("actor_ids",),
+            workspace="body",
+            summary="Read up to 200 Actors with their reference and profile image URLs in one call. Take actor_id from account +list instead of reading accounts one by one.",
+        ),
+        _command(
+            "actor",
             "from-persona",
             "POST",
             "/actors/from-persona",
@@ -709,6 +729,15 @@ def specs() -> list[CommandSpec]:
             version=1,
             workspace="resource",
             summary="Read a Persona through resource access control; no workspace override.",
+        ),
+        _command(
+            "product",
+            "list",
+            "GET",
+            "/products",
+            {**SEARCH_PAGE, "tag": S},
+            version=1,
+            summary="List workspace products with description, selling points, target audiences and every image asset (logo, product image, website and app screenshots); complete pagination.",
         ),
         _command(
             "format",
@@ -1070,6 +1099,24 @@ def specs() -> list[CommandSpec]:
             write=True,
             summary="Schedule explicit video/version/account/time tuples; retain succeeded/conflicted/failures.",
             readback="hireaicreator video +get each succeeded ID and compare account/scheduled_at; never treat top-level success as whole-batch completion.",
+        ),
+        _command(
+            "video",
+            "from-upload",
+            "POST",
+            "/ai-hook-videos/from-upload",
+            {
+                "campaign_id": nullable(U),
+                "items": arr(UPLOADED_VIDEO_ITEM, 1, 50),
+                "required_hashtags": arr(S, maximum=5),
+                "required_mentions": arr(S, maximum=5),
+            },
+            required=("items",),
+            workspace="body",
+            write=True,
+            idempotent=True,
+            summary="Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok or Instagram, at most one account per platform per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+            readback="Read each returned video ID with hireaicreator video +get; change caption or time with video +update or video +bulk-schedule.",
         ),
         _command(
             "plan",

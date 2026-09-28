@@ -1426,5 +1426,96 @@
       "include_bgm": false,
       "demo_id": "10000000-0000-4000-8000-000000000001"
     }
+  },
+  {
+    "name": "actor-resolve",
+    "method": "POST",
+    "path": "/api/v2/actors/batch-resolve",
+    "input": {
+      "actor_ids": [
+        "3c9a1e52-7f04-4b6d-8e21-5a0d9c7b4f13",
+        "8e2f6b10-4a9d-4c35-b7e8-1f5c3d2a9e64"
+      ],
+      "workspace_id": "7d1c2a44-5b0e-4f3a-9c61-2e8b5d0f9a17"
+    },
+    "body": {
+      "actor_ids": [
+        "3c9a1e52-7f04-4b6d-8e21-5a0d9c7b4f13",
+        "8e2f6b10-4a9d-4c35-b7e8-1f5c3d2a9e64"
+      ],
+      "workspace_id": "7d1c2a44-5b0e-4f3a-9c61-2e8b5d0f9a17"
+    }
+  },
+  {
+    "name": "product-list",
+    "method": "GET",
+    "path": "/api/v1/products",
+    "input": {
+      "page": 2,
+      "page_size": 50,
+      "search": "serum",
+      "tag": "skincare",
+      "workspace_id": "7d1c2a44-5b0e-4f3a-9c61-2e8b5d0f9a17"
+    },
+    "query": {
+      "page": 2,
+      "page_size": 50,
+      "search": "serum",
+      "tag": "skincare",
+      "workspace_id": "7d1c2a44-5b0e-4f3a-9c61-2e8b5d0f9a17"
+    }
+  },
+  {
+    "name": "video-from-upload",
+    "method": "POST",
+    "path": "/api/v2/ai-hook-videos/from-upload",
+    "input": {
+      "campaign_id": "4147a390-14f2-44de-9e26-7b7790989892",
+      "items": [
+        {
+          "media_id": "b61e0d3a-92c7-4f58-a1e4-6d0c8f2b7a95",
+          "publishing_account_ids": [
+            "account-tiktok",
+            "account-instagram"
+          ],
+          "caption": "Morning routine #glow",
+          "scheduled_at": "2026-10-02T09:30:00+08:00",
+          "schedule_timezone": "Asia/Shanghai"
+        }
+      ],
+      "required_hashtags": [
+        "#glow"
+      ],
+      "required_mentions": [
+        "@brand"
+      ],
+      "workspace_id": "7d1c2a44-5b0e-4f3a-9c61-2e8b5d0f9a17",
+      "idempotency_key": "external-upload-batch-001"
+    },
+    "body": {
+      "campaign_id": "4147a390-14f2-44de-9e26-7b7790989892",
+      "items": [
+        {
+          "media_id": "b61e0d3a-92c7-4f58-a1e4-6d0c8f2b7a95",
+          "publishing_account_ids": [
+            "account-tiktok",
+            "account-instagram"
+          ],
+          "caption": "Morning routine #glow",
+          "scheduled_at": "2026-10-02T09:30:00+08:00",
+          "schedule_timezone": "Asia/Shanghai"
+        }
+      ],
+      "required_hashtags": [
+        "#glow"
+      ],
+      "required_mentions": [
+        "@brand"
+      ],
+      "workspace_id": "7d1c2a44-5b0e-4f3a-9c61-2e8b5d0f9a17"
+    },
+    "header": {
+      "Idempotency-Key": "external-upload-batch-001"
+    }
   }
 ]
