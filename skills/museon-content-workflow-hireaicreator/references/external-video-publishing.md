@@ -9,7 +9,7 @@
 | 步骤 | 命令 | 性质 |
 | --- | --- | --- |
 | 1 选账号 | `hireaicreator account +list` | 只读 |
-| 2 取 Actor 参考图 | `hireaicreator actor +resolve` | 只读 |
+| 2 取 Actor 参考图，建对照表 | `hireaicreator actor +resolve` | 只读 |
 | 3 取产品资料与图片 | `hireaicreator product +list` | 只读 |
 | 4 外部生成 | 平台外完成 | — |
 | 5 上传成片 | `media +upload --media-type video` | 写 |
@@ -21,6 +21,8 @@
 
 - 第 6 步会生成真实的发布任务：自动发布的账号到点会发帖。只有用户明确要求「发布」或「排期」时才执行；只要求上传或出下载链接时，停在第 5 步。
 - 先解析一次工作区，此后每条接受 `--workspace-id` 的命令都显式传入，不依赖跨轮保留的选择。
+- 开始前用 `museoncli workspace list` 确认目标工作区在列表里。上传走的是 CLI 凭证的授权范围：只授权了部分工作区的 API key，即使用户是目标工作区成员、前面的读取都能成功，上传也会被拒（`Workspace is not available to the current user`）。这时由用户调整 key 的授权或重新登录，不要换工作区凑合。
+- 视频里的人必须是发布账号绑定的 Actor。平台不会检查成片里是谁，匹配完全由调用方保证，见第 2 步的对照表。
 - 写操作先用 `--dry-run` 校验本地参数；dry-run 不访问服务端，不能证明服务端会接受。
 - 每一步以服务端回读为准。收到回执、上传成功或 dry-run 通过，都不代表发布完成。
 
@@ -36,6 +38,7 @@ museoncli hireaicreator account +list --workspace-id "$WS" \
 - 返回里的 `actor_id`、`persona_id`、`platform` 直接用于后续步骤，不要逐个账号再调用 `account +assets-get`。
 - 账号类型（云手机或真机）不影响能否上传，只决定发布方式（第 8 步之后的结果）。
 - 每条视频最多选 2 个账号，且每个平台最多 1 个；只支持 TikTok 和 Instagram。
+- 一条视频的所有账号必须绑定同一个 Actor。不要按平台随手搭配 TikTok 和 Instagram 账号：大多数 Actor 只在一个平台上有账号。
 
 ## 2. 取 Actor 参考图
 
@@ -51,6 +54,25 @@ museoncli hireaicreator actor +resolve --workspace-id "$WS" \
 - 没有 `actor_id` 的账号要在结果里单独列出，由用户决定是否先绑定 Actor（`account +actor-set`），不要猜测。
 - Actor 和 Persona 是两个资源，不要互换 ID。
 
+然后建一张以 Actor 为主键的对照表，后面的生成和登记都只从这张表取值：
+
+```json
+{
+  "<actor_id>": {
+    "actor_name": "Camila Vance",
+    "reference_image": "<images[0].permanent_media_url>",
+    "accounts": {
+      "tiktok": {"id": "<pool_account_id>", "username": "<handle>"},
+      "instagram": {"id": "<pool_account_id>", "username": "<handle>"}
+    }
+  }
+}
+```
+
+- 只按 `actor_id` 关联：账号行里的 `actor_id` 对上 `actor +resolve` 返回的 `id`。不要按名字、列表顺序或长相关联。
+- 某个 Actor 在某平台有多个账号时，由用户指定用哪一个，不要自动挑。
+- 账号自己的头像（`creator.avatar_url`）是会过期的临时链接，只用于显示和人工核对，不能代替 Actor 参考图。
+
 ## 3. 取产品资料与图片
 
 ```bash
@@ -63,13 +85,15 @@ museoncli hireaicreator product +list --workspace-id "$WS" --page-size 100
 
 ## 4. 外部生成
 
-在平台外生成视频和发帖文案。开始前建一份本地映射文件，贯穿后续每一步：
+在平台外生成视频和发帖文案：每条视频用对照表里一个 Actor 的参考图生成，并且只发给这个 Actor 名下的账号。开始前建一份本地映射文件，贯穿后续每一步：
 
 ```json
 [
   {
     "file": "out/tiktok-001.mp4",
-    "publishing_account_ids": ["<tiktok_account_id>"],
+    "actor_id": "<actor_id>",
+    "reference_image": "<生成时用的参考图>",
+    "publishing_account_ids": ["<该 Actor 名下的 tiktok 账号>"],
     "caption": "文案 #tag",
     "scheduled_at": "2026-10-02T09:30:00+08:00",
     "schedule_timezone": "Asia/Shanghai",
@@ -99,7 +123,15 @@ museoncli media +get --workspace-id "$WS" --id <media_id>
 
 ## 6. 登记发布任务与排期
 
-每批 1–50 条。先 dry-run，再正式提交：
+每批 1–50 条。提交前重新核对绑定，确认生成期间没有人改过账号的 Actor：
+
+```bash
+museoncli hireaicreator account +list --workspace-id "$WS" --actor-id <actor_id> --page-size 100
+```
+
+返回的账号必须包含映射文件里这条视频的每个账号；对不上就停下，回到第 2 步，不要照旧提交。
+
+先 dry-run，再正式提交：
 
 ```bash
 museoncli hireaicreator video +from-upload --workspace-id "$WS" \
