@@ -119,7 +119,13 @@ class JsonArgumentParser(argparse.ArgumentParser):
     """Keep usage errors on the JSON stdout contract instead of argparse's stderr text."""
 
     def error(self, message: str) -> Any:  # type: ignore[override]
-        raise UsageError(message, usage=self.format_usage().strip())
+        # A domain command's parser is named after its CLI path, so a missing
+        # required flag still reports which command it belongs to.
+        try:
+            command: str | None = get_command_spec(self.prog).schema_name
+        except (KeyError, ValueError):
+            command = None
+        raise UsageError(message, usage=self.format_usage().strip(), command=command)
 
 
 def main() -> None:
