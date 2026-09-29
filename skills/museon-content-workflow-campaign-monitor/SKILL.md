@@ -21,9 +21,9 @@ A campaign monitor stores tracked creators and content with synchronized post an
 | Situation | Start with |
 | --- | --- |
 | Find a collection | `museoncli campaign-monitor +list` |
-| Inspect creators or content | `museoncli campaign-monitor +creator-list` |
-| Review performance | `museoncli campaign-monitor +summary` |
-| Read synced posts | `museoncli campaign-monitor +post-list` |
+| Inspect creators or content | `museoncli campaign-monitor +list-creators` |
+| Review performance | `museoncli campaign-monitor +get-summary` |
+| Read synced posts | `museoncli campaign-monitor +list-posts` |
 
 ## DON'T
 

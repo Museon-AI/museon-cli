@@ -358,12 +358,12 @@ def test_dispatch_with_notices_keeps_local_commands_offline(
 
 def test_schema_parser_supports_optional_command_name() -> None:
     list_args = parse(["schema"])
-    command_args = parse(["schema", "research.web-research"])
+    command_args = parse(["schema", "research.search-web"])
 
     assert list_args.command == "schema"
     assert list_args.name is None
     assert command_args.command == "schema"
-    assert command_args.name == "research.web-research"
+    assert command_args.name == "research.search-web"
 
 
 def test_setup_parser_supports_named_agent_and_force() -> None:
@@ -655,7 +655,7 @@ def test_research_web_research_parser() -> None:
     args = parse(
         [
             "research",
-            "+web-research",
+            "+search-web",
             "--query",
             "Museon AI",
             "--url",
@@ -670,8 +670,8 @@ def test_research_web_research_parser() -> None:
     )
 
     assert args.command == "research"
-    assert args.shortcut == "+web-research"
-    assert args.domain_command == "research.web-research"
+    assert args.shortcut == "+search-web"
+    assert args.domain_command == "research.search-web"
     assert args.query == "Museon AI"
     assert args.url == "https://example.com"
     assert args.include == ["search-results", "site-visual-assets"]
@@ -680,7 +680,7 @@ def test_research_web_research_parser() -> None:
 
 
 def test_research_web_research_schema_exposes_retry_default() -> None:
-    schema = main_module.schema_payload("research.web-research")
+    schema = main_module.schema_payload("research.search-web")
 
     assert schema["input_schema"]["properties"]["max_retries"]["default"] == 3
 
@@ -689,7 +689,7 @@ def test_research_social_media_search_parser() -> None:
     args = parse(
         [
             "research",
-            "+social-media-search",
+            "+search-social-media",
             "--platform",
             "tiktok",
             "--intent",
@@ -704,8 +704,8 @@ def test_research_social_media_search_parser() -> None:
     )
 
     assert args.command == "research"
-    assert args.shortcut == "+social-media-search"
-    assert args.domain_command == "research.social-media-search"
+    assert args.shortcut == "+search-social-media"
+    assert args.domain_command == "research.search-social-media"
     assert args.platform == "tiktok"
     assert args.intent == "keyword-search"
     assert args.query == "skincare routine"
@@ -717,7 +717,7 @@ def test_research_social_media_search_parser_accepts_xhs() -> None:
     args = parse(
         [
             "research",
-            "+social-media-search",
+            "+search-social-media",
             "--platform",
             "xhs",
             "--intent",
@@ -733,7 +733,7 @@ def test_research_social_media_search_parser_accepts_xhs() -> None:
         ]
     )
 
-    assert args.domain_command == "research.social-media-search"
+    assert args.domain_command == "research.search-social-media"
     assert args.platform == "xhs"
     assert args.intent == "keyword-search"
     assert args.query == "coffee shop decor"
@@ -746,7 +746,7 @@ def test_research_social_media_search_parser_accepts_xhs_post() -> None:
     args = parse(
         [
             "research",
-            "+social-media-search",
+            "+search-social-media",
             "--platform",
             "xhs",
             "--intent",
@@ -756,14 +756,14 @@ def test_research_social_media_search_parser_accepts_xhs_post() -> None:
         ]
     )
 
-    assert args.domain_command == "research.social-media-search"
+    assert args.domain_command == "research.search-social-media"
     assert args.platform == "xhs"
     assert args.intent == "post"
     assert args.query == "6900c677000000000303418e"
 
 
 def test_research_social_media_search_schema_exposes_xhs_detail_intents() -> None:
-    schema = main_module.schema_payload("research.social-media-search")
+    schema = main_module.schema_payload("research.search-social-media")
     intent_schema = schema["input_schema"]["properties"]["intent"]
     max_retries_schema = schema["input_schema"]["properties"]["max_retries"]
     description = intent_schema["description"]
@@ -777,7 +777,7 @@ def test_research_social_media_search_help_shows_numeric_bounds(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     with pytest.raises(SystemExit):
-        parse(["research", "+social-media-search", "--help"])
+        parse(["research", "+search-social-media", "--help"])
 
     out = capsys.readouterr().out
     assert "--content-chars 0-4000" in out
@@ -792,7 +792,7 @@ def test_research_social_media_search_rejects_out_of_range_content_chars() -> No
         parse(
             [
                 "research",
-                "+social-media-search",
+                "+search-social-media",
                 "--platform",
                 "tiktok",
                 "--intent",
@@ -814,7 +814,7 @@ def test_research_social_media_search_rejects_out_of_range_timeout() -> None:
         parse(
             [
                 "research",
-                "+social-media-search",
+                "+search-social-media",
                 "--platform",
                 "tiktok",
                 "--intent",
@@ -834,7 +834,7 @@ def test_research_community_search_parser() -> None:
     args = parse(
         [
             "research",
-            "+community-search",
+            "+search-community",
             "--platform",
             "reddit",
             "--intent",
@@ -852,8 +852,8 @@ def test_research_community_search_parser() -> None:
 
     assert args.command == "research"
     assert args.max_retries == 3
-    assert args.shortcut == "+community-search"
-    assert args.domain_command == "research.community-search"
+    assert args.shortcut == "+search-community"
+    assert args.domain_command == "research.search-community"
     assert args.platform == "reddit"
     assert args.intent == "keyword-search"
     assert args.query == "AI video agent"
@@ -863,7 +863,7 @@ def test_research_community_search_parser() -> None:
 
 
 def test_research_community_search_schema_exposes_retry_default() -> None:
-    schema = main_module.schema_payload("research.community-search")
+    schema = main_module.schema_payload("research.search-community")
 
     assert schema["input_schema"]["properties"]["max_retries"]["default"] == 3
 
@@ -872,7 +872,7 @@ def test_research_visual_analyze_parser() -> None:
     args = parse(
         [
             "research",
-            "+visual-analyze",
+            "+analyze-visual",
             "--media",
             "https://example.com/a.png",
             "--prompt",
@@ -881,8 +881,8 @@ def test_research_visual_analyze_parser() -> None:
     )
 
     assert args.command == "research"
-    assert args.shortcut == "+visual-analyze"
-    assert args.domain_command == "research.visual-analyze"
+    assert args.shortcut == "+analyze-visual"
+    assert args.domain_command == "research.analyze-visual"
     assert args.media_urls == ["https://example.com/a.png"]
     assert args.prompt == "Assess this image."
 
@@ -1025,15 +1025,15 @@ def test_campaign_monitor_post_resolve_parser() -> None:
     args = parse(
         [
             "campaign-monitor",
-            "+post-resolve",
+            "+resolve-post",
             "--schedule-item-id",
             "5c000000-0000-4000-8000-000000000001",
         ]
     )
 
     assert args.command == "campaign-monitor"
-    assert args.shortcut == "+post-resolve"
-    assert args.domain_command == "campaign-monitor.post-resolve"
+    assert args.shortcut == "+resolve-post"
+    assert args.domain_command == "campaign-monitor.resolve-post"
     assert main_module.command_payload(args) == {
         "schedule_item_id": "5c000000-0000-4000-8000-000000000001"
     }
@@ -1043,7 +1043,7 @@ def test_campaign_monitor_post_performance_parser() -> None:
     args = parse(
         [
             "campaign-monitor",
-            "+post-performance-get",
+            "+get-post-performance",
             "--id",
             "c0000000-0000-4000-8000-000000000001",
             "--date-from",
@@ -1054,8 +1054,8 @@ def test_campaign_monitor_post_performance_parser() -> None:
     )
 
     assert args.command == "campaign-monitor"
-    assert args.shortcut == "+post-performance-get"
-    assert args.domain_command == "campaign-monitor.post-performance-get"
+    assert args.shortcut == "+get-post-performance"
+    assert args.domain_command == "campaign-monitor.get-post-performance"
     assert main_module.command_payload(args) == {
         "content_id": "c0000000-0000-4000-8000-000000000001",
         "date_from": "2026-06-01",
@@ -1098,20 +1098,20 @@ def test_dispatch_campaign_monitor_post_list_warns_about_synced_store(
     args = parse(
         [
             "campaign-monitor",
-            "+post-list",
+            "+list-posts",
             "--creator-id",
             creator_id,
         ]
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "campaign-monitor.post-list"
+    assert result["command"] == "campaign-monitor.list-posts"
     assert result["data"]["items"] == []
     assert result["warnings"] == [
         (
             "This command reads Museon's synced monitor store only; use "
-            "campaign-monitor +content-list/+creator-list/+summary for "
-            "campaign-scoped collections and research +social-media-search "
+            "campaign-monitor +list-content/+list-creators/+get-summary for "
+            "campaign-scoped collections and research +search-social-media "
             "for external discovery."
         )
     ]
@@ -1128,7 +1128,7 @@ def test_campaign_monitor_content_list_parser() -> None:
     args = parse(
         [
             "campaign-monitor",
-            "+content-list",
+            "+list-content",
             "--id",
             "campaign-1",
             "--creator-id",
@@ -1151,8 +1151,8 @@ def test_campaign_monitor_content_list_parser() -> None:
     )
 
     assert args.command == "campaign-monitor"
-    assert args.shortcut == "+content-list"
-    assert args.domain_command == "campaign-monitor.content-list"
+    assert args.shortcut == "+list-content"
+    assert args.domain_command == "campaign-monitor.list-content"
     assert main_module.command_payload(args) == {
         "campaign_id": "campaign-1",
         "date_from": "2026-06-01",
@@ -1174,29 +1174,29 @@ def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
     assert [command["name"] for command in schema["commands"]] == [
         "campaign-monitor.list",
         "campaign-monitor.get",
-        "campaign-monitor.creator-list",
-        "campaign-monitor.creator-add",
-        "campaign-monitor.creator-remove",
-        "campaign-monitor.content-list",
-        "campaign-monitor.content-add",
-        "campaign-monitor.content-remove",
-        "campaign-monitor.content-batch-remove",
-        "campaign-monitor.summary",
-        "campaign-monitor.period-performance",
-        "campaign-monitor.creator-get",
-        "campaign-monitor.post-list",
-        "campaign-monitor.creator-performance-get",
-        "campaign-monitor.post-get",
-        "campaign-monitor.post-performance-get",
-        "campaign-monitor.post-resolve",
+        "campaign-monitor.list-creators",
+        "campaign-monitor.add-creators",
+        "campaign-monitor.remove-creators",
+        "campaign-monitor.list-content",
+        "campaign-monitor.add-content",
+        "campaign-monitor.remove-content",
+        "campaign-monitor.bulk-remove-content",
+        "campaign-monitor.get-summary",
+        "campaign-monitor.get-period-performance",
+        "campaign-monitor.get-creator",
+        "campaign-monitor.list-posts",
+        "campaign-monitor.get-creator-performance",
+        "campaign-monitor.get-post",
+        "campaign-monitor.get-post-performance",
+        "campaign-monitor.resolve-post",
     ]
-    content_list = main_module.schema_payload("campaign-monitor.content-list")
+    content_list = main_module.schema_payload("campaign-monitor.list-content")
     properties = content_list["input_schema"]["properties"]
     assert properties["views_min"]["minimum"] == 0
     assert properties["likes_min"]["minimum"] == 0
     assert properties["likes_max"]["minimum"] == 0
 
-    period_performance = main_module.schema_payload("campaign-monitor.period-performance")
+    period_performance = main_module.schema_payload("campaign-monitor.get-period-performance")
     assert period_performance["input_schema"]["required"] == [
         "campaign_id",
         "current_period_start",
@@ -1212,7 +1212,7 @@ def test_campaign_monitor_period_performance_parser() -> None:
     args = parse(
         [
             "campaign-monitor",
-            "+period-performance",
+            "+get-period-performance",
             "--id",
             "campaign-1",
             "--period-start",
@@ -1224,7 +1224,7 @@ def test_campaign_monitor_period_performance_parser() -> None:
         ]
     )
 
-    assert args.domain_command == "campaign-monitor.period-performance"
+    assert args.domain_command == "campaign-monitor.get-period-performance"
     assert main_module.command_payload(args) == {
         "campaign_id": "campaign-1",
         "current_period_start": "2026-09-14",
@@ -1360,20 +1360,20 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "routines",
     ]
     assert [item["name"] for item in result["data"]["commands"]["research"]] == [
-        "research.web-research",
-        "research.social-media-search",
-        "research.social-media-hook-analyze",
-        "research.social-media-hook-source",
-        "research.social-media-hook-analyze-seen",
-        "research.social-media-hook-analyze-get",
-        "research.social-media-hook-analyze-poll",
-        "research.social-media-hook-analyze-results",
-        "research.social-media-hook-analyze-media-get",
-        "research.community-search",
-        "research.creative-search-ads",
-        "research.creative-search-ads-get",
-        "research.creative-search-ads-results",
-        "research.visual-analyze",
+        "research.search-web",
+        "research.search-social-media",
+        "research.create-hook-analysis",
+        "research.submit-hook-candidates",
+        "research.check-hooks-analyzed",
+        "research.get-hook-analysis",
+        "research.bulk-get-hook-analyses",
+        "research.list-hook-analysis-results",
+        "research.get-hook-analysis-media",
+        "research.search-community",
+        "research.create-ads-search",
+        "research.get-ads-search",
+        "research.list-ads-search-results",
+        "research.analyze-visual",
     ]
     assert [item["name"] for item in result["data"]["commands"]["content-analysis"]] == [
         "content-analysis.run",
@@ -1383,21 +1383,21 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
     assert [item["name"] for item in result["data"]["commands"]["campaign-monitor"]] == [
         "campaign-monitor.list",
         "campaign-monitor.get",
-        "campaign-monitor.creator-list",
-        "campaign-monitor.creator-add",
-        "campaign-monitor.creator-remove",
-        "campaign-monitor.content-list",
-        "campaign-monitor.content-add",
-        "campaign-monitor.content-remove",
-        "campaign-monitor.content-batch-remove",
-        "campaign-monitor.summary",
-        "campaign-monitor.period-performance",
-        "campaign-monitor.creator-get",
-        "campaign-monitor.post-list",
-        "campaign-monitor.creator-performance-get",
-        "campaign-monitor.post-get",
-        "campaign-monitor.post-performance-get",
-        "campaign-monitor.post-resolve",
+        "campaign-monitor.list-creators",
+        "campaign-monitor.add-creators",
+        "campaign-monitor.remove-creators",
+        "campaign-monitor.list-content",
+        "campaign-monitor.add-content",
+        "campaign-monitor.remove-content",
+        "campaign-monitor.bulk-remove-content",
+        "campaign-monitor.get-summary",
+        "campaign-monitor.get-period-performance",
+        "campaign-monitor.get-creator",
+        "campaign-monitor.list-posts",
+        "campaign-monitor.get-creator-performance",
+        "campaign-monitor.get-post",
+        "campaign-monitor.get-post-performance",
+        "campaign-monitor.resolve-post",
     ]
     assert "social-media" not in result["data"]["commands"]
     assert [item["name"] for item in result["data"]["commands"]["skills"]] == [
@@ -1416,7 +1416,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "routines.cancel",
         "routines.pause",
         "routines.resume",
-        "routines.memory-get",
+        "routines.get-memory",
         "routines.record",
     ]
 
@@ -1450,11 +1450,11 @@ def test_content_analysis_run_schema_exposes_source_and_wait_contract() -> None:
 
 def test_schema_returns_one_command_contract() -> None:
     result = asyncio.run(
-        main_module.dispatch(argparse.Namespace(command="schema", name="research.visual-analyze"))
+        main_module.dispatch(argparse.Namespace(command="schema", name="research.analyze-visual"))
     )
 
-    assert result["data"]["name"] == "research.visual-analyze"
-    assert result["data"]["shortcut"] == "+visual-analyze"
+    assert result["data"]["name"] == "research.analyze-visual"
+    assert result["data"]["shortcut"] == "+analyze-visual"
     assert result["data"]["risk_level"] == "read"
     assert "credit_cost" not in result["data"]  # costs are a server-side concern
     assert "usd_cost" not in result["data"]
@@ -1497,7 +1497,7 @@ def test_schema_returns_domain_command_catalog() -> None:
     [
         [
             "research",
-            "+visual-analyze",
+            "+analyze-visual",
             "--media",
             "https://example.com/image.png",
             "--prompt",
@@ -1530,7 +1530,7 @@ def test_schema_returns_routines_command_catalog() -> None:
         "routines.cancel",
         "routines.pause",
         "routines.resume",
-        "routines.memory-get",
+        "routines.get-memory",
         "routines.record",
     ]
 
@@ -1792,7 +1792,7 @@ def test_dispatch_routines_get_adds_schedule_ref(
         (["routines", "+cancel", "--id", "routine-1"], "params"),
         (["routines", "+pause", "--id", "routine-1"], "params"),
         (["routines", "+resume", "--id", "routine-1"], "params"),
-        (["routines", "+memory-get", "--id", "routine-1"], "params"),
+        (["routines", "+get-memory", "--id", "routine-1"], "params"),
         (["routines", "+record", "output", "--id", "routine-1", "--content", "Done"], "params"),
     ],
 )
@@ -2043,14 +2043,14 @@ def test_schema_does_not_expose_routines_claim_managed_contract() -> None:
 
 def test_schema_returns_routines_memory_get_contract() -> None:
     result = asyncio.run(
-        main_module.dispatch(argparse.Namespace(command="schema", name="routines.memory-get"))
+        main_module.dispatch(argparse.Namespace(command="schema", name="routines.get-memory"))
     )
 
-    assert result["data"]["name"] == "routines.memory-get"
-    assert result["data"]["shortcut"] == "+memory-get"
+    assert result["data"]["name"] == "routines.get-memory"
+    assert result["data"]["shortcut"] == "+get-memory"
     assert result["data"]["risk_level"] == "read"
     assert result["data"]["input_schema"]["required"] == ["routine_id"]
-    assert "museoncli routines +memory-get" in result["data"]["examples"][0]
+    assert "museoncli routines +get-memory" in result["data"]["examples"][0]
 
 
 @pytest.mark.parametrize(
@@ -2366,7 +2366,7 @@ def test_dispatch_research_web_research_uses_agent_api(
     args = parse(
         [
             "research",
-            "+web-research",
+            "+search-web",
             "--query",
             "Museon AI",
             "--include",
@@ -2377,7 +2377,7 @@ def test_dispatch_research_web_research_uses_agent_api(
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "research.web-research"
+    assert result["command"] == "research.search-web"
     assert result["data"] == {"ok": True, "evidence": {}}
     assert result["run"] is None
     assert calls == [
@@ -2429,7 +2429,7 @@ def test_dispatch_research_social_media_search_uses_agent_api(
     args = parse(
         [
             "research",
-            "+social-media-search",
+            "+search-social-media",
             "--platform",
             "tiktok",
             "--intent",
@@ -2444,7 +2444,7 @@ def test_dispatch_research_social_media_search_uses_agent_api(
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "research.social-media-search"
+    assert result["command"] == "research.search-social-media"
     assert result["data"] == {"ok": True, "evidence": {"items": []}}
     assert result["run"] is None
     assert calls == [
@@ -2500,7 +2500,7 @@ def test_dispatch_research_community_search_uses_agent_api(
     args = parse(
         [
             "research",
-            "+community-search",
+            "+search-community",
             "--platform",
             "x",
             "--intent",
@@ -2518,7 +2518,7 @@ def test_dispatch_research_community_search_uses_agent_api(
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "research.community-search"
+    assert result["command"] == "research.search-community"
     assert result["data"] == {"ok": True, "evidence": {"items": []}}
     assert result["run"] is None
     assert calls == [
@@ -2576,7 +2576,7 @@ def test_dispatch_research_visual_analyze_uses_agent_api(
     args = parse(
         [
             "research",
-            "+visual-analyze",
+            "+analyze-visual",
             "--media-json",
             '[{"url":"https://example.com/a.png","label":"hero"}]',
             "--prompt",
@@ -2585,7 +2585,7 @@ def test_dispatch_research_visual_analyze_uses_agent_api(
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "research.visual-analyze"
+    assert result["command"] == "research.analyze-visual"
     assert result["data"] == {"ok": True, "analysis": "Looks clean."}
     assert calls[0]["path"] == "/agent-cli/research/visual-analyze"
     assert calls[0]["json_body"]["payload"] == {
@@ -2863,14 +2863,14 @@ def test_dispatch_campaign_monitor_post_resolve_uses_agent_api(
     args = parse(
         [
             "campaign-monitor",
-            "+post-resolve",
+            "+resolve-post",
             "--schedule-item-id",
             "5c000000-0000-4000-8000-000000000001",
         ]
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "campaign-monitor.post-resolve"
+    assert result["command"] == "campaign-monitor.resolve-post"
     assert result["data"]["resolved"]["content_id"] == "c0000000-0000-4000-8000-000000000001"
     assert calls == [
         {
@@ -2914,7 +2914,7 @@ def test_dispatch_campaign_monitor_post_performance_uses_agent_api(
     args = parse(
         [
             "campaign-monitor",
-            "+post-performance-get",
+            "+get-post-performance",
             "--id",
             "c0000000-0000-4000-8000-000000000001",
             "--date-from",
@@ -2925,13 +2925,13 @@ def test_dispatch_campaign_monitor_post_performance_uses_agent_api(
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "campaign-monitor.post-performance-get"
+    assert result["command"] == "campaign-monitor.get-post-performance"
     assert result["data"]["content_id"] == "c0000000-0000-4000-8000-000000000001"
     assert result["warnings"] == [
         (
             "This command reads Museon's synced monitor store only; use "
-            "campaign-monitor +content-list/+creator-list/+summary for "
-            "campaign-scoped collections and research +social-media-search "
+            "campaign-monitor +list-content/+list-creators/+get-summary for "
+            "campaign-scoped collections and research +search-social-media "
             "for external discovery."
         )
     ]
@@ -2949,7 +2949,7 @@ def test_dispatch_campaign_monitor_post_performance_uses_agent_api(
 
 
 def test_schema_exposes_frontend_url_templates_for_campaigns_and_accounts() -> None:
-    campaign_schema = main_module.schema_payload("campaign-monitor.summary")
+    campaign_schema = main_module.schema_payload("campaign-monitor.get-summary")
 
     assert "/campaigns/{campaign_id}/creators" in {
         template["path_template"] for template in campaign_schema["frontend_url_templates"]

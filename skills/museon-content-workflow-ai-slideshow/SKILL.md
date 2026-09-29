@@ -24,9 +24,9 @@ Read [slideshow-lifecycle.md](references/slideshow-lifecycle.md) for the support
 | --- | --- |
 | Find or maintain inputs | `museoncli ai-slideshow asset +list` |
 | Generate from explicit assets | `museoncli ai-slideshow generation +create` |
-| Inspect or change account asset pools | `museoncli ai-slideshow publish +asset-pools-batch-preview` |
-| Preview or apply schedule plans | `museoncli ai-slideshow publish +schedule-plan-preview` |
-| Inspect account publish configuration | `museoncli ai-slideshow publish +config-get` |
+| Inspect or change account asset pools | `museoncli ai-slideshow publish +bulk-preview-asset-pools` |
+| Preview or apply schedule plans | `museoncli ai-slideshow publish +preview-schedule-plan` |
+| Inspect account publish configuration | `museoncli ai-slideshow publish +get-config` |
 
 ## DON'T
 

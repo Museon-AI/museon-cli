@@ -32,7 +32,7 @@ def test_creative_search_ads_parser_builds_server_payload() -> None:
     args = _parse(
         [
             "research",
-            "+creative-search-ads",
+            "+create-ads-search",
             "--idempotency-key",
             "ads-search-1",
             "--keyword",
@@ -48,7 +48,7 @@ def test_creative_search_ads_parser_builds_server_payload() -> None:
         ]
     )
 
-    assert args.domain_command == "research.creative-search-ads"
+    assert args.domain_command == "research.create-ads-search"
     assert command_payload(args) == {
         "idempotency_key": "ads-search-1",
         "keywords": ["eco soap", "refill soap"],
@@ -62,7 +62,7 @@ def test_creative_search_ads_parser_applies_safe_defaults() -> None:
     args = _parse(
         [
             "research",
-            "+creative-search-ads",
+            "+create-ads-search",
             "--idempotency-key",
             "ads-search-defaults",
             "--keyword",
@@ -83,7 +83,7 @@ def test_creative_search_ads_parser_requires_idempotency_key() -> None:
     args = _parse(
         [
             "research",
-            "+creative-search-ads",
+            "+create-ads-search",
             "--keyword",
             "eco soap",
         ]
@@ -97,7 +97,7 @@ def test_creative_search_ads_accepts_idempotency_key_from_structured_args() -> N
     args = _parse(
         [
             "research",
-            "+creative-search-ads",
+            "+create-ads-search",
             "--args-json",
             json.dumps(
                 {
@@ -124,7 +124,7 @@ def test_creative_search_ads_rejects_invalid_structured_idempotency_key(
     args = _parse(
         [
             "research",
-            "+creative-search-ads",
+            "+create-ads-search",
             "--args-json",
             json.dumps(
                 {
@@ -152,7 +152,7 @@ def test_creative_search_ads_rejects_invalid_structured_keywords(
     args = _parse(
         [
             "research",
-            "+creative-search-ads",
+            "+create-ads-search",
             "--idempotency-key",
             "ads-search-invalid",
             "--args-json",
@@ -178,7 +178,7 @@ def test_creative_search_ads_results_rejects_invalid_pagination(
     args = _parse(
         [
             "research",
-            "+creative-search-ads-results",
+            "+list-ads-search-results",
             "--id",
             TASK_ID,
             flag,
@@ -194,14 +194,14 @@ def test_creative_search_ads_results_defaults_to_analysis_eligible_matches() -> 
     args = _parse(
         [
             "research",
-            "+creative-search-ads-results",
+            "+list-ads-search-results",
             "--id",
             TASK_ID,
         ]
     )
 
     payload = command_payload(args)
-    schema = schema_payload("research.creative-search-ads-results")
+    schema = schema_payload("research.list-ads-search-results")
 
     assert payload["relevance"] == "matched"
     assert schema["input_schema"]["properties"]["relevance"] == {
@@ -220,7 +220,7 @@ def test_creative_search_ads_results_defaults_to_analysis_eligible_matches() -> 
         _parse(
             [
                 "research",
-                "+creative-search-ads-results",
+                "+list-ads-search-results",
                 "--id",
                 TASK_ID,
                 "--relevance",
@@ -232,7 +232,7 @@ def test_creative_search_ads_results_defaults_to_analysis_eligible_matches() -> 
 
 
 def test_creative_search_ads_schema_is_discoverable_and_provider_neutral() -> None:
-    schema = schema_payload("research.creative-search-ads")
+    schema = schema_payload("research.create-ads-search")
 
     assert schema["risk_level"] == "write"
     assert schema["execution"] == "async_run"
@@ -255,7 +255,7 @@ def test_creative_search_ads_dry_run_makes_no_api_call(
             _parse(
                 [
                     "research",
-                    "+creative-search-ads",
+                    "+create-ads-search",
                     "--idempotency-key",
                     "ads-search-dry-run",
                     "--keyword",
@@ -268,7 +268,7 @@ def test_creative_search_ads_dry_run_makes_no_api_call(
 
     assert result is not None
     assert result["data"]["dry_run"] is True
-    assert result["data"]["would_execute"] == "research.creative-search-ads"
+    assert result["data"]["would_execute"] == "research.create-ads-search"
 
 
 def test_dispatch_creative_search_ads_returns_async_run(
@@ -310,7 +310,7 @@ def test_dispatch_creative_search_ads_returns_async_run(
             _parse(
                 [
                     "research",
-                    "+creative-search-ads",
+                    "+create-ads-search",
                     "--idempotency-key",
                     "ads-search-dispatch-1",
                     "--keyword",
@@ -325,13 +325,13 @@ def test_dispatch_creative_search_ads_returns_async_run(
         "id": TASK_ID,
         "type": "creative_search_ads",
         "status": "pending",
-        "watch_command": (f"museoncli research +creative-search-ads-get --id {TASK_ID}"),
+        "watch_command": (f"museoncli research +get-ads-search --id {TASK_ID}"),
         "recommended_wakeup_delay_seconds": 20,
     }
     assert result["next_steps"] == [
         (
             "Schedule a wakeup in 20 seconds, then poll with: "
-            f"museoncli research +creative-search-ads-get --id {TASK_ID}"
+            f"museoncli research +get-ads-search --id {TASK_ID}"
         )
     ]
     assert calls == [
@@ -382,7 +382,7 @@ def test_dispatch_creative_search_ads_get_stops_polling_when_terminal(
     monkeypatch.setattr(main_module, "api_data", fake_api_data)
 
     result = asyncio.run(
-        main_module.dispatch(_parse(["research", "+creative-search-ads-get", "--id", TASK_ID]))
+        main_module.dispatch(_parse(["research", "+get-ads-search", "--id", TASK_ID]))
     )
 
     assert result is not None
@@ -432,7 +432,7 @@ def test_dispatch_creative_search_ads_results_uses_pagination_query(
             _parse(
                 [
                     "research",
-                    "+creative-search-ads-results",
+                    "+list-ads-search-results",
                     "--id",
                     TASK_ID,
                     "--ad-platform",

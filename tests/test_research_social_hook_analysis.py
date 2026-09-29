@@ -27,7 +27,7 @@ def test_start_accepts_post_and_profile_urls_without_server_strategy() -> None:
     args = _parse(
         [
             "research",
-            "+social-media-hook-analyze",
+            "+create-hook-analysis",
             "--url",
             "https://www.instagram.com/reel/post-1/",
             "--profile-url",
@@ -49,7 +49,7 @@ def test_start_accepts_post_and_profile_urls_without_server_strategy() -> None:
         "max_items": 18,
         "idempotency_key": "hook-analysis-1",
     }
-    schema = schema_payload("research.social-media-hook-analyze")["input_schema"]
+    schema = schema_payload("research.create-hook-analysis")["input_schema"]
     assert "selection" not in schema["properties"]
     assert "decision" not in schema["properties"]
 
@@ -58,7 +58,7 @@ def test_start_requires_at_least_one_source() -> None:
     args = _parse(
         [
             "research",
-            "+social-media-hook-analyze",
+            "+create-hook-analysis",
             "--idempotency-key",
             "hook-analysis-empty",
         ]
@@ -71,7 +71,7 @@ def test_source_builds_agent_prefiltered_candidate_payload() -> None:
     args = _parse(
         [
             "research",
-            "+social-media-hook-source",
+            "+submit-hook-candidates",
             "--url",
             "https://www.instagram.com/reel/post-1/",
             "--url",
@@ -91,7 +91,7 @@ def test_source_builds_agent_prefiltered_candidate_payload() -> None:
         "max_items": 10,
         "idempotency_key": "home-source-1",
     }
-    schema = schema_payload("research.social-media-hook-source")
+    schema = schema_payload("research.submit-hook-candidates")
     assert schema["execution"] == "async_run"
     assert schema["input_schema"]["properties"]["candidate_urls"]["minItems"] == 1
 
@@ -127,7 +127,7 @@ def test_source_dispatches_to_sourcing_boundary(monkeypatch: pytest.MonkeyPatch)
             _parse(
                 [
                     "research",
-                    "+social-media-hook-source",
+                    "+submit-hook-candidates",
                     "--url",
                     "https://www.instagram.com/reel/post-1/",
                     "--idempotency-key",
@@ -148,7 +148,7 @@ def test_seen_parser_builds_ordered_url_payload_and_read_schema() -> None:
     args = _parse(
         [
             "research",
-            "+social-media-hook-analyze-seen",
+            "+check-hooks-analyzed",
             "--url",
             "https://www.instagram.com/reel/post-1/",
             "--url",
@@ -158,7 +158,7 @@ def test_seen_parser_builds_ordered_url_payload_and_read_schema() -> None:
         ]
     )
 
-    assert args.domain_command == "research.social-media-hook-analyze-seen"
+    assert args.domain_command == "research.check-hooks-analyzed"
     assert args.workspace_id == "workspace-2"
     assert command_payload(args) == {
         "urls": [
@@ -166,7 +166,7 @@ def test_seen_parser_builds_ordered_url_payload_and_read_schema() -> None:
             "https://www.instagram.com/reel/post-2/",
         ]
     }
-    schema = schema_payload("research.social-media-hook-analyze-seen")
+    schema = schema_payload("research.check-hooks-analyzed")
     assert schema["risk_level"] == "read"
     assert schema["execution"] == "direct"
     assert schema["input_schema"]["properties"]["urls"]["maxItems"] == 40
@@ -174,7 +174,7 @@ def test_seen_parser_builds_ordered_url_payload_and_read_schema() -> None:
 
 @pytest.mark.parametrize("count", [0, 41])
 def test_seen_requires_one_to_forty_urls(count: int) -> None:
-    argv = ["research", "+social-media-hook-analyze-seen"]
+    argv = ["research", "+check-hooks-analyzed"]
     for index in range(count):
         argv.extend(["--url", f"https://www.instagram.com/reel/post-{index}/"])
 
@@ -207,7 +207,7 @@ def test_seen_dispatch_posts_workspace_scoped_batch(monkeypatch: pytest.MonkeyPa
             _parse(
                 [
                     "research",
-                    "+social-media-hook-analyze-seen",
+                    "+check-hooks-analyzed",
                     "--url",
                     "https://www.instagram.com/reel/post-1/",
                     "--workspace-id",
@@ -217,7 +217,7 @@ def test_seen_dispatch_posts_workspace_scoped_batch(monkeypatch: pytest.MonkeyPa
         )
     )
 
-    assert result["command"] == "research.social-media-hook-analyze-seen"
+    assert result["command"] == "research.check-hooks-analyzed"
     assert calls == [
         {
             "method": "POST",
@@ -235,7 +235,7 @@ def test_poll_collects_up_to_twenty_ids() -> None:
     args = _parse(
         [
             "research",
-            "+social-media-hook-analyze-poll",
+            "+bulk-get-hook-analyses",
             "--id",
             ANALYSIS_ID,
             "--id",
@@ -282,7 +282,7 @@ def test_start_dispatch_returns_proactive_poll_envelope(
             _parse(
                 [
                     "research",
-                    "+social-media-hook-analyze",
+                    "+create-hook-analysis",
                     "--url",
                     "https://www.instagram.com/reel/post-1/",
                     "--idempotency-key",
@@ -296,7 +296,7 @@ def test_start_dispatch_returns_proactive_poll_envelope(
         "id": ANALYSIS_ID,
         "type": "social_hook_analysis",
         "status": "queued",
-        "watch_command": (f"museoncli research +social-media-hook-analyze-get --id {ANALYSIS_ID}"),
+        "watch_command": (f"museoncli research +get-hook-analysis --id {ANALYSIS_ID}"),
         "recommended_wakeup_delay_seconds": 5,
     }
     assert calls[0]["path"] == "/agent-cli/research/social-media-hook-analyze"
@@ -327,7 +327,7 @@ def test_results_uses_stable_pagination_query(monkeypatch: pytest.MonkeyPatch) -
             _parse(
                 [
                     "research",
-                    "+social-media-hook-analyze-results",
+                    "+list-hook-analysis-results",
                     "--id",
                     ANALYSIS_ID,
                     "--page",
@@ -363,7 +363,7 @@ def test_media_get_atomically_writes_video(monkeypatch: pytest.MonkeyPatch, tmp_
             _parse(
                 [
                     "research",
-                    "+social-media-hook-analyze-media-get",
+                    "+get-hook-analysis-media",
                     "--id",
                     ANALYSIS_ID,
                     "--item-id",
@@ -401,7 +401,7 @@ def test_media_get_preserves_existing_output_and_cleans_partial(
                 _parse(
                     [
                         "research",
-                        "+social-media-hook-analyze-media-get",
+                        "+get-hook-analysis-media",
                         "--id",
                         ANALYSIS_ID,
                         "--item-id",

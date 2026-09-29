@@ -7,7 +7,7 @@
 | CLI | 接口 | 回读事实 |
 | --- | --- | --- |
 | `media +generate --type image|video --prompt ... --idempotency-key ...` | POST `/api/v1/media/generations` | 202仅接收；task_id/media_id/workspace_id |
-| `media +status --task-id ...` | GET `/api/v1/media/generations/{task_id}?workspace_id=...` | effective request、provider/model、phase、error、media_ready |
+| `media +get-generation --task-id ...` | GET `/api/v1/media/generations/{task_id}?workspace_id=...` | effective request、provider/model、phase、error、media_ready |
 | `media +get --id ...` | 已有GET `/agent-cli/assets/media/{media_id}` | 媒体状态、真实URL；不证明AI Hook的版本或交付 |
 | `media +upload --media-type file --file ... --file-id ...` | POST `/api/v1/media/files` | kind=file、artifact_id、workspace_id、private、临时下载URL |
 | `media +get --kind file --id ...` | 已有GET `/agent-artifacts/{artifact_id}?workspace_id=...` | 文件账本和重新签名下载URL；不是media表 |
@@ -22,7 +22,7 @@
 
 CAS绑定status/run_id/updated_at。执行先写submitting再调用provider：Kling立即持久job后只poll，绝不再次submit；AnyFast无法恢复的提交/存储窗口明确unknown。图片返回已确认生成后先记录provider事实，存储失败是OUTPUT_STORAGE_UNKNOWN，不谎称没有生成。产物先写media，再进入metering；严格幂等计量成功后才task completed。失败先持久failing检查点、media失败，再task终态，恢复不会漏掉第二张表。
 
-媒体任务创建时设置`notified=true`，进度由CLI的`media +status`读取，不进入旧通用通知托盘。旧托盘“标记已通知”会修改`updated_at`；若混入媒体任务，会使正常worker在provider返回后丢失CAS更新资格。真实PostgREST回归验证普通任务仍能标记，媒体任务在按ID或全量标记时均不被修改，同幂等键重放也不改变执行版本。
+媒体任务创建时设置`notified=true`，进度由CLI的`media +get-generation`读取，不进入旧通用通知托盘。旧托盘“标记已通知”会修改`updated_at`；若混入媒体任务，会使正常worker在provider返回后丢失CAS更新资格。真实PostgREST回归验证普通任务仍能标记，媒体任务在按ID或全量标记时均不被修改，同幂等键重放也不改变执行版本。
 
 Scheduler是pending推进者；worker未完成poll或可安全恢复的阶段释放pending后ACK。恢复前查询当前确定CloudTask，存在则让其继续；不存在才CAS持久下一代delivery_key并派发。旧投递的key与账本不符不能重新claim。submitting失联直接unknown，不因队列重试换键扣费。取消也保留未知/可恢复阶段证据。
 

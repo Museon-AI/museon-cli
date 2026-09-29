@@ -343,13 +343,18 @@ def _frontend_url_templates_for_spec(spec: CommandSpec) -> list[dict[str, Any]]:
         return [dict(template) for template in _CONTENT_ANALYSIS_FRONTEND_URL_TEMPLATES]
     if schema_name.startswith("ai-slideshow.generation-"):
         return [dict(template) for template in _GENERATION_FRONTEND_URL_TEMPLATES]
-    if schema_name.startswith("social-account.connect-link"):
+    if schema_name in {"social-account.create-connect-link", "social-account.get-connect-link"}:
         return [dict(template) for template in _SOCIAL_ACCOUNT_CONNECT_LINK_FRONTEND_URL_TEMPLATES]
     if schema_name.startswith("social-account."):
         return [dict(template) for template in _SOCIAL_ACCOUNT_FRONTEND_URL_TEMPLATES]
-    if schema_name.startswith("campaign-monitor.creator-get"):
+    if schema_name == "campaign-monitor.get-creator":
         return [dict(template) for template in _SOCIAL_MEDIA_CREATOR_FRONTEND_URL_TEMPLATES]
-    if schema_name.startswith("campaign-monitor.post"):
+    if schema_name in {
+        "campaign-monitor.list-posts",
+        "campaign-monitor.get-post",
+        "campaign-monitor.get-post-performance",
+        "campaign-monitor.resolve-post",
+    }:
         return [dict(template) for template in _SOCIAL_MEDIA_POST_FRONTEND_URL_TEMPLATES]
     if schema_name.startswith("campaign-monitor."):
         return [dict(template) for template in _CAMPAIGN_FRONTEND_URL_TEMPLATES]

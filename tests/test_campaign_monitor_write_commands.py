@@ -1,6 +1,6 @@
 """End-to-end dispatch tests for campaign-monitor tracking write commands.
 
-Covers +creator-add / +creator-remove / +content-add — the creator/post
+Covers +add-creators / +remove-creators / +add-content — the creator/post
 tracking write surface added on top of the read + content-remove commands.
 """
 
@@ -56,7 +56,7 @@ def test_parser_registers_tracking_write_commands() -> None:
     add = parse(
         [
             "campaign-monitor",
-            "+creator-add",
+            "+add-creators",
             "--id",
             CAMPAIGN_ID,
             "--url",
@@ -65,33 +65,33 @@ def test_parser_registers_tracking_write_commands() -> None:
             CREATOR_ID,
         ]
     )
-    assert add.domain_command == "campaign-monitor.creator-add"
+    assert add.domain_command == "campaign-monitor.add-creators"
     assert add.creator_urls == ["https://www.tiktok.com/@a"]
     assert add.creator_ids == [CREATOR_ID]
 
     remove = parse(
-        ["campaign-monitor", "+creator-remove", "--id", CAMPAIGN_ID, "--creator-id", CREATOR_ID]
+        ["campaign-monitor", "+remove-creators", "--id", CAMPAIGN_ID, "--creator-id", CREATOR_ID]
     )
-    assert remove.domain_command == "campaign-monitor.creator-remove"
+    assert remove.domain_command == "campaign-monitor.remove-creators"
     assert remove.creator_social_account_id == CREATOR_ID
 
     content = parse(
-        ["campaign-monitor", "+content-add", "--id", CAMPAIGN_ID, "--content-id", CONTENT_ID]
+        ["campaign-monitor", "+add-content", "--id", CAMPAIGN_ID, "--content-id", CONTENT_ID]
     )
-    assert content.domain_command == "campaign-monitor.content-add"
+    assert content.domain_command == "campaign-monitor.add-content"
     assert content.content_ids == [CONTENT_ID]
 
 
 def test_creator_add_requires_url_or_creator_id() -> None:
-    args = parse(["campaign-monitor", "+creator-add", "--id", CAMPAIGN_ID])
-    spec = get_command_spec("campaign-monitor.creator-add")
+    args = parse(["campaign-monitor", "+add-creators", "--id", CAMPAIGN_ID])
+    spec = get_command_spec("campaign-monitor.add-creators")
     with pytest.raises(ValueError):
         spec.build_arguments(args)
 
 
 def test_content_add_requires_url_or_content_id() -> None:
-    args = parse(["campaign-monitor", "+content-add", "--id", CAMPAIGN_ID])
-    spec = get_command_spec("campaign-monitor.content-add")
+    args = parse(["campaign-monitor", "+add-content", "--id", CAMPAIGN_ID])
+    spec = get_command_spec("campaign-monitor.add-content")
     with pytest.raises(ValueError):
         spec.build_arguments(args)
 
@@ -107,7 +107,7 @@ def test_creator_add_posts_urls_ids_and_sync_flag(monkeypatch: pytest.MonkeyPatc
             parse(
                 [
                     "campaign-monitor",
-                    "+creator-add",
+                    "+add-creators",
                     "--id",
                     CAMPAIGN_ID,
                     "--url",
@@ -151,7 +151,7 @@ def test_content_add_posts_content_id(monkeypatch: pytest.MonkeyPatch) -> None:
             parse(
                 [
                     "campaign-monitor",
-                    "+content-add",
+                    "+add-content",
                     "--id",
                     CAMPAIGN_ID,
                     "--content-id",
@@ -186,7 +186,7 @@ def test_creator_remove_without_yes_requires_confirmation(monkeypatch: pytest.Mo
                 parse(
                     [
                         "campaign-monitor",
-                        "+creator-remove",
+                        "+remove-creators",
                         "--id",
                         CAMPAIGN_ID,
                         "--creator-id",
@@ -208,7 +208,7 @@ def test_creator_remove_with_yes_posts_remove_path(monkeypatch: pytest.MonkeyPat
             parse(
                 [
                     "campaign-monitor",
-                    "+creator-remove",
+                    "+remove-creators",
                     "--id",
                     CAMPAIGN_ID,
                     "--creator-id",
@@ -219,7 +219,7 @@ def test_creator_remove_with_yes_posts_remove_path(monkeypatch: pytest.MonkeyPat
         )
     )
 
-    assert result["command"] == "campaign-monitor.creator-remove"
+    assert result["command"] == "campaign-monitor.remove-creators"
     assert capture.calls == [
         {
             "method": "POST",
@@ -236,38 +236,38 @@ def test_creator_remove_with_yes_posts_remove_path(monkeypatch: pytest.MonkeyPat
         (
             [
                 "campaign-monitor",
-                "+creator-add",
+                "+add-creators",
                 "--id",
                 CAMPAIGN_ID,
                 "--creator-id",
                 CREATOR_ID,
                 "--dry-run",
             ],
-            "campaign-monitor.creator-add",
+            "campaign-monitor.add-creators",
         ),
         (
             [
                 "campaign-monitor",
-                "+creator-remove",
+                "+remove-creators",
                 "--id",
                 CAMPAIGN_ID,
                 "--creator-id",
                 CREATOR_ID,
                 "--dry-run",
             ],
-            "campaign-monitor.creator-remove",
+            "campaign-monitor.remove-creators",
         ),
         (
             [
                 "campaign-monitor",
-                "+content-add",
+                "+add-content",
                 "--id",
                 CAMPAIGN_ID,
                 "--content-id",
                 CONTENT_ID,
                 "--dry-run",
             ],
-            "campaign-monitor.content-add",
+            "campaign-monitor.add-content",
         ),
     ],
 )

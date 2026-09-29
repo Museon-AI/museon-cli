@@ -23,7 +23,7 @@ the cheap candidate gate. If it qualifies, capture and canonicalize its permalin
 while it is still visible, then immediately run:
 
 ```bash
-museoncli research +social-media-hook-analyze-seen \
+museoncli research +check-hooks-analyzed \
   --workspace-id <workspace-id> \
   --url <canonical-permalink>
 ```
@@ -55,4 +55,4 @@ quota. Submit only final `seen=false` URLs together in one new analysis batch.
 
 Do not download media or invoke content analysis during collection. After the
 analysis finishes, obtain recommended media only through
-`+social-media-hook-analyze-media-get`.
+`+get-hook-analysis-media`.

@@ -16,7 +16,7 @@ museoncli media +generate --workspace-id "$workspace" --type "$kind" --prompt "$
 jq -e --arg w "$workspace" '.ok == true and .data.workspace_id == $w and (.data.task_id | type == "string")' "$out/receipt.json" >/dev/null
 task=$(jq -r '.data.task_id' "$out/receipt.json")
 media=$(jq -r '.data.media_id' "$out/receipt.json")
-museoncli media +status --workspace-id "$workspace" --task-id "$task" > "$out/status.json"
+museoncli media +get-generation --workspace-id "$workspace" --task-id "$task" > "$out/status.json"
 jq -e --arg w "$workspace" --arg task "$task" --arg media "$media" \
   '.ok == true and .data.workspace_id == $w and .data.task_id == $task and .data.media_id == $media' "$out/status.json" >/dev/null
 if jq -e '.data.status == "failed" or .data.status == "cancelled" or .data.phase == "unknown"' "$out/status.json" >/dev/null; then

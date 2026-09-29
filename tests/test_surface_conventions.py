@@ -15,22 +15,22 @@ from museoncli.domains import command_specs
 
 # commands where --limit is a true "top N" cap (server has no offset paging)
 LIMIT_CAP_COMMANDS = {
-    "research.creative-search-ads",
-    "research.web-research",
-    "research.social-media-search",
-    "research.community-search",
-    "campaign-monitor.creator-performance-get",
-    "campaign-monitor.post-performance-get",
-    "staff-ops.code-search",
-    "staff-ops.supabase-read",
-    "staff-ops.log-search",
+    "research.create-ads-search",
+    "research.search-web",
+    "research.search-social-media",
+    "research.search-community",
+    "campaign-monitor.get-creator-performance",
+    "campaign-monitor.get-post-performance",
+    "staff-ops.search-code",
+    "staff-ops.read-supabase",
+    "staff-ops.search-logs",
 }
 ADMIN_OR_STAFF_COMMANDS = set()
 STAFF_COMMANDS = {
-    "staff-ops.code-read",
-    "staff-ops.code-search",
-    "staff-ops.supabase-read",
-    "staff-ops.log-search",
+    "staff-ops.read-code",
+    "staff-ops.search-code",
+    "staff-ops.read-supabase",
+    "staff-ops.search-logs",
 }
 # positional mode selectors (never IDs)
 ALLOWED_POSITIONALS = {"routines.record": ["kind"]}
@@ -327,7 +327,10 @@ def test_renamed_commands_keep_answering_to_their_old_names() -> None:
             assert path not in canonical, path
             assert get_command_spec(key).schema_name == spec.schema_name
             assert get_command_spec(path).schema_name == spec.schema_name
-            args, _ = parser.parse_known_args(shlex.split(path)[1:])
+            from museoncli.domains._discovery import generated_example
+
+            required = shlex.split(generated_example(spec))[len(shlex.split(spec.cli_path)) :]
+            args = parser.parse_args(shlex.split(path)[1:] + required)
             assert args.domain_command == spec.schema_name
             assert args.legacy_invocation == path
 
