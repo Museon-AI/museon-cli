@@ -2,7 +2,7 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
-## Unreleased
+## 0.8.1
 
 - Fix: `--all` now works on commands whose records sit one level deeper (`data.data.<records>`), e.g. `campaign-monitor +list-creators`.
 - Fix: a usage error for a missing required flag now names its `command` and points at that command's `--help`.
