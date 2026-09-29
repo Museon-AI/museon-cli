@@ -290,7 +290,9 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
         "name": spec.schema_name,
         "capability_key": spec.capability_key,
         "domain": spec.domain.value,
+        "resource": spec.resource,
         "shortcut": spec.shortcut,
+        "cli": spec.cli_path,
         "summary": spec.summary,
         "risk_level": spec.risk_level,
         "execution": spec.execution,
@@ -314,25 +316,27 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
 
 
 def _spec_schema_payload(spec: CommandSpec) -> dict[str, Any]:
+    from museoncli.domains._discovery import command_examples
+
     return {
         **_spec_summary_payload(spec),
         "input_schema": spec.input_schema,
         "output_schema": spec.output_schema,
         "supports_dry_run": spec.supports_dry_run,
         "requires_confirmation": spec.requires_confirmation,
-        "examples": spec.examples,
+        "examples": command_examples(spec),
     }
 
 
 def _frontend_url_templates_for_spec(spec: CommandSpec) -> list[dict[str, Any]]:
     schema_name = spec.schema_name
-    if schema_name.startswith("asset."):
+    if schema_name.startswith("ai-slideshow.asset-"):
         return [dict(template) for template in _ASSET_FRONTEND_URL_TEMPLATES]
     if schema_name.startswith("artifacts."):
         return [dict(template) for template in _ARTIFACT_FRONTEND_URL_TEMPLATES]
     if schema_name.startswith("content-analysis."):
         return [dict(template) for template in _CONTENT_ANALYSIS_FRONTEND_URL_TEMPLATES]
-    if schema_name.startswith("generation."):
+    if schema_name.startswith("ai-slideshow.generation-"):
         return [dict(template) for template in _GENERATION_FRONTEND_URL_TEMPLATES]
     if schema_name.startswith("social-account.connect-link"):
         return [dict(template) for template in _SOCIAL_ACCOUNT_CONNECT_LINK_FRONTEND_URL_TEMPLATES]

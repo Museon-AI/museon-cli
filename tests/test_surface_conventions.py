@@ -240,3 +240,75 @@ def test_public_parser_does_not_expose_server_model_controls() -> None:
         }
         blocked = forbidden - {"--model"} if spec.schema_name == "media.generate" else forbidden
         assert blocked.isdisjoint(flags), spec.schema_name
+
+
+def _runnable_examples(spec):
+    from museoncli.domains._discovery import command_examples
+
+    for example in command_examples(spec):
+        if example.startswith("museoncli schema") or not example.startswith("museoncli "):
+            continue
+        if any(token in example for token in ("&&", "|", "$(")):
+            continue
+        yield example
+
+
+def test_every_command_shows_a_runnable_example() -> None:
+    """Known regression: 132 commands only showed `museoncli schema <self>`."""
+    from museoncli.main import build_parser
+
+    parser = build_parser()
+    for spec in command_specs():
+        examples = list(_runnable_examples(spec))
+        assert examples, spec.schema_name
+        for example in examples:
+            args = parser.parse_args(shlex.split(example)[1:])
+            assert args.domain_command == spec.schema_name, (spec.schema_name, example)
+
+
+def test_every_flag_has_help() -> None:
+    """Known regression: about 95% of flags printed no help at all."""
+    from museoncli.domains._discovery import fill_flag_help
+
+    for spec in command_specs():
+        parser = _parser_for(spec)
+        fill_flag_help(spec, parser)
+        for action in parser._actions:
+            if action.option_strings:
+                assert action.help, (spec.schema_name, action.option_strings[0])
+
+
+def test_capability_keys_and_cli_paths_are_unique_and_reversible() -> None:
+    from museoncli.domains import get_command_spec
+
+    specs = command_specs()
+    assert len({spec.schema_name for spec in specs}) == len(specs)
+    assert len({spec.cli_path for spec in specs}) == len(specs)
+    for spec in specs:
+        assert get_command_spec(spec.cli_path).schema_name == spec.schema_name
+        assert get_command_spec(spec.schema_name).cli_path == spec.cli_path
+
+
+def test_summaries_only_reference_existing_shortcuts() -> None:
+    shortcuts = {spec.shortcut for spec in command_specs()}
+    for spec in command_specs():
+        for reference in re.findall(r"(?<![\w-])\+[a-z][a-z0-9-]+", spec.summary):
+            assert reference in shortcuts, (spec.schema_name, reference)
+
+
+# Existing commands that accept both a singular and a plural spelling of one
+# input. New commands must pick one (a singular flag repeated for several values).
+SINGULAR_PLURAL_FLAG_EXCEPTIONS = {("hireaicreator.video-list", "--publishing-account-id")}
+
+
+def test_no_command_accepts_singular_and_plural_spellings_of_one_input() -> None:
+    for spec in command_specs():
+        flags = {
+            option for action in _parser_for(spec)._actions for option in action.option_strings
+        }
+        for flag in flags:
+            if f"{flag}s" in flags:
+                assert (spec.schema_name, flag) in SINGULAR_PLURAL_FLAG_EXCEPTIONS, (
+                    spec.schema_name,
+                    flag,
+                )

@@ -46,6 +46,7 @@ from museoncli.execution import (
     agent_domain_result,
 )
 from museoncli.large_json import render_json
+from museoncli.paging import collect_all_pages, page_info
 from museoncli.setup_agent import SUPPORTED_AGENTS, install_agent_skill
 
 
@@ -74,26 +75,86 @@ class ApiRequestError(RuntimeError):
         super().__init__(f"HTTP {status_code}: {rendered}")
 
 
+# Exit codes are part of the output contract (docs/cli-surface-conventions.md).
+EXIT_OK = 0
+EXIT_FAILURE = 1
+EXIT_USAGE = 2
+EXIT_NOT_FOUND = 3
+EXIT_AUTH_REQUIRED = 4
+EXIT_CONFLICT = 5
+EXIT_INTERRUPTED = 130
+
+_EXIT_CODE_BY_REASON = {
+    "usage_error": EXIT_USAGE,
+    "not_found": EXIT_NOT_FOUND,
+    "missing_auth": EXIT_AUTH_REQUIRED,
+    "unauthorized": EXIT_AUTH_REQUIRED,
+    "conflict": EXIT_CONFLICT,
+}
+_RETRYABLE_REASONS = frozenset(
+    {"service_unavailable", "server_error", "rate_limited", "network_error"}
+)
+
+
+class UsageError(SystemExit):
+    """Invalid command line; reported through the JSON error contract.
+
+    It stays a ``SystemExit`` with code 2 so programmatic ``parse_args`` callers
+    keep argparse's behavior; ``main`` renders it as JSON on stdout.
+    """
+
+    def __init__(
+        self, message: str, *, usage: str | None = None, command: str | None = None
+    ) -> None:
+        super().__init__(EXIT_USAGE)
+        self.message = message
+        self.usage = usage
+        self.command = command
+
+    def __str__(self) -> str:
+        return self.message
+
+
+class JsonArgumentParser(argparse.ArgumentParser):
+    """Keep usage errors on the JSON stdout contract instead of argparse's stderr text."""
+
+    def error(self, message: str) -> Any:  # type: ignore[override]
+        raise UsageError(message, usage=self.format_usage().strip())
+
+
 def main() -> None:
     _configure_utf8_stdout()
     parser = build_parser()
     argv = sys.argv[1:]
-    args = parser.parse_args([item for item in argv if item != "--json"])
+    try:
+        args, extras = parser.parse_known_args([item for item in argv if item != "--json"])
+        if extras:
+            raise UsageError(
+                f"unrecognized arguments: {' '.join(extras)}",
+                command=invoked_command_name(args),
+            )
+    except UsageError as exc:
+        payload, code = error_envelope(exc, command=exc.command)
+        emit(payload)
+        raise SystemExit(code) from None
     args.json = True
+    command = invoked_command_name(args)
     try:
         result = asyncio.run(dispatch_with_notices(args))
     except KeyboardInterrupt:
-        emit({"ok": False, "reason": "interrupted"})
-        raise SystemExit(130) from None
-    except Exception as exc:
         emit(
             {
                 "ok": False,
-                "reason": reason_from_exception(exc),
-                "detail": exception_detail(exc),
+                "command": command,
+                "reason": "interrupted",
+                "error": {"code": "interrupted", "message": "interrupted", "retryable": True},
             }
         )
-        raise SystemExit(1) from None
+        raise SystemExit(EXIT_INTERRUPTED) from None
+    except Exception as exc:
+        payload, code = error_envelope(exc, command=command)
+        emit(payload)
+        raise SystemExit(code) from None
     if result is not None:
         if not emit(
             {"ok": True, **result},
@@ -114,7 +175,7 @@ def _configure_utf8_stdout() -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="museoncli")
+    parser = JsonArgumentParser(prog="museoncli")
     parser.add_argument(
         "--json",
         action="store_true",
@@ -125,8 +186,15 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("version")
     sub.add_parser("whoami")
     sub.add_parser("health")
-    schema = sub.add_parser("schema")
+    schema = sub.add_parser(
+        "schema",
+        description=(
+            "Describe commands. NAME is a capability key (hireaicreator.video-get), "
+            "a domain (hireaicreator), or a CLI path (hireaicreator video +get)."
+        ),
+    )
     schema.add_argument("name", nargs="?")
+    schema.add_argument("path_rest", nargs="*", help=argparse.SUPPRESS)
 
     setup = sub.add_parser("setup")
     setup.add_argument(
@@ -197,7 +265,8 @@ async def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
     if args.command == "workspace":
         return await dispatch_workspace(args, cfg)
     if args.command == "schema":
-        return {"data": schema_payload(args.name)}
+        name = " ".join([args.name, *getattr(args, "path_rest", [])]) if args.name else None
+        return {"data": schema_payload(name)}
     if getattr(args, "domain_command", None):
         return await dispatch_domain_command(args, cfg)
     raise RuntimeError(f"Unknown command: {args.command}")
@@ -407,7 +476,7 @@ async def dispatch_workspace(args: argparse.Namespace, cfg: Config) -> dict[str,
             selected = workspace
             break
     if selected is None:
-        raise RuntimeError("Workspace not found.")
+        raise RuntimeError("not_found: workspace is not available to the current credential")
     cfg.workspace = WorkspaceState(
         id=selected.get("id"),
         name=selected.get("name"),
@@ -642,8 +711,6 @@ _UUID_SCALAR_ARGUMENT_KEYS = frozenset(
         "product_id",
         "format_id",
         "topic_direction_id",
-        "persona_experiment_id",
-        "evaluator_type_id",
         "creative_research_snapshot_id",
         "slideshow_generation_id",
         "artifact_id",
@@ -873,14 +940,27 @@ def clear_expired_pending_web_approval(cfg: Config) -> None:
 
 
 def reason_from_exception(exc: Exception) -> str:
+    if isinstance(exc, UsageError):
+        return "usage_error"
     if isinstance(exc, ApiRequestError):
         if exc.status_code in {400, 422}:
             return "invalid_input"
         if exc.status_code == 404:
             return "not_found"
+        if exc.status_code == 409:
+            return "conflict"
+        if exc.status_code == 429:
+            return "rate_limited"
         if exc.status_code == 503:
             return "service_unavailable"
+        if exc.status_code >= 500:
+            return "server_error"
+    if isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout)):
+        return "network_error"
     text = str(exc)
+    for prefixed_reason in ("not_found", "conflict"):
+        if text == prefixed_reason or text.startswith(f"{prefixed_reason}:"):
+            return prefixed_reason
     if text in {
         "missing_auth",
         "unauthorized",
@@ -903,11 +983,78 @@ def reason_from_exception(exc: Exception) -> str:
         return "not_found"
     if text.startswith("HTTP 503"):
         return "service_unavailable"
-    return exc.__class__.__name__
+    # A class name ("RuntimeError") told callers nothing; keep a stable category.
+    return "command_failed" if isinstance(exc, RuntimeError) else "internal_error"
 
 
 def exception_detail(exc: Exception) -> Any:
     return exc.detail if isinstance(exc, ApiRequestError) else str(exc)
+
+
+def error_envelope(exc: Exception, *, command: str | None) -> tuple[dict[str, Any], int]:
+    """Render one failure as the JSON error contract and its exit code.
+
+    ``reason`` and ``detail`` keep their released meaning; ``error`` adds a stable
+    shape: ``code`` (the same category as ``reason``), a readable ``message``, the
+    server's own ``server_code`` when it sent one, ``http_status`` and ``retryable``.
+    """
+    reason = reason_from_exception(exc)
+    detail = exception_detail(exc)
+    message = _error_message(detail)
+    error: dict[str, Any] = {"code": reason, "message": message.removeprefix(f"{reason}: ")}
+    if isinstance(exc, ApiRequestError):
+        error["http_status"] = exc.status_code
+    if isinstance(detail, dict) and isinstance(detail.get("code"), str) and detail["code"]:
+        error["server_code"] = detail["code"]
+    error["retryable"] = reason in _RETRYABLE_REASONS
+    payload: dict[str, Any] = {
+        "ok": False,
+        "command": command,
+        "reason": reason,
+        "detail": detail,
+        "error": error,
+    }
+    if isinstance(exc, UsageError):
+        if exc.usage:
+            payload["usage"] = exc.usage
+        error["hint"] = _usage_hint(command)
+    return payload, _EXIT_CODE_BY_REASON.get(reason, EXIT_FAILURE)
+
+
+def _usage_hint(command: str | None) -> str:
+    if command:
+        try:
+            return f"Run `{get_command_spec(command).cli_path} --help` or `museoncli schema {command}`."
+        except ValueError:
+            pass
+    return "Run `museoncli --help` or `museoncli schema` to list commands."
+
+
+def _error_message(detail: Any) -> str:
+    if isinstance(detail, dict):
+        for key in ("message", "detail", "error"):
+            value = detail.get(key)
+            if isinstance(value, str) and value:
+                return value
+        return json.dumps(detail, ensure_ascii=False, sort_keys=True)[:500]
+    if isinstance(detail, list):
+        return json.dumps(detail, ensure_ascii=False)[:500]
+    return str(detail)
+
+
+def invoked_command_name(args: argparse.Namespace) -> str | None:
+    """Name the invoked command: a capability key, or ``<command>.<subcommand>``."""
+    domain_command = getattr(args, "domain_command", None)
+    if domain_command:
+        return str(domain_command)
+    command = getattr(args, "command", None)
+    if not command:
+        return None
+    for attribute in ("auth_command", "workspace_command", "config_command"):
+        subcommand = getattr(args, attribute, None)
+        if subcommand:
+            return f"{command}.{subcommand}"
+    return str(command)
 
 
 def forbidden_error_message(response: httpx.Response) -> str:
@@ -977,23 +1124,35 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
         return domain_command_dry_run_envelope(spec.schema_name, workspace_id, arguments)
     if spec.requires_confirmation and not getattr(args, "yes", False):
         raise RuntimeError("confirmation_required")
-    ctx = CommandContext(
-        cfg=cfg,
-        spec=spec,
-        args=args,
-        arguments=arguments,
-        workspace_id=workspace_id,
-        api_data=api_data,
-        api_data_v2=api_data_v2,
-        upload_media_file=upload_media_file,
-        upload_artifact_file=upload_artifact_file,
-        download_api_file=download_api_file,
-    )
+    executor = command_executor(spec.schema_name)
+
+    async def run(page_arguments: dict[str, Any]) -> dict[str, Any]:
+        ctx = CommandContext(
+            cfg=cfg,
+            spec=spec,
+            args=args,
+            arguments=page_arguments,
+            workspace_id=workspace_id,
+            api_data=api_data,
+            api_data_v2=api_data_v2,
+            upload_media_file=upload_media_file,
+            upload_artifact_file=upload_artifact_file,
+            download_api_file=download_api_file,
+        )
+        return await executor(ctx)
+
     command_token = _ACTIVE_COMMAND_NAME.set(spec.schema_name)
     try:
-        return await command_executor(spec.schema_name)(ctx)
+        if getattr(args, "all", False):
+            return await collect_all_pages(run, arguments)
+        result = await run(arguments)
     finally:
         _ACTIVE_COMMAND_NAME.reset(command_token)
+    if isinstance(result, dict) and "page_info" not in result:
+        info = page_info(result)
+        if info:
+            result["page_info"] = info
+    return result
 
 
 if __name__ == "__main__":

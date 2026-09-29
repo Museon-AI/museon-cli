@@ -787,10 +787,8 @@ def test_research_social_media_search_help_shows_numeric_bounds(
     assert "Per-attempt timeout seconds (5-60; default: 10)." in out
 
 
-def test_research_social_media_search_rejects_out_of_range_content_chars(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    with pytest.raises(SystemExit):
+def test_research_social_media_search_rejects_out_of_range_content_chars() -> None:
+    with pytest.raises(SystemExit) as excinfo:
         parse(
             [
                 "research",
@@ -806,13 +804,13 @@ def test_research_social_media_search_rejects_out_of_range_content_chars(
             ]
         )
 
-    assert "--content-chars must be <= 4000" in capsys.readouterr().err
+    # Usage errors are part of the JSON contract: main() renders this message.
+    assert excinfo.value.code == 2
+    assert "--content-chars must be <= 4000" in str(excinfo.value)
 
 
-def test_research_social_media_search_rejects_out_of_range_timeout(
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    with pytest.raises(SystemExit):
+def test_research_social_media_search_rejects_out_of_range_timeout() -> None:
+    with pytest.raises(SystemExit) as excinfo:
         parse(
             [
                 "research",
@@ -828,7 +826,8 @@ def test_research_social_media_search_rejects_out_of_range_timeout(
             ]
         )
 
-    assert "--timeout must be <= 60" in capsys.readouterr().err
+    assert excinfo.value.code == 2
+    assert "--timeout must be <= 60" in str(excinfo.value)
 
 
 def test_research_community_search_parser() -> None:
@@ -1623,6 +1622,13 @@ def test_dispatch_routines_list_uses_standard_pagination(
         "run": None,
         "warnings": [],
         "next_steps": [],
+        "page_info": {
+            "page": 2,
+            "page_size": 10,
+            "total": 0,
+            "total_pages": 1,
+            "has_more": False,
+        },
     }
     assert calls == [
         {

@@ -526,7 +526,7 @@ def specs() -> list[CommandSpec]:
                 "Campaign monitor list payload returned by Museon API."
             ),
             examples=[
-                "museoncli campaign-monitor +list --search launch --limit 20",
+                "museoncli campaign-monitor +list --search launch --page-size 20",
             ],
             add_arguments=_add_campaign_monitor_list_arguments,
             build_arguments=_build_campaign_monitor_list_arguments,
