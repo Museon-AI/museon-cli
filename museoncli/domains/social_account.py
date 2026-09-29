@@ -179,7 +179,7 @@ def _build_social_account_adb_connect_arguments(args: argparse.Namespace) -> dic
         payload["account_id"] = args.account_id
         return payload
     if not args.platform:
-        raise ValueError("social-account +adb-connect requires --platform with --handle.")
+        raise ValueError("social-account +connect-adb requires --platform with --handle.")
     payload.update({"handle": args.handle, "platform": args.platform})
     if args.workspace_id:
         payload["workspace_id"] = args.workspace_id
@@ -230,7 +230,7 @@ def _build_social_account_profile_edit_submit_arguments(args: argparse.Namespace
     )
     if not profile_edit:
         raise ValueError(
-            "social-account +profile-edit-submit requires --nick-name, --bio, or --avatar-url."
+            "social-account +submit-profile-edit requires --nick-name, --bio, or --avatar-url."
         )
     payload["profile_edit"] = profile_edit
     payload["wait"] = args.wait
@@ -503,7 +503,7 @@ def _social_account_profile_edit_status_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "task_id": _uuid_id_schema("Task UUID returned by social-account +profile-edit-submit.")
+            "task_id": _uuid_id_schema("Task UUID returned by social-account +submit-profile-edit.")
         },
         "required": ["task_id"],
     }
@@ -586,7 +586,7 @@ def _social_account_avatar_generate_status_input_schema() -> dict[str, Any]:
         "type": "object",
         "properties": {
             "task_id": _uuid_id_schema(
-                "Task UUID returned by social-account +avatar-generate-batch."
+                "Task UUID returned by social-account +bulk-generate-avatars."
             )
         },
         "required": ["task_id"],
@@ -614,7 +614,7 @@ def _build_social_account_connect_link_create_arguments(
     platform = payload.get("platform")
     if platform not in SOCIAL_ACCOUNT_CONNECT_PLATFORM_CHOICES:
         choices = "|".join(SOCIAL_ACCOUNT_CONNECT_PLATFORM_CHOICES)
-        raise ValueError(f"social-account +connect-link-create requires --platform ({choices}).")
+        raise ValueError(f"social-account +create-connect-link requires --platform ({choices}).")
     if args.redirect_url is not None:
         payload["redirect_url"] = args.redirect_url
     return payload
@@ -641,7 +641,7 @@ def _build_social_account_connect_link_status_arguments(
         }
     )
     if not str(payload.get("link_id") or "").strip():
-        raise ValueError("social-account +connect-link-status requires --id.")
+        raise ValueError("social-account +get-connect-link requires --id.")
     return payload
 
 
@@ -679,7 +679,7 @@ def _social_account_connect_link_status_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "link_id": _uuid_id_schema("Connect link UUID returned by +connect-link-create."),
+            "link_id": _uuid_id_schema("Connect link UUID returned by +create-connect-link."),
             "wait": {
                 "type": "boolean",
                 "default": False,
@@ -806,7 +806,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+adb-connect",
+            shortcut="+connect-adb",
+            legacy_shortcuts=("+adb-connect",),
             summary=(
                 "Connect the current sandbox to this account's cloud phone over ADB. "
                 "After success, use native adb or u2cli with the returned serial; "
@@ -820,9 +821,9 @@ def specs() -> list[CommandSpec]:
                 "Local ADB connection result with a serial ready for native adb and u2cli."
             ),
             examples=[
-                "museoncli social-account +adb-connect --id <pool_account_id>",
-                "museoncli social-account +adb-connect --handle @creator --platform tiktok",
-                "museoncli social-account +adb-connect --id <pool_account_id> --dry-run",
+                "museoncli social-account +connect-adb --id <pool_account_id>",
+                "museoncli social-account +connect-adb --handle @creator --platform tiktok",
+                "museoncli social-account +connect-adb --id <pool_account_id> --dry-run",
             ],
             add_arguments=_add_social_account_adb_connect_arguments,
             build_arguments=_build_social_account_adb_connect_arguments,
@@ -830,7 +831,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+stream-url",
+            shortcut="+get-stream-url",
+            legacy_shortcuts=("+stream-url",),
             summary=(
                 "Return this account's cloud-phone live-stream URL. The sandbox stream "
                 "sidecar renders it to capture fast motion the u2cli clip command needs; "
@@ -841,13 +843,14 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="social_account_stream_url",
             input_schema=_social_account_get_input_schema(),
             output_schema=_direct_output_schema("Cloud-phone remote stream URL and its phone id."),
-            examples=["museoncli social-account +stream-url --id <pool_account_id>"],
+            examples=["museoncli social-account +get-stream-url --id <pool_account_id>"],
             add_arguments=_add_social_account_id_arguments,
             build_arguments=_build_social_account_id_arguments,
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+connect-link-create",
+            shortcut="+create-connect-link",
+            legacy_shortcuts=("+connect-link-create",),
             summary=(
                 "Create a workspace self-authorization link to connect a user-owned "
                 "social account. Supports TikTok, Instagram, Facebook, LinkedIn, and X."
@@ -860,9 +863,9 @@ def specs() -> list[CommandSpec]:
                 "Created social OAuth connect link returned by Museon API."
             ),
             examples=[
-                "museoncli social-account +connect-link-create --platform tiktok --expires-in-days 7",
-                "museoncli social-account +connect-link-create --platform instagram",
-                "museoncli social-account +connect-link-create --platform x",
+                "museoncli social-account +create-connect-link --platform tiktok --expires-in-days 7",
+                "museoncli social-account +create-connect-link --platform instagram",
+                "museoncli social-account +create-connect-link --platform x",
             ],
             add_arguments=_add_social_account_connect_link_create_arguments,
             build_arguments=_build_social_account_connect_link_create_arguments,
@@ -870,7 +873,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+connect-link-status",
+            shortcut="+get-connect-link",
+            legacy_shortcuts=("+connect-link-status",),
             summary=("Read or wait for the authorization result of a social account connect link."),
             risk_level="read",
             execution="direct",
@@ -880,9 +884,9 @@ def specs() -> list[CommandSpec]:
                 "Social OAuth connect link status returned by Museon API."
             ),
             examples=[
-                "museoncli social-account +connect-link-status --id <connect_link_id>",
+                "museoncli social-account +get-connect-link --id <connect_link_id>",
                 (
-                    "museoncli social-account +connect-link-status --id <connect_link_id> "
+                    "museoncli social-account +get-connect-link --id <connect_link_id> "
                     "--wait --timeout 300"
                 ),
             ],
@@ -891,7 +895,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+performance-get",
+            shortcut="+get-performance",
+            legacy_shortcuts=("+performance-get",),
             summary=(
                 "Live-read performance for one social account: authorized channels "
                 "first, with automatic public-data fallback when authorization is "
@@ -909,9 +914,9 @@ def specs() -> list[CommandSpec]:
                 "Live account performance payload returned by Museon API."
             ),
             examples=[
-                "museoncli social-account +performance-get --id <pool_account_id>",
+                "museoncli social-account +get-performance --id <pool_account_id>",
                 (
-                    "museoncli social-account +performance-get --id <pool_account_id> "
+                    "museoncli social-account +get-performance --id <pool_account_id> "
                     "--period last-7d --cursor <next_cursor>"
                 ),
             ],
@@ -920,7 +925,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+profile-edit-draft",
+            shortcut="+draft-profile-edit",
+            legacy_shortcuts=("+profile-edit-draft",),
             summary="Generate proposed TikTok display name, bio, or avatar drafts for one account.",
             risk_level="read",
             execution="direct",
@@ -931,7 +937,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli social-account +profile-edit-draft --id <pool_account_id> "
+                    "museoncli social-account +draft-profile-edit --id <pool_account_id> "
                     "--target nickName --target bio --target avatar "
                     "--prompt 'friendly AI meeting assistant'"
                 )
@@ -941,10 +947,11 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+profile-edit-submit",
+            shortcut="+submit-profile-edit",
+            legacy_shortcuts=("+profile-edit-submit",),
             summary=(
                 "Submit a TikTok profile edit task for one account. "
-                "Use +profile-edit-status to confirm completion."
+                "Use +get-profile-edit to confirm completion."
             ),
             risk_level="write",
             execution="async_run",
@@ -955,11 +962,11 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli social-account +profile-edit-submit --id <pool_account_id> "
+                    "museoncli social-account +submit-profile-edit --id <pool_account_id> "
                     "--nick-name 'Notta AI' --bio 'Meeting notes, summaries, and translations.' --wait"
                 ),
                 (
-                    "museoncli social-account +profile-edit-submit --id <pool_account_id> "
+                    "museoncli social-account +submit-profile-edit --id <pool_account_id> "
                     "--avatar-url https://example.com/avatar.png"
                 ),
             ],
@@ -969,10 +976,11 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+profile-edit-batch-submit",
+            shortcut="+bulk-submit-profile-edit",
+            legacy_shortcuts=("+profile-edit-batch-submit",),
             summary=(
                 "Submit a TikTok profile edit task for multiple accounts in one batch. "
-                "Use +profile-edit-status to poll the single task for all account statuses."
+                "Use +get-profile-edit to poll the single task for all account statuses."
             ),
             risk_level="write",
             execution="async_run",
@@ -983,7 +991,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli social-account +profile-edit-batch-submit "
+                    "museoncli social-account +bulk-submit-profile-edit "
                     '--account-updates \'[{"account_id":"<uuid>","bio":"AI assistant"}]\' '
                     "--update-bio --wait"
                 ),
@@ -994,7 +1002,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+profile-edit-status",
+            shortcut="+get-profile-edit",
+            legacy_shortcuts=("+profile-edit-status",),
             summary="Read execution status for a profile edit task.",
             risk_level="read",
             execution="direct",
@@ -1002,18 +1011,19 @@ def specs() -> list[CommandSpec]:
             input_schema=_social_account_profile_edit_status_input_schema(),
             output_schema=_direct_output_schema("Profile edit task status returned by Museon API."),
             examples=[
-                "museoncli social-account +profile-edit-status --id <task_id>",
+                "museoncli social-account +get-profile-edit --id <task_id>",
             ],
             add_arguments=_add_social_account_profile_edit_status_arguments,
             build_arguments=_build_social_account_profile_edit_status_arguments,
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+avatar-generate-batch",
+            shortcut="+bulk-generate-avatars",
+            legacy_shortcuts=("+avatar-generate-batch",),
             summary=(
                 "Generate TikTok profile avatar drafts for multiple accounts as one "
-                "async task. Poll +avatar-generate-status for per-account avatar URLs, "
-                "then feed the succeeded ones into +profile-edit-batch-submit."
+                "async task. Poll +get-avatar-generation for per-account avatar URLs, "
+                "then feed the succeeded ones into +bulk-submit-profile-edit."
             ),
             risk_level="read",
             execution="async_run",
@@ -1024,7 +1034,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli social-account +avatar-generate-batch "
+                    "museoncli social-account +bulk-generate-avatars "
                     "--id <uuid> --id <uuid> "
                     "--prompt 'friendly late-night chef portrait'"
                 ),
@@ -1034,7 +1044,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
-            shortcut="+avatar-generate-status",
+            shortcut="+get-avatar-generation",
+            legacy_shortcuts=("+avatar-generate-status",),
             summary="Read per-account status and avatar URLs for an avatar-generation task.",
             risk_level="read",
             execution="direct",
@@ -1044,7 +1055,7 @@ def specs() -> list[CommandSpec]:
                 "Avatar-generation task status returned by Museon API."
             ),
             examples=[
-                "museoncli social-account +avatar-generate-status --id <task_id>",
+                "museoncli social-account +get-avatar-generation --id <task_id>",
             ],
             add_arguments=_add_social_account_avatar_generate_status_arguments,
             build_arguments=_build_social_account_avatar_generate_status_arguments,
@@ -1082,7 +1093,7 @@ async def _execute_connect_link_status(ctx: CommandContext) -> Any:
         raise RuntimeError("missing_workspace")
     link_id = str(arguments.get("link_id") or "")
     if not link_id:
-        raise RuntimeError("social-account.connect-link-status requires link_id")
+        raise RuntimeError("social-account.get-connect-link requires link_id")
     return await _poll_connect_link_status(
         cfg,
         workspace_id=workspace_id,
@@ -1330,7 +1341,7 @@ async def _execute_avatar_generate_batch(ctx: CommandContext) -> Any:
     account_ids = arguments.get("account_ids")
     if not isinstance(account_ids, list) or not account_ids:
         raise RuntimeError(
-            "social-account.avatar-generate-batch requires a non-empty account_ids array"
+            "social-account.bulk-generate-avatars requires a non-empty account_ids array"
         )
     payload = {
         "account_ids": account_ids,
@@ -1370,7 +1381,7 @@ async def _execute_avatar_generate_status(ctx: CommandContext) -> Any:
         raise RuntimeError("missing_workspace")
     task_id = str(arguments.get("task_id") or "")
     if not task_id:
-        raise RuntimeError("social-account.avatar-generate-status requires task_id")
+        raise RuntimeError("social-account.get-avatar-generation requires task_id")
     return agent_domain_result(
         await api_data(
             cfg,
@@ -1389,7 +1400,7 @@ async def _execute_profile_edit_status(ctx: CommandContext) -> Any:
         raise RuntimeError("missing_workspace")
     task_id = str(arguments.get("task_id") or "")
     if not task_id:
-        raise RuntimeError("social-account.profile-edit-status requires task_id")
+        raise RuntimeError("social-account.get-profile-edit requires task_id")
     return agent_domain_result(
         await api_data(
             cfg,
@@ -1445,7 +1456,7 @@ async def _execute_profile_edit_batch_submit(ctx: CommandContext) -> Any:
     account_updates = arguments.get("account_updates")
     if not isinstance(account_updates, list) or not account_updates:
         raise RuntimeError(
-            "social-account.profile-edit-batch-submit requires a non-empty account_updates array"
+            "social-account.bulk-submit-profile-edit requires a non-empty account_updates array"
         )
     payload = {
         "account_updates": account_updates,
@@ -1482,41 +1493,19 @@ async def _execute_profile_edit_batch_submit(ctx: CommandContext) -> Any:
 
 
 EXECUTORS = {
-    "social-account.connect-link-create": direct_enveloped(_execute_connect_link_create),
-    "social-account.connect-link-status": direct_enveloped(_execute_connect_link_status),
-    "social-account.adb-connect": direct_enveloped(_execute_adb_connect),
-    "social-account.stream-url": direct_enveloped(_execute_stream_url),
+    "social-account.create-connect-link": direct_enveloped(_execute_connect_link_create),
+    "social-account.get-connect-link": direct_enveloped(_execute_connect_link_status),
+    "social-account.connect-adb": direct_enveloped(_execute_adb_connect),
+    "social-account.get-stream-url": direct_enveloped(_execute_stream_url),
     "social-account.get": direct_enveloped(_execute_get),
-    "social-account.performance-get": direct_enveloped(_execute_performance_get),
+    "social-account.get-performance": direct_enveloped(_execute_performance_get),
     "social-account.list": direct_enveloped(_execute_list),
-    "social-account.avatar-generate-batch": direct_enveloped(_execute_avatar_generate_batch),
-    "social-account.avatar-generate-status": direct_enveloped(_execute_avatar_generate_status),
-    "social-account.profile-edit-batch-submit": direct_enveloped(
-        _execute_profile_edit_batch_submit
-    ),
-    "social-account.profile-edit-draft": direct_enveloped(_execute_profile_edit_draft),
-    "social-account.profile-edit-status": direct_enveloped(_execute_profile_edit_status),
-    "social-account.profile-edit-submit": direct_enveloped(_execute_profile_edit_submit),
-}
-EXECUTORS = {
-    name: executor
-    for name, executor in EXECUTORS.items()
-    if name.removeprefix("social-account.")
-    in {
-        "list",
-        "get",
-        "adb-connect",
-        "stream-url",
-        "connect-link-create",
-        "connect-link-status",
-        "performance-get",
-        "profile-edit-draft",
-        "profile-edit-submit",
-        "profile-edit-batch-submit",
-        "profile-edit-status",
-        "avatar-generate-batch",
-        "avatar-generate-status",
-    }
+    "social-account.bulk-generate-avatars": direct_enveloped(_execute_avatar_generate_batch),
+    "social-account.get-avatar-generation": direct_enveloped(_execute_avatar_generate_status),
+    "social-account.bulk-submit-profile-edit": direct_enveloped(_execute_profile_edit_batch_submit),
+    "social-account.draft-profile-edit": direct_enveloped(_execute_profile_edit_draft),
+    "social-account.get-profile-edit": direct_enveloped(_execute_profile_edit_status),
+    "social-account.submit-profile-edit": direct_enveloped(_execute_profile_edit_submit),
 }
 
 

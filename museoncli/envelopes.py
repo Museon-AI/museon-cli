@@ -77,26 +77,26 @@ def direct_api_envelope(
     elif command_name == "content-analysis.run":
         run = _content_analysis_run_from_data(data)
     elif command_name in {
-        "research.creative-search-ads",
-        "research.creative-search-ads-get",
+        "research.create-ads-search",
+        "research.get-ads-search",
     }:
         run = _creative_search_ads_run_from_data(data)
     elif command_name in {
-        "research.social-media-hook-analyze",
-        "research.social-media-hook-source",
-        "research.social-media-hook-analyze-get",
+        "research.create-hook-analysis",
+        "research.submit-hook-candidates",
+        "research.get-hook-analysis",
     }:
         run = _social_hook_analysis_run_from_data(data)
     elif command_name in {
-        "social-account.profile-edit-submit",
-        "social-account.profile-edit-batch-submit",
+        "social-account.submit-profile-edit",
+        "social-account.bulk-submit-profile-edit",
     }:
         run = _profile_edit_run_from_data(data)
-    elif command_name == "social-account.avatar-generate-batch":
+    elif command_name == "social-account.bulk-generate-avatars":
         run = _avatar_generate_run_from_data(data)
-    elif command_name == "ai-slideshow.publish-asset-pools-batch-set":
+    elif command_name == "ai-slideshow.publish-bulk-set-asset-pools":
         run = _asset_pools_batch_run_from_data(data)
-    elif command_name == "ai-slideshow.publish-schedule-plan-batch":
+    elif command_name == "ai-slideshow.publish-submit-schedule-plan":
         run = _schedule_plan_run_from_data(data)
     else:
         run = None
@@ -151,15 +151,15 @@ def without_provider_metadata(value: Any) -> Any:
 
 def _direct_api_warnings(command_name: str) -> list[str]:
     if command_name in {
-        "campaign-monitor.post-list",
-        "campaign-monitor.creator-performance-get",
-        "campaign-monitor.post-performance-get",
+        "campaign-monitor.list-posts",
+        "campaign-monitor.get-creator-performance",
+        "campaign-monitor.get-post-performance",
     }:
         return [
             (
                 "This command reads Museon's synced monitor store only; use "
-                "campaign-monitor +content-list/+creator-list/+summary for "
-                "campaign-scoped collections and research +social-media-search "
+                "campaign-monitor +list-content/+list-creators/+get-summary for "
+                "campaign-scoped collections and research +search-social-media "
                 "for external discovery."
             )
         ]
@@ -460,7 +460,7 @@ def _creative_search_ads_run_from_data(data: Any) -> dict[str, Any] | None:
         "id": task_id,
         "type": "creative_search_ads",
         "status": status or None,
-        "watch_command": f"museoncli research +creative-search-ads-get --id {task_id}",
+        "watch_command": f"museoncli research +get-ads-search --id {task_id}",
     }
     if status.lower() not in {"completed", "failed", "cancelled", "canceled"}:
         run["recommended_wakeup_delay_seconds"] = (
@@ -480,7 +480,7 @@ def _social_hook_analysis_run_from_data(data: Any) -> dict[str, Any] | None:
         "id": analysis_id,
         "type": "social_hook_analysis",
         "status": data.get("status"),
-        "watch_command": (f"museoncli research +social-media-hook-analyze-get --id {analysis_id}"),
+        "watch_command": (f"museoncli research +get-hook-analysis --id {analysis_id}"),
     }
     if not terminal:
         run["recommended_wakeup_delay_seconds"] = int(
@@ -505,7 +505,7 @@ def _profile_edit_run_from_data(data: Any) -> dict[str, Any] | None:
             provider_status=provider_status,
             summary=summary,
         ),
-        "watch_command": f"museoncli social-account +profile-edit-status --id {task_id}",
+        "watch_command": f"museoncli social-account +get-profile-edit --id {task_id}",
     }
 
 
@@ -525,7 +525,7 @@ def _avatar_generate_run_from_data(data: Any) -> dict[str, Any] | None:
             provider_status=provider_status,
             summary=summary,
         ),
-        "watch_command": f"museoncli social-account +avatar-generate-status --id {task_id}",
+        "watch_command": f"museoncli social-account +get-avatar-generation --id {task_id}",
     }
 
 
@@ -567,7 +567,7 @@ def _schedule_plan_run_from_data(data: Any) -> dict[str, Any] | None:
         "id": job_id,
         "type": "account_publish_schedule_plan",
         "status": job.get("status") or data.get("status"),
-        "watch_command": f"museoncli ai-slideshow publish +schedule-plan-status --id {job_id}",
+        "watch_command": f"museoncli ai-slideshow publish +get-schedule-plan-job --id {job_id}",
     }
     delay = job.get("recommended_wakeup_delay_seconds") or data.get(
         "recommended_wakeup_delay_seconds"
@@ -589,7 +589,7 @@ def _asset_pools_batch_run_from_data(data: Any) -> dict[str, Any] | None:
         "id": job_id,
         "type": "account_publish_asset_pools_batch",
         "status": job.get("status") or data.get("status"),
-        "watch_command": f"museoncli ai-slideshow publish +asset-pools-batch-status --id {job_id}",
+        "watch_command": f"museoncli ai-slideshow publish +get-asset-pool-job --id {job_id}",
     }
     delay = job.get("recommended_wakeup_delay_seconds") or data.get(
         "recommended_wakeup_delay_seconds"
@@ -633,16 +633,16 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
         watch_command = run.get("watch_command")
         if isinstance(watch_command, str) and watch_command:
             return [f"Check profile edit status with: {watch_command}"]
-        return ["Check the returned task id with social-account +profile-edit-status."]
+        return ["Check the returned task id with social-account +get-profile-edit."]
     if run.get("type") == "pool_account_avatar_generation":
         watch_command = run.get("watch_command")
         if isinstance(watch_command, str) and watch_command:
             return [
                 f"Poll avatar generation with: {watch_command}. Then feed the "
                 "succeeded accounts' avatar_url into social-account "
-                "+profile-edit-batch-submit."
+                "+bulk-submit-profile-edit."
             ]
-        return ["Poll the returned task id with social-account +avatar-generate-status."]
+        return ["Poll the returned task id with social-account +get-avatar-generation."]
     if run.get("kind") == "content_analysis":
         status_value = str(run.get("status") or "").lower()
         if status_value in {"completed", "failed", "cancelled", "canceled"}:
@@ -663,7 +663,7 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
                     f"Schedule a wakeup in {wakeup_delay} seconds, then poll with: {watch_command}"
                 ]
             return [f"Poll with: {watch_command}"]
-        return ["Poll the returned task id with research +creative-search-ads-get."]
+        return ["Poll the returned task id with research +get-ads-search."]
     if run.get("type") == "account_publish_schedule_plan":
         watch_command = run.get("watch_command")
         wakeup_delay = run.get("recommended_wakeup_delay_seconds")
@@ -674,7 +674,7 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
                     f"{watch_command}"
                 ]
             return [f"Poll only with: {watch_command}"]
-        return ["Poll the returned job id with ai-slideshow publish +schedule-plan-status."]
+        return ["Poll the returned job id with ai-slideshow publish +get-schedule-plan-job."]
     if run.get("type") == "account_publish_asset_pools_batch":
         watch_command = run.get("watch_command")
         wakeup_delay = run.get("recommended_wakeup_delay_seconds")
@@ -685,14 +685,14 @@ def _run_next_steps(run: dict[str, Any] | None) -> list[str]:
                     f"{watch_command}"
                 ]
             return [f"Poll only with: {watch_command}"]
-        return ["Poll the returned job id with ai-slideshow publish +asset-pools-batch-status."]
+        return ["Poll the returned job id with ai-slideshow publish +get-asset-pool-job."]
     return _generation_next_steps(run)
 
 
 def _social_auth_next_steps(command_name: str, data: Any) -> list[str]:
     if not isinstance(data, dict):
         return []
-    if command_name == "social-account.connect-link-create":
+    if command_name == "social-account.create-connect-link":
         link_id = data.get("id")
         url = data.get("url")
         status_check_supported = data.get("status_check_supported") is not False
@@ -701,18 +701,18 @@ def _social_auth_next_steps(command_name: str, data: Any) -> list[str]:
             steps.append(f"Open the returned url to authorize: {url}")
         if status_check_supported and isinstance(link_id, str) and link_id:
             steps.append(
-                "Poll with: museoncli social-account +connect-link-status "
+                "Poll with: museoncli social-account +get-connect-link "
                 f"--id {link_id} --wait --timeout 300"
             )
         return steps
-    if command_name == "social-account.connect-link-status" and data.get("status") == "pending":
+    if command_name == "social-account.get-connect-link" and data.get("status") == "pending":
         link_id = data.get("link_id")
         if isinstance(link_id, str) and link_id:
             return [
-                "Still pending. Poll with: museoncli social-account +connect-link-status "
+                "Still pending. Poll with: museoncli social-account +get-connect-link "
                 f"--id {link_id} --wait --timeout 300"
             ]
-    if command_name == "social-account.performance-get":
+    if command_name == "social-account.get-performance":
         return _performance_page_next_steps(data)
     return []
 
@@ -726,13 +726,13 @@ def _performance_page_next_steps(data: dict[str, Any]) -> list[str]:
         next_cursor = page.get("next_cursor")
         if isinstance(next_cursor, str) and next_cursor and account_id:
             steps.append(
-                "More posts available: museoncli social-account +performance-get "
+                "More posts available: museoncli social-account +get-performance "
                 f"--id {account_id} --cursor {next_cursor}"
             )
     if isinstance(account, dict) and account.get("auth_status") == "expired":
         steps.append(
             "Account authorization is expired; renew it with "
-            "social-account +connect-link-create before relying on this data."
+            "social-account +create-connect-link before relying on this data."
         )
     return steps
 

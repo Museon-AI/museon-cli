@@ -2,7 +2,7 @@
 
 ## Assets
 
-Use `ai-slideshow asset +list/+get/+get-batch/+options/+create/+update/+delete`. Read the returned object after a write. If deletion is blocked by a relationship, resolve it in the owning workflow before retrying.
+Use `ai-slideshow asset +list/+get/+get-batch/+list-options/+create/+update/+delete`. Read the returned object after a write. If deletion is blocked by a relationship, resolve it in the owning workflow before retrying.
 
 ## Generation
 
@@ -12,11 +12,11 @@ Use `ai-slideshow generation +create` with explicit `format_id`, `content_topic_
 
 The restored publish surface keeps the original account and schedule orchestration:
 
-- `+asset-pools-batch-get/preview/set/status/cancel` reads and changes persona, product, format, topic, and BGM pools for up to 200 accounts. Preview first. `set` uses the matching `preview_token`, a stable `idempotency_key`, and required confirmation flags. Status is completion ground truth; cancel stops pending work and does not roll back completed changes.
-- `+config-get/update/batch-update` manages account publish configuration.
-- `+version-list/get/create/activate` manages versioned schedule rules.
-- `+schedule-list/get/generate/create/update/delete` reads and changes concrete schedule items.
-- `+schedule-plan-preview/batch/status/cancel` plans up to 200 accounts, 180 days, 24 daily slots, and 5,000 occurrences. Apply the matching preview token and stable idempotency key. Job cancellation does not delete schedule items already created; use a previewed `cancel-only` batch for schedule removal.
+- `+bulk-get-asset-pools/preview/set/status/cancel` reads and changes persona, product, format, topic, and BGM pools for up to 200 accounts. Preview first. `set` uses the matching `preview_token`, a stable `idempotency_key`, and required confirmation flags. Status is completion ground truth; cancel stops pending work and does not roll back completed changes.
+- `+get-config/update/batch-update` manages account publish configuration.
+- `+list-versions/get/create/activate` manages versioned schedule rules.
+- `+list-schedules/get/generate/create/update/delete` reads and changes concrete schedule items.
+- `+preview-schedule-plan/batch/status/cancel` plans up to 200 accounts, 180 days, 24 daily slots, and 5,000 occurrences. Apply the matching preview token and stable idempotency key. Job cancellation does not delete schedule items already created; use a previewed `cancel-only` batch for schedule removal.
 
 Do not treat preview or batch admission as completion. Preserve returned job ids and poll the matching status command. These commands use the established slideshow publishing backend; they do not restore evaluator or CTA commands.
 

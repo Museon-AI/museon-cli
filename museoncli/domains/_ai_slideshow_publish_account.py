@@ -104,7 +104,7 @@ def _build_social_account_config_update_arguments(args: argparse.Namespace) -> d
         )
     ):
         raise ValueError(
-            "ai-slideshow publish +config-update requires "
+            "ai-slideshow publish +update-config requires "
             "--require-approval-before-publish, --no-require-approval-before-publish, "
             "--output-language, or --required-hashtags."
         )
@@ -178,7 +178,7 @@ def _build_social_account_config_batch_update_arguments(
     ids = [part.strip() for part in (args.ids or "").split(",") if part.strip()]
     if not ids:
         raise ValueError(
-            "ai-slideshow publish +config-batch-update requires --account-updates or --ids."
+            "ai-slideshow publish +bulk-update-config requires --account-updates or --ids."
         )
     uniform: dict[str, Any] = {}
     if args.require_approval_before_publish is not None:
@@ -191,7 +191,7 @@ def _build_social_account_config_batch_update_arguments(
         ]
     if not uniform:
         raise ValueError(
-            "ai-slideshow publish +config-batch-update with --ids requires at least one of "
+            "ai-slideshow publish +bulk-update-config with --ids requires at least one of "
             "--required-hashtags, --output-language, "
             "--require-approval-before-publish, or --no-require-approval-before-publish."
         )
@@ -222,7 +222,7 @@ def _build_social_account_version_create_arguments(args: argparse.Namespace) -> 
     payload = _build_social_account_id_arguments(args)
     if args.rules_json and args.rules_file:
         raise ValueError(
-            "ai-slideshow publish +version-create accepts either --rules-json or --rules-file."
+            "ai-slideshow publish +create-version accepts either --rules-json or --rules-file."
         )
     if args.rules_file:
         schedule_rules = _json_list(
@@ -311,14 +311,14 @@ def _build_social_account_schedule_generate_arguments(
     _reject_server_controlled_fields(
         payload,
         fields={"text_model", "image_model", "slice_model"},
-        context="ai-slideshow publish +schedule-generate",
+        context="ai-slideshow publish +generate-schedule",
     )
     structured_generation = payload.get("generation")
     if isinstance(structured_generation, dict):
         _reject_server_controlled_fields(
             structured_generation,
             fields={"text_model", "image_model", "slice_model"},
-            context="ai-slideshow publish +schedule-generate generation",
+            context="ai-slideshow publish +generate-schedule generation",
         )
     generation = _without_none(
         {
@@ -379,7 +379,7 @@ def _build_social_account_schedule_update_arguments(args: argparse.Namespace) ->
         schedule_item["generation_id"] = None
     if not schedule_item:
         raise ValueError(
-            "ai-slideshow publish +schedule-update requires at least one field to update."
+            "ai-slideshow publish +update-schedule requires at least one field to update."
         )
     payload["schedule_item"] = schedule_item
     return payload
@@ -483,7 +483,7 @@ def _social_account_schedule_payload_from_args(
         missing = [field for field in require_fields_tuple if not payload.get(field)]
         if missing:
             raise ValueError(
-                "ai-slideshow publish +schedule-create missing required fields: "
+                "ai-slideshow publish +create-schedule missing required fields: "
                 + ", ".join(missing)
             )
     return payload
@@ -795,7 +795,8 @@ def _all_specs() -> list[CommandSpec]:
     return [
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+config-get",
+            shortcut="+get-config",
+            legacy_shortcuts=("+config-get",),
             summary=(
                 "Read account publish configuration, including the account-wide "
                 "output language used for overlays, captions, and hashtags."
@@ -805,13 +806,14 @@ def _all_specs() -> list[CommandSpec]:
             adapter_tool_name="social_account_config_get",
             input_schema=_social_account_get_input_schema(),
             output_schema=_direct_output_schema("Publish config payload returned by Museon API."),
-            examples=["museoncli ai-slideshow publish +config-get --id <pool_account_id>"],
+            examples=["museoncli ai-slideshow publish +get-config --id <pool_account_id>"],
             add_arguments=_add_social_account_id_arguments,
             build_arguments=_build_social_account_id_arguments,
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+config-update",
+            shortcut="+update-config",
+            legacy_shortcuts=("+config-update",),
             summary=(
                 "Update account publish settings such as output language, required hashtags, "
                 "and approval-before-publish."
@@ -825,15 +827,15 @@ def _all_specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +config-update --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +update-config --id <pool_account_id> "
                     "--require-approval-before-publish"
                 ),
                 (
-                    "museoncli ai-slideshow publish +config-update --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +update-config --id <pool_account_id> "
                     "--output-language zh-CN"
                 ),
                 (
-                    "museoncli ai-slideshow publish +config-update --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +update-config --id <pool_account_id> "
                     "--required-hashtags '#PlantSenso,#PlantCare'"
                 ),
             ],
@@ -843,11 +845,12 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+config-batch-update",
+            shortcut="+bulk-update-config",
+            legacy_shortcuts=("+config-batch-update",),
             summary=(
                 "Batch-update publish settings (output language, required hashtags, "
                 "approval-before-publish) for up to 200 accounts in one call. Use "
-                "instead of looping +config-update; returns a per-account summary."
+                "instead of looping +update-config; returns a per-account summary."
             ),
             risk_level="write",
             execution="direct",
@@ -858,11 +861,11 @@ def _all_specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +config-batch-update "
+                    "museoncli ai-slideshow publish +bulk-update-config "
                     "--ids <id1>,<id2> --required-hashtags '#PlantSenso,#PlantCare'"
                 ),
                 (
-                    "museoncli ai-slideshow publish +config-batch-update --account-updates "
+                    "museoncli ai-slideshow publish +bulk-update-config --account-updates "
                     '\'[{"account_id":"<uuid>","output_language":"zh-CN"}]\''
                 ),
             ],
@@ -872,20 +875,22 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+version-list",
+            shortcut="+list-versions",
+            legacy_shortcuts=("+version-list",),
             summary="List account publish config versions.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="social_account_version_list",
             input_schema=_social_account_get_input_schema(),
             output_schema=_direct_output_schema("Publish config versions returned by Museon API."),
-            examples=["museoncli ai-slideshow publish +version-list --id <pool_account_id>"],
+            examples=["museoncli ai-slideshow publish +list-versions --id <pool_account_id>"],
             add_arguments=_add_social_account_id_arguments,
             build_arguments=_build_social_account_id_arguments,
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+version-get",
+            shortcut="+get-version",
+            legacy_shortcuts=("+version-get",),
             summary="Read one account publish config version.",
             risk_level="read",
             execution="direct",
@@ -893,14 +898,15 @@ def _all_specs() -> list[CommandSpec]:
             input_schema=_social_account_version_get_input_schema(),
             output_schema=_direct_output_schema("Publish config version returned by Museon API."),
             examples=[
-                "museoncli ai-slideshow publish +version-get --id <pool_account_id> --version-id <version_id>"
+                "museoncli ai-slideshow publish +get-version --id <pool_account_id> --version-id <version_id>"
             ],
             add_arguments=_add_social_account_version_get_arguments,
             build_arguments=_build_social_account_version_get_arguments,
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+version-create",
+            shortcut="+create-version",
+            legacy_shortcuts=("+version-create",),
             summary="Create a draft account publish config version.",
             risk_level="write",
             execution="direct",
@@ -911,7 +917,7 @@ def _all_specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +version-create --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +create-version --id <pool_account_id> "
                     "--rules-file ./rules.json --change-note 'weekly plan'"
                 )
             ],
@@ -921,7 +927,8 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+version-activate",
+            shortcut="+activate-version",
+            legacy_shortcuts=("+version-activate",),
             summary="Activate a publish config version and materialize schedule items.",
             risk_level="write",
             execution="direct",
@@ -930,7 +937,7 @@ def _all_specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema("Schedule preview payload returned by Museon API."),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +version-activate --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +activate-version --id <pool_account_id> "
                     "--version-id <version_id> --days 30"
                 )
             ],
@@ -940,7 +947,8 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-list",
+            shortcut="+list-schedules",
+            legacy_shortcuts=("+schedule-list",),
             summary="List account publish schedule items.",
             risk_level="read",
             execution="direct",
@@ -949,7 +957,7 @@ def _all_specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema("Schedule items returned by Museon API."),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +schedule-list --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +list-schedules --id <pool_account_id> "
                     "--from 2026-06-01T00:00:00Z --to 2026-06-30T23:59:59Z"
                 )
             ],
@@ -958,7 +966,8 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-get",
+            shortcut="+get-schedule",
+            legacy_shortcuts=("+schedule-get",),
             summary="Read one account publish schedule item.",
             risk_level="read",
             execution="direct",
@@ -967,7 +976,7 @@ def _all_specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema("Schedule item returned by Museon API."),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +schedule-get --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +get-schedule --id <pool_account_id> "
                     "--schedule-item-id <schedule_item_id>"
                 )
             ],
@@ -976,7 +985,8 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-generate",
+            shortcut="+generate-schedule",
+            legacy_shortcuts=("+schedule-generate",),
             summary="Start content generation for one account publish schedule item.",
             risk_level="write",
             execution="async_run",
@@ -988,7 +998,7 @@ def _all_specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +schedule-generate --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +generate-schedule --id <pool_account_id> "
                     "--schedule-item-id <schedule_item_id>"
                 ),
             ],
@@ -998,7 +1008,8 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-create",
+            shortcut="+create-schedule",
+            legacy_shortcuts=("+schedule-create",),
             summary="Create one manual account publish schedule item.",
             risk_level="write",
             execution="direct",
@@ -1007,7 +1018,7 @@ def _all_specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema("Created schedule item returned by Museon API."),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +schedule-create --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +create-schedule --id <pool_account_id> "
                     "--scheduled-at 2026-06-10T10:00:00Z --format-id <format_id> "
                     "--content-topic-id <topic_id>"
                 )
@@ -1018,7 +1029,8 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-update",
+            shortcut="+update-schedule",
+            legacy_shortcuts=("+schedule-update",),
             summary="Update one account publish schedule item.",
             risk_level="write",
             execution="direct",
@@ -1027,7 +1039,7 @@ def _all_specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema("Updated schedule item returned by Museon API."),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +schedule-update --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +update-schedule --id <pool_account_id> "
                     "--schedule-item-id <schedule_item_id> --status cancelled"
                 )
             ],
@@ -1037,7 +1049,8 @@ def _all_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-delete",
+            shortcut="+delete-schedule",
+            legacy_shortcuts=("+schedule-delete",),
             summary="Cancel one account publish schedule item.",
             risk_level="write",
             execution="direct",
@@ -1046,7 +1059,7 @@ def _all_specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema("Cancelled schedule item returned by Museon API."),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +schedule-delete --id <pool_account_id> "
+                    "museoncli ai-slideshow publish +delete-schedule --id <pool_account_id> "
                     "--schedule-item-id <schedule_item_id> --reason 'not needed'"
                 )
             ],
@@ -1391,19 +1404,19 @@ async def _execute_version_list(ctx: CommandContext) -> Any:
 
 
 _ALL_EXECUTORS = {
-    "ai-slideshow.publish-config-get": direct_enveloped(_execute_config_get),
-    "ai-slideshow.publish-config-update": direct_enveloped(_execute_config_update),
-    "ai-slideshow.publish-config-batch-update": direct_enveloped(_execute_config_batch_update),
-    "ai-slideshow.publish-schedule-create": direct_enveloped(_execute_schedule_create),
-    "ai-slideshow.publish-schedule-delete": direct_enveloped(_execute_schedule_delete),
-    "ai-slideshow.publish-schedule-generate": direct_enveloped(_execute_schedule_generate),
-    "ai-slideshow.publish-schedule-get": direct_enveloped(_execute_schedule_get),
-    "ai-slideshow.publish-schedule-list": direct_enveloped(_execute_schedule_list),
-    "ai-slideshow.publish-schedule-update": direct_enveloped(_execute_schedule_update),
-    "ai-slideshow.publish-version-activate": direct_enveloped(_execute_version_activate),
-    "ai-slideshow.publish-version-create": direct_enveloped(_execute_version_create),
-    "ai-slideshow.publish-version-get": direct_enveloped(_execute_version_get),
-    "ai-slideshow.publish-version-list": direct_enveloped(_execute_version_list),
+    "ai-slideshow.publish-get-config": direct_enveloped(_execute_config_get),
+    "ai-slideshow.publish-update-config": direct_enveloped(_execute_config_update),
+    "ai-slideshow.publish-bulk-update-config": direct_enveloped(_execute_config_batch_update),
+    "ai-slideshow.publish-create-schedule": direct_enveloped(_execute_schedule_create),
+    "ai-slideshow.publish-delete-schedule": direct_enveloped(_execute_schedule_delete),
+    "ai-slideshow.publish-generate-schedule": direct_enveloped(_execute_schedule_generate),
+    "ai-slideshow.publish-get-schedule": direct_enveloped(_execute_schedule_get),
+    "ai-slideshow.publish-list-schedules": direct_enveloped(_execute_schedule_list),
+    "ai-slideshow.publish-update-schedule": direct_enveloped(_execute_schedule_update),
+    "ai-slideshow.publish-activate-version": direct_enveloped(_execute_version_activate),
+    "ai-slideshow.publish-create-version": direct_enveloped(_execute_version_create),
+    "ai-slideshow.publish-get-version": direct_enveloped(_execute_version_get),
+    "ai-slideshow.publish-list-versions": direct_enveloped(_execute_version_list),
 }
 
 

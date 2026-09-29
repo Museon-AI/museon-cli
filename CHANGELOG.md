@@ -8,6 +8,7 @@ Museon CLI follows semantic versioning for its package and command contract.
 - Paged reads add a normalized `page_info`; read commands with `--page` take `--all`.
 - Every flag has help and every command shows a runnable example; `schema` accepts CLI paths.
 - HireAICreator actions are now a verb or a verb with its object (51 renames, e.g. `video +from-upload` → `+create-from-upload`, `test-group +accounts-set` → `+set-accounts`, `warmup +journeys` → `+list-journeys`). Old names keep working, hidden from help, and return a deprecation warning; `schema` lists them under `deprecated_aliases`.
+- The same rule now covers every other domain (70 renames, e.g. `research +web-research` → `+search-web`, `social-account +connect-link-create` → `+create-connect-link`, `campaign-monitor +creator-list` → `+list-creators`, `ai-slideshow publish +schedule-plan-batch` → `+submit-schedule-plan`, `routines +memory-get` → `+get-memory`). Old names keep working the same way.
 - Fix: `ai-slideshow generation +create` returns its run and frontend links again.
 
 ## 0.7.3

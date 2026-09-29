@@ -8,17 +8,17 @@ from museoncli.domains import command_executors, get_command_spec, schema_payloa
 RETAINED = {
     "list",
     "get",
-    "adb-connect",
-    "stream-url",
-    "connect-link-create",
-    "connect-link-status",
-    "performance-get",
-    "profile-edit-draft",
-    "profile-edit-submit",
-    "profile-edit-batch-submit",
-    "profile-edit-status",
-    "avatar-generate-batch",
-    "avatar-generate-status",
+    "connect-adb",
+    "get-stream-url",
+    "create-connect-link",
+    "get-connect-link",
+    "get-performance",
+    "draft-profile-edit",
+    "submit-profile-edit",
+    "bulk-submit-profile-edit",
+    "get-profile-edit",
+    "bulk-generate-avatars",
+    "get-avatar-generation",
 }
 
 REMOVED = {

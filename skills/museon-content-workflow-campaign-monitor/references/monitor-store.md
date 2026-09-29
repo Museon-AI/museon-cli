@@ -10,10 +10,10 @@ Review compares planned, generated, and published work with observed outcomes, s
 
 | Object | Start with |
 | --- | --- |
-| Creator membership | `museoncli campaign-monitor +creator-list` |
-| Content membership | `museoncli campaign-monitor +content-list` |
-| Creator history | `museoncli campaign-monitor +creator-performance-get` |
-| Post history | `museoncli campaign-monitor +post-performance-get` |
+| Creator membership | `museoncli campaign-monitor +list-creators` |
+| Content membership | `museoncli campaign-monitor +list-content` |
+| Creator history | `museoncli campaign-monitor +get-creator-performance` |
+| Post history | `museoncli campaign-monitor +get-post-performance` |
 
 ## DON'T
 

@@ -264,10 +264,10 @@ def _build_asset_get_batch_arguments(args: argparse.Namespace) -> dict[str, Any]
     format_ids = [str(item).strip() for item in args.format_ids if str(item).strip()]
     if len(format_ids) > FORMAT_BATCH_GET_MAX_IDS:
         raise ValueError(
-            f"ai-slideshow asset +get-batch supports at most {FORMAT_BATCH_GET_MAX_IDS} --id values."
+            f"ai-slideshow asset +bulk-get supports at most {FORMAT_BATCH_GET_MAX_IDS} --id values."
         )
     if len(format_ids) != len(set(format_ids)):
-        raise ValueError("ai-slideshow asset +get-batch --id values must be unique.")
+        raise ValueError("ai-slideshow asset +bulk-get --id values must be unique.")
     payload.update(
         {
             "type": _asset_resource_type(dekebab(args.asset_type)),
@@ -369,7 +369,7 @@ def _add_asset_write_arguments(
         "--category",
         help=(
             "Product category canonical value. See `museoncli schema asset.create` "
-            "or run `museoncli ai-slideshow asset +options --type product --field category`."
+            "or run `museoncli ai-slideshow asset +list-options --type product --field category`."
         ),
     )
     parser.add_argument("--media-type", choices=["image", "video", "audio"])
@@ -1085,7 +1085,7 @@ def _product_write_payload_schema(*, create: bool) -> dict[str, Any]:
                 "enum": PRODUCT_CATEGORY_CHOICES,
                 "description": (
                     "Canonical product category. For intent search and labels, run "
-                    "`museoncli ai-slideshow asset +options --type product --field category`."
+                    "`museoncli ai-slideshow asset +list-options --type product --field category`."
                 ),
             },
             "description": {
@@ -1229,7 +1229,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+get-batch",
+            shortcut="+bulk-get",
+            legacy_shortcuts=("+get-batch",),
             summary=(
                 "Read 1-100 Formats by exact IDs in one request. When two or more known "
                 "Format IDs must be queried, MUST use this command instead of looping "
@@ -1245,7 +1246,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow asset +get-batch --type format --id <format_id_1> --id <format_id_2>"
+                    "museoncli ai-slideshow asset +bulk-get --type format --id <format_id_1> --id <format_id_2>"
                 ),
             ],
             add_arguments=_add_asset_get_batch_arguments,
@@ -1253,7 +1254,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+options",
+            shortcut="+list-options",
+            legacy_shortcuts=("+options",),
             summary=(
                 "List canonical values and labels for an asset field. Product category "
                 "supports optional intent search, so a term such as education, edtech, or 教育 "
@@ -1267,12 +1269,12 @@ def specs() -> list[CommandSpec]:
                 "Canonical asset-field options returned by Museon API."
             ),
             examples=[
-                "museoncli ai-slideshow asset +options --type product --field category",
+                "museoncli ai-slideshow asset +list-options --type product --field category",
                 (
-                    "museoncli ai-slideshow asset +options --type product --field category --query education"
+                    "museoncli ai-slideshow asset +list-options --type product --field category --query education"
                 ),
                 (
-                    "museoncli ai-slideshow asset +options --type product --field category --query 教育"
+                    "museoncli ai-slideshow asset +list-options --type product --field category --query 教育"
                 ),
             ],
             add_arguments=_add_asset_options_arguments,
@@ -1284,7 +1286,7 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Create one reusable product, persona, topic, format, or media asset. "
                 "Product requires name, category, and description; discover canonical "
-                "categories with ai-slideshow asset +options and use --dry-run for authoritative "
+                "categories with ai-slideshow asset +list-options and use --dry-run for authoritative "
                 "server validation without writing."
             ),
             risk_level="write",
@@ -1526,9 +1528,9 @@ async def _execute_delete(ctx: CommandContext) -> Any:
 async def _run_read(ctx: CommandContext) -> dict[str, Any]:
     if ctx.spec.schema_name == "ai-slideshow.asset-list":
         raw = await _execute_list(ctx)
-    elif ctx.spec.schema_name == "ai-slideshow.asset-get-batch":
+    elif ctx.spec.schema_name == "ai-slideshow.asset-bulk-get":
         raw = await _execute_get_batch(ctx)
-    elif ctx.spec.schema_name == "ai-slideshow.asset-options":
+    elif ctx.spec.schema_name == "ai-slideshow.asset-list-options":
         raw = await _execute_options(ctx)
     else:
         raw = await _execute_get(ctx)
@@ -1567,8 +1569,8 @@ async def _run_write(ctx: CommandContext) -> dict[str, Any]:
 EXECUTORS = {
     "ai-slideshow.asset-list": _run_read,
     "ai-slideshow.asset-get": _run_read,
-    "ai-slideshow.asset-get-batch": _run_read,
-    "ai-slideshow.asset-options": _run_read,
+    "ai-slideshow.asset-bulk-get": _run_read,
+    "ai-slideshow.asset-list-options": _run_read,
     "ai-slideshow.asset-create": _run_write,
     "ai-slideshow.asset-update": _run_write,
     "ai-slideshow.asset-delete": direct_enveloped(_execute_delete),

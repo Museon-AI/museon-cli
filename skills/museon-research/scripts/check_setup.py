@@ -11,10 +11,10 @@ import sys
 from typing import Any
 
 REQUIRED_SCHEMAS = (
-    "research.social-media-hook-analyze",
-    "research.social-media-hook-analyze-poll",
-    "research.social-media-hook-analyze-results",
-    "research.social-media-hook-analyze-media-get",
+    "research.create-hook-analysis",
+    "research.bulk-get-hook-analyses",
+    "research.list-hook-analysis-results",
+    "research.get-hook-analysis-media",
 )
 
 

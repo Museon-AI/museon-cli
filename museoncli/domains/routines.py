@@ -66,7 +66,14 @@ def _routine_command_specs() -> list[CommandSpec]:
                 summary=str(spec["summary"]),
                 risk_level=spec["risk_level"],
                 execution=spec["execution"],
-                adapter_tool_name=f"routine_{name.removeprefix('routines.').replace('-', '_')}",
+                # Adapter names are server-side identities; a CLI rename must not move them.
+                adapter_tool_name=(
+                    "routine_"
+                    + (spec.get("legacy_shortcuts") or [name.removeprefix("routines.")])[0].replace(
+                        "-", "_"
+                    )
+                ),
+                legacy_shortcuts=tuple(f"+{old}" for old in spec.get("legacy_shortcuts") or ()),
                 input_schema=spec["input_schema"],
                 output_schema=spec["output_schema"],
                 examples=spec["examples"],
@@ -89,7 +96,7 @@ def _routine_add_arguments(schema_name: str) -> Callable[[argparse.ArgumentParse
         "routines.cancel": _add_routine_id_arguments,
         "routines.pause": _add_routine_id_arguments,
         "routines.resume": _add_routine_id_arguments,
-        "routines.memory-get": _add_routine_id_arguments,
+        "routines.get-memory": _add_routine_id_arguments,
         "routines.record": _add_routine_record_arguments,
     }[schema_name]
 
@@ -105,7 +112,7 @@ def _routine_build_arguments(schema_name: str) -> Callable[[argparse.Namespace],
         "routines.cancel": _build_routine_id_arguments,
         "routines.pause": _build_routine_id_arguments,
         "routines.resume": _build_routine_id_arguments,
-        "routines.memory-get": _build_routine_id_arguments,
+        "routines.get-memory": _build_routine_id_arguments,
         "routines.record": _build_routine_record_arguments,
     }[schema_name]
 
@@ -650,9 +657,10 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
             "examples": ["museoncli routines +resume --id <routine_id>"],
         },
         {
-            "name": "routines.memory-get",
+            "name": "routines.get-memory",
             "domain": ROUTINES_DOMAIN,
-            "shortcut": "memory-get",
+            "shortcut": "get-memory",
+            "legacy_shortcuts": ["memory-get"],
             "summary": "Read the current effective memory snapshot for one routine.",
             "risk_level": "read",
             "execution": "direct",
@@ -665,7 +673,7 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "required": ["routine_id"],
             },
             "output_schema": _direct_output_schema("Routine memory returned by Museon API."),
-            "examples": ["museoncli routines +memory-get --id <routine_id>"],
+            "examples": ["museoncli routines +get-memory --id <routine_id>"],
         },
         {
             "name": "routines.record",
@@ -1028,7 +1036,7 @@ EXECUTORS = {
     "routines.create-draft": routines_enveloped(_execute_create_draft),
     "routines.get": routines_enveloped(_execute_get),
     "routines.list": routines_enveloped(_execute_list),
-    "routines.memory-get": routines_enveloped(_execute_memory_get),
+    "routines.get-memory": routines_enveloped(_execute_memory_get),
     "routines.pause": routines_enveloped(_execute_pause),
     "routines.rebuild-ad-hoc": routines_enveloped(_execute_rebuild_ad_hoc),
     "routines.record": routines_enveloped(_execute_record),

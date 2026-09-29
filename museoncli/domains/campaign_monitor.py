@@ -417,7 +417,7 @@ def _campaign_monitor_creator_add_input_schema() -> dict[str, Any]:
                 "items": {"type": "string"},
                 "description": (
                     "Public creator profile URLs to track. Resolved in a background "
-                    "task (response data.url_import_task); verify later with +creator-list."
+                    "task (response data.url_import_task); verify later with +list-creators."
                 ),
             },
             "creator_ids": {
@@ -457,13 +457,13 @@ def _campaign_monitor_content_add_input_schema() -> dict[str, Any]:
                 "items": {"type": "string"},
                 "description": (
                     "Public post/video URLs to track. Resolved in a background task "
-                    "(response data.url_import_task); verify later with +content-list."
+                    "(response data.url_import_task); verify later with +list-content."
                 ),
             },
             "content_ids": {
                 "type": ["array", "null"],
                 "items": {"type": "string"},
-                "description": "Existing content ids already known to Museon (field `id` from +content-list).",
+                "description": "Existing content ids already known to Museon (field `id` from +list-content).",
             },
             "sync": {"type": "boolean", "default": True},
         }
@@ -550,7 +550,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+creator-list",
+            shortcut="+list-creators",
+            legacy_shortcuts=("+creator-list",),
             summary="List creators covered by a campaign monitor.",
             risk_level="read",
             execution="direct",
@@ -560,19 +561,20 @@ def specs() -> list[CommandSpec]:
                 "Campaign monitor creator payload returned by Museon API."
             ),
             examples=[
-                ("museoncli campaign-monitor +creator-list --id <campaign_id> --sort views_desc"),
+                ("museoncli campaign-monitor +list-creators --id <campaign_id> --sort views_desc"),
             ],
             add_arguments=_add_campaign_monitor_creator_list_arguments,
             build_arguments=_build_campaign_monitor_creator_list_arguments,
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+creator-add",
+            shortcut="+add-creators",
+            legacy_shortcuts=("+creator-add",),
             summary=(
                 "Track creators in a campaign so their matching posts sync in going "
                 "forward. --url imports new creators by public profile URL via a "
                 "background task (response data.url_import_task); --creator-id attaches "
-                "creators already known to Museon. Verify with +creator-list later."
+                "creators already known to Museon. Verify with +list-creators later."
             ),
             risk_level="write",
             supports_dry_run=True,
@@ -584,11 +586,11 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +creator-add --id <campaign_id> "
+                    "museoncli campaign-monitor +add-creators --id <campaign_id> "
                     "--url https://www.tiktok.com/@creator1"
                 ),
                 (
-                    "museoncli campaign-monitor +creator-add --id <campaign_id> "
+                    "museoncli campaign-monitor +add-creators --id <campaign_id> "
                     "--creator-id <creator_social_account_id>"
                 ),
             ],
@@ -597,7 +599,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+creator-remove",
+            shortcut="+remove-creators",
+            legacy_shortcuts=("+creator-remove",),
             summary=(
                 "Stop tracking a creator in a campaign: removes the creator monitor and "
                 "its derived content monitors from this campaign and resyncs. This does "
@@ -605,7 +608,7 @@ def specs() -> list[CommandSpec]:
                 "confirmation is required before running with --yes. Tracking is "
                 "workspace-wide, so the monitor is only fully deleted when no other "
                 "campaign references it. --creator-id is the creator_social_account_id "
-                "from +creator-list."
+                "from +list-creators."
             ),
             risk_level="destructive",
             requires_confirmation=True,
@@ -618,7 +621,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +creator-remove --id <campaign_id> "
+                    "museoncli campaign-monitor +remove-creators --id <campaign_id> "
                     "--creator-id <creator_social_account_id> --dry-run"
                 ),
             ],
@@ -627,7 +630,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+content-list",
+            shortcut="+list-content",
+            legacy_shortcuts=("+content-list",),
             summary="List posts/content covered by a campaign monitor.",
             risk_level="read",
             execution="direct",
@@ -638,7 +642,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +content-list "
+                    "museoncli campaign-monitor +list-content "
                     "--id <campaign_id> --date-from 2026-06-16 --date-to 2026-07-15 "
                     "--views-min 10000 --likes-min 10 --likes-max 99 "
                     "--sort views_desc --page-size 100"
@@ -649,11 +653,12 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+content-add",
+            shortcut="+add-content",
+            legacy_shortcuts=("+content-add",),
             summary=(
                 "Track individual posts in a campaign. --url imports new posts by public "
                 "URL via a background task (response data.url_import_task); --content-id "
-                "attaches posts already known to Museon. Verify with +content-list later."
+                "attaches posts already known to Museon. Verify with +list-content later."
             ),
             risk_level="write",
             supports_dry_run=True,
@@ -665,11 +670,11 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +content-add --id <campaign_id> "
+                    "museoncli campaign-monitor +add-content --id <campaign_id> "
                     "--url https://www.tiktok.com/@creator/video/123"
                 ),
                 (
-                    "museoncli campaign-monitor +content-add --id <campaign_id> "
+                    "museoncli campaign-monitor +add-content --id <campaign_id> "
                     "--content-id <content_id>"
                 ),
             ],
@@ -678,13 +683,14 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+content-remove",
+            shortcut="+remove-content",
+            legacy_shortcuts=("+content-remove",),
             summary=(
                 "Remove one content record from a campaign monitor. This only removes "
                 "the collection record from the campaign monitor (soft delete), it does "
                 "NOT delete the original social-platform post; explicit operator "
                 "confirmation is required before running with --yes. The "
-                "collection_content_id comes from the +content-list response, and the "
+                "collection_content_id comes from the +list-content response, and the "
                 "response includes removed / missing detail."
             ),
             risk_level="destructive",
@@ -698,7 +704,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +content-remove --id <campaign_id> "
+                    "museoncli campaign-monitor +remove-content --id <campaign_id> "
                     "--collection-content-id <collection_content_id> --dry-run"
                 ),
             ],
@@ -707,7 +713,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+content-batch-remove",
+            shortcut="+bulk-remove-content",
+            legacy_shortcuts=("+content-batch-remove",),
             summary=(
                 "Remove content records from a campaign monitor in batch. This only "
                 "removes the collection record from the campaign monitor (soft delete), "
@@ -715,7 +722,7 @@ def specs() -> list[CommandSpec]:
                 "operator confirmation is required before running with --yes. Batch "
                 "size <=100, split into multiple batches if exceeded; response includes "
                 "removed / missing detail; collection_content_id comes from the "
-                "+content-list response."
+                "+list-content response."
             ),
             risk_level="destructive",
             requires_confirmation=True,
@@ -728,7 +735,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +content-batch-remove --id <campaign_id> "
+                    "museoncli campaign-monitor +bulk-remove-content --id <campaign_id> "
                     "--collection-content-ids <collection_content_id_1>,<collection_content_id_2> "
                     "--dry-run"
                 ),
@@ -738,11 +745,12 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+summary",
+            shortcut="+get-summary",
+            legacy_shortcuts=("+summary",),
             summary=(
                 "Read daily content-trend totals for a campaign monitor. This is not "
                 "the Campaign Analytics Period Performance comparison; use "
-                "+period-performance for period-end snapshots and previous-period deltas."
+                "+get-period-performance for period-end snapshots and previous-period deltas."
             ),
             risk_level="read",
             execution="direct",
@@ -753,7 +761,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +summary --id <campaign_id> "
+                    "museoncli campaign-monitor +get-summary --id <campaign_id> "
                     "--date-from 2026-06-01 --date-to 2026-06-08"
                 ),
             ],
@@ -762,7 +770,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+period-performance",
+            shortcut="+get-period-performance",
+            legacy_shortcuts=("+period-performance",),
             summary=(
                 "Read the Campaign Analytics Period Performance snapshot. The requested "
                 "period end is the current performance cutoff; Museon derives the "
@@ -778,7 +787,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +period-performance --id <campaign_id> "
+                    "museoncli campaign-monitor +get-period-performance --id <campaign_id> "
                     "--period-start 2026-09-14 --period-end 2026-09-20 "
                     "--timezone Asia/Shanghai"
                 ),
@@ -1095,15 +1104,15 @@ def _dedupe_collection_content_ids(raw_ids: list[Any]) -> list[str]:
 
 
 EXECUTORS = {
-    "campaign-monitor.content-add": direct_enveloped(_execute_content_add),
-    "campaign-monitor.content-batch-remove": direct_enveloped(_execute_content_batch_remove),
-    "campaign-monitor.content-list": direct_enveloped(_execute_content_list),
-    "campaign-monitor.content-remove": direct_enveloped(_execute_content_remove),
-    "campaign-monitor.creator-add": direct_enveloped(_execute_creator_add),
-    "campaign-monitor.creator-list": direct_enveloped(_execute_creator_list),
-    "campaign-monitor.creator-remove": direct_enveloped(_execute_creator_remove),
+    "campaign-monitor.add-content": direct_enveloped(_execute_content_add),
+    "campaign-monitor.bulk-remove-content": direct_enveloped(_execute_content_batch_remove),
+    "campaign-monitor.list-content": direct_enveloped(_execute_content_list),
+    "campaign-monitor.remove-content": direct_enveloped(_execute_content_remove),
+    "campaign-monitor.add-creators": direct_enveloped(_execute_creator_add),
+    "campaign-monitor.list-creators": direct_enveloped(_execute_creator_list),
+    "campaign-monitor.remove-creators": direct_enveloped(_execute_creator_remove),
     "campaign-monitor.get": direct_enveloped(_execute_get),
     "campaign-monitor.list": direct_enveloped(_execute_list),
-    "campaign-monitor.period-performance": direct_enveloped(_execute_period_performance),
-    "campaign-monitor.summary": direct_enveloped(_execute_summary),
+    "campaign-monitor.get-period-performance": direct_enveloped(_execute_period_performance),
+    "campaign-monitor.get-summary": direct_enveloped(_execute_summary),
 }

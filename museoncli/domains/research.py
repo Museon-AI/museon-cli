@@ -189,7 +189,7 @@ def _build_web_research_arguments(args: argparse.Namespace) -> dict[str, Any]:
         }
     )
     if not str(payload.get("query") or "").strip() and not str(payload.get("url") or "").strip():
-        raise ValueError("research +web-research requires --query or --url.")
+        raise ValueError("research +search-web requires --query or --url.")
     return payload
 
 
@@ -276,7 +276,7 @@ def _build_social_media_search_arguments(args: argparse.Namespace) -> dict[str, 
     )
     for key in ("platform", "intent", "query"):
         if not str(payload.get(key) or "").strip():
-            raise ValueError(f"research +social-media-search requires --{key.replace('_', '-')}.")
+            raise ValueError(f"research +search-social-media requires --{key.replace('_', '-')}.")
     return payload
 
 
@@ -306,7 +306,7 @@ def _build_social_hook_analyze_arguments(args: argparse.Namespace) -> dict[str, 
     post_urls = _optional_url_list(payload.get("post_urls"), field="post_urls")
     profile_urls = _optional_url_list(payload.get("profile_urls"), field="profile_urls")
     if not post_urls and not profile_urls:
-        raise ValueError("research +social-media-hook-analyze requires --url or --profile-url.")
+        raise ValueError("research +create-hook-analysis requires --url or --profile-url.")
     if len(post_urls) + len(profile_urls) > 40:
         raise ValueError("At most 40 --url/--profile-url values are allowed.")
     payload["post_urls"] = post_urls
@@ -337,7 +337,7 @@ def _build_social_hook_source_arguments(args: argparse.Namespace) -> dict[str, A
     )
     if not 1 <= len(candidate_urls) <= 40:
         raise ValueError(
-            "research +social-media-hook-source requires 1 to 40 --url values."
+            "research +submit-hook-candidates requires 1 to 40 --url values."
         )
     if len(candidate_urls) != len(set(candidate_urls)):
         raise ValueError("--url values must be unique.")
@@ -366,7 +366,7 @@ def _build_social_hook_analyze_seen_arguments(args: argparse.Namespace) -> dict[
         raise ValueError("urls must be an array of URLs.")
     urls = [url.strip() for url in raw_urls]
     if not 1 <= len(urls) <= 40:
-        raise ValueError("research +social-media-hook-analyze-seen requires 1 to 40 --url values.")
+        raise ValueError("research +check-hooks-analyzed requires 1 to 40 --url values.")
     if any(not url for url in urls):
         raise ValueError("--url must not be blank.")
     if any(len(url) > 2048 for url in urls):
@@ -504,7 +504,7 @@ def _build_community_search_arguments(args: argparse.Namespace) -> dict[str, Any
         payload["search_type"] = args.search_type
     for key in ("platform", "intent", "query"):
         if not str(payload.get(key) or "").strip():
-            raise ValueError(f"research +community-search requires --{key.replace('_', '-')}.")
+            raise ValueError(f"research +search-community requires --{key.replace('_', '-')}.")
     return payload
 
 
@@ -539,7 +539,7 @@ def _build_creative_search_ads_arguments(args: argparse.Namespace) -> dict[str, 
     _reject_server_controlled_fields(
         payload,
         fields={"provider", "provider_name", "source_type"},
-        context="research +creative-search-ads",
+        context="research +create-ads-search",
     )
     raw_idempotency_key = (
         args.idempotency_key if args.idempotency_key is not None else payload.get("idempotency_key")
@@ -665,7 +665,7 @@ def _normalized_string_list(
     maximum: int,
 ) -> list[str]:
     if not isinstance(value, list):
-        raise ValueError(f"research +creative-search-ads requires --keyword ({field}).")
+        raise ValueError(f"research +create-ads-search requires --keyword ({field}).")
     if any(not isinstance(item, str) for item in value):
         raise ValueError(f"{field} values must be strings.")
     normalized = [item.strip() for item in value if item.strip()]
@@ -725,7 +725,7 @@ def _build_visual_analyze_arguments(args: argparse.Namespace) -> dict[str, Any]:
     _reject_server_controlled_fields(
         payload,
         fields={"model", "temperature", "max_output_tokens"},
-        context="research +visual-analyze",
+        context="research +analyze-visual",
     )
     if args.media_json:
         payload["media"] = _json_list(args.media_json, flag="--media-json")
@@ -736,7 +736,7 @@ def _build_visual_analyze_arguments(args: argparse.Namespace) -> dict[str, Any]:
         payload["media"] = list(args.media_urls)
     if not payload.get("media"):
         raise ValueError(
-            "research +visual-analyze requires --media, --media-json, or --media-file."
+            "research +analyze-visual requires --media, --media-json, or --media-file."
         )
     payload["prompt"] = args.prompt
     if args.context is not None:
@@ -1209,7 +1209,8 @@ def specs() -> list[CommandSpec]:
     return [
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+web-research",
+            shortcut="+search-web",
+            legacy_shortcuts=("+web-research",),
             summary=(
                 "Research public web evidence from a query or URL, including page text "
                 "and official-site visual assets."
@@ -1223,11 +1224,11 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +web-research --query 'Museon AI' "
+                    "museoncli research +search-web --query 'Museon AI' "
                     "--include search-results --limit 5"
                 ),
                 (
-                    "museoncli research +web-research --url https://example.com "
+                    "museoncli research +search-web --url https://example.com "
                     "--include page-text --include site-visual-assets"
                 ),
             ],
@@ -1236,7 +1237,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+social-media-search",
+            shortcut="+search-social-media",
+            legacy_shortcuts=("+social-media-search",),
             summary=(
                 "Search social-native evidence across TikTok, Instagram, YouTube, and XHS "
                 "using a stable platform and intent contract."
@@ -1252,43 +1254,43 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +social-media-search --platform tiktok "
+                    "museoncli research +search-social-media --platform tiktok "
                     "--intent keyword-search --query 'skincare routine' --content-type video"
                 ),
                 (
-                    "museoncli research +social-media-search --platform tiktok "
+                    "museoncli research +search-social-media --platform tiktok "
                     "--intent hashtag-videos --query '#skincare' --limit 10"
                 ),
                 (
-                    "museoncli research +social-media-search --platform instagram "
+                    "museoncli research +search-social-media --platform instagram "
                     "--intent reels --query '@creator' --limit 10"
                 ),
                 (
-                    "museoncli research +social-media-search --platform tiktok "
+                    "museoncli research +search-social-media --platform tiktok "
                     "--intent comments --query '7551234567890123456' --limit 20"
                 ),
                 (
-                    "museoncli research +social-media-search --platform instagram "
+                    "museoncli research +search-social-media --platform instagram "
                     "--intent comments --query 'https://www.instagram.com/reel/<shortcode>/'"
                 ),
                 (
-                    "museoncli research +social-media-search --platform youtube "
+                    "museoncli research +search-social-media --platform youtube "
                     "--intent keyword-search --query 'AI video ads'"
                 ),
                 (
-                    "museoncli research +social-media-search --platform xhs "
+                    "museoncli research +search-social-media --platform xhs "
                     "--intent keyword-search --query 'coffee shop decor' --content-type image"
                 ),
                 (
-                    "museoncli research +social-media-search --platform xhs "
+                    "museoncli research +search-social-media --platform xhs "
                     "--intent post --query 'https://www.xiaohongshu.com/explore/<note_id>'"
                 ),
                 (
-                    "museoncli research +social-media-search --platform xhs "
+                    "museoncli research +search-social-media --platform xhs "
                     "--intent comments --query 'https://xhslink.cn/o/<share_id>'"
                 ),
                 (
-                    "museoncli research +social-media-search --platform xhs "
+                    "museoncli research +search-social-media --platform xhs "
                     "--intent creator-posts "
                     "--query 'https://www.xiaohongshu.com/user/profile/<user_id>' --limit 10"
                 ),
@@ -1298,7 +1300,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+social-media-hook-analyze",
+            shortcut="+create-hook-analysis",
+            legacy_shortcuts=("+social-media-hook-analyze",),
             summary=(
                 "Start a durable Instagram Hook analysis batch from post and/or profile URLs. "
                 "Returns immediately; poll batches together and read structured results by page."
@@ -1312,7 +1315,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +social-media-hook-analyze "
+                    "museoncli research +create-hook-analysis "
                     "--url https://www.instagram.com/reel/<id>/ "
                     "--profile-url https://www.instagram.com/<creator>/ "
                     "--idempotency-key <stable_key>"
@@ -1324,7 +1327,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+social-media-hook-source",
+            shortcut="+submit-hook-candidates",
+            legacy_shortcuts=("+social-media-hook-source",),
             summary=(
                 "Submit Agent-prefiltered Instagram Hook candidates, recheck "
                 "workspace-scoped duplicates, and start the existing durable analysis batch."
@@ -1338,7 +1342,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +social-media-hook-source "
+                    "museoncli research +submit-hook-candidates "
                     "--url https://www.instagram.com/reel/<id>/ "
                     "--idempotency-key <stable_key>"
                 )
@@ -1349,7 +1353,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+social-media-hook-analyze-seen",
+            shortcut="+check-hooks-analyzed",
+            legacy_shortcuts=("+social-media-hook-analyze-seen",),
             summary=(
                 "Check up to 40 Instagram post URLs against prior workspace-scoped "
                 "Social Media Hook analyses."
@@ -1363,7 +1368,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +social-media-hook-analyze-seen "
+                    "museoncli research +check-hooks-analyzed "
                     "--url https://www.instagram.com/reel/<id_1>/ "
                     "--url https://www.instagram.com/reel/<id_2>/"
                 )
@@ -1373,33 +1378,36 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+social-media-hook-analyze-get",
+            shortcut="+get-hook-analysis",
+            legacy_shortcuts=("+social-media-hook-analyze-get",),
             summary="Read one Social Media Hook analysis batch and its aggregate progress.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="social_media_hook_analyze_get",
             input_schema=_social_hook_get_input_schema(),
             output_schema=_async_output_schema("Social Media Hook analysis batch status."),
-            examples=["museoncli research +social-media-hook-analyze-get --id <analysis_id>"],
+            examples=["museoncli research +get-hook-analysis --id <analysis_id>"],
             add_arguments=_add_social_hook_get_arguments,
             build_arguments=_build_social_hook_get_arguments,
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+social-media-hook-analyze-poll",
+            shortcut="+bulk-get-hook-analyses",
+            legacy_shortcuts=("+social-media-hook-analyze-poll",),
             summary="Poll up to 20 Social Media Hook analysis batches in one request.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="social_media_hook_analyze_poll",
             input_schema=_social_hook_poll_input_schema(),
             output_schema=_async_output_schema("Grouped Social Media Hook analysis progress."),
-            examples=["museoncli research +social-media-hook-analyze-poll --id <id_1> --id <id_2>"],
+            examples=["museoncli research +bulk-get-hook-analyses --id <id_1> --id <id_2>"],
             add_arguments=_add_social_hook_poll_arguments,
             build_arguments=_build_social_hook_poll_arguments,
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+social-media-hook-analyze-results",
+            shortcut="+list-hook-analysis-results",
+            legacy_shortcuts=("+social-media-hook-analyze-results",),
             summary=(
                 "List versioned, structured Hook evidence for one analysis batch. "
                 "Apply scoring and recommendation policy in the consuming Skill."
@@ -1413,7 +1421,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +social-media-hook-analyze-results --id <analysis_id> "
+                    "museoncli research +list-hook-analysis-results --id <analysis_id> "
                     "--page 1 --page-size 20"
                 )
             ],
@@ -1422,7 +1430,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+social-media-hook-analyze-media-get",
+            shortcut="+get-hook-analysis-media",
+            legacy_shortcuts=("+social-media-hook-analyze-media-get",),
             summary=(
                 "Download one workspace-scoped temporary source video from a Social Media "
                 "Hook analysis item without exposing a signed URL."
@@ -1436,7 +1445,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +social-media-hook-analyze-media-get "
+                    "museoncli research +get-hook-analysis-media "
                     "--id <analysis_id> --item-id <item_id> --output ./hook.mp4"
                 )
             ],
@@ -1445,7 +1454,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+community-search",
+            shortcut="+search-community",
+            legacy_shortcuts=("+community-search",),
             summary=(
                 "Search community evidence across X, Reddit, and LinkedIn using "
                 "a stable platform and intent contract."
@@ -1459,19 +1469,19 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +community-search --platform reddit "
+                    "museoncli research +search-community --platform reddit "
                     "--intent keyword-search --query 'AI video agent' --search-type post --limit 5"
                 ),
                 (
-                    "museoncli research +community-search --platform x "
+                    "museoncli research +search-community --platform x "
                     "--intent keyword-search --query 'AI video agent'"
                 ),
                 (
-                    "museoncli research +community-search --platform linkedin "
+                    "museoncli research +search-community --platform linkedin "
                     "--intent company-profile --query openai"
                 ),
                 (
-                    "museoncli research +community-search --platform linkedin "
+                    "museoncli research +search-community --platform linkedin "
                     "--intent keyword-search --query 'AI automation' --limit 5"
                 ),
             ],
@@ -1480,7 +1490,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+creative-search-ads",
+            shortcut="+create-ads-search",
+            legacy_shortcuts=("+creative-search-ads",),
             summary=(
                 "Start a durable Creative Search Ads task across Meta and TikTok ad "
                 "libraries. Requires a stable idempotency key for safe retries. "
@@ -1496,12 +1507,12 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +creative-search-ads --keyword 'eco soap' "
+                    "museoncli research +create-ads-search --keyword 'eco soap' "
                     "--ad-platform meta-ads --ad-platform tiktok-ads --media-type video "
                     "--idempotency-key <stable_key>"
                 ),
                 (
-                    "museoncli research +creative-search-ads --keyword 'summer dress' "
+                    "museoncli research +create-ads-search --keyword 'summer dress' "
                     "--media-type photo --limit 20 --idempotency-key <stable_key> --dry-run"
                 ),
             ],
@@ -1511,7 +1522,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+creative-search-ads-get",
+            shortcut="+get-ads-search",
+            legacy_shortcuts=("+creative-search-ads-get",),
             summary=(
                 "Read one Creative Search Ads task, including terminal aggregate "
                 "statistics and sanitized partial-failure details."
@@ -1524,14 +1536,15 @@ def specs() -> list[CommandSpec]:
                 "Creative Search Ads task status and terminal aggregate result."
             ),
             examples=[
-                "museoncli research +creative-search-ads-get --id <task_id>",
+                "museoncli research +get-ads-search --id <task_id>",
             ],
             add_arguments=_add_creative_search_ads_get_arguments,
             build_arguments=_build_creative_search_ads_get_arguments,
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+creative-search-ads-results",
+            shortcut="+list-ads-search-results",
+            legacy_shortcuts=("+creative-search-ads-results",),
             summary=(
                 "List deduplicated Creative Search Ads evidence for one task. Defaults "
                 "to analysis-eligible matches and returns relevance, evidence quality, "
@@ -1550,7 +1563,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +creative-search-ads-results --id <task_id> "
+                    "museoncli research +list-ads-search-results --id <task_id> "
                     "--ad-platform meta-ads --page 1 --page-size 20"
                 ),
             ],
@@ -1559,7 +1572,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.RESEARCH,
-            shortcut="+visual-analyze",
+            shortcut="+analyze-visual",
+            legacy_shortcuts=("+visual-analyze",),
             summary=(
                 "Analyze one or more image/video URLs with a business prompt. "
                 "If a TikTok or signed CDN URL cannot be prepared, import it as "
@@ -1575,17 +1589,17 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli research +visual-analyze --media "
+                    "museoncli research +analyze-visual --media "
                     "https://example.com/image.png --prompt 'Assess visual style.'"
                 ),
                 (
                     "museoncli media +import --url "
                     "https://example.com/reference.jpg && "
-                    "museoncli research +visual-analyze --media <media_url> "
+                    "museoncli research +analyze-visual --media <media_url> "
                     "--prompt 'Assess visual style.'"
                 ),
                 (
-                    "museoncli research +visual-analyze --media-json "
+                    "museoncli research +analyze-visual --media-json "
                     '\'[{"url":"https://...","label":"hero"}]\' '
                     "--prompt 'Compare composition.'"
                 ),
@@ -1599,10 +1613,10 @@ def specs() -> list[CommandSpec]:
 # ---- executors ----
 
 _RESEARCH_PATHS = {
-    "research.web-research": "/agent-cli/research/web-research",
-    "research.social-media-search": "/agent-cli/research/social-media-search",
-    "research.community-search": "/agent-cli/research/community-search",
-    "research.visual-analyze": "/agent-cli/research/visual-analyze",
+    "research.search-web": "/agent-cli/research/web-research",
+    "research.search-social-media": "/agent-cli/research/social-media-search",
+    "research.search-community": "/agent-cli/research/community-search",
+    "research.analyze-visual": "/agent-cli/research/visual-analyze",
 }
 
 
@@ -1787,18 +1801,18 @@ async def _execute_creative_search_ads_results(ctx: CommandContext) -> Any:
 
 EXECUTORS = {
     **{schema: direct_enveloped(_execute_research) for schema in _RESEARCH_PATHS},
-    "research.creative-search-ads": direct_enveloped(_execute_creative_search_ads),
-    "research.creative-search-ads-get": direct_enveloped(_execute_creative_search_ads_get),
-    "research.creative-search-ads-results": direct_enveloped(_execute_creative_search_ads_results),
-    "research.social-media-hook-analyze": direct_enveloped(_execute_social_hook_analyze),
-    "research.social-media-hook-source": direct_enveloped(_execute_social_hook_source),
-    "research.social-media-hook-analyze-seen": direct_enveloped(
+    "research.create-ads-search": direct_enveloped(_execute_creative_search_ads),
+    "research.get-ads-search": direct_enveloped(_execute_creative_search_ads_get),
+    "research.list-ads-search-results": direct_enveloped(_execute_creative_search_ads_results),
+    "research.create-hook-analysis": direct_enveloped(_execute_social_hook_analyze),
+    "research.submit-hook-candidates": direct_enveloped(_execute_social_hook_source),
+    "research.check-hooks-analyzed": direct_enveloped(
         _execute_social_hook_analyze_seen
     ),
-    "research.social-media-hook-analyze-get": direct_enveloped(_execute_social_hook_get),
-    "research.social-media-hook-analyze-poll": direct_enveloped(_execute_social_hook_poll),
-    "research.social-media-hook-analyze-results": direct_enveloped(_execute_social_hook_results),
-    "research.social-media-hook-analyze-media-get": direct_enveloped(
+    "research.get-hook-analysis": direct_enveloped(_execute_social_hook_get),
+    "research.bulk-get-hook-analyses": direct_enveloped(_execute_social_hook_poll),
+    "research.list-hook-analysis-results": direct_enveloped(_execute_social_hook_results),
+    "research.get-hook-analysis-media": direct_enveloped(
         _execute_social_hook_media_get
     ),
 }

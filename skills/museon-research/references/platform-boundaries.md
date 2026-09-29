@@ -10,9 +10,9 @@ XHS `xhslink.cn` / `xhslink.com` links are first-class inputs for post, profile,
 
 | Situation | Start with |
 | --- | --- |
-| TikTok comments by video ID | `museoncli research +social-media-search` |
-| Instagram comments by Reel URL/shortcode | `museoncli research +social-media-search` |
-| XHS post/comments by share link | `museoncli research +social-media-search` |
+| TikTok comments by video ID | `museoncli research +search-social-media` |
+| Instagram comments by Reel URL/shortcode | `museoncli research +search-social-media` |
+| XHS post/comments by share link | `museoncli research +search-social-media` |
 
 ## DON'T
 

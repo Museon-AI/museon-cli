@@ -237,12 +237,13 @@ def specs() -> list[CommandSpec]:
     return [
         CommandSpec(
             domain=Domain.STAFF_OPS,
-            shortcut="+code-read",
+            shortcut="+read-code",
+            legacy_shortcuts=("+code-read",),
             summary="Read a bounded line range from code packaged in the deployed API image.",
             adapter_tool_name="staff_code_read",
             input_schema=_code_read_schema(),
             examples=[
-                "museoncli staff-ops +code-read --path app/main.py --start-line 1 --end-line 120"
+                "museoncli staff-ops +read-code --path app/main.py --start-line 1 --end-line 120"
             ],
             add_arguments=_add_code_read_arguments,
             build_arguments=_build_code_read_arguments,
@@ -250,23 +251,25 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.STAFF_OPS,
-            shortcut="+code-search",
+            shortcut="+search-code",
+            legacy_shortcuts=("+code-search",),
             summary="Search deployed API source code with bounded results.",
             adapter_tool_name="staff_code_search",
             input_schema=_code_search_schema(),
-            examples=["museoncli staff-ops +code-search --query trace_id --path-prefix app"],
+            examples=["museoncli staff-ops +search-code --query trace_id --path-prefix app"],
             add_arguments=_add_code_search_arguments,
             build_arguments=_build_code_search_arguments,
             **common,  # type: ignore[arg-type]
         ),
         CommandSpec(
             domain=Domain.STAFF_OPS,
-            shortcut="+supabase-read",
+            shortcut="+read-supabase",
+            legacy_shortcuts=("+supabase-read",),
             summary="Run a structured, bounded, read-only Supabase table query.",
             adapter_tool_name="staff_supabase_read",
             input_schema=_supabase_read_schema(),
             examples=[
-                'museoncli staff-ops +supabase-read --table agent_jobs --column id --column status --order-by created_at --filters-json \'[{"field":"status","op":"eq","value":"failed"}]\''
+                'museoncli staff-ops +read-supabase --table agent_jobs --column id --column status --order-by created_at --filters-json \'[{"field":"status","op":"eq","value":"failed"}]\''
             ],
             add_arguments=_add_supabase_read_arguments,
             build_arguments=_build_supabase_read_arguments,
@@ -274,12 +277,13 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.STAFF_OPS,
-            shortcut="+log-search",
+            shortcut="+search-logs",
+            legacy_shortcuts=("+log-search",),
             summary="Search Cloud Logging or the Agents per-turn timeline in a bounded window.",
             adapter_tool_name="staff_log_search",
             input_schema=_log_search_schema(),
             examples=[
-                'museoncli staff-ops +log-search --start-time 2026-09-20T00:00:00Z --end-time 2026-09-20T01:00:00Z --service museon-api-prod --identifiers-json \'{"trace_id":"TRACE_ID"}\''
+                'museoncli staff-ops +search-logs --start-time 2026-09-20T00:00:00Z --end-time 2026-09-20T01:00:00Z --service museon-api-prod --identifiers-json \'{"trace_id":"TRACE_ID"}\''
             ],
             add_arguments=_add_log_search_arguments,
             build_arguments=_build_log_search_arguments,
@@ -289,8 +293,8 @@ def specs() -> list[CommandSpec]:
 
 
 EXECUTORS = {
-    "staff-ops.code-read": adapter_executor(),
-    "staff-ops.code-search": adapter_executor(),
-    "staff-ops.supabase-read": adapter_executor(),
-    "staff-ops.log-search": adapter_executor(),
+    "staff-ops.read-code": adapter_executor(),
+    "staff-ops.search-code": adapter_executor(),
+    "staff-ops.read-supabase": adapter_executor(),
+    "staff-ops.search-logs": adapter_executor(),
 }

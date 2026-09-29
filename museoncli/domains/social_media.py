@@ -186,7 +186,8 @@ def specs() -> list[CommandSpec]:
     return [
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+creator-get",
+            shortcut="+get-creator",
+            legacy_shortcuts=("+creator-get",),
             summary="Read one workspace-visible social account profile from Museon's store.",
             risk_level="read",
             execution="direct",
@@ -194,14 +195,15 @@ def specs() -> list[CommandSpec]:
             input_schema=_social_media_creator_get_input_schema(),
             output_schema=_direct_output_schema("Creator profile payload returned by Museon API."),
             examples=[
-                "museoncli campaign-monitor +creator-get --id <creator_social_account_id>",
+                "museoncli campaign-monitor +get-creator --id <creator_social_account_id>",
             ],
             add_arguments=_add_social_media_creator_get_arguments,
             build_arguments=_build_social_media_creator_get_arguments,
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+post-list",
+            shortcut="+list-posts",
+            legacy_shortcuts=("+post-list",),
             summary=(
                 "List Museon-synced posts for one workspace-visible social account; "
                 "not a live platform-history fetch."
@@ -213,7 +215,7 @@ def specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema("Post list payload returned by Museon API."),
             examples=[
                 (
-                    "museoncli campaign-monitor +post-list --creator-id "
+                    "museoncli campaign-monitor +list-posts --creator-id "
                     "<creator_social_account_id> --page-size 20"
                 ),
             ],
@@ -222,7 +224,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+creator-performance-get",
+            shortcut="+get-creator-performance",
+            legacy_shortcuts=("+creator-performance-get",),
             summary=(
                 "Read local synced performance history for one workspace-visible social account."
             ),
@@ -235,7 +238,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli campaign-monitor +creator-performance-get "
+                    "museoncli campaign-monitor +get-creator-performance "
                     "--id <creator_social_account_id> --date-from 2026-06-01"
                 ),
             ],
@@ -244,20 +247,22 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+post-get",
+            shortcut="+get-post",
+            legacy_shortcuts=("+post-get",),
             summary="Read one Museon-synced social post/content record.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="social_media_post_get",
             input_schema=_social_media_post_get_input_schema(),
             output_schema=_direct_output_schema("Post detail payload returned by Museon API."),
-            examples=["museoncli campaign-monitor +post-get --id <content_id>"],
+            examples=["museoncli campaign-monitor +get-post --id <content_id>"],
             add_arguments=_add_social_media_post_get_arguments,
             build_arguments=_build_social_media_post_get_arguments,
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+post-performance-get",
+            shortcut="+get-post-performance",
+            legacy_shortcuts=("+post-performance-get",),
             summary="Read local synced performance history for one social post/content record.",
             risk_level="read",
             execution="direct",
@@ -267,14 +272,15 @@ def specs() -> list[CommandSpec]:
                 "Post performance history payload returned by Museon API."
             ),
             examples=[
-                ("museoncli campaign-monitor +post-performance-get --id <content_id> --limit 10"),
+                ("museoncli campaign-monitor +get-post-performance --id <content_id> --limit 10"),
             ],
             add_arguments=_add_social_media_post_performance_get_arguments,
             build_arguments=_build_social_media_post_performance_get_arguments,
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
-            shortcut="+post-resolve",
+            shortcut="+resolve-post",
+            legacy_shortcuts=("+post-resolve",),
             summary="Resolve an account publish schedule item to its published social post.",
             risk_level="read",
             execution="direct",
@@ -284,7 +290,7 @@ def specs() -> list[CommandSpec]:
                 "Schedule item to post resolution payload returned by Museon API."
             ),
             examples=[
-                ("museoncli campaign-monitor +post-resolve --schedule-item-id <schedule_item_id>"),
+                ("museoncli campaign-monitor +resolve-post --schedule-item-id <schedule_item_id>"),
             ],
             add_arguments=_add_social_media_post_resolve_arguments,
             build_arguments=_build_social_media_post_resolve_arguments,
@@ -422,10 +428,10 @@ async def _execute_post_resolve(ctx: CommandContext) -> Any:
 
 
 EXECUTORS = {
-    "campaign-monitor.creator-get": direct_enveloped(_execute_creator_get),
-    "campaign-monitor.creator-performance-get": direct_enveloped(_execute_creator_performance_get),
-    "campaign-monitor.post-get": direct_enveloped(_execute_post_get),
-    "campaign-monitor.post-list": direct_enveloped(_execute_post_list),
-    "campaign-monitor.post-performance-get": direct_enveloped(_execute_post_performance_get),
-    "campaign-monitor.post-resolve": direct_enveloped(_execute_post_resolve),
+    "campaign-monitor.get-creator": direct_enveloped(_execute_creator_get),
+    "campaign-monitor.get-creator-performance": direct_enveloped(_execute_creator_performance_get),
+    "campaign-monitor.get-post": direct_enveloped(_execute_post_get),
+    "campaign-monitor.list-posts": direct_enveloped(_execute_post_list),
+    "campaign-monitor.get-post-performance": direct_enveloped(_execute_post_performance_get),
+    "campaign-monitor.resolve-post": direct_enveloped(_execute_post_resolve),
 }

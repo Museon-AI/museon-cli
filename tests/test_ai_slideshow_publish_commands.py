@@ -91,7 +91,7 @@ def _plan_args(shortcut: str, *, execute: bool = False) -> list[str]:
         "--conflict-policy",
         "replace-non-published",
     ]
-    if shortcut == "+schedule-plan-batch":
+    if shortcut == "+submit-schedule-plan":
         argv.extend(
             [
                 "--preview-token",
@@ -119,7 +119,7 @@ def _cancel_only_args(shortcut: str, *, execute: bool = False) -> list[str]:
         "--cancel-reason",
         "operator requested schedule removal",
     ]
-    if shortcut == "+schedule-plan-batch":
+    if shortcut == "+submit-schedule-plan":
         argv.extend(
             [
                 "--preview-token",
@@ -151,7 +151,7 @@ def _asset_pool_args(shortcut: str, *, execute: bool = False) -> list[str]:
         "--format-id",
         FORMAT_ID,
     ]
-    if shortcut == "+asset-pools-batch-set":
+    if shortcut == "+bulk-set-asset-pools":
         argv.extend(
             [
                 "--preview-token",
@@ -166,10 +166,10 @@ def _asset_pool_args(shortcut: str, *, execute: bool = False) -> list[str]:
 
 
 def test_asset_pool_uniform_patch_parser_and_builder() -> None:
-    args = _parse(_asset_pool_args("+asset-pools-batch-preview"))
-    spec = get_command_spec("ai-slideshow.publish-asset-pools-batch-preview")
+    args = _parse(_asset_pool_args("+bulk-preview-asset-pools"))
+    spec = get_command_spec("ai-slideshow.publish-bulk-preview-asset-pools")
 
-    assert args.domain_command == "ai-slideshow.publish-asset-pools-batch-preview"
+    assert args.domain_command == "ai-slideshow.publish-bulk-preview-asset-pools"
     assert spec.build_arguments(args) == {
         "account_ids": [ACCOUNT_1, ACCOUNT_2],
         "uniform_patch": {
@@ -180,8 +180,8 @@ def test_asset_pool_uniform_patch_parser_and_builder() -> None:
 
 
 def test_asset_pool_batch_set_builder_omits_managed_operation_approved_by_default() -> None:
-    args = _parse(_asset_pool_args("+asset-pools-batch-set"))
-    spec = get_command_spec("ai-slideshow.publish-asset-pools-batch-set")
+    args = _parse(_asset_pool_args("+bulk-set-asset-pools"))
+    spec = get_command_spec("ai-slideshow.publish-bulk-set-asset-pools")
 
     payload = spec.build_arguments(args)
 
@@ -189,8 +189,8 @@ def test_asset_pool_batch_set_builder_omits_managed_operation_approved_by_defaul
 
 
 def test_asset_pool_batch_set_builder_includes_managed_operation_approved_when_flagged() -> None:
-    args = _parse(_asset_pool_args("+asset-pools-batch-set") + ["--managed-operation-approved"])
-    spec = get_command_spec("ai-slideshow.publish-asset-pools-batch-set")
+    args = _parse(_asset_pool_args("+bulk-set-asset-pools") + ["--managed-operation-approved"])
+    spec = get_command_spec("ai-slideshow.publish-bulk-set-asset-pools")
 
     payload = spec.build_arguments(args)
 
@@ -201,7 +201,7 @@ def test_one_account_parser_builds_complete_five_pool_patch() -> None:
     argv = [
         "ai-slideshow",
         "publish",
-        "+asset-pools-batch-preview",
+        "+bulk-preview-asset-pools",
         "--account-id",
         ACCOUNT_1,
         "--persona-operation",
@@ -226,7 +226,7 @@ def test_one_account_parser_builds_complete_five_pool_patch() -> None:
         BGM_ID,
     ]
 
-    payload = get_command_spec("ai-slideshow.publish-asset-pools-batch-preview").build_arguments(
+    payload = get_command_spec("ai-slideshow.publish-bulk-preview-asset-pools").build_arguments(
         _parse(argv)
     )
 
@@ -251,12 +251,12 @@ def test_asset_pool_per_account_patch_overrides_and_explicit_unchanged() -> None
         + TOPIC_ID
         + '"]}}}]'
     )
-    argv = _asset_pool_args("+asset-pools-batch-preview") + [
+    argv = _asset_pool_args("+bulk-preview-asset-pools") + [
         "--account-patches-json",
         patches,
     ]
 
-    payload = get_command_spec("ai-slideshow.publish-asset-pools-batch-preview").build_arguments(
+    payload = get_command_spec("ai-slideshow.publish-bulk-preview-asset-pools").build_arguments(
         _parse(argv)
     )
 
@@ -272,9 +272,9 @@ def test_asset_pool_per_account_patch_overrides_and_explicit_unchanged() -> None
 
 
 def test_asset_pool_schema_exposes_batch_and_patch_contract() -> None:
-    get = get_command_spec("ai-slideshow.publish-asset-pools-batch-get")
-    preview = get_command_spec("ai-slideshow.publish-asset-pools-batch-preview")
-    batch = get_command_spec("ai-slideshow.publish-asset-pools-batch-set")
+    get = get_command_spec("ai-slideshow.publish-bulk-get-asset-pools")
+    preview = get_command_spec("ai-slideshow.publish-bulk-preview-asset-pools")
+    batch = get_command_spec("ai-slideshow.publish-bulk-set-asset-pools")
 
     assert get.input_schema["properties"]["account_ids"]["maxItems"] == 200
     assert get.input_schema["properties"]["include_resource_details"]["default"] is True
@@ -315,14 +315,14 @@ def test_asset_pool_builder_rejects_invalid_operations(extra: list[str], message
     argv = [
         "ai-slideshow",
         "publish",
-        "+asset-pools-batch-preview",
+        "+bulk-preview-asset-pools",
         "--account-id",
         ACCOUNT_1,
         *extra,
     ]
 
     with pytest.raises(ValueError, match=message):
-        get_command_spec("ai-slideshow.publish-asset-pools-batch-preview").build_arguments(
+        get_command_spec("ai-slideshow.publish-bulk-preview-asset-pools").build_arguments(
             _parse(argv)
         )
 
@@ -332,7 +332,7 @@ def test_asset_pool_account_override_must_target_selected_account() -> None:
     argv = [
         "ai-slideshow",
         "publish",
-        "+asset-pools-batch-preview",
+        "+bulk-preview-asset-pools",
         "--account-id",
         ACCOUNT_1,
         "--account-patches-json",
@@ -340,16 +340,16 @@ def test_asset_pool_account_override_must_target_selected_account() -> None:
     ]
 
     with pytest.raises(ValueError, match="must also be supplied"):
-        get_command_spec("ai-slideshow.publish-asset-pools-batch-preview").build_arguments(
+        get_command_spec("ai-slideshow.publish-bulk-preview-asset-pools").build_arguments(
             _parse(argv)
         )
 
 
 def test_parser_and_builder_normalize_schedule_plan() -> None:
-    args = _parse(_plan_args("+schedule-plan-preview"))
-    spec = get_command_spec("ai-slideshow.publish-schedule-plan-preview")
+    args = _parse(_plan_args("+preview-schedule-plan"))
+    spec = get_command_spec("ai-slideshow.publish-preview-schedule-plan")
 
-    assert args.domain_command == "ai-slideshow.publish-schedule-plan-preview"
+    assert args.domain_command == "ai-slideshow.publish-preview-schedule-plan"
     assert spec.build_arguments(args) == {
         "operation": "plan",
         "account_ids": [ACCOUNT_1, ACCOUNT_2],
@@ -366,8 +366,8 @@ def test_parser_and_builder_normalize_schedule_plan() -> None:
 
 
 def test_cancel_only_parser_and_builder_map_to_api_operation() -> None:
-    args = _parse(_cancel_only_args("+schedule-plan-preview"))
-    spec = get_command_spec("ai-slideshow.publish-schedule-plan-preview")
+    args = _parse(_cancel_only_args("+preview-schedule-plan"))
+    spec = get_command_spec("ai-slideshow.publish-preview-schedule-plan")
 
     assert args.operation == "cancel-only"
     assert spec.build_arguments(args) == {
@@ -381,7 +381,7 @@ def test_plan_defaults_are_preserved_after_conditional_argument_parsing() -> Non
     argv = [
         "ai-slideshow",
         "publish",
-        "+schedule-plan-preview",
+        "+preview-schedule-plan",
         "--account-id",
         ACCOUNT_1,
         "--start-date",
@@ -394,7 +394,7 @@ def test_plan_defaults_are_preserved_after_conditional_argument_parsing() -> Non
         "UTC",
     ]
 
-    payload = get_command_spec("ai-slideshow.publish-schedule-plan-preview").build_arguments(
+    payload = get_command_spec("ai-slideshow.publish-preview-schedule-plan").build_arguments(
         _parse(argv)
     )
 
@@ -418,10 +418,10 @@ def test_plan_defaults_are_preserved_after_conditional_argument_parsing() -> Non
 
 
 def test_cancel_only_reason_is_optional_but_explicit_blank_is_rejected() -> None:
-    argv = _cancel_only_args("+schedule-plan-preview")
+    argv = _cancel_only_args("+preview-schedule-plan")
     reason_index = argv.index("--cancel-reason")
     del argv[reason_index : reason_index + 2]
-    spec = get_command_spec("ai-slideshow.publish-schedule-plan-preview")
+    spec = get_command_spec("ai-slideshow.publish-preview-schedule-plan")
 
     assert spec.build_arguments(_parse(argv)) == {
         "operation": "cancel_only",
@@ -433,8 +433,8 @@ def test_cancel_only_reason_is_optional_but_explicit_blank_is_rejected() -> None
 
 
 def test_schema_advertises_cli_kebab_choices_and_batch_contract() -> None:
-    preview = get_command_spec("ai-slideshow.publish-schedule-plan-preview")
-    batch = get_command_spec("ai-slideshow.publish-schedule-plan-batch")
+    preview = get_command_spec("ai-slideshow.publish-preview-schedule-plan")
+    batch = get_command_spec("ai-slideshow.publish-submit-schedule-plan")
 
     assert preview.input_schema["properties"]["conflict_policy"]["enum"] == [
         "create-only",
@@ -483,19 +483,19 @@ def test_schema_advertises_cli_kebab_choices_and_batch_contract() -> None:
     assert batch.execution == "async_run"
     assert batch.requires_confirmation is True
     assert batch.supports_dry_run is True
-    assert "only state source is +schedule-plan-status" in batch.summary
+    assert "only state source is +get-schedule-plan-job" in batch.summary
     assert "bgm_bound_count/summary.bgm_bound" in batch.summary
     assert "never call schedule-list, bgm-asset-list, or routines" in batch.summary
     assert "--operation cancel-only is the primary batch deletion path" in batch.summary
     assert any("--operation cancel-only" in example for example in preview.examples)
     assert any("--operation cancel-only" in example for example in batch.examples)
 
-    status = get_command_spec("ai-slideshow.publish-schedule-plan-status")
+    status = get_command_spec("ai-slideshow.publish-get-schedule-plan-job")
     assert "only state source after submission" in status.summary
     assert "bgm_bound_count/summary.bgm_bound" in status.summary
     assert "never call schedule-list, bgm-asset-list, or routines" in status.summary
 
-    cancel = get_command_spec("ai-slideshow.publish-schedule-plan-cancel")
+    cancel = get_command_spec("ai-slideshow.publish-cancel-schedule-plan-job")
     assert "job control only" in cancel.summary
     assert "never deletes schedule items already created" in cancel.summary
 
@@ -512,43 +512,43 @@ def test_schema_advertises_cli_kebab_choices_and_batch_contract() -> None:
     ],
 )
 def test_cancel_only_rejects_plan_only_fields(plan_only_args: list[str]) -> None:
-    argv = _cancel_only_args("+schedule-plan-preview") + plan_only_args
+    argv = _cancel_only_args("+preview-schedule-plan") + plan_only_args
 
     with pytest.raises(ValueError, match="not allowed with --operation cancel-only"):
-        get_command_spec("ai-slideshow.publish-schedule-plan-preview").build_arguments(_parse(argv))
+        get_command_spec("ai-slideshow.publish-preview-schedule-plan").build_arguments(_parse(argv))
 
 
 def test_plan_rejects_cancel_reason() -> None:
-    argv = _plan_args("+schedule-plan-preview") + [
+    argv = _plan_args("+preview-schedule-plan") + [
         "--cancel-reason",
         "not a plan field",
     ]
 
     with pytest.raises(ValueError, match="only allowed with --operation cancel-only"):
-        get_command_spec("ai-slideshow.publish-schedule-plan-preview").build_arguments(_parse(argv))
+        get_command_spec("ai-slideshow.publish-preview-schedule-plan").build_arguments(_parse(argv))
 
 
 def test_cancel_only_batch_requires_preview_token() -> None:
-    argv = _cancel_only_args("+schedule-plan-batch")
+    argv = _cancel_only_args("+submit-schedule-plan")
     token_index = argv.index("--preview-token")
     del argv[token_index : token_index + 2]
 
     with pytest.raises(ValueError, match="preview-token is required"):
-        get_command_spec("ai-slideshow.publish-schedule-plan-batch").build_arguments(_parse(argv))
+        get_command_spec("ai-slideshow.publish-submit-schedule-plan").build_arguments(_parse(argv))
 
 
 def test_replace_batch_requires_preview_token() -> None:
-    argv = _plan_args("+schedule-plan-batch")
+    argv = _plan_args("+submit-schedule-plan")
     token_index = argv.index("--preview-token")
     del argv[token_index : token_index + 2]
     args = _parse(argv)
 
     with pytest.raises(ValueError, match="preview-token is required"):
-        get_command_spec("ai-slideshow.publish-schedule-plan-batch").build_arguments(args)
+        get_command_spec("ai-slideshow.publish-submit-schedule-plan").build_arguments(args)
 
 
 def test_batch_parser_requires_idempotency_key() -> None:
-    argv = _plan_args("+schedule-plan-batch")
+    argv = _plan_args("+submit-schedule-plan")
     key_index = argv.index("--idempotency-key")
     del argv[key_index : key_index + 2]
 
@@ -557,7 +557,7 @@ def test_batch_parser_requires_idempotency_key() -> None:
 
 
 def test_plan_builder_rejects_total_occurrence_budget() -> None:
-    argv = _plan_args("+schedule-plan-preview")
+    argv = _plan_args("+preview-schedule-plan")
     account_flag_index = argv.index("--account-id")
     del argv[account_flag_index : account_flag_index + 4]
     for number in range(29):
@@ -566,7 +566,7 @@ def test_plan_builder_rejects_total_occurrence_budget() -> None:
     argv[days_index + 1] = "180"
 
     with pytest.raises(ValueError, match="5000 total occurrences"):
-        get_command_spec("ai-slideshow.publish-schedule-plan-preview").build_arguments(_parse(argv))
+        get_command_spec("ai-slideshow.publish-preview-schedule-plan").build_arguments(_parse(argv))
 
 
 @pytest.mark.parametrize(
@@ -579,7 +579,7 @@ def test_plan_builder_rejects_total_occurrence_budget() -> None:
     ],
 )
 def test_plan_builder_rejects_invalid_time_inputs(replacement: list[str], message: str) -> None:
-    argv = _plan_args("+schedule-plan-preview")
+    argv = _plan_args("+preview-schedule-plan")
     flag = replacement[0]
     first_index = argv.index(flag)
     argv[first_index : first_index + 2] = replacement
@@ -589,7 +589,7 @@ def test_plan_builder_rejects_invalid_time_inputs(replacement: list[str], messag
     args = _parse(argv)
 
     with pytest.raises(ValueError, match=message):
-        get_command_spec("ai-slideshow.publish-schedule-plan-preview").build_arguments(args)
+        get_command_spec("ai-slideshow.publish-preview-schedule-plan").build_arguments(args)
 
 
 def test_preview_is_a_real_server_request_with_workspace_override(
@@ -598,7 +598,7 @@ def test_preview_is_a_real_server_request_with_workspace_override(
     capture = _Capture({"would_create": 20, "would_cancel": 4})
     monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
-    argv = _plan_args("+schedule-plan-preview") + ["--workspace-id", WORKSPACE_2]
+    argv = _plan_args("+preview-schedule-plan") + ["--workspace-id", WORKSPACE_2]
 
     result = asyncio.run(main_module.dispatch(_parse(argv)))
 
@@ -627,11 +627,11 @@ def test_cancel_only_preview_and_batch_send_api_operation_and_workspace(
 
     asyncio.run(
         main_module.dispatch(
-            _parse(_cancel_only_args("+schedule-plan-preview") + ["--workspace-id", WORKSPACE_2])
+            _parse(_cancel_only_args("+preview-schedule-plan") + ["--workspace-id", WORKSPACE_2])
         )
     )
     batch_result = asyncio.run(
-        main_module.dispatch(_parse(_cancel_only_args("+schedule-plan-batch", execute=True)))
+        main_module.dispatch(_parse(_cancel_only_args("+submit-schedule-plan", execute=True)))
     )
 
     assert capture.calls[0] == {
@@ -663,7 +663,7 @@ def test_batch_requires_yes_before_server_call(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     with pytest.raises(RuntimeError, match="confirmation_required"):
-        asyncio.run(main_module.dispatch(_parse(_plan_args("+schedule-plan-batch"))))
+        asyncio.run(main_module.dispatch(_parse(_plan_args("+submit-schedule-plan"))))
 
     assert capture.calls == []
 
@@ -674,7 +674,7 @@ def test_batch_dry_run_is_local_and_does_not_call_server(
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
-    argv = _plan_args("+schedule-plan-batch") + ["--dry-run"]
+    argv = _plan_args("+submit-schedule-plan") + ["--dry-run"]
 
     result = asyncio.run(main_module.dispatch(_parse(argv)))
 
@@ -696,7 +696,7 @@ def test_batch_returns_async_run_and_status_next_step(monkeypatch: pytest.Monkey
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     result = asyncio.run(
-        main_module.dispatch(_parse(_plan_args("+schedule-plan-batch", execute=True)))
+        main_module.dispatch(_parse(_plan_args("+submit-schedule-plan", execute=True)))
     )
 
     assert capture.calls[0]["path"] == "/account-publish/schedule-plans:batch"
@@ -707,7 +707,7 @@ def test_batch_returns_async_run_and_status_next_step(monkeypatch: pytest.Monkey
         "id": JOB_ID,
         "type": "account_publish_schedule_plan",
         "status": "queued",
-        "watch_command": f"museoncli ai-slideshow publish +schedule-plan-status --id {JOB_ID}",
+        "watch_command": f"museoncli ai-slideshow publish +get-schedule-plan-job --id {JOB_ID}",
         "recommended_wakeup_delay_seconds": 12,
     }
     assert "poll only with" in result["next_steps"][0].lower()
@@ -720,7 +720,7 @@ def test_status_and_cancel_use_job_resource_paths(monkeypatch: pytest.MonkeyPatc
 
     status = asyncio.run(
         main_module.dispatch(
-            _parse(["ai-slideshow", "publish", "+schedule-plan-status", "--id", JOB_ID])
+            _parse(["ai-slideshow", "publish", "+get-schedule-plan-job", "--id", JOB_ID])
         )
     )
     cancelled = asyncio.run(
@@ -729,7 +729,7 @@ def test_status_and_cancel_use_job_resource_paths(monkeypatch: pytest.MonkeyPatc
                 [
                     "ai-slideshow",
                     "publish",
-                    "+schedule-plan-cancel",
+                    "+cancel-schedule-plan-job",
                     "--id",
                     JOB_ID,
                     "--reason",
@@ -759,9 +759,9 @@ def test_status_and_cancel_use_job_resource_paths(monkeypatch: pytest.MonkeyPatc
 
 def test_existing_social_account_single_schedule_commands_remain_registered() -> None:
     for name in (
-        "ai-slideshow.publish-schedule-list",
-        "ai-slideshow.publish-schedule-create",
-        "ai-slideshow.publish-schedule-delete",
+        "ai-slideshow.publish-list-schedules",
+        "ai-slideshow.publish-create-schedule",
+        "ai-slideshow.publish-delete-schedule",
     ):
         assert get_command_spec(name).schema_name == name
 
@@ -779,7 +779,7 @@ def test_asset_pool_batch_get_and_preview_use_workspace_override(
                 [
                     "ai-slideshow",
                     "publish",
-                    "+asset-pools-batch-get",
+                    "+bulk-get-asset-pools",
                     "--account-id",
                     ACCOUNT_1,
                     "--account-id",
@@ -792,7 +792,7 @@ def test_asset_pool_batch_get_and_preview_use_workspace_override(
     )
     preview_result = asyncio.run(
         main_module.dispatch(
-            _parse(_asset_pool_args("+asset-pools-batch-preview") + ["--workspace-id", WORKSPACE_2])
+            _parse(_asset_pool_args("+bulk-preview-asset-pools") + ["--workspace-id", WORKSPACE_2])
         )
     )
 
@@ -820,9 +820,9 @@ def test_asset_pool_batch_set_requires_confirmation_and_supports_local_dry_run(
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     with pytest.raises(RuntimeError, match="confirmation_required"):
-        asyncio.run(main_module.dispatch(_parse(_asset_pool_args("+asset-pools-batch-set"))))
+        asyncio.run(main_module.dispatch(_parse(_asset_pool_args("+bulk-set-asset-pools"))))
     dry_run = asyncio.run(
-        main_module.dispatch(_parse(_asset_pool_args("+asset-pools-batch-set") + ["--dry-run"]))
+        main_module.dispatch(_parse(_asset_pool_args("+bulk-set-asset-pools") + ["--dry-run"]))
     )
 
     assert capture.calls == []
@@ -845,7 +845,7 @@ def test_asset_pool_batch_set_returns_async_run_and_status_next_step(
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     result = asyncio.run(
-        main_module.dispatch(_parse(_asset_pool_args("+asset-pools-batch-set", execute=True)))
+        main_module.dispatch(_parse(_asset_pool_args("+bulk-set-asset-pools", execute=True)))
     )
 
     assert capture.calls[0]["path"] == "/account-publish/asset-pools:batch-set"
@@ -855,7 +855,7 @@ def test_asset_pool_batch_set_returns_async_run_and_status_next_step(
         "id": JOB_ID,
         "type": "account_publish_asset_pools_batch",
         "status": "queued",
-        "watch_command": f"museoncli ai-slideshow publish +asset-pools-batch-status --id {JOB_ID}",
+        "watch_command": f"museoncli ai-slideshow publish +get-asset-pool-job --id {JOB_ID}",
         "recommended_wakeup_delay_seconds": 9,
     }
     assert "poll only with" in result["next_steps"][0].lower()
@@ -870,7 +870,7 @@ def test_asset_pool_status_and_cancel_use_job_resource_paths(
 
     asyncio.run(
         main_module.dispatch(
-            _parse(["ai-slideshow", "publish", "+asset-pools-batch-status", "--id", JOB_ID])
+            _parse(["ai-slideshow", "publish", "+get-asset-pool-job", "--id", JOB_ID])
         )
     )
     asyncio.run(
@@ -879,7 +879,7 @@ def test_asset_pool_status_and_cancel_use_job_resource_paths(
                 [
                     "ai-slideshow",
                     "publish",
-                    "+asset-pools-batch-cancel",
+                    "+cancel-asset-pool-job",
                     "--id",
                     JOB_ID,
                     "--reason",

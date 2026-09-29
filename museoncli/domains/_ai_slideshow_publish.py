@@ -502,7 +502,7 @@ def _build_schedule_plan_batch_arguments(args: argparse.Namespace) -> dict[str, 
     if payload["operation"] == "cancel_only" and not preview_token:
         raise ValueError(
             "--preview-token is required with --operation cancel-only; "
-            "run +schedule-plan-preview first."
+            "run +preview-schedule-plan first."
         )
     if (
         payload["operation"] == "plan"
@@ -511,7 +511,7 @@ def _build_schedule_plan_batch_arguments(args: argparse.Namespace) -> dict[str, 
     ):
         raise ValueError(
             "--preview-token is required with --conflict-policy replace-non-published; "
-            "run +schedule-plan-preview first."
+            "run +preview-schedule-plan first."
         )
     if preview_token:
         if len(preview_token) > 200:
@@ -727,7 +727,7 @@ def _asset_pools_mutation_input_schema(*, include_submission: bool) -> dict[str,
 
 def _asset_pools_job_input_schema(*, include_reason: bool) -> dict[str, Any]:
     properties: dict[str, Any] = {
-        "job_id": _uuid_id_schema("Asset-pool batch job UUID returned by +asset-pools-batch-set.")
+        "job_id": _uuid_id_schema("Asset-pool batch job UUID returned by +bulk-set-asset-pools.")
     }
     if include_reason:
         properties["reason"] = {"type": ["string", "null"], "maxLength": 500}
@@ -862,7 +862,7 @@ def _schedule_plan_input_schema(*, include_idempotency_key: bool) -> dict[str, A
 
 def _schedule_plan_job_input_schema(*, include_reason: bool) -> dict[str, Any]:
     properties: dict[str, Any] = {
-        "job_id": _uuid_id_schema("Schedule-plan job UUID returned by +schedule-plan-batch.")
+        "job_id": _uuid_id_schema("Schedule-plan job UUID returned by +submit-schedule-plan.")
     }
     if include_reason:
         properties["reason"] = {"type": ["string", "null"], "maxLength": 500}
@@ -885,7 +885,8 @@ def specs() -> list[CommandSpec]:
     return [
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+asset-pools-batch-get",
+            shortcut="+bulk-get-asset-pools",
+            legacy_shortcuts=("+asset-pools-batch-get",),
             summary=(
                 "Read effective persona, product, format, topic, and BGM pools for MULTIPLE "
                 "accounts in one request, with per-account issues and hydrated resource details "
@@ -902,7 +903,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +asset-pools-batch-get "
+                    "museoncli ai-slideshow publish +bulk-get-asset-pools "
                     "--account-id <uuid1> --account-id <uuid2>"
                 )
             ],
@@ -911,11 +912,12 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+asset-pools-batch-preview",
+            shortcut="+bulk-preview-asset-pools",
+            legacy_shortcuts=("+asset-pools-batch-preview",),
             summary=(
                 "Live-preview one multi-account asset-pool change without writing. Supports a "
                 "uniform patch plus per-account precise overrides for persona, product, formats, "
-                "topics, and BGM. Always run this before +asset-pools-batch-set, present every "
+                "topics, and BGM. Always run this before +bulk-set-asset-pools, present every "
                 "changed/skipped/failed account and existing-schedule impact, then obtain explicit "
                 "approval. Fully-managed accounts are previewed normally and marked "
                 "requires_managed_operation_approved=true; after explicit approval, submit with "
@@ -930,13 +932,13 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +asset-pools-batch-preview "
+                    "museoncli ai-slideshow publish +bulk-preview-asset-pools "
                     "--account-id <uuid1> --account-id <uuid2> "
                     "--product-operation set --product-id <product_id> "
                     "--formats-operation add --format-id <format_id>"
                 ),
                 (
-                    "museoncli ai-slideshow publish +asset-pools-batch-preview "
+                    "museoncli ai-slideshow publish +bulk-preview-asset-pools "
                     "--account-id <uuid1> --account-id <uuid2> "
                     "--account-patches-file ./account-patches.json"
                 ),
@@ -946,7 +948,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+asset-pools-batch-set",
+            shortcut="+bulk-set-asset-pools",
+            legacy_shortcuts=("+asset-pools-batch-set",),
             summary=(
                 "Submit one durable Cloud Task job to change publish asset pools for MULTIPLE "
                 "accounts. Use this instead of issuing one write per account or writing "
@@ -955,7 +958,7 @@ def specs() -> list[CommandSpec]:
                 "pools for one account. "
                 "Requires the opaque token and identical normalized patches from a fresh live "
                 "preview, plus a stable idempotency key and --yes. After submission, poll only "
-                "+asset-pools-batch-status and inspect every failed/skipped account. If preview "
+                "+get-asset-pool-job and inspect every failed/skipped account. If preview "
                 "marks any fully-managed account requires_managed_operation_approved=true, relay "
                 "its impact and add --managed-operation-approved only after explicit approval; "
                 "without it those accounts fail per-account."
@@ -967,7 +970,7 @@ def specs() -> list[CommandSpec]:
             output_schema=_asset_pools_async_output_schema(),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +asset-pools-batch-set "
+                    "museoncli ai-slideshow publish +bulk-set-asset-pools "
                     "--account-id <uuid1> --account-id <uuid2> "
                     "--product-operation set --product-id <product_id> "
                     "--formats-operation add --format-id <format_id> "
@@ -981,11 +984,12 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+asset-pools-batch-status",
+            shortcut="+get-asset-pool-job",
+            legacy_shortcuts=("+asset-pools-batch-status",),
             summary=(
                 "Read durable asset-pool batch progress and per-account results. This is the only "
-                "state source after +asset-pools-batch-set; do not rescan accounts or loop "
-                "+asset-pools-batch-get for verification."
+                "state source after +bulk-set-asset-pools; do not rescan accounts or loop "
+                "+bulk-get-asset-pools for verification."
             ),
             risk_level="read",
             execution="direct",
@@ -994,13 +998,14 @@ def specs() -> list[CommandSpec]:
             output_schema=_direct_output_schema(
                 "Account publish asset-pool batch job status returned by Museon API."
             ),
-            examples=["museoncli ai-slideshow publish +asset-pools-batch-status --id <job_id>"],
+            examples=["museoncli ai-slideshow publish +get-asset-pool-job --id <job_id>"],
             add_arguments=_add_asset_pools_job_arguments,
             build_arguments=_build_asset_pools_job_arguments,
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+asset-pools-batch-cancel",
+            shortcut="+cancel-asset-pool-job",
+            legacy_shortcuts=("+asset-pools-batch-cancel",),
             summary=(
                 "Request cancellation of a durable asset-pool batch job. Stops account work not "
                 "yet started but does not roll back accounts already completed."
@@ -1014,7 +1019,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +asset-pools-batch-cancel --id <job_id> "
+                    "museoncli ai-slideshow publish +cancel-asset-pool-job --id <job_id> "
                     "--reason 'operator request'"
                 )
             ],
@@ -1024,7 +1029,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-plan-preview",
+            shortcut="+preview-schedule-plan",
+            legacy_shortcuts=("+schedule-plan-preview",),
             summary=(
                 "Live-preview a durable schedule-plan operation without writing. "
                 "--operation cancel-only is the primary way to inspect deletion of current "
@@ -1048,14 +1054,14 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +schedule-plan-preview "
+                    "museoncli ai-slideshow publish +preview-schedule-plan "
                     "--account-id <uuid1> --account-id <uuid2> --start-date 2026-07-17 "
                     "--days 5 --daily-slot 17:00 --daily-slot 22:00 "
                     "--timezone Asia/Shanghai --conflict-policy replace-non-published "
                     "--bgm-policy required"
                 ),
                 (
-                    "museoncli ai-slideshow publish +schedule-plan-preview "
+                    "museoncli ai-slideshow publish +preview-schedule-plan "
                     "--operation cancel-only --account-id <uuid1> --account-id <uuid2> "
                     "--cancel-reason 'operator requested schedule removal'"
                 ),
@@ -1065,7 +1071,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-plan-batch",
+            shortcut="+submit-schedule-plan",
+            legacy_shortcuts=("+schedule-plan-batch",),
             summary=(
                 "Submit one durable asynchronous schedule-plan operation. --operation "
                 "cancel-only is the primary batch deletion path for current eligible schedule "
@@ -1073,11 +1080,11 @@ def specs() -> list[CommandSpec]:
                 "cancelled, and protected results by prior status. For --operation plan, create "
                 "MULTIPLE accounts or MULTIPLE occurrences. MUST use this command instead of "
                 "looping social-account "
-                "+schedule-list/+schedule-create/+schedule-delete or Python/shell scripts. "
+                "+list-schedules/+create-schedule/+delete-schedule or Python/shell scripts. "
                 "One plan accepts up to 200 accounts and 5,000 total occurrences. "
                 "BGM mode required makes an account fail when its pool has no valid BGM; it "
                 "never silently creates a no-BGM occurrence. After submission, the only state "
-                "source is +schedule-plan-status. When --bgm-policy required finishes with "
+                "source is +get-schedule-plan-job. When --bgm-policy required finishes with "
                 "status succeeded, the server guarantees every created occurrence has a "
                 "concrete BGM; use bgm_bound_count/summary.bgm_bound and never call "
                 "schedule-list, bgm-asset-list, or routines to verify it. Inspect every "
@@ -1095,7 +1102,7 @@ def specs() -> list[CommandSpec]:
             output_schema=_schedule_plan_async_output_schema(),
             examples=[
                 (
-                    "museoncli ai-slideshow publish +schedule-plan-batch "
+                    "museoncli ai-slideshow publish +submit-schedule-plan "
                     "--account-id <uuid1> --account-id <uuid2> --start-date 2026-07-17 "
                     "--days 5 --daily-slot 17:00 --daily-slot 22:00 "
                     "--timezone Asia/Shanghai --conflict-policy replace-non-published "
@@ -1103,7 +1110,7 @@ def specs() -> list[CommandSpec]:
                     "--idempotency-key <stable_key> --yes"
                 ),
                 (
-                    "museoncli ai-slideshow publish +schedule-plan-batch "
+                    "museoncli ai-slideshow publish +submit-schedule-plan "
                     "--operation cancel-only --account-id <uuid1> --account-id <uuid2> "
                     "--preview-token <preview_token> --cancel-reason "
                     "'operator requested schedule removal' "
@@ -1117,7 +1124,8 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-plan-status",
+            shortcut="+get-schedule-plan-job",
+            legacy_shortcuts=("+schedule-plan-status",),
             summary=(
                 "Read durable schedule-plan operation progress and per-account results. This is "
                 "the only state source after submission. cancel-only results include cancelled "
@@ -1133,17 +1141,18 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="account_publish_schedule_plan_status",
             input_schema=_schedule_plan_job_input_schema(include_reason=False),
             output_schema=_direct_output_schema("Schedule-plan job status returned by Museon API."),
-            examples=["museoncli ai-slideshow publish +schedule-plan-status --id <job_id>"],
+            examples=["museoncli ai-slideshow publish +get-schedule-plan-job --id <job_id>"],
             add_arguments=_add_schedule_plan_id_arguments,
             build_arguments=_build_schedule_plan_id_arguments,
         ),
         CommandSpec(
             domain=Domain.AI_SLIDESHOW,
-            shortcut="+schedule-plan-cancel",
+            shortcut="+cancel-schedule-plan-job",
+            legacy_shortcuts=("+schedule-plan-cancel",),
             summary=(
                 "Abort unfinished work in a durable schedule-plan job. This is job control only: "
                 "it never deletes schedule items already created. Use "
-                "+schedule-plan-preview/+schedule-plan-batch --operation cancel-only when the "
+                "+preview-schedule-plan/+submit-schedule-plan --operation cancel-only when the "
                 "operator wants schedule items removed."
             ),
             risk_level="write",
@@ -1154,7 +1163,7 @@ def specs() -> list[CommandSpec]:
                 "Schedule-plan cancellation result returned by API."
             ),
             examples=[
-                "museoncli ai-slideshow publish +schedule-plan-cancel --id <job_id> --reason 'operator request'"
+                "museoncli ai-slideshow publish +cancel-schedule-plan-job --id <job_id> --reason 'operator request'"
             ],
             add_arguments=_add_schedule_plan_cancel_arguments,
             build_arguments=_build_schedule_plan_cancel_arguments,
@@ -1271,15 +1280,15 @@ async def _execute_schedule_plan_cancel(ctx: CommandContext) -> Any:
 
 
 EXECUTORS = {
-    "ai-slideshow.publish-asset-pools-batch-get": direct_enveloped(_execute_asset_pools_batch_get),
-    "ai-slideshow.publish-asset-pools-batch-preview": direct_enveloped(
+    "ai-slideshow.publish-bulk-get-asset-pools": direct_enveloped(_execute_asset_pools_batch_get),
+    "ai-slideshow.publish-bulk-preview-asset-pools": direct_enveloped(
         _execute_asset_pools_batch_preview
     ),
-    "ai-slideshow.publish-asset-pools-batch-set": direct_enveloped(_execute_asset_pools_batch_set),
-    "ai-slideshow.publish-asset-pools-batch-status": direct_enveloped(_execute_asset_pools_batch_status),
-    "ai-slideshow.publish-asset-pools-batch-cancel": direct_enveloped(_execute_asset_pools_batch_cancel),
-    "ai-slideshow.publish-schedule-plan-preview": direct_enveloped(_execute_schedule_plan_preview),
-    "ai-slideshow.publish-schedule-plan-batch": direct_enveloped(_execute_schedule_plan_batch),
-    "ai-slideshow.publish-schedule-plan-status": direct_enveloped(_execute_schedule_plan_status),
-    "ai-slideshow.publish-schedule-plan-cancel": direct_enveloped(_execute_schedule_plan_cancel),
+    "ai-slideshow.publish-bulk-set-asset-pools": direct_enveloped(_execute_asset_pools_batch_set),
+    "ai-slideshow.publish-get-asset-pool-job": direct_enveloped(_execute_asset_pools_batch_status),
+    "ai-slideshow.publish-cancel-asset-pool-job": direct_enveloped(_execute_asset_pools_batch_cancel),
+    "ai-slideshow.publish-preview-schedule-plan": direct_enveloped(_execute_schedule_plan_preview),
+    "ai-slideshow.publish-submit-schedule-plan": direct_enveloped(_execute_schedule_plan_batch),
+    "ai-slideshow.publish-get-schedule-plan-job": direct_enveloped(_execute_schedule_plan_status),
+    "ai-slideshow.publish-cancel-schedule-plan-job": direct_enveloped(_execute_schedule_plan_cancel),
 }

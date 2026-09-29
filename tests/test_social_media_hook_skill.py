@@ -419,10 +419,10 @@ def test_skill_setup_checks_ego_and_required_museon_schemas(
 
     assert result["ready"] is True
     assert set(result["dependencies"]["museon_cli"]["schemas"]) == {
-        "research.social-media-hook-analyze",
-        "research.social-media-hook-analyze-poll",
-        "research.social-media-hook-analyze-results",
-        "research.social-media-hook-analyze-media-get",
+        "research.create-hook-analysis",
+        "research.bulk-get-hook-analyses",
+        "research.list-hook-analysis-results",
+        "research.get-hook-analysis-media",
     }
 
 

@@ -61,26 +61,26 @@ def _config_with_workspace() -> Config:
         (
             [
                 "campaign-monitor",
-                "+content-remove",
+                "+remove-content",
                 "--id",
                 CAMPAIGN_ID,
                 "--collection-content-id",
                 CC_ID_1,
                 "--dry-run",
             ],
-            "campaign-monitor.content-remove",
+            "campaign-monitor.remove-content",
         ),
         (
             [
                 "campaign-monitor",
-                "+content-batch-remove",
+                "+bulk-remove-content",
                 "--id",
                 CAMPAIGN_ID,
                 "--collection-content-ids",
                 f"{CC_ID_1},{CC_ID_2}",
                 "--dry-run",
             ],
-            "campaign-monitor.content-batch-remove",
+            "campaign-monitor.bulk-remove-content",
         ),
     ],
 )
@@ -122,7 +122,7 @@ def test_campaign_monitor_content_remove_without_yes_requires_confirmation(
                 parse(
                     [
                         "campaign-monitor",
-                        "+content-remove",
+                        "+remove-content",
                         "--id",
                         CAMPAIGN_ID,
                         "--collection-content-id",
@@ -146,7 +146,7 @@ def test_campaign_monitor_content_remove_with_yes_posts_single_id(
             parse(
                 [
                     "campaign-monitor",
-                    "+content-remove",
+                    "+remove-content",
                     "--id",
                     CAMPAIGN_ID,
                     "--collection-content-id",
@@ -157,7 +157,7 @@ def test_campaign_monitor_content_remove_with_yes_posts_single_id(
         )
     )
 
-    assert result["command"] == "campaign-monitor.content-remove"
+    assert result["command"] == "campaign-monitor.remove-content"
     assert capture.calls == [
         {
             "method": "POST",
@@ -184,7 +184,7 @@ def test_campaign_monitor_content_batch_remove_parses_and_dedupes_ids(
             parse(
                 [
                     "campaign-monitor",
-                    "+content-batch-remove",
+                    "+bulk-remove-content",
                     "--id",
                     CAMPAIGN_ID,
                     "--collection-content-ids",
@@ -213,7 +213,7 @@ def test_campaign_monitor_content_batch_remove_missing_workspace(
                 parse(
                     [
                         "campaign-monitor",
-                        "+content-batch-remove",
+                        "+bulk-remove-content",
                         "--id",
                         CAMPAIGN_ID,
                         "--collection-content-ids",

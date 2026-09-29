@@ -81,7 +81,7 @@ museoncli hireaicreator product +list --workspace-id "$WS" --page-size 100
 
 - 一次返回产品的 `name`、`description`、`website_url`、`tags`、`selling_points`、`target_audiences`，以及 `brand_logos`、`product_images`、`website_screenshots`、`app_screenshots`（每项带 `media_url`）。
 - 翻完所有分页（`--all`）。
-- 需要知道某个账号绑定的是哪个产品时，才读 `account +get-assets` 的 `product_id`；多个账号的发布素材池用 `ai-slideshow publish +asset-pools-batch-get` 一次读取。
+- 需要知道某个账号绑定的是哪个产品时，才读 `account +get-assets` 的 `product_id`；多个账号的发布素材池用 `ai-slideshow publish +bulk-get-asset-pools` 一次读取。
 
 ## 4. 外部生成
 

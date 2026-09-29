@@ -10,9 +10,9 @@ Content Analyzer creates a durable video analysis run from a supported platform 
 
 | Evidence shape | Start with |
 | --- | --- |
-| Source/page facts | `museoncli research +web-research` |
+| Source/page facts | `museoncli research +search-web` |
 | Social/community observations | Matching research search shortcut |
-| Visual claims | `museoncli research +visual-analyze` |
+| Visual claims | `museoncli research +analyze-visual` |
 | Video structure | `museoncli content-analysis +run` |
 
 ## DON'T

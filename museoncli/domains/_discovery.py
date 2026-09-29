@@ -138,6 +138,10 @@ def generated_example(spec: CommandSpec) -> str:
         for action in parser._actions
         if action.option_strings and action.required and action.dest not in required
     ]
+    for group in parser._mutually_exclusive_groups:
+        # "one of --id / --handle is required": show the first alternative.
+        if group.required and not any(action.dest in required for action in group._group_actions):
+            required.append(group._group_actions[0].dest)
     options = {option for action in parser._actions for option in action.option_strings}
     parts = [spec.cli_path]
     needs_file = False

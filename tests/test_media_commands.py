@@ -399,7 +399,7 @@ def test_generation_argv_reaches_request_and_status(monkeypatch, kind, extra, ex
         ]
     )
     assert receipt["data"]["media_ready"] is False
-    run(["media", "+status", "--workspace-id", OVERRIDE, "--task-id", MEDIA])
+    run(["media", "+get-generation", "--workspace-id", OVERRIDE, "--task-id", MEDIA])
     assert requests[0].url.path == "/api/v1/media/generations"
     assert requests[0].headers["Idempotency-Key"] == "caller-same-key"
     assert json.loads(requests[0].content) == {

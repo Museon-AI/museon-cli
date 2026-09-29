@@ -229,7 +229,7 @@ def _generation_specs() -> list[CommandSpec]:
             domain=Domain.MEDIA,
             shortcut="+generate",
             risk_level="write",
-            summary="Submit prompt image (GPT Image 2.5) or text video (Kling 3); requires configured model credits. Receipt is not completion: read media +status then +get.",
+            summary="Submit prompt image (GPT Image 2.5) or text video (Kling 3); requires configured model credits. Receipt is not completion: read media +get-generation then +get.",
             execution="direct",
             adapter_tool_name="media_generate",
             input_schema={
@@ -264,7 +264,8 @@ def _generation_specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.MEDIA,
-            shortcut="+status",
+            shortcut="+get-generation",
+            legacy_shortcuts=("+status",),
             risk_level="read",
             summary="Read durable generation phase, effective model parameters, errors and media readiness.",
             execution="direct",
@@ -276,7 +277,7 @@ def _generation_specs() -> list[CommandSpec]:
                 "additionalProperties": False,
             },
             output_schema=_direct_output_schema("Generation ledger readback."),
-            examples=["museoncli media +status --task-id <task_id>"],
+            examples=["museoncli media +get-generation --task-id <task_id>"],
             add_arguments=_status_args,
             build_arguments=_status_payload,
         ),
@@ -366,7 +367,7 @@ def specs() -> list[CommandSpec]:
 
 EXECUTORS = {
     "media.generate": direct_enveloped(_generate),
-    "media.status": direct_enveloped(_status),
+    "media.get-generation": direct_enveloped(_status),
     "media.upload": direct_enveloped(_upload),
     "media.import": direct_enveloped(_import),
     "media.get": direct_enveloped(_get),

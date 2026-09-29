@@ -28,11 +28,11 @@ For the Instagram Hook comparison workflow, begin with [setup.md](references/set
 
 | Situation | Start with |
 | --- | --- |
-| Creator/post/comment/trend | `museoncli research +social-media-search` |
-| X/Reddit/LinkedIn discussion | `museoncli research +community-search` |
-| Public page or official asset | `museoncli research +web-research` |
-| Meta/TikTok ad evidence | `museoncli research +creative-search-ads` |
-| Image/video visual question | `museoncli research +visual-analyze` |
+| Creator/post/comment/trend | `museoncli research +search-social-media` |
+| X/Reddit/LinkedIn discussion | `museoncli research +search-community` |
+| Public page or official asset | `museoncli research +search-web` |
+| Meta/TikTok ad evidence | `museoncli research +create-ads-search` |
+| Image/video visual question | `museoncli research +analyze-visual` |
 
 ## DON'T
 
