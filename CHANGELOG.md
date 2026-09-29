@@ -2,7 +2,7 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
-## Unreleased
+## 0.8.0
 
 - Errors: every failure carries `command` and an `error` object (`code`, `message`, `server_code`, `http_status`, `retryable`, `hint`); `reason` is always a category. Usage errors are JSON on stdout. New exit codes: 3 not found, 4 authentication required, 5 conflict.
 - Paged reads add a normalized `page_info`; read commands with `--page` take `--all`.
