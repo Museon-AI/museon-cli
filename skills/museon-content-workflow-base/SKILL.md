@@ -67,6 +67,8 @@ and Business Skill boundaries. Read only the reference needed for the current ca
 | Known Business Skill | `museoncli skills +get` |
 | Authentication failure | `museoncli auth start` |
 | Missing workspace | `museoncli workspace list` |
+| Need every page of a read | add `--all`, then check `page_info.complete` |
+| A command failed | branch on `error.code`, `error.server_code` and `error.retryable`; a usage error's `error.hint` names the help to read |
 
 ## DON'T
 

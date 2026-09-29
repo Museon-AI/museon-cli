@@ -33,7 +33,7 @@ museoncli hireaicreator account +list --workspace-id "$WS" \
   --platform tiktok --platform instagram --is-active --has-actor --page-size 100
 ```
 
-- 翻完所有分页，再确定账号名单；第一页不是完整名单。
+- 翻完所有分页再确定账号名单：加 `--all` 一次取全，并确认 `page_info.complete` 为 true；第一页不是完整名单。
 - 按用户给的账号名精确查找时，用 `--search-term <handle> --search-match exact`，重复传入多个 handle。
 - 返回里的 `actor_id`、`persona_id`、`platform` 直接用于后续步骤，不要逐个账号再调用 `account +assets-get`。
 - 账号类型（云手机或真机）不影响能否上传，只决定发布方式（第 8 步之后的结果）。
@@ -80,7 +80,7 @@ museoncli hireaicreator product +list --workspace-id "$WS" --page-size 100
 ```
 
 - 一次返回产品的 `name`、`description`、`website_url`、`tags`、`selling_points`、`target_audiences`，以及 `brand_logos`、`product_images`、`website_screenshots`、`app_screenshots`（每项带 `media_url`）。
-- 翻完所有分页。
+- 翻完所有分页（`--all`）。
 - 需要知道某个账号绑定的是哪个产品时，才读 `account +assets-get` 的 `product_id`；多个账号的发布素材池用 `ai-slideshow publish +asset-pools-batch-get` 一次读取。
 
 ## 4. 外部生成

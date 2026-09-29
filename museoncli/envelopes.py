@@ -42,7 +42,7 @@ def domain_command_envelope(
     response = adapter_response if isinstance(adapter_response, dict) else {}
     job = response.get("job")
     data = response.get("result")
-    if command_name.startswith("generation.") or _is_async_generation_command(command_name):
+    if command_name.startswith("ai-slideshow.generation-") or _is_async_generation_command(command_name):
         data = add_generation_refs(data, site_url=site_url)
     run = None
     if isinstance(job, dict):
@@ -70,7 +70,7 @@ def direct_api_envelope(
     *,
     site_url: str = DEFAULT_SITE_URL,
 ) -> dict[str, Any]:
-    if command_name.startswith("generation.") or _is_async_generation_command(command_name):
+    if command_name.startswith("ai-slideshow.generation-") or _is_async_generation_command(command_name):
         data = add_generation_refs(data, site_url=site_url)
     if _is_async_generation_command(command_name):
         run = _generation_run_from_data(data)
@@ -372,10 +372,9 @@ def markdown_link_label(value: str) -> str:
 
 
 def _is_async_generation_command(command_name: str) -> bool:
-    return command_name in {
-        "generation.create",
-        "social-account.schedule-generate",
-    }
+    # Retired CLI 1.x names (generation.create, social-account.schedule-generate)
+    # silently stopped matching when slideshow generation moved domains.
+    return command_name == "ai-slideshow.generation-create"
 
 
 def _generation_run_from_data(data: Any) -> dict[str, Any] | None:
