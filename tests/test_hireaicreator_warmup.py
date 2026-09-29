@@ -62,7 +62,7 @@ CASES = [
         {**CONFIG, "workspace_id": W, "expected_version": 4},
     ),
     (
-        "accounts",
+        "list-accounts",
         {
             "id": ID,
             "status": ["warming", "terminated"],
@@ -100,7 +100,7 @@ CASES = [
         {"pool_account_ids": [ACCOUNT], "expected_version": 6, "workspace_id": W},
     ),
     (
-        "account-stats",
+        "get-account-stats",
         {"id": ID, "pool_account_ids": [ACCOUNT, FORMAT]},
         "GET",
         PATH + "/account-stats",
@@ -108,7 +108,7 @@ CASES = [
         None,
     ),
     (
-        "readiness",
+        "get-readiness",
         {"pool_account_ids": [ACCOUNT], "action_type": "ai-hook"},
         "POST",
         BASE + "/accounts/readiness",
@@ -156,8 +156,8 @@ CASES = [
         {},
         {"workspace_id": W, "pool_account_ids": [ACCOUNT]},
     ),
-    ("journey-get", {"id": ID}, "GET", BASE + "/journeys/" + ID, {"workspace_id": W}, None),
-    ("deletion-preview", {"id": ID}, "GET", PATH + "/deletion", {"workspace_id": W}, None),
+    ("get-journey", {"id": ID}, "GET", BASE + "/journeys/" + ID, {"workspace_id": W}, None),
+    ("preview-deletion", {"id": ID}, "GET", PATH + "/deletion", {"workspace_id": W}, None),
     (
         "delete",
         {"id": ID, "expected_version": 11},
@@ -170,12 +170,12 @@ CASES = [
 CONFIRM = {"remove-accounts", "check-and-start", "activate", "pause", "resume", "reset", "delete"}
 READS = {
     "get",
-    "accounts",
-    "account-stats",
-    "readiness",
+    "list-accounts",
+    "get-account-stats",
+    "get-readiness",
     "preview",
-    "journey-get",
-    "deletion-preview",
+    "get-journey",
+    "preview-deletion",
 }
 CLIENT = httpx.AsyncClient
 

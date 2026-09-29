@@ -101,7 +101,7 @@ def get_command_spec(schema_name: str) -> CommandSpec:
         for spec in command_specs():
             if (
                 spec.domain.value == domain
-                and spec.shortcut == shortcut
+                and shortcut in (spec.shortcut, *spec.legacy_shortcuts)
                 and (spec.resource or None) == (resource[0] if resource else None)
                 and len(resource) <= 1
             ):
@@ -111,7 +111,24 @@ def get_command_spec(schema_name: str) -> CommandSpec:
     for spec in command_specs():
         if spec.schema_name == normalized:
             return spec
+    for spec in command_specs():
+        if normalized in spec.legacy_schema_names:
+            return spec
     raise ValueError(f"Unknown command schema: {schema_name}")
+
+
+def _hide_legacy_choices(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    legacy: set[str],
+) -> None:
+    """Keep deprecated aliases callable but out of usage lines and help listings."""
+    if not legacy:
+        return
+    subparsers._choices_actions = [
+        action for action in subparsers._choices_actions if action.dest not in legacy
+    ]
+    visible = [name for name in subparsers.choices if name not in legacy]
+    subparsers.metavar = "{" + ",".join(visible) + "}"
 
 
 def add_domain_command_parsers(
@@ -129,6 +146,7 @@ def add_domain_command_parsers(
             shortcut: str,
             *,
             hidden: bool = False,
+            legacy: bool = False,
         ) -> None:
             examples = "\n".join(f"  {example}" for example in command_examples(spec))
             shortcut_parser = parser.add_parser(
@@ -152,16 +170,25 @@ def add_domain_command_parsers(
                     ),
                 )
             fill_flag_help(spec, shortcut_parser)
-            shortcut_parser.set_defaults(domain_command=spec.schema_name)
+            shortcut_parser.set_defaults(
+                domain_command=spec.schema_name,
+                legacy_invocation=spec.legacy_cli_path(shortcut) if legacy else None,
+            )
 
         resource_specs: dict[str, list[CommandSpec]] = {}
+        domain_legacy = {
+            legacy for spec in specs if spec.resource is None for legacy in spec.legacy_shortcuts
+        }
         for spec in specs:
             if spec.resource is None:
                 add_command_parser(shortcut_subparsers, spec, spec.shortcut)
+                # A renamed command keeps answering to its old name, hidden from help.
+                for legacy_shortcut in spec.legacy_shortcuts:
+                    add_command_parser(
+                        shortcut_subparsers, spec, legacy_shortcut, hidden=True, legacy=True
+                    )
                 continue
             resource_specs.setdefault(spec.resource, []).append(spec)
-            for legacy_shortcut in spec.legacy_shortcuts:
-                add_command_parser(shortcut_subparsers, spec, legacy_shortcut, hidden=True)
 
         for resource, grouped_specs in resource_specs.items():
             resource_parser = shortcut_subparsers.add_parser(resource)
@@ -170,6 +197,16 @@ def add_domain_command_parsers(
             )
             for spec in grouped_specs:
                 add_command_parser(action_subparsers, spec, spec.shortcut)
+            for spec in grouped_specs:
+                for legacy_shortcut in spec.legacy_shortcuts:
+                    add_command_parser(
+                        action_subparsers, spec, legacy_shortcut, hidden=True, legacy=True
+                    )
+            _hide_legacy_choices(
+                action_subparsers,
+                {legacy for spec in grouped_specs for legacy in spec.legacy_shortcuts},
+            )
+        _hide_legacy_choices(shortcut_subparsers, domain_legacy)
 
 
 def schema_payload(schema_name: str | None = None) -> dict[str, Any]:

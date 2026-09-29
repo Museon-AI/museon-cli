@@ -1,6 +1,6 @@
 [
   {
-    "name": "format-tags",
+    "name": "format-list-tags",
     "input": {
       "workspace_id": "40000000-0000-4000-8000-000000000004"
     },
@@ -11,7 +11,7 @@
     }
   },
   {
-    "name": "format-warmup-readiness",
+    "name": "format-get-warmup-readiness",
     "input": {
       "workspace_id": "40000000-0000-4000-8000-000000000004",
       "format_ids": [
@@ -28,7 +28,7 @@
     }
   },
   {
-    "name": "format-patch",
+    "name": "format-update",
     "input": {
       "id": "10000000-0000-4000-8000-000000000001",
       "workspace_id": "40000000-0000-4000-8000-000000000004",

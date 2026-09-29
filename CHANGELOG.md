@@ -2,6 +2,14 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+- Errors: every failure carries `command` and an `error` object (`code`, `message`, `server_code`, `http_status`, `retryable`, `hint`); `reason` is always a category. Usage errors are JSON on stdout. New exit codes: 3 not found, 4 authentication required, 5 conflict.
+- Paged reads add a normalized `page_info`; read commands with `--page` take `--all`.
+- Every flag has help and every command shows a runnable example; `schema` accepts CLI paths.
+- HireAICreator actions are now a verb or a verb with its object (51 renames, e.g. `video +from-upload` → `+create-from-upload`, `test-group +accounts-set` → `+set-accounts`, `warmup +journeys` → `+list-journeys`). Old names keep working, hidden from help, and return a deprecation warning; `schema` lists them under `deprecated_aliases`.
+- Fix: `ai-slideshow generation +create` returns its run and frontend links again.
+
 ## 0.7.3
 
 - 新增 `hireaicreator actor +resolve`：一次最多读取 200 个 Actor 及其参考图 URL。

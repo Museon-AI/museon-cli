@@ -312,3 +312,42 @@ def test_no_command_accepts_singular_and_plural_spellings_of_one_input() -> None
                     spec.schema_name,
                     flag,
                 )
+
+
+def test_renamed_commands_keep_answering_to_their_old_names() -> None:
+    """A rename must not break a released invocation: old paths and keys resolve."""
+    from museoncli.domains import get_command_spec
+    from museoncli.main import build_parser
+
+    parser = build_parser()
+    canonical = {spec.cli_path for spec in command_specs()}
+    for spec in command_specs():
+        for legacy, key in zip(spec.legacy_shortcuts, spec.legacy_schema_names):
+            path = spec.legacy_cli_path(legacy)
+            assert path not in canonical, path
+            assert get_command_spec(key).schema_name == spec.schema_name
+            assert get_command_spec(path).schema_name == spec.schema_name
+            args, _ = parser.parse_known_args(shlex.split(path)[1:])
+            assert args.domain_command == spec.schema_name
+            assert args.legacy_invocation == path
+
+
+def test_old_names_are_hidden_from_help() -> None:
+    import contextlib
+    import io
+
+    from museoncli.main import build_parser
+
+    parser = build_parser()
+    for spec in command_specs():
+        if not spec.legacy_shortcuts:
+            continue
+        prefix = ["hireaicreator", spec.resource] if spec.resource else [spec.domain.value]
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer), contextlib.suppress(SystemExit):
+            parser.parse_args([*prefix, "--help"])
+        for legacy in spec.legacy_shortcuts:
+            assert re.search(rf"(?<![\w-]){re.escape(legacy)}(?![\w-])", buffer.getvalue()) is None, (
+                spec.schema_name,
+                legacy,
+            )

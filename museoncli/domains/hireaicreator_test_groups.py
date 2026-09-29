@@ -66,7 +66,7 @@ PREVIEW = {
     "publish_times": nullable(arr(S, maximum=100)),
 }
 READBACK = (
-    "Read test-group +get and +publishing for the same workspace and group before dependent writes."
+    "Read test-group +get and +get-publishing for the same workspace and group before dependent writes."
 )
 
 
@@ -189,7 +189,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "overview",
+            "get-overview",
             "GET",
             group + "/operations-overview",
             {"plan_id": U, "timezone": TZ},
@@ -237,7 +237,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "category-requirements",
+            "get-category-requirements",
             "POST",
             group + "/category-requirements",
             {"recipe_group_ids": arr(U, 1)},
@@ -246,7 +246,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "category-options",
+            "list-category-options",
             "GET",
             group + "/category-tag-options",
             {**page(300), "key_id": U},
@@ -255,7 +255,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "category-set",
+            "set-category",
             "PUT",
             group + "/{id}/category-tags",
             {"selections": arr(SELECTION)},
@@ -264,7 +264,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "hook-target",
+            "get-hook-target",
             "GET",
             group + "/{id}/hook-launch-target",
             summary="Read Hook append target and constraints.",
@@ -281,7 +281,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "content-set",
+            "set-content",
             "PUT",
             group + "/{id}/content-source",
             {
@@ -296,7 +296,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "content-group-set",
+            "set-content-group",
             "PUT",
             group + "/{id}/content-group",
             CONTENT,
@@ -306,7 +306,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "accounts",
+            "list-accounts",
             "GET",
             group + "/{id}/publishing-accounts",
             page(300, 200),
@@ -314,7 +314,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "accounts-set",
+            "set-accounts",
             "PUT",
             group + "/{id}/accounts",
             {"publishing_account_ids": arr(ACCOUNT), "mode": enum("replace", "append")},
@@ -325,7 +325,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "accounts-transfer",
+            "transfer-accounts",
             "POST",
             group + "/{id}/accounts/transfer",
             {"publishing_account_ids": arr(ACCOUNT, 1, 200)},
@@ -336,7 +336,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "accounts-assign",
+            "assign-accounts",
             "PUT",
             group + "/account-assignments",
             {"test_group_ids": arr(U, 1), "publishing_account_ids": arr(ACCOUNT)},
@@ -347,7 +347,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "schedule-set",
+            "set-schedule",
             "PUT",
             group + "/{id}/schedule",
             {
@@ -405,7 +405,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "publishing",
+            "get-publishing",
             "GET",
             group + "/{id}/publishing",
             {"run_id": U},
@@ -413,7 +413,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "test-group",
-            "publishing-accounts",
+            "list-publishing-accounts",
             "GET",
             group + "/{id}/publishing/accounts",
             {

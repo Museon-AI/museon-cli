@@ -7,11 +7,11 @@ Q 表示 workspace_id 位于 query，B 表示位于 body，R 表示后端按资�
 | 命令资源/动作 | Method / path | 输入位置 / workspace | 返回与下一阶段 ground truth |
 | --- | --- | --- | --- |
 | account +list | GET v2 /pool-accounts/workspace-accounts | Q；分页、精确 search_terms/search_match、阶段/设备/Actor/Persona/测试组筛选 | 原始账号分页；不可把第一页当完整名单 |
-| account +eligibility | POST v2 /ai-hook-test-groups/account-eligibility | B；明确账号ID集合、可选test_group_id | items[].eligible/code，逐账号保留原因 |
+| account +check-eligibility | POST v2 /ai-hook-test-groups/account-eligibility | B；明确账号ID集合、可选test_group_id | items[].eligible/code，逐账号保留原因 |
 | actor +list / +get | GET v2 /actors / /actors/{id} | Q；列表分页/search/source_persona_id；get路径id | creative_actors 身份、source_persona_id，不等同Persona |
 | actor +resolve | POST v2 /actors/batch-resolve | B；actor_ids 1–200 | 每个Actor含images[]/profile_image的media_url、permanent_media_url、thumbnail_url；actor_id取自account +list，不逐账号读取 |
-| actor +from-persona | POST v2 /actors/from-persona | B；已有Persona、性别/年龄段及一张工作区图片 | 返回Actor ID→actor +get；无幂等键，未知结果先核对再重试 |
-| actor +batch-create / +batch-get / +batch-items / +batch-select | POST/GET v2 /actors/generation-batches | 创建要求Persona、性别/年龄段、数量和幂等键；候选选择要求明确item_ids | 批次生成的是候选，选择成功候选后才形成Actor；分页读取item状态并回读Actor |
+| actor +create-from-persona | POST v2 /actors/from-persona | B；已有Persona、性别/年龄段及一张工作区图片 | 返回Actor ID→actor +get；无幂等键，未知结果先核对再重试 |
+| actor +create-batch / +get-batch / +list-batch-items / +select-batch-items | POST/GET v2 /actors/generation-batches | 创建要求Persona、性别/年龄段、数量和幂等键；候选选择要求明确item_ids | 批次生成的是候选，选择成功候选后才形成Actor；分页读取item状态并回读Actor |
 | persona +list / +get | GET v1 /personas / /personas/{id} | list Q；get R | personas 身份及资源；不得当Actor ID |
 | product +list | GET v1 /products | Q；分页/search/tag | 产品描述、卖点、目标人群及logo/产品图/网站截图/App截图；须翻完分页 |
 | format +list / +get | GET v2 /ai-hook-formats / /ai-hook-formats/{id} | Q；分页/search/status/tag | 真实Format ID、分析/处理状态 |
@@ -21,25 +21,25 @@ Q 表示 workspace_id 位于 query，B 表示位于 body，R 表示后端按资�
 | pov +list | GET v2 /ai-hook-povs | Q；分页/search/tag | POV ID/text |
 | bgm +list | GET v2 /bgm-assets | Q；分页/search/tag/mood/publishable_only | BGM ID/媒体与可发布状态 |
 | clip +list / +get | GET v2 /content-clips / /content-clips/{id} | list Q；get R | 原始Clip版本/账号/migration_state/媒体ID |
-| clip +batch-create | POST v2 /content-clips/batch | B；items client_key/mapping_version/媒体/标签等 | 逐项登记结果→clip +get；初始needs_account，不能称库存已可用 |
+| clip +bulk-create | POST v2 /content-clips/batch | B；items client_key/mapping_version/媒体/标签等 | 逐项登记结果→clip +get；初始needs_account，不能称库存已可用 |
 | clip +assign-account | POST v2 /content-clips/batch-assign-account | R；items含clip_id/expected_version及目标账号 | 逐项资源→clip +get核对账号与版本；不发明batch-create账号字段 |
 | video +list / +get | GET v2 /ai-hook-videos / /ai-hook-videos/{id} | list Q；get R；分页/状态/plan/账号/组/时间 | 当前版本、组件/渲染/发布状态与关联资源 |
-| video +readiness | GET v2 /ai-hook-videos/{id}/readiness | R | 只能证明资格/阻塞，不能证明生成完成 |
+| video +get-readiness | GET v2 /ai-hook-videos/{id}/readiness | R | 只能证明资格/阻塞，不能证明生成完成 |
 | video +update | PATCH v2 /ai-hook-videos/{id} | R；expected_version及显式patch字段 | video +get核对目标字段/版本；新成片另看export revision |
 | video +generate | POST v2 /ai-hook-videos/{id}/generate | R；expected_version/generation_directions；Idempotency-Key header | accepted→video +get；任务完成与成片分别核验 |
 | video +bulk-schedule | POST v2 /ai-hook-videos/bulk-schedule | R；items含版本/账号/带偏移时间/时区 | succeeded/conflicted/failures，逐video +get核对；非测试组增量重排 |
-| video +from-upload | POST v2 /ai-hook-videos/from-upload | B；幂等键；items 1–50，每条media_id(media +upload)、1–2个账号、caption、可选带偏移scheduled_at | 每账号一条发布任务；TikTok/Instagram、每平台最多1个；无需POV/叠字/渲染，按账号的发布方式发布；逐video +get核对 |
-| plan +preview / +capacity | POST v2 /ai-hook-video-plans/preview / /capacity | B；组合计划 / 账号日期时区 | preview分配与阻塞 / account-capacity，不写入 |
+| video +create-from-upload | POST v2 /ai-hook-videos/from-upload | B；幂等键；items 1–50，每条media_id(media +upload)、1–2个账号、caption、可选带偏移scheduled_at | 每账号一条发布任务；TikTok/Instagram、每平台最多1个；无需POV/叠字/渲染，按账号的发布方式发布；逐video +get核对 |
+| plan +preview / +get-capacity | POST v2 /ai-hook-video-plans/preview / /capacity | B；组合计划 / 账号日期时区 | preview分配与阻塞 / account-capacity，不写入 |
 | plan +create | POST v2 /ai-hook-video-plans | B；计划组合，显式start_generation；Idempotency-Key header | plan ID→plan +get；默认不生成，video +list --plan-id再核验 |
 | plan +get | GET v2 /ai-hook-video-plans/{id} | R | 持久计划及生成状态，不把记录存在当成片 |
 | test-group +list / +get | GET v2 /ai-hook-test-groups / /ai-hook-test-groups/{id} | Q；list按工作区分页，可选plan_id | 当前组/成员/排期状态；无计划时返回空列表，不隐式创建 |
 | test-group +preview | POST v2 /ai-hook-test-groups/preview | B；test_group_id、可选campaign_id | 持久组驱动的preview与缺口，不暴露已失效的旧请求排期字段 |
-| warmup +list / +journeys | GET v2 /pool-account-warmup/strategies / /journeys | Q；分页/status，journeys可选strategy_id/current_only | 暖号策略与参与状态；不自动晋级/迁组 |
+| warmup +list / +list-journeys | GET v2 /pool-account-warmup/strategies / /journeys | Q；分页/status，journeys可选strategy_id/current_only | 暖号策略与参与状态；不自动晋级/迁组 |
 | dashboard +get | GET v2 /ai-hook-dashboard | Q；campaign_id/date_from/date_to/timezone及账号/组筛选 | 原始看板及数据新鲜度，未回收不等于零 |
 | delivery +preview / +share | POST v2 /ai-hook-public-video-collections/preview / /share | B；collection_kind/id或video_filter | preview只有计数；share有副作用/预热，返回token→delivery +get |
 | delivery +get | GET v2 /public/ai-hook-test-groups/{token} | R；token路径、page/page_size | total/items核验实际视频集合；不发明has_more |
-| delivery +export | POST v2 /ai-hook-videos/{id}/exports | R；expected_version/hook_resolution；Idempotency-Key header | export ID→delivery +export-get |
-| delivery +export-get | GET v2 /ai-hook-video-exports/{id} | R | status completed、video_id/video_version/render_revision及download_url |
+| delivery +export | POST v2 /ai-hook-videos/{id}/exports | R；expected_version/hook_resolution；Idempotency-Key header | export ID→delivery +get-export |
+| delivery +get-export | GET v2 /ai-hook-video-exports/{id} | R | status completed、video_id/video_version/render_revision及download_url |
 
 ## 首版输入与结果限制
 

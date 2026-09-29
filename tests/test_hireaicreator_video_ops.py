@@ -58,12 +58,12 @@ def test_bulk_partial_failure_remains_visible_and_does_not_retry(monkeypatch):
 
 def test_export_batch_rejects_over_50_before_network(monkeypatch):
     attach_transport(monkeypatch, lambda _: pytest.fail("invalid batch reached HTTP"))
-    original = next(c for c in CASES if c["name"] == "delivery-export-batch")
+    original = next(c for c in CASES if c["name"] == "delivery-bulk-export")
     with pytest.raises(ValueError, match="item count"):
-        dispatch(argv("delivery-export-batch", items=original["input"]["items"] * 51))
+        dispatch(argv("delivery-bulk-export", items=original["input"]["items"] * 51))
 
 
-@pytest.mark.parametrize("name", ["video-render", "video-caption-regenerate", "video-review"])
+@pytest.mark.parametrize("name", ["video-render", "video-regenerate-caption", "video-review"])
 def test_stale_or_missing_version_cannot_be_silently_defaulted(monkeypatch, name):
     attach_transport(monkeypatch, lambda _: pytest.fail("invalid version reached HTTP"))
     with pytest.raises(ValueError, match="range"):

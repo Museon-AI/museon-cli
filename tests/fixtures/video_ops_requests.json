@@ -201,7 +201,7 @@
     }
   },
   {
-    "name": "video-render-get",
+    "name": "video-get-render",
     "input": {
       "id": "22222222-2222-4222-8222-222222222222"
     },
@@ -210,7 +210,7 @@
     "query": {}
   },
   {
-    "name": "video-candidates-commit",
+    "name": "video-commit-candidates",
     "input": {
       "expected_version": 7,
       "id": "22222222-2222-4222-8222-222222222222"
@@ -267,7 +267,7 @@
     }
   },
   {
-    "name": "delivery-export-batch",
+    "name": "delivery-bulk-export",
     "input": {
       "items": [
         {
@@ -294,7 +294,7 @@
     }
   },
   {
-    "name": "calendar-month",
+    "name": "calendar-get-month",
     "input": {
       "campaign_id": "33333333-3333-4333-8333-333333333333",
       "timezone": "Asia/Shanghai",
@@ -317,7 +317,7 @@
     }
   },
   {
-    "name": "calendar-day",
+    "name": "calendar-get-day",
     "input": {
       "campaign_id": "33333333-3333-4333-8333-333333333333",
       "timezone": "Asia/Shanghai",
@@ -340,7 +340,7 @@
     }
   },
   {
-    "name": "video-ai-hook-regenerate",
+    "name": "video-regenerate-ai-hook",
     "input": {
       "expected_version": 7,
       "generation_directions": {
@@ -366,7 +366,7 @@
     }
   },
   {
-    "name": "video-pov-regenerate",
+    "name": "video-regenerate-pov",
     "input": {
       "expected_version": 7,
       "creative_direction": "A travel POV",
@@ -384,7 +384,7 @@
     }
   },
   {
-    "name": "video-text-overlay-regenerate",
+    "name": "video-regenerate-text-overlay",
     "input": {
       "expected_version": 7,
       "creative_direction": "Use short text",
@@ -402,7 +402,7 @@
     }
   },
   {
-    "name": "video-caption-regenerate",
+    "name": "video-regenerate-caption",
     "input": {
       "expected_version": 7,
       "creative_direction": "Conversational caption",
@@ -420,7 +420,7 @@
     }
   },
   {
-    "name": "video-ai-hook-candidate",
+    "name": "video-generate-ai-hook-candidate",
     "input": {
       "expected_version": 7,
       "generation_directions": {
@@ -446,7 +446,7 @@
     }
   },
   {
-    "name": "video-pov-candidate",
+    "name": "video-generate-pov-candidate",
     "input": {
       "expected_version": 7,
       "generation_directions": {

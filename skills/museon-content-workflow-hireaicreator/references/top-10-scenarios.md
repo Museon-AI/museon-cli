@@ -28,7 +28,7 @@ On a timeout, the write outcome is unknown. Reuse the original key only when the
 
 ## Relationships
 
-Use `test-group +list` for a read-only workspace inventory; it resolves the current Test Plan without creating one, and `plan_id` is optional when already known. Complete pagination before calling the result exhaustive. For new Actors, choose an existing Persona and either create from one workspace image or use `actor +batch-create → +batch-get/+batch-items → +batch-select`; a generated candidate is not yet an Actor. Resource-bound reads/writes may have no workspace flag; verify the returned object's workspace rather than attaching a guessed default.
+Use `test-group +list` for a read-only workspace inventory; it resolves the current Test Plan without creating one, and `plan_id` is optional when already known. Complete pagination before calling the result exhaustive. For new Actors, choose an existing Persona and either create from one workspace image or use `actor +create-batch → +get-batch/+list-batch-items → +select-batch-items`; a generated candidate is not yet an Actor. Resource-bound reads/writes may have no workspace flag; verify the returned object's workspace rather than attaching a guessed default.
 
 ## 1. Find and reuse creative resources
 
@@ -42,7 +42,7 @@ Use `test-group +list` for a read-only workspace inventory; it resolves the curr
 
 **Done:** Each selected item is identifiable and its necessary dependencies are available for the next operation. If the next operation needs ready material, check its readiness/status instead of treating every search match as usable.
 
-**Unknown/limits:** Missing tags, absent descriptions and failed parsing remain missing facts. Do not claim semantic search when the API only searched text. A Format URL import is asynchronous: retain every returned ID and poll its detail until required extraction is ready or failed. Use `format +tags` for tag discovery and `+warmup-readiness` for revision/issue diagnostics. Repair links or the playbook with versioned `+patch`; retry only the affected processing step with `+retry`, then read the same Format again. Do not repeatedly reimport the URL to disguise failure.
+**Unknown/limits:** Missing tags, absent descriptions and failed parsing remain missing facts. Do not claim semantic search when the API only searched text. A Format URL import is asynchronous: retain every returned ID and poll its detail until required extraction is ready or failed. Use `format +list-tags` for tag discovery and `+get-warmup-readiness` for revision/issue diagnostics. Repair links or the playbook with versioned `+update`; retry only the affected processing step with `+retry`, then read the same Format again. Do not repeatedly reimport the URL to disguise failure.
 
 ## 2. Compose and generate content for accounts
 
@@ -60,7 +60,7 @@ Use `test-group +list` for a read-only workspace inventory; it resolves the curr
 
 `start_generation=false` does not make creation read-only: a supplied schedule can occupy publishing slots, and a Clip composition can reserve Clips. Replaying an existing key returns the original plan, whose generation may already have started; inspect its persisted intent and child states.
 
-**Unknown/limits:** Explain skipped allocations and incomplete components. Do not substitute a Persona ID for Actor ID or silently select an alternative account. Creative quality and visual identity need media inspection; a completed task status alone proves neither. Actor creation requires an existing Persona and explicit candidate selection. Account binding uses separate authorized `account +actor-set` / `+persona-set` commands and readback.
+**Unknown/limits:** Explain skipped allocations and incomplete components. Do not substitute a Persona ID for Actor ID or silently select an alternative account. Creative quality and visual identity need media inspection; a completed task status alone proves neither. Actor creation requires an existing Persona and explicit candidate selection. Account binding uses separate authorized `account +set-actor` / `+set-persona` commands and readback.
 
 ## 3. Find exact accounts and check eligibility
 
@@ -102,7 +102,7 @@ Use `test-group +list` for a read-only workspace inventory; it resolves the curr
 
 **Done:** For a diagnostic request, identify affected accounts, current work and blockers. For an authorized change, execute the supported operation and verify the intended membership, schedule or journey state on the same IDs; a diagnosis alone does not complete that request.
 
-**Authorized actions:** Use `test-group +accounts-transfer`, `+accounts-set` or `+accounts-assign` for the intended membership operation; inspect eligibility and both affected groups before and after. Use `+schedule-set`, fresh `+preview` and `test-run +confirm` for a schedule change. Use `warmup +reset` for explicitly selected journeys after checking reset blockers. These actions can be rejected by live service rules; do not simulate a rejected migration with cancellation/recreation or promise uninterrupted execution. See [lifecycle operations](lifecycle-operations.md).
+**Authorized actions:** Use `test-group +transfer-accounts`, `+set-accounts` or `+assign-accounts` for the intended membership operation; inspect eligibility and both affected groups before and after. Use `+set-schedule`, fresh `+preview` and `test-run +confirm` for a schedule change. Use `warmup +reset` for explicitly selected journeys after checking reset blockers. These actions can be rejected by live service rules; do not simulate a rejected migration with cancellation/recreation or promise uninterrupted execution. See [lifecycle operations](lifecycle-operations.md).
 
 ## 6. Import videos, register Clips and assign accounts
 
@@ -124,11 +124,11 @@ Use `test-group +list` for a read-only workspace inventory; it resolves the curr
 
 **Inputs:** Account IDs, relevant Test Group or plan configuration, Recipe/resource choices, dates, times and timezone.
 
-**Flow:** Read selected resources/accounts → use `plan +capacity` for daily publishing slots and group/plan preview for composition or Clip shortages → preserve the affected account/resource IDs for a scoped follow-up.
+**Flow:** Read selected resources/accounts → use `plan +get-capacity` for daily publishing slots and group/plan preview for composition or Clip shortages → preserve the affected account/resource IDs for a scoped follow-up.
 
 **Ground truth:** Service-calculated required/available quantities, eligibility, content gaps, clip coverage and any incomplete/timeout indicator. A locally counted list of uploaded files is not allocatable inventory.
 
-`plan +capacity` reports occupied and remaining publishing slots for the requested dates/accounts. It does not establish Actor eligibility or available Clip stock. An unscheduled plan need not change those slots; uploading or assigning a Clip does not itself increase the publishing limit. Compare the same account/date scope, including any excluded video IDs.
+`plan +get-capacity` reports occupied and remaining publishing slots for the requested dates/accounts. It does not establish Actor eligibility or available Clip stock. An unscheduled plan need not change those slots; uploading or assigning a Clip does not itself increase the publishing limit. Compare the same account/date scope, including any excluded video IDs.
 
 **Done:** Separate sufficient, insufficient, blocked and unknown; describe which resource/account needs attention. After a write intended to fix a gap, rerun the same scoped preview and compare the result.
 

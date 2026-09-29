@@ -30,12 +30,12 @@ museoncli media +get --workspace-id "$WORKSPACE_ID" --id "$RESULT_VIDEO_MEDIA_ID
 ```bash
 museoncli hireaicreator batch +list --workspace-id "$WORKSPACE_ID" --page 1 --page-size 100
 museoncli hireaicreator batch +get --id "$BATCH_ID"
-museoncli hireaicreator batch +items --id "$BATCH_ID" --hook-id "$HOOK_ID" --page 1 --page-size 100
+museoncli hireaicreator batch +list-items --id "$BATCH_ID" --hook-id "$HOOK_ID" --page 1 --page-size 100
 ```
 
 - `batch +list` 可按 `--status` 筛选；没有批次名称或文本搜索参数。
 - `batch +get` 返回批次状态、请求数量、排队/运行/完成/失败/取消数量及时间。
-- `batch +items` 可按 `--status`、`--hook-id`、`--actor-id`、`--persona-id` 筛选，并分页。它返回 item 状态和结果媒体 ID；需要文件时用 `media +get` 读取。
+- `batch +list-items` 可按 `--status`、`--hook-id`、`--actor-id`、`--persona-id` 筛选，并分页。它返回 item 状态和结果媒体 ID；需要文件时用 `media +get` 读取。
 - 详情及批次内列表按资源 ID 鉴权，不接受工作区覆盖参数。由实际服务端响应和访问控制确定对象，不能把权限拒绝解释为记录不存在。
 
 ## Ground truth 与恢复

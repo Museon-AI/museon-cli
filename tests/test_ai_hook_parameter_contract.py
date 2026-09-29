@@ -351,7 +351,7 @@ def test_nullable_collection_id_explicit_flag_reaches_http(monkeypatch, action):
 
 
 def test_integer_zero_is_forwarded_for_server_business_validation(monkeypatch):
-    case = deepcopy(next(c for c in CASES if c["name"] == "clip-batch-create"))
+    case = deepcopy(next(c for c in CASES if c["name"] == "clip-bulk-create"))
     case["input"]["items"][0]["usage_limit"] = 0
     requests = []
     attach_transport(

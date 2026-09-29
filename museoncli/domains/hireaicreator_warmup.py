@@ -92,7 +92,7 @@ def _operation(action: str, method: str, path: str, properties: dict, **kwargs) 
 
 
 def specs() -> list[CommandSpec]:
-    """Add to HireAICreator specs; existing +list and +journeys remain there."""
+    """Add to HireAICreator specs; existing +list and +list-journeys remain there."""
     readback = "hireaicreator warmup +get --id STRATEGY_ID; inspect version, status and blockers before the next operation."
     result = [
         _operation(
@@ -132,7 +132,7 @@ def specs() -> list[CommandSpec]:
             readback=readback,
         ),
         _operation(
-            "accounts",
+            "list-accounts",
             "GET",
             STRATEGY + "/accounts",
             {
@@ -173,7 +173,7 @@ def specs() -> list[CommandSpec]:
             readback=readback,
         ),
         _operation(
-            "account-stats",
+            "get-account-stats",
             "GET",
             STRATEGY + "/account-stats",
             {
@@ -183,7 +183,7 @@ def specs() -> list[CommandSpec]:
             summary="Read selected accounts' published counts and measured performance; preserve missing values.",
         ),
         _operation(
-            "readiness",
+            "get-readiness",
             "POST",
             PREFIX + "/accounts/readiness",
             {
@@ -225,17 +225,17 @@ def specs() -> list[CommandSpec]:
             write=True,
             confirmation=True,
             summary="Reset selected journeys after checking reset blockers. No server version/idempotency key is supported; reconcile before retrying. Requires --yes.",
-            readback="hireaicreator warmup +accounts --id STRATEGY_ID; inspect current journeys and reset blockers.",
+            readback="hireaicreator warmup +list-accounts --id STRATEGY_ID; inspect current journeys and reset blockers.",
         ),
         _operation(
-            "journey-get",
+            "get-journey",
             "GET",
             PREFIX + "/journeys/{id}",
             {},
             summary="Read a journey and its cycles, receipts, evidence and blocker codes.",
         ),
         _operation(
-            "deletion-preview",
+            "preview-deletion",
             "GET",
             STRATEGY + "/deletion",
             {},

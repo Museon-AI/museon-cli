@@ -128,7 +128,7 @@ def test_delete_204_and_confirmation(requests):
 
 
 def test_readiness_is_body_scoped_read_and_tags_is_query_scoped(requests):
-    run("warmup-readiness", {"format_ids": [ID]})
+    run("get-warmup-readiness", {"format_ids": [ID]})
     r = requests[0]
     assert r.method == "POST" and r.url.path == "/api/v2/ai-hook-formats/warmup-readiness"
     assert not r.url.query

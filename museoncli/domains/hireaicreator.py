@@ -324,6 +324,64 @@ def _load(
 EXECUTORS: dict[str, Any] = {}
 
 
+# Actions are a verb or a verb with its object (docs/cli-surface-conventions.md).
+# Commands renamed to that shape keep answering to their old names, hidden from
+# help and with a deprecation warning, until those names are retired.
+LEGACY_ACTIONS: dict[tuple[str, str], tuple[str, ...]] = {
+    ("account", "get-assets"): ("assets-get",),
+    ("account", "set-actor"): ("actor-set",),
+    ("account", "set-persona"): ("persona-set",),
+    ("account", "check-eligibility"): ("eligibility",),
+    ("actor", "get-access"): ("access",),
+    ("actor", "preview-assign"): ("assign-preview",),
+    ("actor", "create-from-persona"): ("from-persona",),
+    ("actor", "create-batch"): ("batch-create",),
+    ("actor", "get-batch"): ("batch-get",),
+    ("actor", "list-batch-items"): ("batch-items",),
+    ("actor", "select-batch-items"): ("batch-select",),
+    ("format", "list-tags"): ("tags",),
+    ("format", "get-warmup-readiness"): ("warmup-readiness",),
+    ("format", "update"): ("patch",),
+    ("batch", "list-items"): ("items",),
+    ("clip", "bulk-create"): ("batch-create",),
+    ("video", "get-readiness"): ("readiness",),
+    ("video", "create-from-upload"): ("from-upload",),
+    ("video", "get-render"): ("render-get",),
+    ("video", "commit-candidates"): ("candidates-commit",),
+    ("video", "regenerate-ai-hook"): ("ai-hook-regenerate",),
+    ("video", "regenerate-pov"): ("pov-regenerate",),
+    ("video", "regenerate-text-overlay"): ("text-overlay-regenerate",),
+    ("video", "regenerate-caption"): ("caption-regenerate",),
+    ("video", "generate-ai-hook-candidate"): ("ai-hook-candidate",),
+    ("video", "generate-pov-candidate"): ("pov-candidate",),
+    ("plan", "get-capacity"): ("capacity",),
+    ("warmup", "list-journeys"): ("journeys",),
+    ("warmup", "list-accounts"): ("accounts",),
+    ("warmup", "get-account-stats"): ("account-stats",),
+    ("warmup", "get-readiness"): ("readiness",),
+    ("warmup", "get-journey"): ("journey-get",),
+    ("warmup", "preview-deletion"): ("deletion-preview",),
+    ("delivery", "get-export"): ("export-get",),
+    ("delivery", "bulk-export"): ("export-batch",),
+    ("test-group", "get-overview"): ("overview",),
+    ("test-group", "get-category-requirements"): ("category-requirements",),
+    ("test-group", "list-category-options"): ("category-options",),
+    ("test-group", "set-category"): ("category-set",),
+    ("test-group", "get-hook-target"): ("hook-target",),
+    ("test-group", "set-content"): ("content-set",),
+    ("test-group", "set-content-group"): ("content-group-set",),
+    ("test-group", "list-accounts"): ("accounts",),
+    ("test-group", "set-accounts"): ("accounts-set",),
+    ("test-group", "transfer-accounts"): ("accounts-transfer",),
+    ("test-group", "assign-accounts"): ("accounts-assign",),
+    ("test-group", "set-schedule"): ("schedule-set",),
+    ("test-group", "get-publishing"): ("publishing",),
+    ("test-group", "list-publishing-accounts"): ("publishing-accounts",),
+    ("calendar", "get-month"): ("month",),
+    ("calendar", "get-day"): ("day",),
+}
+
+
 def _command(
     resource: str,
     action: str,
@@ -491,6 +549,7 @@ def _command(
         input_schema=schema,
         output_schema=_direct_output_schema("Unmodified API resource or receipt. " + readback),
         examples=[f"museoncli schema {name}"],
+        legacy_shortcuts=tuple("+" + old for old in LEGACY_ACTIONS.get((resource, action), ())),
         add_arguments=add_arguments,
         build_arguments=build,
         supports_dry_run=write,
@@ -525,7 +584,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "account",
-            "assets-get",
+            "get-assets",
             "GET",
             "/pool-accounts/{id}/publish-assets",
             {},
@@ -533,7 +592,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "account",
-            "actor-set",
+            "set-actor",
             "PUT",
             "/pool-accounts/{id}/publish-assets/actor",
             {"actor_id": U},
@@ -541,11 +600,11 @@ def specs() -> list[CommandSpec]:
             workspace="body",
             write=True,
             summary="Bind an existing Actor to an account; use its exact ID to resolve duplicate names.",
-            readback="Read hireaicreator account +assets-get for the same account and workspace.",
+            readback="Read hireaicreator account +get-assets for the same account and workspace.",
         ),
         _command(
             "account",
-            "persona-set",
+            "set-persona",
             "PUT",
             "/pool-accounts/{id}/publish-assets/persona",
             {
@@ -557,11 +616,11 @@ def specs() -> list[CommandSpec]:
             workspace="body",
             write=True,
             summary="Bind an existing Persona to an account. Managed-operation approval must be explicit.",
-            readback="Read hireaicreator account +assets-get for the same account and workspace.",
+            readback="Read hireaicreator account +get-assets for the same account and workspace.",
         ),
         _command(
             "account",
-            "eligibility",
+            "check-eligibility",
             "POST",
             "/ai-hook-test-groups/account-eligibility",
             {
@@ -574,7 +633,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "actor",
-            "access",
+            "get-access",
             "POST",
             "/actors/access",
             {"actor_ids": arr(U, 1, 100)},
@@ -584,7 +643,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "actor",
-            "assign-preview",
+            "preview-assign",
             "POST",
             "/actors/assign-preview",
             {
@@ -613,7 +672,7 @@ def specs() -> list[CommandSpec]:
             idempotent=True,
             requires_confirmation=True,
             summary="Atomically copy or move the exact previewed Actor batch. Requires matching preview token, explicit confirmation and a stable idempotency key. State drift fails the entire batch; never automatically refresh a conflicting preview or retry an unknown outcome with a new key.",
-            readback="Read actor +access in the target workspace using the returned Actor IDs. Copy creates independent identities; move retains the existing IDs. Account bindings and publication are separate operations.",
+            readback="Read actor +get-access in the target workspace using the returned Actor IDs. Copy creates independent identities; move retains the existing IDs. Account bindings and publication are separate operations.",
         ),
         _command(
             "actor",
@@ -643,7 +702,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "actor",
-            "from-persona",
+            "create-from-persona",
             "POST",
             "/actors/from-persona",
             {
@@ -667,7 +726,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "actor",
-            "batch-create",
+            "create-batch",
             "POST",
             "/actors/generation-batches",
             {"items": arr(ACTOR_GENERATION_ITEM, 1, 100)},
@@ -676,11 +735,11 @@ def specs() -> list[CommandSpec]:
             write=True,
             idempotent=True,
             summary="Start Persona-based Actor generation. Generated images remain candidates until selected.",
-            readback="Use actor +batch-get and actor +batch-items until candidates settle; select approved item IDs with actor +batch-select.",
+            readback="Use actor +get-batch and actor +list-batch-items until candidates settle; select approved item IDs with actor +select-batch-items.",
         ),
         _command(
             "actor",
-            "batch-get",
+            "get-batch",
             "GET",
             "/actors/generation-batches/{batch_id}",
             {},
@@ -690,7 +749,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "actor",
-            "batch-items",
+            "list-batch-items",
             "GET",
             "/actors/generation-batches/{batch_id}/items",
             {**PAGE, "status": enum("queued", "processing", "succeeded", "failed")},
@@ -700,7 +759,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "actor",
-            "batch-select",
+            "select-batch-items",
             "POST",
             "/actors/generation-batches/{batch_id}/select",
             {"item_ids": arr(U, 1, 100)},
@@ -867,7 +926,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "batch",
-            "items",
+            "list-items",
             "GET",
             "/ai-hook-batches/{id}/items",
             {
@@ -908,7 +967,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "clip",
-            "batch-create",
+            "bulk-create",
             "POST",
             "/content-clips/batch",
             {"items": arr(CLIP_ITEM, 1, 50)},
@@ -1005,7 +1064,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "video",
-            "readiness",
+            "get-readiness",
             "GET",
             "/ai-hook-videos/{id}/readiness",
             {},
@@ -1102,7 +1161,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "video",
-            "from-upload",
+            "create-from-upload",
             "POST",
             "/ai-hook-videos/from-upload",
             {
@@ -1130,7 +1189,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "plan",
-            "capacity",
+            "get-capacity",
             "POST",
             "/ai-hook-video-plans/capacity",
             {
@@ -1181,7 +1240,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "warmup",
-            "journeys",
+            "list-journeys",
             "GET",
             "/pool-account-warmup/journeys",
             {
@@ -1280,11 +1339,11 @@ def specs() -> list[CommandSpec]:
             write=True,
             idempotent=True,
             summary="Request an export bound to video version; preserve the idempotency key on retry.",
-            readback="hireaicreator delivery +export-get returned export ID; require completed, matching video_id/video_version/render_revision and usable download_url.",
+            readback="hireaicreator delivery +get-export returned export ID; require completed, matching video_id/video_version/render_revision and usable download_url.",
         ),
         _command(
             "delivery",
-            "export-get",
+            "get-export",
             "GET",
             "/ai-hook-video-exports/{id}",
             {},

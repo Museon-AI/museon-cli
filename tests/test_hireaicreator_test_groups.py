@@ -28,7 +28,7 @@ def argv(name, **overrides):
 
 
 @pytest.mark.parametrize(
-    "name", ["test-run-confirm", "test-group-accounts-transfer", "test-group-delete"]
+    "name", ["test-run-confirm", "test-group-transfer-accounts", "test-group-delete"]
 )
 def test_publication_transfer_and_deletion_require_confirmation_before_http(monkeypatch, name):
     attach_transport(monkeypatch, lambda _: pytest.fail("unconfirmed write reached HTTP"))
@@ -55,7 +55,7 @@ def test_clear_accounts_preserves_empty_array_and_no_fake_idempotency(monkeypatc
     attach_transport(
         monkeypatch, lambda r: requests.append(r) or httpx.Response(200, json={"id": "receipt"})
     )
-    dispatch([*argv("test-group-accounts-set", publishing_account_ids=[], mode="replace"), "--yes"])
+    dispatch([*argv("test-group-set-accounts", publishing_account_ids=[], mode="replace"), "--yes"])
     assert json.loads(requests[0].content)["publishing_account_ids"] == []
     assert "Idempotency-Key" not in requests[0].headers
 
