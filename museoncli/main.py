@@ -139,6 +139,7 @@ def main() -> None:
         raise SystemExit(code) from None
     args.json = True
     command = invoked_command_name(args)
+    deprecation = deprecation_notice(args)
     try:
         result = asyncio.run(dispatch_with_notices(args))
     except KeyboardInterrupt:
@@ -153,8 +154,12 @@ def main() -> None:
         raise SystemExit(EXIT_INTERRUPTED) from None
     except Exception as exc:
         payload, code = error_envelope(exc, command=command)
+        if deprecation:
+            payload["warnings"] = [deprecation]
         emit(payload)
         raise SystemExit(code) from None
+    if result is not None and deprecation:
+        result = {**result, "warnings": [*(result.get("warnings") or []), deprecation]}
     if result is not None:
         if not emit(
             {"ok": True, **result},
@@ -1040,6 +1045,18 @@ def _error_message(detail: Any) -> str:
     if isinstance(detail, list):
         return json.dumps(detail, ensure_ascii=False)[:500]
     return str(detail)
+
+
+def deprecation_notice(args: argparse.Namespace) -> str | None:
+    """Warn when a command was invoked through a name it answered to before a rename."""
+    legacy = getattr(args, "legacy_invocation", None)
+    command = getattr(args, "domain_command", None)
+    if not legacy or not command:
+        return None
+    return (
+        f"`{legacy}` is deprecated and will be removed; use "
+        f"`{get_command_spec(command).cli_path}` (same inputs and output)."
+    )
 
 
 def invoked_command_name(args: argparse.Namespace) -> str | None:

@@ -33,7 +33,7 @@ CALENDAR = {
     "publishing_account_id": {"type": "string", "maxLength": 200},
     "account_operation_stage": enum("all", "promotable", "warmup"),
 }
-READBACK = "Read video +get and +readiness; accepted is not completed. Refresh versions before subsequent writes."
+READBACK = "Read video +get and +get-readiness; accepted is not completed. Refresh versions before subsequent writes."
 
 
 def specs() -> list[CommandSpec]:
@@ -169,18 +169,18 @@ def specs() -> list[CommandSpec]:
             required=("expected_version",),
             write=True,
             summary="Request rendering for a video version; generation directions are accepted but not used by this endpoint.",
-            readback="Poll video +render-get until succeeded or failed; verify video_version and render_revision.",
+            readback="Poll video +get-render until succeeded or failed; verify video_version and render_revision.",
         ),
         cmd(
             "video",
-            "render-get",
+            "get-render",
             "GET",
             video + "/{id}/render",
             summary="Read actual rendering status, version, revision, URL and error.",
         ),
         cmd(
             "video",
-            "candidates-commit",
+            "commit-candidates",
             "POST",
             video + "/{id}/candidates/commit",
             VERSION,
@@ -208,7 +208,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "delivery",
-            "export-batch",
+            "bulk-export",
             "POST",
             "/ai-hook-video-exports/batches",
             {"items": arr(VERSION_ITEM, 1, 50), "hook_resolution": enum("original", "480p")},
@@ -216,11 +216,11 @@ def specs() -> list[CommandSpec]:
             write=True,
             idempotent=True,
             summary="Export up to 50 unique video versions under a stable idempotency key.",
-            readback="Poll each delivery +export-get; require completed and matching video/version/revision before delivery.",
+            readback="Poll each delivery +get-export; require completed and matching video/version/revision before delivery.",
         ),
         cmd(
             "calendar",
-            "month",
+            "get-month",
             "GET",
             video + "/calendar/month",
             {**CALENDAR, "scheduled_from": DT, "scheduled_to": DT},
@@ -230,7 +230,7 @@ def specs() -> list[CommandSpec]:
         ),
         cmd(
             "calendar",
-            "day",
+            "get-day",
             "GET",
             video + "/calendar/day",
             {**CALENDAR, "day": D, "include_preview": B},
@@ -246,7 +246,7 @@ def specs() -> list[CommandSpec]:
         result.append(
             cmd(
                 "video",
-                component + "-regenerate",
+                "regenerate-" + component,
                 "POST",
                 video + "/{id}/" + component + "/regenerate",
                 properties,
@@ -260,14 +260,14 @@ def specs() -> list[CommandSpec]:
         result.append(
             cmd(
                 "video",
-                component + "-candidate",
+                "generate-" + component + "-candidate",
                 "POST",
                 video + "/{id}/" + component + "/candidate",
                 GENERATE,
                 required=("expected_version",),
                 write=True,
                 idempotent=True,
-                summary=f"Generate a {component} candidate; inspect it before candidates-commit.",
+                summary=f"Generate a {component} candidate; inspect it before +commit-candidates.",
             )
         )
     return result

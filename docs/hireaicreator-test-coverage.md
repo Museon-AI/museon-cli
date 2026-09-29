@@ -1,5 +1,7 @@
 # AI Hook 首版验收与覆盖口径
 
+> 本文是历史验收记录，命令名为 0.8 改名前的写法；旧名作为弃用别名仍可调用，新旧对照见 `museoncli/domains/hireaicreator.py` 的 `LEGACY_ACTIONS`。
+
 状态：已完成首轮验收、隔离草稿编辑，以及第二轮共享样本补验。已确认唯一 AI Hook Test 工作区及普通 API Key editor 权限；受控写入只使用新增中性测试素材和无账号、无排期的合成草稿，未执行发布、消息发送或公开分享。命令分母绑定本次 `contracts/command-catalog.json` 中全部40条 `hireaicreator.*` 注册项。未发布、未升级版本；隔离数据库 fixture 和打包 skill 均为合成数据。第二轮结果及其优先级见文末，线上与隔离证据不合并计数。
 
 2026-09-12 后续新增了5条只读查询命令：`item +list/+get`与`batch +list/+get/+items`，当前HireAICreator公开面为45条。本文所有40条分母和比例均是新增前的场景验收快照，不含这5条；新增命令只完成本地参数契约、帮助与生成物检查，尚未经过真实API验收，因此不重算本文历史比例。

@@ -65,7 +65,7 @@
     }
   },
   {
-    "name": "account-eligibility",
+    "name": "account-check-eligibility",
     "method": "POST",
     "path": "/api/v2/ai-hook-test-groups/account-eligibility",
     "input": {
@@ -117,7 +117,7 @@
     }
   },
   {
-    "name": "actor-from-persona",
+    "name": "actor-create-from-persona",
     "method": "POST",
     "path": "/api/v2/actors/from-persona",
     "input": {
@@ -144,7 +144,7 @@
     }
   },
   {
-    "name": "actor-batch-create",
+    "name": "actor-create-batch",
     "method": "POST",
     "path": "/api/v2/actors/generation-batches",
     "input": {
@@ -181,7 +181,7 @@
     }
   },
   {
-    "name": "actor-batch-get",
+    "name": "actor-get-batch",
     "method": "GET",
     "path": "/api/v2/actors/generation-batches/40000000-0000-4000-8000-000000000004",
     "input": {
@@ -190,7 +190,7 @@
     "query": {}
   },
   {
-    "name": "actor-batch-items",
+    "name": "actor-list-batch-items",
     "method": "GET",
     "path": "/api/v2/actors/generation-batches/40000000-0000-4000-8000-000000000004/items",
     "input": {
@@ -206,7 +206,7 @@
     }
   },
   {
-    "name": "actor-batch-select",
+    "name": "actor-select-batch-items",
     "method": "POST",
     "path": "/api/v2/actors/generation-batches/40000000-0000-4000-8000-000000000004/select",
     "input": {
@@ -466,7 +466,7 @@
     "query": {}
   },
   {
-    "name": "batch-items",
+    "name": "batch-list-items",
     "method": "GET",
     "path": "/api/v1/ai-hook-batches/f05404a3-3873-5ec1-b093-e3c877955557/items",
     "input": {
@@ -522,7 +522,7 @@
     "query": {}
   },
   {
-    "name": "clip-batch-create",
+    "name": "clip-bulk-create",
     "method": "POST",
     "path": "/api/v2/content-clips/batch",
     "input": {
@@ -663,7 +663,7 @@
     }
   },
   {
-    "name": "video-readiness",
+    "name": "video-get-readiness",
     "method": "GET",
     "path": "/api/v2/ai-hook-videos/59f5101d-6cca-529d-afde-96fe20403620/readiness",
     "input": {
@@ -906,7 +906,7 @@
     }
   },
   {
-    "name": "plan-capacity",
+    "name": "plan-get-capacity",
     "method": "POST",
     "path": "/api/v2/ai-hook-video-plans/capacity",
     "input": {
@@ -1092,7 +1092,7 @@
     }
   },
   {
-    "name": "warmup-journeys",
+    "name": "warmup-list-journeys",
     "method": "GET",
     "path": "/api/v2/pool-account-warmup/journeys",
     "input": {
@@ -1262,7 +1262,7 @@
     }
   },
   {
-    "name": "delivery-export-get",
+    "name": "delivery-get-export",
     "method": "GET",
     "path": "/api/v2/ai-hook-video-exports/e60da085-1bb4-5f6c-bbc1-fab82a691830",
     "input": {
@@ -1271,7 +1271,7 @@
     "query": {}
   },
   {
-    "name": "account-assets-get",
+    "name": "account-get-assets",
     "method": "GET",
     "path": "/api/v2/pool-accounts/10000000-0000-4000-8000-000000000001/publish-assets",
     "input": {
@@ -1283,7 +1283,7 @@
     }
   },
   {
-    "name": "account-actor-set",
+    "name": "account-set-actor",
     "method": "PUT",
     "path": "/api/v2/pool-accounts/10000000-0000-4000-8000-000000000001/publish-assets/actor",
     "input": {
@@ -1297,7 +1297,7 @@
     }
   },
   {
-    "name": "account-persona-set",
+    "name": "account-set-persona",
     "method": "PUT",
     "path": "/api/v2/pool-accounts/10000000-0000-4000-8000-000000000001/publish-assets/persona",
     "input": {
@@ -1466,7 +1466,7 @@
     }
   },
   {
-    "name": "video-from-upload",
+    "name": "video-create-from-upload",
     "method": "POST",
     "path": "/api/v2/ai-hook-videos/from-upload",
     "input": {

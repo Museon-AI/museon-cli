@@ -9,7 +9,7 @@ from museoncli.domains.hireaicreator import POSITIVE_INT, U, _command, arr, enum
 def specs() -> list[CommandSpec]:
     patch = _command(
         "format",
-        "patch",
+        "update",
         "PATCH",
         "/ai-hook-formats/{id}",
         {
@@ -21,7 +21,7 @@ def specs() -> list[CommandSpec]:
         },
         write=True,
         summary="Edit Format name, BGM, POV or playbook. Supply the read version to detect stale edits. Empty playbook string clears its override; null does not clear links.",
-        readback="hireaicreator format +get --id FORMAT_ID; verify version and edited fields, then check +warmup-readiness.",
+        readback="hireaicreator format +get --id FORMAT_ID; verify version and edited fields, then check +get-warmup-readiness.",
     )
     original_build = patch.build_arguments
 
@@ -39,7 +39,7 @@ def specs() -> list[CommandSpec]:
     return [
         _command(
             "format",
-            "tags",
+            "list-tags",
             "GET",
             "/ai-hook-formats/tags",
             {},
@@ -47,7 +47,7 @@ def specs() -> list[CommandSpec]:
         ),
         _command(
             "format",
-            "warmup-readiness",
+            "get-warmup-readiness",
             "POST",
             "/ai-hook-formats/warmup-readiness",
             {"format_ids": arr(U, 1)},

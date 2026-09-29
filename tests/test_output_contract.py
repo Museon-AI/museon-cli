@@ -167,3 +167,20 @@ def test_slideshow_generation_keeps_its_run_and_links_after_the_domain_move() ->
     assert envelope["run"]["id"] == "11111111-1111-4111-8111-111111111111"
     assert schema_payload("ai-slideshow.generation-get").get("frontend_url_templates")
     assert schema_payload("ai-slideshow.asset-get").get("frontend_url_templates")
+
+
+def test_an_old_command_name_still_runs_and_warns(monkeypatch, capsys) -> None:
+    async def fake_dispatch(args: Any) -> dict[str, Any]:
+        return {"command": args.domain_command, "data": {"id": "x"}, "warnings": []}
+
+    monkeypatch.setattr(main_module, "dispatch_with_notices", fake_dispatch)
+    monkeypatch.setattr(sys, "argv", ["museoncli", "hireaicreator", "video", "+render-get", "--id", "x"])
+    main_module.main()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert payload["ok"] is True
+    assert payload["command"] == "hireaicreator.video-get-render"
+    assert payload["warnings"] == [
+        "`museoncli hireaicreator video +render-get` is deprecated and will be removed; "
+        "use `museoncli hireaicreator video +get-render` (same inputs and output)."
+    ]

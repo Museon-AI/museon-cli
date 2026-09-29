@@ -309,6 +309,11 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
             "enforcement": "museon_server" if spec.authentication_required else "local_process",
         },
     }
+    if spec.legacy_shortcuts:
+        payload["deprecated_aliases"] = [
+            {"cli": spec.legacy_cli_path(shortcut), "capability_key": key}
+            for shortcut, key in zip(spec.legacy_shortcuts, spec.legacy_schema_names)
+        ]
     frontend_url_templates = _frontend_url_templates_for_spec(spec)
     if frontend_url_templates:
         payload["frontend_url_templates"] = frontend_url_templates

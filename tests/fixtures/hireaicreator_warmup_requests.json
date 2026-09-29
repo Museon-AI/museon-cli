@@ -289,7 +289,7 @@
     }
   },
   {
-    "name": "warmup-accounts",
+    "name": "warmup-list-accounts",
     "input": {
       "id": "10000000-0000-4000-8000-000000000001",
       "status": [
@@ -363,7 +363,7 @@
     }
   },
   {
-    "name": "warmup-account-stats",
+    "name": "warmup-get-account-stats",
     "input": {
       "id": "10000000-0000-4000-8000-000000000001",
       "pool_account_ids": [
@@ -383,7 +383,7 @@
     }
   },
   {
-    "name": "warmup-readiness",
+    "name": "warmup-get-readiness",
     "input": {
       "pool_account_ids": [
         "20000000-0000-4000-8000-000000000002"
@@ -511,7 +511,7 @@
     }
   },
   {
-    "name": "warmup-journey-get",
+    "name": "warmup-get-journey",
     "input": {
       "id": "10000000-0000-4000-8000-000000000001",
       "workspace_id": "40000000-0000-4000-8000-000000000004"
@@ -523,7 +523,7 @@
     }
   },
   {
-    "name": "warmup-deletion-preview",
+    "name": "warmup-preview-deletion",
     "input": {
       "id": "10000000-0000-4000-8000-000000000001",
       "workspace_id": "40000000-0000-4000-8000-000000000004"

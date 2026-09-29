@@ -89,6 +89,24 @@ class CommandSpec:
         return " ".join(parts)
 
     @property
+    def legacy_schema_names(self) -> tuple[str, ...]:
+        """Capability keys this command answered to before a rename."""
+
+        return tuple(
+            f"{self.domain.value}.{self.resource}-{legacy.removeprefix('+')}"
+            if self.resource
+            else f"{self.domain.value}.{legacy.removeprefix('+')}"
+            for legacy in self.legacy_shortcuts
+        )
+
+    def legacy_cli_path(self, legacy_shortcut: str) -> str:
+        parts = ["museoncli", self.domain.value]
+        if self.resource:
+            parts.append(self.resource)
+        parts.append(legacy_shortcut)
+        return " ".join(parts)
+
+    @property
     def capability_key(self) -> str:
         """Stable capability identifier shared by discovery and API contracts."""
 

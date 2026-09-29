@@ -17,18 +17,18 @@ live blockers. A successful preview does not reserve state indefinitely.
 
 ## Test Groups and Runs
 
-1. Discover existing groups with `test-group +list`, then `+get` / `+overview`.
+1. Discover existing groups with `test-group +list`, then `+get` / `+get-overview`.
    `test-plan +ensure` may create a plan, so use it only when creating/configuring
    a plan is within scope. `test-plan +update` edits its configuration.
 2. Manage selected content with `content-group +list/+create/+update/+delete`
    and Test Group creation/content commands from the current schema. Preserve
    exact resource IDs and requested composition; do not send an entire GET object
    back as an update.
-3. Read account eligibility and `test-group +accounts`. Use `+accounts-set`
-   (append or replace), `+accounts-transfer`, or `+accounts-assign` according to
+3. Read account eligibility and `test-group +list-accounts`. Use `+set-accounts`
+   (append or replace), `+transfer-accounts`, or `+assign-accounts` according to
    the requested membership change. An empty replacement removes all members.
    Inspect source and destination membership and blockers after a transfer.
-4. Set the schedule with `+schedule-set`, the observed `expected_updated_at`,
+4. Set the schedule with `+set-schedule`, the observed `expected_updated_at`,
    explicit timezone and intended times. Then run `+preview`. Address its blockers
    and retain the preview inputs and `match_fingerprint`.
 5. `test-run +confirm` creates a scheduled Run and requires publication authority,
@@ -46,11 +46,11 @@ account is eligible. Keep partial successes and unchanged memberships explicit.
 
 ## Warmup
 
-Read `warmup +list`, `+get`, `+accounts`, `+journeys`, `+journey-get` and
-`+account-stats` for current configuration, participation, evidence and blockers.
+Read `warmup +list`, `+get`, `+list-accounts`, `+list-journeys`, `+get-journey` and
+`+get-account-stats` for current configuration, participation, evidence and blockers.
 Complete pagination. Historical journey outcomes differ from current membership.
 
-For a new plan, run `+readiness` on exact accounts, then `+create` with account
+For a new plan, run `+get-readiness` on exact accounts, then `+create` with account
 IDs/timezones, content, onboarding/termination rules and publish time. Read the
 draft and its version. `+configure` replaces required configuration fields;
 `+replace` also replaces account assignments. `+add-accounts` and
@@ -63,14 +63,14 @@ check completed without starting. `+activate`, `+pause` and `+resume` require th
 current version and `--yes`. A paused strategy can still have dispatched work.
 
 `+reset` applies only to selected account IDs; inspect account reset blockers first.
-Before `+delete`, use `+deletion-preview` and its version. Neither reset nor creation
+Before `+delete`, use `+preview-deletion` and its version. Neither reset nor creation
 has an idempotency-header contract; reconcile uncertain outcomes before retrying.
 Verify journey/version/status changes, not merely the command receipt.
 
 ## Formats
 
-Use `format +tags`, `+list`, `+get` and `+warmup-readiness` for discovery and readiness.
-`+patch` supports name, BGM, POV and viral playbook. Supply the observed
+Use `format +list-tags`, `+list`, `+get` and `+get-warmup-readiness` for discovery and readiness.
+`+update` supports name, BGM, POV and viral playbook. Supply the observed
 `expected_version`; the API permits omission but then cannot detect a caller's
 stale view. Empty `viral_playbook_override` explicitly clears the manual override;
 null and omission do not clear BGM/POV links.
@@ -91,21 +91,21 @@ linked creative context; use actual schema and readiness for BGM requirements.
 Creation does not start generation automatically.
 
 Use current versions and stable keys for `video +generate`, component
-`+ai-hook-regenerate`, `+pov-regenerate`, `+text-overlay-regenerate`,
-`+caption-regenerate`, or `+bulk-regenerate`. Use candidate commands followed by
-inspection and `+candidates-commit` when comparing alternatives. Do not regenerate
+`+regenerate-ai-hook`, `+regenerate-pov`, `+regenerate-text-overlay`,
+`+regenerate-caption`, or `+bulk-regenerate`. Use candidate commands followed by
+inspection and `+commit-candidates` when comparing alternatives. Do not regenerate
 unaffected content for a BGM-only or caption-only correction. Cancel generation
 only when requested; cancellation is not a successful generation result.
 
 `+review` / `+bulk-review` record review decisions with confirmation. `+render`
-and `+retry-render` request rendering; `+render-get` verifies render progress.
-`delivery +export` / `+export-batch` require current versions; retain every export
-ID and use `+export-get` until completed or failed. Batch success is per item.
+and `+retry-render` request rendering; `+get-render` verifies render progress.
+`delivery +export` / `+bulk-export` require current versions; retain every export
+ID and use `+get-export` until completed or failed. Batch success is per item.
 Download and inspect dimensions, playback, text, identity and audio when delivering
 finished media; an export receipt alone cannot establish creative quality.
 
 For scheduling use authorized video updates/bulk scheduling, then read the same
-IDs and scheduled instants. `calendar +month/+day` help verify the intended scope;
+IDs and scheduled instants. `calendar +get-month/+get-day` help verify the intended scope;
 respect truncation and missing data. `video +cancel`, `+delete` and `+bulk-delete`
 affect existing work and require their declared confirmations/versions. Read back
 results and account for conflicts without refreshing versions and overwriting.

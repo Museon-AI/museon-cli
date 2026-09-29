@@ -13,7 +13,7 @@
 | 3 取产品资料与图片 | `hireaicreator product +list` | 只读 |
 | 4 外部生成 | 平台外完成 | — |
 | 5 上传成片 | `media +upload --media-type video` | 写 |
-| 6 登记发布任务与排期 | `hireaicreator video +from-upload` | 写，会产生发布 |
+| 6 登记发布任务与排期 | `hireaicreator video +create-from-upload` | 写，会产生发布 |
 | 7 回读核对 | `hireaicreator video +get` / `video +list` | 只读 |
 | 8 改期、改文案或取消 | `video +update` / `video +bulk-schedule` / `video +cancel` | 写 |
 
@@ -35,7 +35,7 @@ museoncli hireaicreator account +list --workspace-id "$WS" \
 
 - 翻完所有分页再确定账号名单：加 `--all` 一次取全，并确认 `page_info.complete` 为 true；第一页不是完整名单。
 - 按用户给的账号名精确查找时，用 `--search-term <handle> --search-match exact`，重复传入多个 handle。
-- 返回里的 `actor_id`、`persona_id`、`platform` 直接用于后续步骤，不要逐个账号再调用 `account +assets-get`。
+- 返回里的 `actor_id`、`persona_id`、`platform` 直接用于后续步骤，不要逐个账号再调用 `account +get-assets`。
 - 账号类型（云手机或真机）不影响能否上传，只决定发布方式（第 8 步之后的结果）。
 - 每条视频最多选 2 个账号，且每个平台最多 1 个；只支持 TikTok 和 Instagram。
 - 一条视频的所有账号必须绑定同一个 Actor。不要按平台随手搭配 TikTok 和 Instagram 账号：大多数 Actor 只在一个平台上有账号。
@@ -51,7 +51,7 @@ museoncli hireaicreator actor +resolve --workspace-id "$WS" \
 
 - 每个 Actor 返回 `images[]`（主参考图）和 `profile_image`（头像），各带 `media_url`、`permanent_media_url`、`thumbnail_url`。长期保存用 `permanent_media_url`。
 - 超过 200 个时按 200 分批，调用次数显式可数，不要按账号逐个读取。
-- 没有 `actor_id` 的账号要在结果里单独列出，由用户决定是否先绑定 Actor（`account +actor-set`），不要猜测。
+- 没有 `actor_id` 的账号要在结果里单独列出，由用户决定是否先绑定 Actor（`account +set-actor`），不要猜测。
 - Actor 和 Persona 是两个资源，不要互换 ID。
 
 然后建一张以 Actor 为主键的对照表，后面的生成和登记都只从这张表取值：
@@ -81,7 +81,7 @@ museoncli hireaicreator product +list --workspace-id "$WS" --page-size 100
 
 - 一次返回产品的 `name`、`description`、`website_url`、`tags`、`selling_points`、`target_audiences`，以及 `brand_logos`、`product_images`、`website_screenshots`、`app_screenshots`（每项带 `media_url`）。
 - 翻完所有分页（`--all`）。
-- 需要知道某个账号绑定的是哪个产品时，才读 `account +assets-get` 的 `product_id`；多个账号的发布素材池用 `ai-slideshow publish +asset-pools-batch-get` 一次读取。
+- 需要知道某个账号绑定的是哪个产品时，才读 `account +get-assets` 的 `product_id`；多个账号的发布素材池用 `ai-slideshow publish +asset-pools-batch-get` 一次读取。
 
 ## 4. 外部生成
 
@@ -134,11 +134,11 @@ museoncli hireaicreator account +list --workspace-id "$WS" --actor-id <actor_id>
 先 dry-run，再正式提交：
 
 ```bash
-museoncli hireaicreator video +from-upload --workspace-id "$WS" \
+museoncli hireaicreator video +create-from-upload --workspace-id "$WS" \
   --idempotency-key "external-upload-<批次标识>" \
   --args-file batch.json --dry-run
 
-museoncli hireaicreator video +from-upload --workspace-id "$WS" \
+museoncli hireaicreator video +create-from-upload --workspace-id "$WS" \
   --idempotency-key "external-upload-<批次标识>" \
   --args-file batch.json
 ```
