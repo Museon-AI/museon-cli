@@ -184,3 +184,43 @@ def test_an_old_command_name_still_runs_and_warns(monkeypatch, capsys) -> None:
         "`museoncli hireaicreator video +render-get` is deprecated and will be removed; "
         "use `museoncli hireaicreator video +get-render` (same inputs and output)."
     ]
+
+
+def test_all_finds_records_nested_under_data_data() -> None:
+    """Known regression (0.8.0 smoke test): campaign-monitor returns
+    `data.data.creators`, and `--all` failed with "no record list"."""
+    calls: list[dict[str, Any]] = []
+    pages = [
+        {
+            "data": {
+                "data": {"creators": [1, 2], "collection": {"id": "c"}},
+                "pagination": {"page": 1, "limit": 2, "total": 3, "total_pages": 2},
+            }
+        },
+        {
+            "data": {
+                "data": {"creators": [3], "collection": {"id": "c"}},
+                "pagination": {"page": 2, "limit": 2, "total": 3, "total_pages": 2},
+            }
+        },
+    ]
+    merged = asyncio.run(paging.collect_all_pages(_pages(pages, calls), {"page_size": 2}))
+
+    assert [call["page"] for call in calls] == [1, 2]
+    assert merged["data"]["data"]["creators"] == [1, 2, 3]
+    assert merged["data"]["data"]["collection"] == {"id": "c"}
+    assert merged["page_info"]["complete"] is True
+
+
+def test_a_missing_required_flag_names_its_command(monkeypatch, capsys) -> None:
+    """Known regression (0.8.0 smoke test): missing required flags reported
+    `command: null` and a generic hint, unlike unknown flags."""
+    monkeypatch.setattr(sys, "argv", ["museoncli", "media", "+get-generation"])
+    with pytest.raises(SystemExit) as exc_info:
+        main_module.main()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert exc_info.value.code == 2
+    assert payload["command"] == "media.get-generation"
+    assert "--task-id" in payload["error"]["message"]
+    assert "museoncli media +get-generation --help" in payload["error"]["hint"]

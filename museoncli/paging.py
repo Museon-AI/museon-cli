@@ -55,16 +55,32 @@ def page_info(result: dict[str, Any]) -> dict[str, Any] | None:
     return info or None
 
 
+def _records_location(data: Any) -> tuple[dict[str, Any], str] | None:
+    """Find the dict and key holding a page's records.
+
+    Records sit at ``data.items``, ``data.data``, or one level deeper as the only
+    list under ``data.data`` (campaign-monitor: ``data.data.creators``).
+    """
+    if not isinstance(data, dict):
+        return None
+    for key in _LIST_KEYS:
+        if isinstance(data.get(key), list):
+            return data, key
+    nested = data.get("data")
+    if isinstance(nested, dict):
+        lists = [key for key, value in nested.items() if isinstance(value, list)]
+        if len(lists) == 1:
+            return nested, lists[0]
+    return None
+
+
 def page_items(result: dict[str, Any]) -> list[Any] | None:
     """Return the list of records on one page, wherever the domain put it."""
     data = result.get("data")
     if isinstance(data, list):
         return data
-    if isinstance(data, dict):
-        for key in _LIST_KEYS:
-            if isinstance(data.get(key), list):
-                return data[key]
-    return None
+    location = _records_location(data)
+    return location[0][location[1]] if location else None
 
 
 def _with_page(arguments: dict[str, Any], page: int) -> dict[str, Any]:
@@ -82,10 +98,9 @@ def _replace_items(result: dict[str, Any], items: list[Any]) -> dict[str, Any]:
     if isinstance(data, list):
         merged["data"] = items
         return merged
-    for key in _LIST_KEYS:
-        if isinstance(data, dict) and isinstance(data.get(key), list):
-            data[key] = items
-            return merged
+    location = _records_location(data)
+    if location:
+        location[0][location[1]] = items
     return merged
 
 

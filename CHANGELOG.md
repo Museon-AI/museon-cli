@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+- Fix: `--all` now works on commands whose records sit one level deeper (`data.data.<records>`), e.g. `campaign-monitor +list-creators`.
+- Fix: a usage error for a missing required flag now names its `command` and points at that command's `--help`.
+
 ## 0.8.0
 
 - Errors: every failure carries `command` and an `error` object (`code`, `message`, `server_code`, `http_status`, `retryable`, `hint`); `reason` is always a category. Usage errors are JSON on stdout. New exit codes: 3 not found, 4 authentication required, 5 conflict.
