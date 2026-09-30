@@ -3187,7 +3187,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "Find exact account identities and current stage/assignment state; complete pagination before fixing a selection.",
+          "summary": "Find exact account identities, workspace tags, and current stage/assignment state; --tags matches any listed workspace tag; complete pagination before fixing a selection.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -20001,6 +20001,15 @@
             "minItems": 0,
             "type": "array"
           },
+          "tags": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array"
+          },
           "test_group_assignment_state": {
             "enum": [
               "assignable",
@@ -20080,7 +20089,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "Find exact account identities and current stage/assignment state; complete pagination before fixing a selection.",
+      "summary": "Find exact account identities, workspace tags, and current stage/assignment state; --tags matches any listed workspace tag; complete pagination before fixing a selection.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
