@@ -2,6 +2,10 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.8.2
+
+- `hireaicreator account +list` takes a repeatable `--tags` to filter by workspace account tags (any match); tags must not contain commas.
+
 ## 0.8.1
 
 - Fix: `--all` now works on commands whose records sit one level deeper (`data.data.<records>`), e.g. `campaign-monitor +list-creators`.
