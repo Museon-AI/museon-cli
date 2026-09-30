@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-239 commands across 11 domains (source of truth: `museoncli schema`).
+242 commands across 11 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -90,6 +90,8 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
+| `hireaicreator account +get-publish-settings` | read | — | — | direct | Read publication methods, global authorization, readiness and pending schedule counts for up to 200 workspace accounts in one request. |
+| `hireaicreator account +set-publish-settings` | write | yes | — | direct | Batch configure account publication. First read settings, send preview=true with exact updated_at values, then apply the same changes with preview=false. The server rejects stale settings and changes during active delivery. Supports different methods per account. |
 | `hireaicreator account +list` | read | — | — | direct | Find exact account identities, workspace tags, and current stage/assignment state; --tags matches any listed workspace tag; complete pagination before fixing a selection. |
 | `hireaicreator account +get-assets` | read | — | — | direct | Read an account's Actor, Persona and other publish asset bindings. |
 | `hireaicreator account +set-actor` | write | yes | — | direct | Bind an existing Actor to an account; use its exact ID to resolve duplicate names. |
@@ -133,7 +135,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `hireaicreator video +update` | write | yes | — | direct | Patch only supplied video fields using the observed expected_version; do not auto-retry conflicts. |
 | `hireaicreator video +generate` | write | yes | — | direct | Request video generation with a stable idempotency key; response is acceptance only. |
 | `hireaicreator video +bulk-schedule` | write | yes | — | direct | Schedule explicit video/version/account/time tuples; retain succeeded/conflicted/failures. |
-| `hireaicreator video +create-from-upload` | write | yes | — | direct | Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok or Instagram, at most one account per platform per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries. |
+| `hireaicreator video +create-from-upload` | write | yes | — | direct | Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries. |
 | `hireaicreator plan +preview` | read | — | — | direct | Read server allocation and blockers for a proposed plan; does not create the plan. |
 | `hireaicreator plan +get-capacity` | read | — | — | direct | Read account capacity for a bounded date range. |
 | `hireaicreator plan +create` | write | yes | — | direct | Create a plan with a stable idempotency key. Server defaults start_generation to false; creation is not a finished video. |
@@ -146,6 +148,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `hireaicreator delivery +get` | read | — | — | direct | Read a public collection by its opaque token. Paginate with total/items; no has_more is promised. |
 | `hireaicreator delivery +export` | write | yes | — | direct | Request an export bound to video version; preserve the idempotency key on retry. |
 | `hireaicreator delivery +get-export` | read | — | — | direct | Read actual export status, version/revision, error and download URL. |
+| `hireaicreator video +publish-local` | write | yes | — | direct | Upload local finished videos and schedule each on explicit accounts. Each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged. |
 | `hireaicreator test-plan +ensure` | write | yes | — | direct | Get or create the workspace Test Plan. |
 | `hireaicreator test-plan +update` | write | yes | — | direct | Update workspace Test Plan defaults. |
 | `hireaicreator content-group +list` | read | — | — | direct | List reusable content groups; complete pagination. |

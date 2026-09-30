@@ -3177,6 +3177,60 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "hireaicreator.account-get-publish-settings",
+          "cli": "museoncli hireaicreator account +get-publish-settings",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.account-get-publish-settings",
+          "requires_confirmation": false,
+          "resource": "account",
+          "risk_level": "read",
+          "shortcut": "+get-publish-settings",
+          "stability": "stable",
+          "summary": "Read publication methods, global authorization, readiness and pending schedule counts for up to 200 workspace accounts in one request.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.account-set-publish-settings",
+          "cli": "museoncli hireaicreator account +set-publish-settings",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.account-set-publish-settings",
+          "requires_confirmation": false,
+          "resource": "account",
+          "risk_level": "write",
+          "shortcut": "+set-publish-settings",
+          "stability": "stable",
+          "summary": "Batch configure account publication. First read settings, send preview=true with exact updated_at values, then apply the same changes with preview=false. The server rejects stale settings and changes during active delivery. Supports different methods per account.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "hireaicreator.account-list",
           "cli": "museoncli hireaicreator account +list",
           "domain": "hireaicreator",
@@ -4438,7 +4492,7 @@
           "risk_level": "write",
           "shortcut": "+create-from-upload",
           "stability": "stable",
-          "summary": "Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok or Instagram, at most one account per platform per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+          "summary": "Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -4782,6 +4836,33 @@
           "stability": "stable",
           "summary": "Read actual export status, version/revision, error and download URL.",
           "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "hireaicreator.video-publish-local",
+          "cli": "museoncli hireaicreator video +publish-local",
+          "domain": "hireaicreator",
+          "execution": "direct",
+          "name": "hireaicreator.video-publish-local",
+          "requires_confirmation": false,
+          "resource": "video",
+          "risk_level": "write",
+          "shortcut": "+publish-local",
+          "stability": "stable",
+          "summary": "Upload local finished videos and schedule each on explicit accounts. Each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged.",
+          "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
         {
@@ -9230,7 +9311,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.8.2",
+  "contract_revision": "0.9.0",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -19896,6 +19977,113 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "hireaicreator.account-get-publish-settings": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.account-get-publish-settings",
+      "cli": "museoncli hireaicreator account +get-publish-settings",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli hireaicreator account +get-publish-settings --account-ids <account-id>",
+        "museoncli schema hireaicreator.account-get-publish-settings"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_ids"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.account-get-publish-settings",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "account",
+      "risk_level": "read",
+      "shortcut": "+get-publish-settings",
+      "stability": "stable",
+      "summary": "Read publication methods, global authorization, readiness and pending schedule counts for up to 200 workspace accounts in one request.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "hireaicreator.account-list": {
       "authorization": {
         "authentication_required": true,
@@ -20326,6 +20514,141 @@
       "shortcut": "+set-persona",
       "stability": "stable",
       "summary": "Bind an existing Persona to an account. Managed-operation approval must be explicit.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.account-set-publish-settings": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.account-set-publish-settings",
+      "cli": "museoncli hireaicreator account +set-publish-settings",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli hireaicreator account +set-publish-settings --preview --args-file input.json",
+        "museoncli schema hireaicreator.account-set-publish-settings"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "account_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "expected_updated_at": {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "method": {
+                  "enum": [
+                    "api",
+                    "rpa",
+                    "tiktok_draft",
+                    "disabled"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "account_id",
+                "method",
+                "expected_updated_at"
+              ],
+              "type": "object"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          },
+          "preview": {
+            "type": "boolean"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "changes",
+          "preview"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.account-set-publish-settings",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read returned account methods; all changes are atomic. No publication is triggered by this command.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "account",
+      "risk_level": "write",
+      "shortcut": "+set-publish-settings",
+      "stability": "stable",
+      "summary": "Batch configure account publication. First read settings, send preview=true with exact updated_at values, then apply the same changes with preview=false. The server rejects stale settings and changes during active delivery. Supports different methods per account.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -32190,7 +32513,7 @@
                     "minLength": 1,
                     "type": "string"
                   },
-                  "maxItems": 2,
+                  "maxItems": 100,
                   "minItems": 1,
                   "type": "array"
                 },
@@ -32306,7 +32629,7 @@
       "risk_level": "write",
       "shortcut": "+create-from-upload",
       "stability": "stable",
-      "summary": "Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok or Instagram, at most one account per platform per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+      "summary": "Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -33313,6 +33636,154 @@
       "stability": "stable",
       "summary": "List videos and their version/state; paginate explicitly.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "hireaicreator.video-publish-local": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "hireaicreator.video-publish-local",
+      "cli": "museoncli hireaicreator video +publish-local",
+      "domain": "hireaicreator",
+      "examples": [
+        "museoncli hireaicreator video +publish-local --idempotency-key <stable-key> --args-file input.json",
+        "museoncli schema hireaicreator.video-publish-local"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 8,
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "account_ids": {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "maxItems": 100,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "caption": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "file": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "now": {
+                  "type": "boolean"
+                },
+                "schedule_timezone": {
+                  "format": "timezone",
+                  "type": "string"
+                },
+                "scheduled_at": {
+                  "format": "date-time",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "file",
+                "account_ids",
+                "caption"
+              ],
+              "type": "object"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "hireaicreator.video-publish-local",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Use hireaicreator video +get for returned video IDs; drafts are not public posts.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "video",
+      "risk_level": "write",
+      "shortcut": "+publish-local",
+      "stability": "stable",
+      "summary": "Upload local finished videos and schedule each on explicit accounts. Each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "hireaicreator.video-regenerate-ai-hook": {
