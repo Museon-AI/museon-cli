@@ -454,6 +454,8 @@ def _command(
                 raise ValueError(
                     "test_group_id and test_group_assignment_state must be supplied together"
                 )
+            if any("," in tag for tag in payload.get("tags", ())):
+                raise ValueError("tags must not contain commas")
         if resource == "video" and action == "create":
             account, actor = (
                 bool(payload.get("publishing_account_id")),
@@ -515,6 +517,9 @@ def _command(
                 raise RuntimeError("missing_workspace")
             arguments["workspace_id"] = scope
         wire = _wire(arguments, schema)
+        if resource == "account" and action == "list" and "tags" in wire:
+            # The API takes workspace tags as one comma-separated value (any match).
+            wire["tags"] = ",".join(wire["tags"])
         call = ctx.api_data_v2 if version == 2 else ctx.api_data
         kwargs: dict[str, Any] = {"unwrap_success": True}
         if method == "GET":
@@ -578,9 +583,10 @@ def specs() -> list[CommandSpec]:
                 "persona_id": U,
                 "test_group_id": U,
                 "test_group_assignment_state": enum("assignable", "assigned"),
+                "tags": arr(S, maximum=50),
             },
             flags={"search_terms": "--search-term"},
-            summary="Find exact account identities and current stage/assignment state; complete pagination before fixing a selection.",
+            summary="Find exact account identities, workspace tags, and current stage/assignment state; --tags matches any listed workspace tag; complete pagination before fixing a selection.",
         ),
         _command(
             "account",

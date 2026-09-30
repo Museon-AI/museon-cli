@@ -31,7 +31,11 @@
       "persona_id": "f333092c-e379-5a7f-bfa2-090ffb59e89b",
       "test_group_id": "0f27611b-8e9b-53da-9007-3c9f9d430886",
       "test_group_assignment_state": "assignable",
-      "workspace_id": "1c630bb6-fe05-56f3-b850-09fa109b3c8e"
+      "workspace_id": "1c630bb6-fe05-56f3-b850-09fa109b3c8e",
+      "tags": [
+        "creator-a",
+        "backup"
+      ]
     },
     "query": {
       "page": 3,
@@ -61,7 +65,8 @@
       "persona_id": "f333092c-e379-5a7f-bfa2-090ffb59e89b",
       "test_group_id": "0f27611b-8e9b-53da-9007-3c9f9d430886",
       "test_group_assignment_state": "assignable",
-      "workspace_id": "1c630bb6-fe05-56f3-b850-09fa109b3c8e"
+      "workspace_id": "1c630bb6-fe05-56f3-b850-09fa109b3c8e",
+      "tags": "creator-a,backup"
     }
   },
   {

@@ -90,7 +90,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `hireaicreator account +list` | read | — | — | direct | Find exact account identities and current stage/assignment state; complete pagination before fixing a selection. |
+| `hireaicreator account +list` | read | — | — | direct | Find exact account identities, workspace tags, and current stage/assignment state; --tags matches any listed workspace tag; complete pagination before fixing a selection. |
 | `hireaicreator account +get-assets` | read | — | — | direct | Read an account's Actor, Persona and other publish asset bindings. |
 | `hireaicreator account +set-actor` | write | yes | — | direct | Bind an existing Actor to an account; use its exact ID to resolve duplicate names. |
 | `hireaicreator account +set-persona` | write | yes | — | direct | Bind an existing Persona to an account. Managed-operation approval must be explicit. |
