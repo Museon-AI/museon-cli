@@ -161,7 +161,9 @@ def test_every_declared_field_and_flag_has_an_independent_request_case():
         spec.schema_name.removeprefix("hireaicreator."): spec
         for spec in command_specs()
         if spec.domain.value == "hireaicreator"
+        and spec.schema_name != "hireaicreator.video-publish-local"
     }
+    # Local upload has a multi-request, resumable workflow, covered separately.
     assert set(specs) == {case["name"] for case in CASES}
     for case in CASES:
         spec = specs[case["name"]]

@@ -164,7 +164,7 @@ BULK_SLOT = obj(
 UPLOADED_VIDEO_ITEM = obj(
     {
         "media_id": U,
-        "publishing_account_ids": arr(S, 1, 2),
+        "publishing_account_ids": arr(S, 1, 100),
         "caption": {"type": "string", "minLength": 1, "maxLength": 2200},
         "scheduled_at": nullable(DT),
         "schedule_timezone": TZ,
@@ -564,6 +564,42 @@ def _command(
 
 def specs() -> list[CommandSpec]:
     commands = [
+        _command(
+            "account",
+            "get-publish-settings",
+            "POST",
+            "/pool-accounts/publication-settings:read",
+            {"account_ids": arr(U, 1, 200)},
+            required=("account_ids",),
+            workspace="body",
+            summary="Read publication methods, global authorization, readiness and pending schedule counts for up to 200 workspace accounts in one request.",
+        ),
+        _command(
+            "account",
+            "set-publish-settings",
+            "POST",
+            "/pool-accounts/publication-settings:batch-update",
+            {
+                "changes": arr(
+                    obj(
+                        {
+                            "account_id": U,
+                            "method": enum("api", "rpa", "tiktok_draft", "disabled"),
+                            "expected_updated_at": DT,
+                        },
+                        ("account_id", "method", "expected_updated_at"),
+                    ),
+                    1,
+                    200,
+                ),
+                "preview": B,
+            },
+            required=("changes", "preview"),
+            workspace="body",
+            write=True,
+            summary="Batch configure account publication. First read settings, send preview=true with exact updated_at values, then apply the same changes with preview=false. The server rejects stale settings and changes during active delivery. Supports different methods per account.",
+            readback="Read returned account methods; all changes are atomic. No publication is triggered by this command.",
+        ),
         _command(
             "account",
             "list",
@@ -1180,7 +1216,7 @@ def specs() -> list[CommandSpec]:
             workspace="body",
             write=True,
             idempotent=True,
-            summary="Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok or Instagram, at most one account per platform per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+            summary="Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
             readback="Read each returned video ID with hireaicreator video +get; change caption or time with video +update or video +bulk-schedule.",
         ),
         _command(
@@ -1365,4 +1401,13 @@ def specs() -> list[CommandSpec]:
 
     from .hireaicreator_formats import specs as format_specs
 
-    return commands + test_group_specs() + warmup_specs() + video_specs() + format_specs()
+    from .hireaicreator_local_publish import specs as local_publish_specs
+
+    return (
+        commands
+        + local_publish_specs()
+        + test_group_specs()
+        + warmup_specs()
+        + video_specs()
+        + format_specs()
+    )
