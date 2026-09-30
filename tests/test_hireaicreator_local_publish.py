@@ -146,3 +146,20 @@ def test_explicit_schedule_and_dry_run_do_not_change_publication_semantics(monke
     assert not calls
     invoke(args)
     assert len(calls) == 3
+
+
+def test_explicit_workspace_overrides_selected_workspace(monkeypatch, tmp_path):
+    requested = "70000000-0000-4000-8000-000000000007"
+    seen = []
+
+    def handler(request):
+        seen.append(request)
+        assert request.url.path.endswith("publication-settings:read")
+        assert json.loads(request.content)["workspace_id"] == requested
+        return httpx.Response(200, json={"items": [{"id": ACCOUNT, "ready": False}]})
+
+    args = setup(monkeypatch, tmp_path, handler)
+    args["workspace_id"] = requested
+    with pytest.raises(ValueError, match="not ready"):
+        invoke(args)
+    assert len(seen) == 1

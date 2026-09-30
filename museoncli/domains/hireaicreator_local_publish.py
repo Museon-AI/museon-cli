@@ -26,9 +26,10 @@ def _save(path: Path, record: dict[str, Any]) -> None:
 
 
 async def _publish(ctx: CommandContext) -> dict[str, Any]:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     args = ctx.arguments
+    workspace_id = str(args.get("workspace_id") or ctx.workspace_id or "").strip()
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
     items = args["items"]
     account_ids = sorted({value for item in items for value in item["account_ids"]})
     if len(account_ids) > 200:
@@ -42,7 +43,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
             raise ValueError("Each item requires exactly one of now=true or scheduled_at")
         fingerprint_items.append({**item, "file": str(path), "sha256": _digest_file(path)})
     fingerprint = hashlib.sha256(json.dumps(fingerprint_items, sort_keys=True).encode()).hexdigest()
-    identity = json.dumps([ctx.cfg.api_base_url, ctx.workspace_id, args["idempotency_key"]])
+    identity = json.dumps([ctx.cfg.api_base_url, workspace_id, args["idempotency_key"]])
     key = hashlib.sha256(identity.encode()).hexdigest()
     receipt_dir = (
         Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "museoncli" / "publication"
@@ -71,7 +72,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
             ctx.cfg,
             "POST",
             "/pool-accounts/publication-settings:read",
-            json_body={"workspace_id": ctx.workspace_id, "account_ids": account_ids},
+            json_body={"workspace_id": workspace_id, "account_ids": account_ids},
             unwrap_success=True,
         )
         blocked = [row["id"] for row in settings["items"] if not row["ready"]]
@@ -84,7 +85,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
             if digest not in record["uploaded"]:
                 upload = await ctx.upload_media_file(
                     ctx.cfg,
-                    workspace_id=ctx.workspace_id,
+                    workspace_id=workspace_id,
                     arguments={"file": item["file"], "media_type": "video"},
                 )
                 record["uploaded"][digest] = upload["data"]["asset"]["media_id"]
@@ -108,12 +109,12 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
             ctx.cfg,
             "POST",
             "/ai-hook-videos/from-upload",
-            json_body={"workspace_id": ctx.workspace_id, "items": payload_items},
+            json_body={"workspace_id": workspace_id, "items": payload_items},
             idempotency_key=args["idempotency_key"],
             unwrap_success=True,
         )
         receipt = direct_api_envelope(
-            ctx.spec.schema_name, ctx.workspace_id, raw, site_url=ctx.cfg.site_url
+            ctx.spec.schema_name, workspace_id, raw, site_url=ctx.cfg.site_url
         )
         receipt["warnings"].append(
             "Accepted publication tasks, not proof of public posts. Read each video for final delivery state."
