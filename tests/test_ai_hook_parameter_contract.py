@@ -424,3 +424,24 @@ def test_manual_video_create_requires_source_and_dry_run_never_writes(monkeypatc
     payload.pop("reference_hook_id")
     with pytest.raises(ValueError, match="requires format_id or reference_hook_id"):
         dispatch([*command(case), "--args-json", json.dumps(payload)])
+
+
+@pytest.mark.parametrize(
+    "video_model",
+    ["auto", "compshare-h3", "kling-3-standard", "minimax-h3-max", "minimax-h3-max-turbo"],
+)
+def test_plan_generation_model_ids_retain_provider_spelling(monkeypatch, tmp_path, video_model):
+    case = deepcopy(next(case for case in CASES if case["name"] == "plan-create"))
+    for direction in ("input", "body"):
+        case[direction]["generation_options"]["video_model"] = video_model
+        case[direction]["generation_options"]["image_model"] = "gpt-image-2.5-sunburst"
+    requests = []
+    attach_transport(
+        monkeypatch,
+        lambda request: requests.append(request) or httpx.Response(200, json={"ok": True}),
+    )
+    path = tmp_path / "generation.json"
+    path.write_text(json.dumps(case["input"]))
+    dispatch([*command(case), "--args-file", str(path)])
+    assert len(requests) == 1
+    request_matches(requests[0], case)

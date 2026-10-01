@@ -9311,7 +9311,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.9.0",
+  "contract_revision": "0.9.1",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -26562,6 +26562,72 @@
                   "string",
                   "null"
                 ]
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "generation_options": {
+            "additionalProperties": false,
+            "properties": {
+              "duration_policy": {
+                "enum": [
+                  "match_source_nearest_supported"
+                ],
+                "type": "string"
+              },
+              "duration_seconds": {
+                "maximum": 15,
+                "minimum": 3,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "generate_audio": {
+                "type": "boolean"
+              },
+              "image_model": {
+                "enum": [
+                  "auto",
+                  "gpt-image-2.5-flare",
+                  "gpt-image-2.5-sunburst",
+                  "gpt-image-2",
+                  "nano-banana-2",
+                  "nano-banana-pro"
+                ],
+                "type": "string",
+                "x-preserve-wire-value": true
+              },
+              "image_resolution": {
+                "enum": [
+                  "1K",
+                  "2K",
+                  "4K"
+                ],
+                "type": "string"
+              },
+              "reference_image_media_ids": {
+                "additionalProperties": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxProperties": 100,
+                "propertyNames": {
+                  "format": "uuid"
+                },
+                "type": "object"
+              },
+              "video_model": {
+                "enum": [
+                  "auto",
+                  "kling-3-standard",
+                  "minimax-h3-max",
+                  "minimax-h3-max-turbo",
+                  "compshare-h3"
+                ],
+                "type": "string",
+                "x-preserve-wire-value": true
               }
             },
             "required": [],

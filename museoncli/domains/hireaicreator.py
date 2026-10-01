@@ -53,6 +53,11 @@ def enum(*values: str) -> dict[str, Any]:
     return {"type": "string", "enum": list(values)}
 
 
+def model_id(*values: str) -> dict[str, Any]:
+    # Provider model IDs retain hyphens on the wire, unlike API business enums.
+    return {**enum(*values), "x-preserve-wire-value": True}
+
+
 PAGE = {"page": POSITIVE_INT, "page_size": {"type": "integer", "minimum": 1, "maximum": 100}}
 SEARCH_PAGE = {**PAGE, "search": S}
 ACTOR_GENDER = enum("female", "male", "androgynous")
@@ -70,6 +75,36 @@ ACTOR_GENERATION_ITEM = obj(
     ("persona_id", "presentation_gender", "apparent_age_group"),
 )
 DIRECTIONS = obj({"pov": nullable(S), "text_overlay": nullable(S), "caption": nullable(S)})
+GENERATION_OPTIONS = obj(
+    {
+        "image_model": model_id(
+            "auto",
+            "gpt-image-2.5-flare",
+            "gpt-image-2.5-sunburst",
+            "gpt-image-2",
+            "nano-banana-2",
+            "nano-banana-pro",
+        ),
+        "video_model": model_id(
+            "auto",
+            "kling-3-standard",
+            "minimax-h3-max",
+            "minimax-h3-max-turbo",
+            "compshare-h3",
+        ),
+        "duration_policy": enum("match_source_nearest_supported"),
+        "duration_seconds": nullable({"type": "integer", "minimum": 3, "maximum": 15}),
+        "reference_image_media_ids": {
+            "type": "object",
+            "propertyNames": {"format": "uuid"},
+            "additionalProperties": U,
+            "maxProperties": 100,
+        },
+        "generate_audio": B,
+        "image_resolution": enum("1K", "2K", "4K"),
+    }
+)
+
 CLIP_RULE = obj(
     {
         "position": POSITIVE_INT,
@@ -295,7 +330,11 @@ def _wire(value: Any, schema: dict[str, Any]) -> Any:
         }
     if isinstance(value, list):
         return [_wire(child, schema["items"]) for child in value]
-    return value.replace("-", "_") if "enum" in schema else value
+    return (
+        value.replace("-", "_")
+        if "enum" in schema and not schema.get("x-preserve-wire-value")
+        else value
+    )
 
 
 def _load(
@@ -1255,6 +1294,7 @@ def specs() -> list[CommandSpec]:
                 "confirm_demo_reuse": B,
                 "start_generation": B,
                 "generation_directions": DIRECTIONS,
+                "generation_options": GENERATION_OPTIONS,
             },
             required=PLAN_REQUIRED,
             workspace="body",
