@@ -41,7 +41,7 @@ If the command is unavailable:
    reviewed wheel from the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.9.0/museoncli-0.9.0-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.9.1/museoncli-0.9.1-py3-none-any.whl"
    ```
 
    Do not clone the repository, install from a mutable branch, or substitute a

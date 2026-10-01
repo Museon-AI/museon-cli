@@ -218,10 +218,17 @@ def test_public_schema_does_not_expose_server_model_controls() -> None:
         # unrelated business workflows continue to hide server routing controls.
         blocked = forbidden - {"model"} if spec.schema_name == "media.generate" else forbidden
         assert blocked.isdisjoint(properties), spec.schema_name
-        for value in properties.values():
+        for name, value in properties.items():
             if isinstance(value, dict):
                 nested = value.get("properties", {})
-                assert forbidden.isdisjoint(nested), spec.schema_name
+                # Plan generation exposes a reviewed finite image model selection.
+                nested_blocked = (
+                    forbidden - {"image_model"}
+                    if spec.schema_name == "hireaicreator.plan-create"
+                    and name == "generation_options"
+                    else forbidden
+                )
+                assert nested_blocked.isdisjoint(nested), spec.schema_name
 
 
 def test_public_parser_does_not_expose_server_model_controls() -> None:

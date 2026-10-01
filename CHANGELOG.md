@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.9.1
+
+- `hireaicreator plan +create` accepts optional `generation_options` in structured JSON, including `compshare-h3`, video duration, audio, image settings, and Actor reference image media IDs.
+- Provider model IDs retain their original spelling when sent to the API.
+
 ## 0.8.2
 
 - `hireaicreator account +list` takes a repeatable `--tags` to filter by workspace account tags (any match); tags must not contain commas.
