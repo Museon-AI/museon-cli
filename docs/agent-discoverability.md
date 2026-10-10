@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-242 commands across 11 domains (source of truth: `museoncli schema`).
+266 commands across 12 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -284,6 +284,35 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `campaign-monitor +get-post` | read | — | — | direct | Read one Museon-synced social post/content record. |
 | `campaign-monitor +get-post-performance` | read | — | — | direct | Read local synced performance history for one social post/content record. |
 | `campaign-monitor +resolve-post` | read | — | — | direct | Resolve an account publish schedule item to its published social post. |
+
+### agentic-campaign
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `agentic-campaign plan +supply-update` | write | yes | — | direct | Set reviewed reference pairs for a Museon persona Plan. This opens a proposal; it does not start publishing. Keep existing pairs when appending. Never creates a Format × Topic cross product. |
+| `agentic-campaign plan +account-control` | destructive | yes | `--yes` | direct | Control one explicitly selected Museon managed member. Enable after reviewed rollout; pause/resume preserve membership; stop retires and releases it. Already-submitted posts keep reconciling. |
+| `agentic-campaign plan +posts` | read | — | — | direct | Read this Plan's posts and metrics by account or reference. Missing metrics are not zero results; platform acceptance is not public-post confirmation. |
+| `agentic-campaign +campaign-review-only` | write | yes | — | direct | Require manual review for future reference/persona/strategy changes in this Museon Campaign, and disable automatic recruitment. Existing confirmed publishing continues. New CLI campaigns use this policy by default. |
+| `agentic-campaign plan +members-reconcile` | write | yes | — | direct | Atomically reconcile a Plan's managed accounts and matching Plan budget. The CLI reads current versions, raises Campaign total budget only when required, and submits the member/budget change as one compare-and-swap operation. |
+| `agentic-campaign proposal +withdraw` | write | yes | — | direct | Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected Proposal: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with plan +supply-update --proposal-id. Never resend the rejected payload unchanged. |
+| `agentic-campaign +schedule-rollout-preflight` | read | — | — | direct | Always run this read-only command before first confirming one specified awaiting-review proposal, and rerun it whenever coverage or testing overrides change. It returns the exact schedule-rollout matrix the operator must review before applying. The proposal does not need to be the Plan's newest: independent active-Plan proposals can be confirmed in any order. Includes winner boost placements. A boost reserves visible target-account slots; if the response is coverage_days_required because existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows. A confirmed proposal can only be inspected or retried; use +schedule-rollout-get for its persisted rollout. Dismissed or superseded proposals are rejected. |
+| `agentic-campaign +confirm-schedule-rollout` | write | yes | — | direct | After a ready +schedule-rollout-preflight for the same proposal, coverage, and testing plan, atomically apply one specified awaiting-review proposal (there is no separate approval command), persist its immutable schedule-rollout intent including visible winner boost placements, and dispatch asynchronous execution. The proposal need not be newest: independent active-Plan proposals can be confirmed in any order; confirming a competitive whole-plan alternative dismisses the other awaiting-review alternatives. Reuse the same idempotency key to retry a confirmed proposal's existing rollout; dismissed or superseded proposals are rejected. Poll +schedule-rollout-get after the 202 response. |
+| `agentic-campaign +schedule-rollout-get` | read | — | — | direct | Read durable schedule-rollout status by rollout id or confirmed proposal id. Use this after +confirm-schedule-rollout's 202 response to inspect immutable assignments, seed bindings, and asynchronous progress. |
+| `agentic-campaign proposal +list` | read | — | — | direct | List Proposals for exactly one Plan or all Plans in one Campaign. Campaign scope returns each Proposal's Plan and Persona summary. |
+| `agentic-campaign proposal +get` | read | — | — | direct | Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations). |
+| `agentic-campaign +campaign-create` | write | yes | — | direct | Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward. |
+| `agentic-campaign +campaign-update` | write | yes | `--yes` | direct | Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config. |
+| `agentic-campaign +plan-update` | write | yes | — | direct | Update plan tokens for the next generation while a campaign is active or paused, or update name/budget only during setup. |
+| `agentic-campaign +plan-create` | write | yes | — | direct | Create a Persona Plan under a campaign. Only allowed while the campaign is in setup (setting_up or setup_ready); the server rejects the request otherwise and the error is passed through unchanged. |
+| `agentic-campaign +campaign-activate` | write | yes | — | direct | Activate an Agentic Creative Campaign, resuming member account operations. |
+| `agentic-campaign +campaign-pause` | write | yes | — | direct | Pause an Agentic Creative Campaign, stopping member account operations. |
+| `agentic-campaign +campaign-archive` | destructive | yes | `--yes` | direct | Archive an Agentic Creative Campaign. This cascades to stop account operations for every member of every plan in the campaign; the operator must explicitly confirm before running with --yes. |
+| `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
+| `agentic-campaign +get` | read | — | — | direct | Get an Agentic Creative Campaign detail by campaign id. |
+| `agentic-campaign +plan-list` | read | — | — | direct | List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted. |
+| `agentic-campaign +plan-get` | read | — | — | direct | Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted. |
+| `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |
+| `agentic-campaign +plan-attribution` | read | — | — | direct | Aggregate attribution across a Persona Plan, omitting account operation ids. |
 
 ### skills
 

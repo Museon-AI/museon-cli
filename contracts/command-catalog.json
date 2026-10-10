@@ -1,6 +1,668 @@
 {
   "catalog": {
     "commands": {
+      "agentic-campaign": [
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_admin_or_staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-supply-update",
+          "cli": "museoncli agentic-campaign plan +supply-update",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-supply-update",
+          "requires_confirmation": false,
+          "resource": "plan",
+          "risk_level": "write",
+          "shortcut": "+supply-update",
+          "stability": "stable",
+          "summary": "Set reviewed reference pairs for a Museon persona Plan. This opens a proposal; it does not start publishing. Keep existing pairs when appending. Never creates a Format × Topic cross product.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_admin_or_staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-account-control",
+          "cli": "museoncli agentic-campaign plan +account-control",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-account-control",
+          "requires_confirmation": true,
+          "resource": "plan",
+          "risk_level": "destructive",
+          "shortcut": "+account-control",
+          "stability": "stable",
+          "summary": "Control one explicitly selected Museon managed member. Enable after reviewed rollout; pause/resume preserve membership; stop retires and releases it. Already-submitted posts keep reconciling.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-posts",
+          "cli": "museoncli agentic-campaign plan +posts",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-posts",
+          "requires_confirmation": false,
+          "resource": "plan",
+          "risk_level": "read",
+          "shortcut": "+posts",
+          "stability": "stable",
+          "summary": "Read this Plan's posts and metrics by account or reference. Missing metrics are not zero results; platform acceptance is not public-post confirmation.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.campaign-review-only",
+          "cli": "museoncli agentic-campaign +campaign-review-only",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.campaign-review-only",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+campaign-review-only",
+          "stability": "stable",
+          "summary": "Require manual review for future reference/persona/strategy changes in this Museon Campaign, and disable automatic recruitment. Existing confirmed publishing continues. New CLI campaigns use this policy by default.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_admin_or_staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-members-reconcile",
+          "cli": "museoncli agentic-campaign plan +members-reconcile",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-members-reconcile",
+          "requires_confirmation": false,
+          "resource": "plan",
+          "risk_level": "write",
+          "shortcut": "+members-reconcile",
+          "stability": "stable",
+          "summary": "Atomically reconcile a Plan's managed accounts and matching Plan budget. The CLI reads current versions, raises Campaign total budget only when required, and submits the member/budget change as one compare-and-swap operation.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.proposal-withdraw",
+          "cli": "museoncli agentic-campaign proposal +withdraw",
+          "deprecated_aliases": [
+            {
+              "capability_key": "agentic-campaign.proposal-proposal-withdraw",
+              "cli": "museoncli agentic-campaign proposal +proposal-withdraw"
+            }
+          ],
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-withdraw",
+          "requires_confirmation": false,
+          "resource": "proposal",
+          "risk_level": "write",
+          "shortcut": "+withdraw",
+          "stability": "stable",
+          "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected Proposal: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with plan +supply-update --proposal-id. Never resend the rejected payload unchanged.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.schedule-rollout-preflight",
+          "cli": "museoncli agentic-campaign +schedule-rollout-preflight",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.schedule-rollout-preflight",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+schedule-rollout-preflight",
+          "stability": "stable",
+          "summary": "Always run this read-only command before first confirming one specified awaiting-review proposal, and rerun it whenever coverage or testing overrides change. It returns the exact schedule-rollout matrix the operator must review before applying. The proposal does not need to be the Plan's newest: independent active-Plan proposals can be confirmed in any order. Includes winner boost placements. A boost reserves visible target-account slots; if the response is coverage_days_required because existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows. A confirmed proposal can only be inspected or retried; use +schedule-rollout-get for its persisted rollout. Dismissed or superseded proposals are rejected.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.confirm-schedule-rollout",
+          "cli": "museoncli agentic-campaign +confirm-schedule-rollout",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.confirm-schedule-rollout",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+confirm-schedule-rollout",
+          "stability": "stable",
+          "summary": "After a ready +schedule-rollout-preflight for the same proposal, coverage, and testing plan, atomically apply one specified awaiting-review proposal (there is no separate approval command), persist its immutable schedule-rollout intent including visible winner boost placements, and dispatch asynchronous execution. The proposal need not be newest: independent active-Plan proposals can be confirmed in any order; confirming a competitive whole-plan alternative dismisses the other awaiting-review alternatives. Reuse the same idempotency key to retry a confirmed proposal's existing rollout; dismissed or superseded proposals are rejected. Poll +schedule-rollout-get after the 202 response.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.schedule-rollout-get",
+          "cli": "museoncli agentic-campaign +schedule-rollout-get",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.schedule-rollout-get",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+schedule-rollout-get",
+          "stability": "stable",
+          "summary": "Read durable schedule-rollout status by rollout id or confirmed proposal id. Use this after +confirm-schedule-rollout's 202 response to inspect immutable assignments, seed bindings, and asynchronous progress.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.proposal-list",
+          "cli": "museoncli agentic-campaign proposal +list",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-list",
+          "requires_confirmation": false,
+          "resource": "proposal",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List Proposals for exactly one Plan or all Plans in one Campaign. Campaign scope returns each Proposal's Plan and Persona summary.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.proposal-get",
+          "cli": "museoncli agentic-campaign proposal +get",
+          "deprecated_aliases": [
+            {
+              "capability_key": "agentic-campaign.proposal-proposal-get",
+              "cli": "museoncli agentic-campaign proposal +proposal-get"
+            }
+          ],
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.proposal-get",
+          "requires_confirmation": false,
+          "resource": "proposal",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations).",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.campaign-create",
+          "cli": "museoncli agentic-campaign +campaign-create",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.campaign-create",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+campaign-create",
+          "stability": "stable",
+          "summary": "Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.campaign-update",
+          "cli": "museoncli agentic-campaign +campaign-update",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.campaign-update",
+          "requires_confirmation": true,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+campaign-update",
+          "stability": "stable",
+          "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-update",
+          "cli": "museoncli agentic-campaign +plan-update",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-update",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+plan-update",
+          "stability": "stable",
+          "summary": "Update plan tokens for the next generation while a campaign is active or paused, or update name/budget only during setup.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-create",
+          "cli": "museoncli agentic-campaign +plan-create",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-create",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+plan-create",
+          "stability": "stable",
+          "summary": "Create a Persona Plan under a campaign. Only allowed while the campaign is in setup (setting_up or setup_ready); the server rejects the request otherwise and the error is passed through unchanged.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.campaign-activate",
+          "cli": "museoncli agentic-campaign +campaign-activate",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.campaign-activate",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+campaign-activate",
+          "stability": "stable",
+          "summary": "Activate an Agentic Creative Campaign, resuming member account operations.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.campaign-pause",
+          "cli": "museoncli agentic-campaign +campaign-pause",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.campaign-pause",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+campaign-pause",
+          "stability": "stable",
+          "summary": "Pause an Agentic Creative Campaign, stopping member account operations.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.campaign-archive",
+          "cli": "museoncli agentic-campaign +campaign-archive",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.campaign-archive",
+          "requires_confirmation": true,
+          "resource": null,
+          "risk_level": "destructive",
+          "shortcut": "+campaign-archive",
+          "stability": "stable",
+          "summary": "Archive an Agentic Creative Campaign. This cascades to stop account operations for every member of every plan in the campaign; the operator must explicitly confirm before running with --yes.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.list",
+          "cli": "museoncli agentic-campaign +list",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.list",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List Agentic Creative Campaign summaries in the selected workspace.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.get",
+          "cli": "museoncli agentic-campaign +get",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.get",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Get an Agentic Creative Campaign detail by campaign id.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-list",
+          "cli": "museoncli agentic-campaign +plan-list",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-list",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+plan-list",
+          "stability": "stable",
+          "summary": "List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-get",
+          "cli": "museoncli agentic-campaign +plan-get",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-get",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+plan-get",
+          "stability": "stable",
+          "summary": "Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-tags",
+          "cli": "museoncli agentic-campaign +plan-tags",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-tags",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+plan-tags",
+          "stability": "stable",
+          "summary": "Aggregate element tags across a Persona Plan, omitting account operation ids.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "agentic-campaign.plan-attribution",
+          "cli": "museoncli agentic-campaign +plan-attribution",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-attribution",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+plan-attribution",
+          "stability": "stable",
+          "summary": "Aggregate attribution across a Persona Plan, omitting account operation ids.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        }
+      ],
       "ai-slideshow": [
         {
           "authorization": {
@@ -9306,15 +9968,3132 @@
       "hireaicreator",
       "ai-slideshow",
       "campaign-monitor",
+      "agentic-campaign",
       "skills",
       "staff-ops",
       "routines"
     ]
   },
-  "contract_revision": "0.9.1",
+  "contract_revision": "0.10.0",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
+    "agentic-campaign.campaign-activate": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.campaign-activate",
+      "cli": "museoncli agentic-campaign +campaign-activate",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +campaign-activate --campaign-id 22222222-2222-4222-8222-222222222222"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.campaign-activate",
+      "output_schema": {
+        "description": "Transitioned campaign detail and the operation batch result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+campaign-activate",
+      "stability": "stable",
+      "summary": "Activate an Agentic Creative Campaign, resuming member account operations.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.campaign-archive": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.campaign-archive",
+      "cli": "museoncli agentic-campaign +campaign-archive",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +campaign-archive --campaign-id 22222222-2222-4222-8222-222222222222 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.campaign-archive",
+      "output_schema": {
+        "description": "Transitioned campaign detail and the operation batch result (succeeded/skipped/failed counts for the stopped member operations).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": null,
+      "risk_level": "destructive",
+      "shortcut": "+campaign-archive",
+      "stability": "stable",
+      "summary": "Archive an Agentic Creative Campaign. This cascades to stop account operations for every member of every plan in the campaign; the operator must explicitly confirm before running with --yes.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.campaign-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.campaign-create",
+      "cli": "museoncli agentic-campaign +campaign-create",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +campaign-create --name 'Summer maker campaign' --total-account-budget 20 --planned-persona-count 3"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "bind_notification_conversation": {
+            "default": false,
+            "type": "boolean"
+          },
+          "config": {
+            "additionalProperties": false,
+            "properties": {
+              "preferred_publish_windows": {
+                "default": [],
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "end": {
+                      "pattern": "^\\d{2}:\\d{2}$",
+                      "type": "string"
+                    },
+                    "start": {
+                      "pattern": "^\\d{2}:\\d{2}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "required_hashtags": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "required_mentions": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "contract": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cta_definition": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "direction_brief": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          },
+          "planned_persona_count": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "product_id": {
+            "description": "Optional product id",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "success_hypothesis": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total_account_budget": {
+            "default": 0,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.campaign-create",
+      "output_schema": {
+        "description": "Created campaign detail.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+campaign-create",
+      "stability": "stable",
+      "summary": "Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.campaign-pause": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.campaign-pause",
+      "cli": "museoncli agentic-campaign +campaign-pause",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +campaign-pause --campaign-id 22222222-2222-4222-8222-222222222222"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.campaign-pause",
+      "output_schema": {
+        "description": "Transitioned campaign detail and the operation batch result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+campaign-pause",
+      "stability": "stable",
+      "summary": "Pause an Agentic Creative Campaign, stopping member account operations.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.campaign-review-only": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.campaign-review-only",
+      "cli": "museoncli agentic-campaign +campaign-review-only",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +campaign-review-only --campaign-id <campaign-id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.campaign-review-only",
+      "output_schema": {
+        "description": "Persisted review-only policy",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+campaign-review-only",
+      "stability": "stable",
+      "summary": "Require manual review for future reference/persona/strategy changes in this Museon Campaign, and disable automatic recruitment. Existing confirmed publishing continues. New CLI campaigns use this policy by default.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.campaign-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.campaign-update",
+      "cli": "museoncli agentic-campaign +campaign-update",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --total-account-budget 107 --yes",
+        "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --bind-notification-conversation --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "bind_notification_conversation": {
+            "type": "boolean"
+          },
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "config": {
+            "additionalProperties": false,
+            "properties": {
+              "preferred_publish_windows": {
+                "default": [],
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "end": {
+                      "pattern": "^\\d{2}:\\d{2}$",
+                      "type": "string"
+                    },
+                    "start": {
+                      "pattern": "^\\d{2}:\\d{2}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "required_hashtags": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              },
+              "required_mentions": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "cta_definition": {
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          },
+          "planned_persona_count": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "preferred_publish_windows": {
+            "default": [],
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "end": {
+                  "pattern": "^\\d{2}:\\d{2}$",
+                  "type": "string"
+                },
+                "start": {
+                  "pattern": "^\\d{2}:\\d{2}$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "start",
+                "end"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "product_id": {
+            "description": "Product id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "required_hashtags": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "required_mentions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "type": "array"
+          },
+          "total_account_budget": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.campaign-update",
+      "output_schema": {
+        "description": "Updated campaign detail.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+campaign-update",
+      "stability": "stable",
+      "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.confirm-schedule-rollout": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.confirm-schedule-rollout",
+      "cli": "museoncli agentic-campaign +confirm-schedule-rollout",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +confirm-schedule-rollout --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --timezone Asia/Shanghai --idempotency-key rollout-20260801-001 --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "coverage": {
+            "type": "object"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "maxLength": 240,
+            "minLength": 8,
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "description": "Exact awaiting-review revision proposal id to apply. It need not be the newest Plan proposal. A confirmed id only retries its existing durable rollout; dismissed and superseded ids are rejected.",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "testing_plan": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "proposal_id",
+          "coverage",
+          "testing_plan",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.confirm-schedule-rollout",
+      "output_schema": {
+        "description": "202-accepted durable rollout id and current state; use +schedule-rollout-get until terminal.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+confirm-schedule-rollout",
+      "stability": "stable",
+      "summary": "After a ready +schedule-rollout-preflight for the same proposal, coverage, and testing plan, atomically apply one specified awaiting-review proposal (there is no separate approval command), persist its immutable schedule-rollout intent including visible winner boost placements, and dispatch asynchronous execution. The proposal need not be newest: independent active-Plan proposals can be confirmed in any order; confirming a competitive whole-plan alternative dismisses the other awaiting-review alternatives. Reuse the same idempotency key to retry a confirmed proposal's existing rollout; dismissed or superseded proposals are rejected. Poll +schedule-rollout-get after the 202 response.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.get",
+      "cli": "museoncli agentic-campaign +get",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +get --id 22222222-2222-4222-8222-222222222222"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.get",
+      "output_schema": {
+        "description": "Campaign detail.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Get an Agentic Creative Campaign detail by campaign id.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.list",
+      "cli": "museoncli agentic-campaign +list",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +list --page 1 --page-size 20"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "name": "agentic-campaign.list",
+      "output_schema": {
+        "description": "Campaign summaries and pagination metadata.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List Agentic Creative Campaign summaries in the selected workspace.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-account-control": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_admin_or_staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-account-control",
+      "cli": "museoncli agentic-campaign plan +account-control",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign plan +account-control --campaign-id <campaign-id> --plan-id <plan-id> --account-id <account-id> --action enable --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "account_id": {
+            "description": "Member account",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "action": {
+            "enum": [
+              "enable",
+              "disable",
+              "pause",
+              "resume",
+              "stop"
+            ]
+          },
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "destructive_confirmation": {
+            "type": "boolean"
+          },
+          "dry_run": {
+            "type": "boolean"
+          },
+          "expected_version": {
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "account_id",
+          "action"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-account-control",
+      "output_schema": {
+        "description": "Authoritative account execution state",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "plan",
+      "risk_level": "destructive",
+      "shortcut": "+account-control",
+      "stability": "stable",
+      "summary": "Control one explicitly selected Museon managed member. Enable after reviewed rollout; pause/resume preserve membership; stop retires and releases it. Already-submitted posts keep reconciling.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-attribution": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-attribution",
+      "cli": "museoncli agentic-campaign +plan-attribution",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +plan-attribution --plan-id 33333333-3333-4333-8333-333333333333 --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-attribution",
+      "output_schema": {
+        "description": "Plan attribution rows with pool_account_id and handle.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+plan-attribution",
+      "stability": "stable",
+      "summary": "Aggregate attribution across a Persona Plan, omitting account operation ids.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-create",
+      "cli": "museoncli agentic-campaign +plan-create",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +plan-create --campaign-id 22222222-2222-4222-8222-222222222222 --name 'DIY makers' --account-budget 5"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "account_budget": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          },
+          "persona_id": {
+            "description": "Existing workspace persona to bind",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "campaign_id",
+          "name",
+          "account_budget"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-create",
+      "output_schema": {
+        "description": "Campaign detail including the new plan.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+plan-create",
+      "stability": "stable",
+      "summary": "Create a Persona Plan under a campaign. Only allowed while the campaign is in setup (setting_up or setup_ready); the server rejects the request otherwise and the error is passed through unchanged.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-get",
+      "cli": "museoncli agentic-campaign +plan-get",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +plan-get --plan-id 33333333-3333-4333-8333-333333333333 --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-get",
+      "output_schema": {
+        "description": "Persona Plan and display-safe member accounts.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+plan-get",
+      "stability": "stable",
+      "summary": "Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-list",
+      "cli": "museoncli agentic-campaign +plan-list",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +plan-list --id 22222222-2222-4222-8222-222222222222"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-list",
+      "output_schema": {
+        "description": "Persona Plans with display-safe member accounts.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+plan-list",
+      "stability": "stable",
+      "summary": "List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-members-reconcile": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_admin_or_staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-members-reconcile",
+      "cli": "museoncli agentic-campaign plan +members-reconcile",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign plan +members-reconcile --plan-id 33333333-3333-4333-8333-333333333333 --account-ids '[\"44444444-4444-4444-8444-444444444444\",\"55555555-5555-4555-8555-555555555555\"]' --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "target_account_ids": {
+            "items": {
+              "description": "Managed social account id",
+              "examples": [
+                "33333333-3333-4333-8333-333333333333"
+              ],
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 500,
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "target_account_ids"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-members-reconcile",
+      "output_schema": {
+        "description": "Reconciled member list, Plan budget, Campaign total budget, and new versions.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "plan",
+      "risk_level": "write",
+      "shortcut": "+members-reconcile",
+      "stability": "stable",
+      "summary": "Atomically reconcile a Plan's managed accounts and matching Plan budget. The CLI reads current versions, raises Campaign total budget only when required, and submits the member/budget change as one compare-and-swap operation.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-posts": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-posts",
+      "cli": "museoncli agentic-campaign plan +posts",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign plan +posts --campaign-id <campaign-id> --plan-id <plan-id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "account_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "days": {
+            "maximum": 365,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "element_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "sort": {
+            "enum": [
+              "recent",
+              "views"
+            ]
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-posts",
+      "output_schema": {
+        "description": "Posts, generation and publication state, attribution and metrics",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "plan",
+      "risk_level": "read",
+      "shortcut": "+posts",
+      "stability": "stable",
+      "summary": "Read this Plan's posts and metrics by account or reference. Missing metrics are not zero results; platform acceptance is not public-post confirmation.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-supply-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_admin_or_staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-supply-update",
+      "cli": "museoncli agentic-campaign plan +supply-update",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign plan +supply-update --campaign-id <campaign-id> --plan-id <plan-id> --persona-id <persona-id> --expected-version 1 --pairs-json <pairs-json>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "combinations": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "cta_target_id": {
+                  "description": "Optional CTA",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "format_id": {
+                  "description": "Reference format",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "topic_id": {
+                  "description": "Reference topic",
+                  "examples": [
+                    "33333333-3333-4333-8333-333333333333"
+                  ],
+                  "format": "uuid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "format_id",
+                "topic_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "dry_run": {
+            "type": "boolean"
+          },
+          "expected_version": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "persona_id": {
+            "description": "Selected persona",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "persona_id",
+          "expected_version",
+          "combinations"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-supply-update",
+      "output_schema": {
+        "description": "Proposal receipt, pair count and preview generation count; read proposal before confirming rollout",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "plan",
+      "risk_level": "write",
+      "shortcut": "+supply-update",
+      "stability": "stable",
+      "summary": "Set reviewed reference pairs for a Museon persona Plan. This opens a proposal; it does not start publishing. Keep existing pairs when appending. Never creates a Format × Topic cross product.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-tags": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-tags",
+      "cli": "museoncli agentic-campaign +plan-tags",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +plan-tags --plan-id 33333333-3333-4333-8333-333333333333 --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-tags",
+      "output_schema": {
+        "description": "Plan tag rows with pool_account_id and handle.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+plan-tags",
+      "stability": "stable",
+      "summary": "Aggregate element tags across a Persona Plan, omitting account operation ids.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.plan-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-update",
+      "cli": "museoncli agentic-campaign +plan-update",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +plan-update --plan-id 33333333-3333-4333-8333-333333333333 --required-hashtags '#maker,#diy' --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "account_budget": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "required_hashtags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required_mentions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-update",
+      "output_schema": {
+        "description": "Updated Persona Plan detail.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+plan-update",
+      "stability": "stable",
+      "summary": "Update plan tokens for the next generation while a campaign is active or paused, or update name/budget only during setup.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.proposal-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-get",
+      "cli": "museoncli agentic-campaign proposal +get",
+      "deprecated_aliases": [
+        {
+          "capability_key": "agentic-campaign.proposal-proposal-get",
+          "cli": "museoncli agentic-campaign proposal +proposal-get"
+        }
+      ],
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign proposal +get --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "description": "Adjustment proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "proposal_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-get",
+      "output_schema": {
+        "description": "Proposal number, canonical proposal_url, status, revision round, changes, current elements, latest feedback summary, the annotations section (per-round compiled_summary/round/resolved, newest round first, or the string \"暂无标注意见\" when there is no feedback yet), and a review reminder. Forward proposal_url exactly as returned; never construct a link.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "proposal",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations).",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.proposal-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-list",
+      "cli": "museoncli agentic-campaign proposal +list",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign proposal +list --plan-id 33333333-3333-4333-8333-333333333333 --campaign-id 11111111-1111-4111-8111-111111111111",
+        "museoncli agentic-campaign proposal +list --campaign-id 22222222-2222-4222-8222-222222222222 --awaiting-review"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "awaiting_review": {
+            "default": false,
+            "type": "boolean"
+          },
+          "campaign_id": {
+            "description": "Agentic Creative Campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "include_draft_stage": {
+            "default": false,
+            "type": "boolean"
+          },
+          "page": {
+            "default": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "items": {
+              "enum": [
+                "awaiting-review",
+                "confirmed",
+                "dismissed",
+                "superseded"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-list",
+      "output_schema": {
+        "description": "Paginated Proposal list for one Plan or Campaign. Every item includes its canonical proposal_url; forward it exactly as returned.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "proposal",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List Proposals for exactly one Plan or all Plans in one Campaign. Campaign scope returns each Proposal's Plan and Persona summary.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.proposal-withdraw": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.proposal-withdraw",
+      "cli": "museoncli agentic-campaign proposal +withdraw",
+      "deprecated_aliases": [
+        {
+          "capability_key": "agentic-campaign.proposal-proposal-withdraw",
+          "cli": "museoncli agentic-campaign proposal +proposal-withdraw"
+        }
+      ],
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign proposal +withdraw --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "type": "boolean"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "description": "Open adjustment proposal id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "proposal_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.proposal-withdraw",
+      "output_schema": {
+        "description": "Withdrawn adjustment proposal.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "proposal",
+      "risk_level": "write",
+      "shortcut": "+withdraw",
+      "stability": "stable",
+      "summary": "Withdraw one open adjustment proposal on this plan, permanently releasing the plan elements and the persona change it holds. Withdrawal cannot be undone, and a proposal the operator already confirmed cannot be withdrawn. This is one of the two ways out of a rejected Proposal: when the server answers 409 proposal_element_conflict, proposal_persona_conflict or proposal_open_limit_reached it names the blocking_proposal_id, so either withdraw that proposal here and submit again, or revise the named proposal in place with plan +supply-update --proposal-id. Never resend the rejected payload unchanged.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.schedule-rollout-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.schedule-rollout-get",
+      "cli": "museoncli agentic-campaign +schedule-rollout-get",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +schedule-rollout-get --plan-id 33333333-3333-4333-8333-333333333333 --rollout-id 88888888-8888-4888-8888-888888888888 --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "rollout_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.schedule-rollout-get",
+      "output_schema": {
+        "description": "Durable rollout state, immutable coverage/testing assignments, seed bindings, and execution progress.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+schedule-rollout-get",
+      "stability": "stable",
+      "summary": "Read durable schedule-rollout status by rollout id or confirmed proposal id. Use this after +confirm-schedule-rollout's 202 response to inspect immutable assignments, seed bindings, and asynchronous progress.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "agentic-campaign.schedule-rollout-preflight": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.schedule-rollout-preflight",
+      "cli": "museoncli agentic-campaign +schedule-rollout-preflight",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign +schedule-rollout-preflight --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --timezone Asia/Shanghai --campaign-id 11111111-1111-4111-8111-111111111111",
+        "museoncli agentic-campaign +schedule-rollout-preflight --plan-id 33333333-3333-4333-8333-333333333333 --proposal-id 77777777-7777-4777-8777-777777777777 --coverage future-window --days 7 --timezone Asia/Shanghai --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "coverage": {
+            "additionalProperties": false,
+            "properties": {
+              "days": {
+                "maximum": 30,
+                "minimum": 1,
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "mode": {
+                "enum": [
+                  "existing_future_all",
+                  "future_window"
+                ]
+              },
+              "timezone": {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "mode",
+              "timezone"
+            ],
+            "type": "object"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposal_id": {
+            "description": "Exact revision proposal id. First confirmation requires awaiting_review; it need not be the newest proposal on the Plan. A confirmed proposal may be inspected, but +schedule-rollout-get reads its persisted rollout.",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "testing_plan": {
+            "additionalProperties": false,
+            "properties": {
+              "overrides": {
+                "maxItems": 500,
+                "type": "array"
+              },
+              "strategy": {
+                "const": "balanced_exploration"
+              }
+            },
+            "required": [
+              "strategy",
+              "overrides"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "proposal_id",
+          "coverage",
+          "testing_plan"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.schedule-rollout-preflight",
+      "output_schema": {
+        "description": "Read-only rollout preview: target slots, seed bindings, regular generation count, failed elements, and coverage_days_required when future slots must be created.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+schedule-rollout-preflight",
+      "stability": "stable",
+      "summary": "Always run this read-only command before first confirming one specified awaiting-review proposal, and rerun it whenever coverage or testing overrides change. It returns the exact schedule-rollout matrix the operator must review before applying. The proposal does not need to be the Plan's newest: independent active-Plan proposals can be confirmed in any order. Includes winner boost placements. A boost reserves visible target-account slots; if the response is coverage_days_required because existing future slots cannot fulfil its days, rerun with --coverage future-window --days 1..30. Future slots follow the campaign preferred publish windows. A confirmed proposal can only be inspected or retried; use +schedule-rollout-get for its persisted rollout. Dismissed or superseded proposals are rejected.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "ai-slideshow.asset-bulk-get": {
       "authorization": {
         "authentication_required": true,
