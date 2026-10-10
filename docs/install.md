@@ -74,11 +74,11 @@ or `current` and includes their destination paths.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install the workflow Skill folders and Hook Analysis Skill:
 
-https://github.com/Museon-AI/museon-cli/tree/v0.8.2/skills/museon-content-workflow-base
-https://github.com/Museon-AI/museon-cli/tree/v0.8.2/skills/museon-research
-https://github.com/Museon-AI/museon-cli/tree/v0.8.2/skills/museon-content-workflow-hireaicreator
-https://github.com/Museon-AI/museon-cli/tree/v0.8.2/skills/museon-content-workflow-ai-slideshow
-https://github.com/Museon-AI/museon-cli/tree/v0.8.2/skills/museon-content-workflow-campaign-monitor
+https://github.com/Museon-AI/museon-cli/tree/v0.10.0/skills/museon-content-workflow-base
+https://github.com/Museon-AI/museon-cli/tree/v0.10.0/skills/museon-research
+https://github.com/Museon-AI/museon-cli/tree/v0.10.0/skills/museon-content-workflow-hireaicreator
+https://github.com/Museon-AI/museon-cli/tree/v0.10.0/skills/museon-content-workflow-ai-slideshow
+https://github.com/Museon-AI/museon-cli/tree/v0.10.0/skills/museon-content-workflow-campaign-monitor
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and

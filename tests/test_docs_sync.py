@@ -82,6 +82,10 @@ def test_install_docs_use_one_versioned_official_wheel() -> None:
     for path in docs:
         text = path.read_text(encoding="utf-8")
         assert text.count(wheel) == 1, path
+        skill_revisions = re.findall(
+            r"https://github\.com/Museon-AI/museon-cli/tree/v([^/]+)/skills/", text
+        )
+        assert all(revision == version for revision in skill_revisions), path
         assert "npm install" not in text, path
         assert "archive/" not in text, path
         assert "museon-cli.git@main" not in text, path
