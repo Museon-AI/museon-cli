@@ -27,7 +27,6 @@ RETIRED = (
     "generation",
     "account-publish",
     "account-operation",
-    "agentic-campaign",
     "product",
     "evaluator",
 )

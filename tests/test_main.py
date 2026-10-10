@@ -1355,6 +1355,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "hireaicreator",
         "ai-slideshow",
         "campaign-monitor",
+        "agentic-campaign",
         "skills",
         "staff-ops",
         "routines",

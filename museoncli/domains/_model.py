@@ -38,6 +38,7 @@ class Domain(str, Enum):
     SOCIAL_ACCOUNT = "social-account"
     HIRE_AI_CREATOR = "hireaicreator"
     AI_SLIDESHOW = "ai-slideshow"
+    AGENTIC_CAMPAIGN = "agentic-campaign"
     CAMPAIGN_MONITOR = "campaign-monitor"
     SKILLS = "skills"
     STAFF_OPS = "staff-ops"

@@ -25,7 +25,11 @@ LIMIT_CAP_COMMANDS = {
     "staff-ops.read-supabase",
     "staff-ops.search-logs",
 }
-ADMIN_OR_STAFF_COMMANDS = set()
+ADMIN_OR_STAFF_COMMANDS = {
+    "agentic-campaign.plan-supply-update",
+    "agentic-campaign.plan-account-control",
+    "agentic-campaign.plan-members-reconcile",
+}
 STAFF_COMMANDS = {
     "staff-ops.read-code",
     "staff-ops.search-code",
@@ -357,7 +361,9 @@ def test_old_names_are_hidden_from_help() -> None:
         with contextlib.redirect_stdout(buffer), contextlib.suppress(SystemExit):
             parser.parse_args([*prefix, "--help"])
         for legacy in spec.legacy_shortcuts:
-            assert re.search(rf"(?<![\w-]){re.escape(legacy)}(?![\w-])", buffer.getvalue()) is None, (
+            assert (
+                re.search(rf"(?<![\w-]){re.escape(legacy)}(?![\w-])", buffer.getvalue()) is None
+            ), (
                 spec.schema_name,
                 legacy,
             )
