@@ -380,6 +380,33 @@ def test_integer_zero_is_forwarded_for_server_business_validation(monkeypatch):
             ),
             "--dry-run",
         ],
+        *(
+            [
+                "hireaicreator",
+                "video",
+                action,
+                "--args-json",
+                json.dumps({"idempotency_key": "upload-without-campaign", "items": [item]}),
+            ]
+            for action, item in [
+                (
+                    "+create-from-upload",
+                    {
+                        "media_id": BASE_WORKSPACE,
+                        "publishing_account_ids": ["account"],
+                        "caption": "Finished",
+                    },
+                ),
+                (
+                    "+publish-local",
+                    {
+                        "file": "finished.mp4",
+                        "account_ids": [BASE_WORKSPACE],
+                        "caption": "Finished",
+                    },
+                ),
+            ]
+        ),
     ],
 )
 def test_invalid_contract_values_never_reach_http(monkeypatch, argv):

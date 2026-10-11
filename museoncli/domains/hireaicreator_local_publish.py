@@ -14,6 +14,9 @@ from museoncli.envelopes import direct_api_envelope
 from museoncli.execution import CommandContext
 
 
+_CAMPAIGN_REQUIRED = "UPLOADED_CAMPAIGN_REQUIRED"
+
+
 def _digest_file(path: Path) -> str:
     with path.open("rb") as handle:
         return hashlib.file_digest(handle, "sha256").hexdigest()
@@ -30,6 +33,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
     workspace_id = str(args.get("workspace_id") or ctx.workspace_id or "").strip()
     if not workspace_id:
         raise RuntimeError("missing_workspace")
+    campaign_id = args["campaign_id"]
     items = args["items"]
     account_ids = sorted({value for item in items for value in item["account_ids"]})
     if len(account_ids) > 200:
@@ -66,8 +70,18 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
         )
         if record["fingerprint"] != fingerprint:
             raise ValueError("Idempotency key was already used for different files or targets")
+        # Kept outside the fingerprint so receipts written before campaigns were
+        # required stay readable; the server rejects a batch it already accepted.
+        if record.get("campaign_id") not in (None, campaign_id):
+            raise ValueError("Idempotency key was already used for a different campaign")
         if "receipt" in record:
             return record["receipt"]
+        # A receipt that reached submission without a campaign predates the
+        # requirement: the server may hold that batch, and only its original
+        # body replays it.
+        replay_legacy = "campaign_id" not in record and record["scheduled_now"] is not None
+        if not replay_legacy:
+            record["campaign_id"] = campaign_id
         settings = await ctx.api_data_v2(
             ctx.cfg,
             "POST",
@@ -105,14 +119,35 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
         for item in payload_items:
             if item["scheduled_at"] == "now":
                 item["scheduled_at"] = record["scheduled_now"]
-        raw = await ctx.api_data_v2(
-            ctx.cfg,
-            "POST",
-            "/ai-hook-videos/from-upload",
-            json_body={"workspace_id": workspace_id, "items": payload_items},
-            idempotency_key=args["idempotency_key"],
-            unwrap_success=True,
-        )
+        body = {"workspace_id": workspace_id, "items": payload_items}
+
+        async def submit(json_body: dict[str, Any]) -> Any:
+            return await ctx.api_data_v2(
+                ctx.cfg,
+                "POST",
+                "/ai-hook-videos/from-upload",
+                json_body=json_body,
+                idempotency_key=args["idempotency_key"],
+                unwrap_success=True,
+            )
+
+        raw = None
+        if replay_legacy:
+            try:
+                raw = await submit(body)
+            except RuntimeError as exc:
+                detail = getattr(exc, "detail", None)
+                if (
+                    getattr(exc, "status_code", None) != 409
+                    or not isinstance(detail, dict)
+                    or detail.get("code") != _CAMPAIGN_REQUIRED
+                ):
+                    raise
+                # Never accepted, so it is new work and takes the campaign.
+                record["campaign_id"] = campaign_id
+                _save(receipt_path, record)
+        if raw is None:
+            raw = await submit({**body, "campaign_id": campaign_id})
         receipt = direct_api_envelope(
             ctx.spec.schema_name, workspace_id, raw, site_url=ctx.cfg.site_url
         )
@@ -133,6 +168,7 @@ def specs():
         "POST",
         "/ai-hook-videos/from-upload",
         {
+            "campaign_id": U,
             "items": arr(
                 obj(
                     {
@@ -149,11 +185,11 @@ def specs():
                 50,
             ),
         },
-        required=("items",),
+        required=("campaign_id", "items"),
         workspace="body",
         write=True,
         idempotent=True,
-        summary="Upload local finished videos and schedule each on explicit accounts. Each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged.",
+        summary="Upload local finished videos into a campaign and schedule each on explicit accounts. Requires campaign_id; each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged.",
         readback="Use hireaicreator video +get for returned video IDs; drafts are not public posts.",
     )
     EXECUTORS[spec.schema_name] = _publish
