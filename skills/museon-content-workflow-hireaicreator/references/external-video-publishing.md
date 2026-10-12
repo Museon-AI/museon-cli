@@ -147,6 +147,7 @@ museoncli hireaicreator video +create-from-upload --workspace-id "$WS" \
 
 ```json
 {
+  "campaign_id": "<campaign_id>",
   "items": [
     {
       "media_id": "<media_id>",
@@ -164,7 +165,7 @@ museoncli hireaicreator video +create-from-upload --workspace-id "$WS" \
 - 幂等键在提交前生成并写进映射文件；结果未知时用同一个键、同一份 `batch.json` 重试，会拿回同一批任务。换键或改内容重试会重复排期或报 `IDEMPOTENCY_KEY_REUSED`。
 - `scheduled_at` 必须带时区偏移，并且在未来。平台在临近发布时间（约提前 1 小时）开始准备发布，给足余量。
 - 不填 `scheduled_at` 时任务只登记不发布，之后必须先排期（第 8 步）才会发布，人工确认发布也要求先排期。
-- 可选 `campaign_id` 把任务归入某个 Campaign，便于在看板统计。
+- `campaign_id` 必填：看板和 Campaign 同步都按它找视频，任务创建后不能再改归属；缺少它提交会被拒绝（`UPLOADED_CAMPAIGN_REQUIRED`）。`agentic-campaign +list` 不接受 `--workspace-id`，读的是当前选中的工作区，所以先 `museoncli workspace select --id "$WS"`，再 `museoncli agentic-campaign +list --all` 取 ID。
 
 常见拒绝：
 

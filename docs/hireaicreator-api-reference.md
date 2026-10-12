@@ -28,7 +28,7 @@ Q 表示 workspace_id 位于 query，B 表示位于 body，R 表示后端按资�
 | video +update | PATCH v2 /ai-hook-videos/{id} | R；expected_version及显式patch字段 | video +get核对目标字段/版本；新成片另看export revision |
 | video +generate | POST v2 /ai-hook-videos/{id}/generate | R；expected_version/generation_directions；Idempotency-Key header | accepted→video +get；任务完成与成片分别核验 |
 | video +bulk-schedule | POST v2 /ai-hook-videos/bulk-schedule | R；items含版本/账号/带偏移时间/时区 | succeeded/conflicted/failures，逐video +get核对；非测试组增量重排 |
-| video +create-from-upload | POST v2 /ai-hook-videos/from-upload | B；幂等键；items 1–50，每条media_id(media +upload)、1–2个账号、caption、可选带偏移scheduled_at | 每账号一条发布任务；TikTok/Instagram、每平台最多1个；无需POV/叠字/渲染，按账号的发布方式发布；逐video +get核对 |
+| video +create-from-upload | POST v2 /ai-hook-videos/from-upload | B；幂等键；必填campaign_id；items 1–50，每条media_id(media +upload)、1–2个账号、caption、可选带偏移scheduled_at | 每账号一条发布任务；TikTok/Instagram、每平台最多1个；无需POV/叠字/渲染，按账号的发布方式发布；逐video +get核对 |
 | plan +preview / +get-capacity | POST v2 /ai-hook-video-plans/preview / /capacity | B；组合计划 / 账号日期时区 | preview分配与阻塞 / account-capacity，不写入 |
 | plan +create | POST v2 /ai-hook-video-plans | B；计划组合，显式start_generation；Idempotency-Key header | plan ID→plan +get；默认不生成，video +list --plan-id再核验 |
 | plan +get | GET v2 /ai-hook-video-plans/{id} | R | 持久计划及生成状态，不把记录存在当成片 |

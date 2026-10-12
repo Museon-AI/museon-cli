@@ -5154,7 +5154,7 @@
           "risk_level": "write",
           "shortcut": "+create-from-upload",
           "stability": "stable",
-          "summary": "Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+          "summary": "Register finished videos uploaded with media +upload as publishing tasks in a campaign, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. Requires campaign_id. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -5523,7 +5523,7 @@
           "risk_level": "write",
           "shortcut": "+publish-local",
           "stability": "stable",
-          "summary": "Upload local finished videos and schedule each on explicit accounts. Each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged.",
+          "summary": "Upload local finished videos into a campaign and schedule each on explicit accounts. Requires campaign_id; each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -36321,7 +36321,7 @@
       ],
       "domain": "hireaicreator",
       "examples": [
-        "museoncli hireaicreator video +create-from-upload --idempotency-key <stable-key> --args-file input.json",
+        "museoncli hireaicreator video +create-from-upload --campaign-id <campaign-id> --idempotency-key <stable-key> --args-file input.json",
         "museoncli schema hireaicreator.video-create-from-upload"
       ],
       "execution": "direct",
@@ -36330,10 +36330,7 @@
         "properties": {
           "campaign_id": {
             "format": "uuid",
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "idempotency_key": {
             "maxLength": 200,
@@ -36409,6 +36406,7 @@
           }
         },
         "required": [
+          "campaign_id",
           "items",
           "idempotency_key"
         ],
@@ -36474,7 +36472,7 @@
       "risk_level": "write",
       "shortcut": "+create-from-upload",
       "stability": "stable",
-      "summary": "Register finished videos uploaded with media +upload as publishing tasks, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+      "summary": "Register finished videos uploaded with media +upload as publishing tasks in a campaign, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. Requires campaign_id. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -37500,13 +37498,17 @@
       "cli": "museoncli hireaicreator video +publish-local",
       "domain": "hireaicreator",
       "examples": [
-        "museoncli hireaicreator video +publish-local --idempotency-key <stable-key> --args-file input.json",
+        "museoncli hireaicreator video +publish-local --campaign-id <campaign-id> --idempotency-key <stable-key> --args-file input.json",
         "museoncli schema hireaicreator.video-publish-local"
       ],
       "execution": "direct",
       "input_schema": {
         "additionalProperties": false,
         "properties": {
+          "campaign_id": {
+            "format": "uuid",
+            "type": "string"
+          },
           "idempotency_key": {
             "maxLength": 200,
             "minLength": 8,
@@ -37562,6 +37564,7 @@
           }
         },
         "required": [
+          "campaign_id",
           "items",
           "idempotency_key"
         ],
@@ -37627,7 +37630,7 @@
       "risk_level": "write",
       "shortcut": "+publish-local",
       "stability": "stable",
-      "summary": "Upload local finished videos and schedule each on explicit accounts. Each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged.",
+      "summary": "Upload local finished videos into a campaign and schedule each on explicit accounts. Requires campaign_id; each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
