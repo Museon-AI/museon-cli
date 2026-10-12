@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.11.0
+
+- Breaking: `hireaicreator video +publish-local` and `hireaicreator video +create-from-upload` require `campaign_id`. Uploaded videos without a campaign published but never reached the Campaign dashboard or Campaign sync, and a campaign cannot be assigned after creation. Requests without one are rejected before any network call; look the id up with `workspace select --id <workspace>` followed by `agentic-campaign +list --all`.
+- `video +publish-local` binds the campaign to the idempotency key. Receipts written by earlier versions stay readable, and a batch submitted before this change whose outcome is unknown is replayed with its original request first.
+
 ## 0.9.1
 
 - `hireaicreator plan +create` accepts optional `generation_options` in structured JSON, including `compshare-h3`, video duration, audio, image settings, and Actor reference image media IDs.
