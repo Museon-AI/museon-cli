@@ -23915,6 +23915,7 @@
           "operation_stage": {
             "items": {
               "enum": [
+                "nurturing",
                 "warmup",
                 "promotable",
                 "unavailable",

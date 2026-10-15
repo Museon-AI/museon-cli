@@ -648,7 +648,9 @@ def specs() -> list[CommandSpec]:
                 **SEARCH_PAGE,
                 "search_terms": arr(S, maximum=100),
                 "search_match": enum("exact", "fuzzy"),
-                "operation_stage": arr(enum("warmup", "promotable", "unavailable", "unset")),
+                "operation_stage": arr(
+                    enum("nurturing", "warmup", "promotable", "unavailable", "unset")
+                ),
                 "device_kind": arr(enum("cloud-phone", "real-device")),
                 "platform": arr(S),
                 "is_active": B,
