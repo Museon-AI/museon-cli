@@ -1353,6 +1353,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "media",
         "social-account",
         "hireaicreator",
+        "publish",
         "ai-slideshow",
         "campaign-monitor",
         "agentic-campaign",

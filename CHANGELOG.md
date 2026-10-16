@@ -2,6 +2,13 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.12.0
+
+- New `publish` domain: publish finished videos to the social accounts bound to a workspace, without HireAICreator campaigns.
+  - `publish account +list` lists the workspace's bound accounts (filter by platform and device kind).
+  - `publish post +schedule` uploads local videos (or reuses media IDs) and schedules each on the chosen accounts with a caption, at a scheduled time or `now=true`. It sends an idempotency key: a retry reuses uploads and the server returns the batch it already accepted instead of posting twice. Resend the same input unchanged when retrying.
+  - `publish job +list`, `+get` and `+cancel` read and cancel the resulting publish jobs.
+
 ## 0.11.0
 
 - Breaking: `hireaicreator video +publish-local` and `hireaicreator video +create-from-upload` require `campaign_id`. Uploaded videos without a campaign published but never reached the Campaign dashboard or Campaign sync, and a campaign cannot be assigned after creation. Requests without one are rejected before any network call; look the id up with `workspace select --id <workspace>` followed by `agentic-campaign +list --all`.

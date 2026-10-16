@@ -7921,6 +7921,143 @@
           "transport": "agent_cli_api"
         }
       ],
+      "publish": [
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "publish.account-list",
+          "cli": "museoncli publish account +list",
+          "domain": "publish",
+          "execution": "direct",
+          "name": "publish.account-list",
+          "requires_confirmation": false,
+          "resource": "account",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the social accounts bound to this workspace, which are the accounts it can publish to. Filter by platform (tiktok) and device kind; follow every page before choosing accounts.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "publish.post-schedule",
+          "cli": "museoncli publish post +schedule",
+          "domain": "publish",
+          "execution": "direct",
+          "name": "publish.post-schedule",
+          "requires_confirmation": false,
+          "resource": "post",
+          "risk_level": "write",
+          "shortcut": "+schedule",
+          "stability": "stable",
+          "summary": "Upload local videos (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes file or media_id, account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product. Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "publish.job-list",
+          "cli": "museoncli publish job +list",
+          "domain": "publish",
+          "execution": "direct",
+          "name": "publish.job-list",
+          "requires_confirmation": false,
+          "resource": "job",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List publish jobs (one per video and account) with status, scheduled time and error; --task-id narrows to one batch returned by publish post +schedule.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "publish.job-get",
+          "cli": "museoncli publish job +get",
+          "domain": "publish",
+          "execution": "direct",
+          "name": "publish.job-get",
+          "requires_confirmation": false,
+          "resource": "job",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one publish job's status, scheduled time and error.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "publish.job-cancel",
+          "cli": "museoncli publish job +cancel",
+          "domain": "publish",
+          "execution": "direct",
+          "name": "publish.job-cancel",
+          "requires_confirmation": false,
+          "resource": "job",
+          "risk_level": "write",
+          "shortcut": "+cancel",
+          "stability": "stable",
+          "summary": "Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires a workspace editor.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        }
+      ],
       "research": [
         {
           "authorization": {
@@ -9966,6 +10103,7 @@
       "media",
       "social-account",
       "hireaicreator",
+      "publish",
       "ai-slideshow",
       "campaign-monitor",
       "agentic-campaign",
@@ -9974,7 +10112,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.11.0",
+  "contract_revision": "0.12.0",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -42131,6 +42269,614 @@
       "shortcut": "+upload",
       "stability": "stable",
       "summary": "Upload local image/video/audio or a private general file. General files return artifact_id, with expiring download URL; read with --kind file. Read the returned media ID with media +get; upload success does not prove business generation or delivery completion.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "publish.account-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "publish.account-list",
+      "cli": "museoncli publish account +list",
+      "domain": "publish",
+      "examples": [
+        "museoncli publish account +list",
+        "museoncli schema publish.account-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "device_kind": {
+            "items": {
+              "enum": [
+                "cloud-phone",
+                "real-device"
+              ],
+              "type": "string"
+            },
+            "maxItems": 300,
+            "minItems": 0,
+            "type": "array"
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "platform": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 300,
+            "minItems": 0,
+            "type": "array"
+          },
+          "search": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "publish.account-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "account",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the social accounts bound to this workspace, which are the accounts it can publish to. Filter by platform (tiktok) and device kind; follow every page before choosing accounts.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "publish.job-cancel": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "publish.job-cancel",
+      "cli": "museoncli publish job +cancel",
+      "domain": "publish",
+      "examples": [
+        "museoncli publish job +cancel --id <job-id>",
+        "museoncli schema publish.job-cancel"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "publish.job-cancel",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. museoncli publish job +get --id JOB_ID; verify status cancelled.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "job",
+      "risk_level": "write",
+      "shortcut": "+cancel",
+      "stability": "stable",
+      "summary": "Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires a workspace editor.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "publish.job-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "publish.job-get",
+      "cli": "museoncli publish job +get",
+      "domain": "publish",
+      "examples": [
+        "museoncli publish job +get --id <job-id>",
+        "museoncli schema publish.job-get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "publish.job-get",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "job",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one publish job's status, scheduled time and error.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "publish.job-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "publish.job-list",
+      "cli": "museoncli publish job +list",
+      "domain": "publish",
+      "examples": [
+        "museoncli publish job +list",
+        "museoncli schema publish.job-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "task_id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "publish.job-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "job",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List publish jobs (one per video and account) with status, scheduled time and error; --task-id narrows to one batch returned by publish post +schedule.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "publish.post-schedule": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "publish.post-schedule",
+      "cli": "museoncli publish post +schedule",
+      "domain": "publish",
+      "examples": [
+        "museoncli publish post +schedule --idempotency-key <stable-key> --args-file input.json",
+        "museoncli schema publish.post-schedule"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "ai_tag": {
+            "description": "Mark the posts as AI-generated on the platform.",
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 8,
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "account_ids": {
+                  "items": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "maxItems": 100,
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "caption": {
+                  "maxLength": 2200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "file": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "media_id": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "product_id": {
+                  "maxLength": 64,
+                  "pattern": "^\\d+$",
+                  "type": "string"
+                },
+                "scheduled_at": {
+                  "format": "date-time",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "account_ids",
+                "caption"
+              ],
+              "type": "object"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "now": {
+            "description": "Publish at once instead of at each scheduled_at.",
+            "type": "boolean"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "publish.post-schedule",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. museoncli publish job +list --task-id TASK_ID; scheduled posts are not public yet.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "post",
+      "risk_level": "write",
+      "shortcut": "+schedule",
+      "stability": "stable",
+      "summary": "Upload local videos (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes file or media_id, account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product. Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

@@ -350,7 +350,7 @@ def _load(
         value = Path(args.args_file).read_text(encoding="utf-8")
     payload = json.loads(value) if value is not None else {}
     if not isinstance(payload, dict):
-        raise ValueError("HireAICreator structured input must be an object")
+        raise ValueError("Structured input must be an object")
     for key in properties:
         if hasattr(args, key):
             if key in payload:
@@ -440,6 +440,7 @@ def _command(
     query_fields: tuple[str, ...] = (),
     requires_confirmation: bool = False,
     destructive: bool = False,
+    domain: Domain = Domain.HIRE_AI_CREATOR,
 ) -> CommandSpec:
     props = dict(properties)
     path_keys = tuple(re.findall(r"\{([^}]+)\}", path))
@@ -452,7 +453,7 @@ def _command(
         props["idempotency_key"] = {"type": "string", "minLength": 8, "maxLength": 200}
         required = (*required, "idempotency_key")
     schema = obj(props, required)
-    name = f"hireaicreator.{resource}-{action}"
+    name = f"{domain.value}.{resource}-{action}"
     aliases = flags or {}
 
     def add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -582,18 +583,23 @@ def _command(
         return result
 
     EXECUTORS[name] = execute
+    tool_prefix = "ai_hook_" if domain is Domain.HIRE_AI_CREATOR else f"{domain.value}_"
     return CommandSpec(
-        domain=Domain.HIRE_AI_CREATOR,
+        domain=domain,
         resource=resource,
         shortcut="+" + action,
         summary=summary,
         risk_level="destructive" if destructive else ("write" if write else "read"),
         execution="direct",
-        adapter_tool_name="ai_hook_" + resource.replace("-", "_") + "_" + action.replace("-", "_"),
+        adapter_tool_name=tool_prefix + resource.replace("-", "_") + "_" + action.replace("-", "_"),
         input_schema=schema,
         output_schema=_direct_output_schema("Unmodified API resource or receipt. " + readback),
         examples=[f"museoncli schema {name}"],
-        legacy_shortcuts=tuple("+" + old for old in LEGACY_ACTIONS.get((resource, action), ())),
+        legacy_shortcuts=(
+            tuple("+" + old for old in LEGACY_ACTIONS.get((resource, action), ()))
+            if domain is Domain.HIRE_AI_CREATOR
+            else ()
+        ),
         add_arguments=add_arguments,
         build_arguments=build,
         supports_dry_run=write,

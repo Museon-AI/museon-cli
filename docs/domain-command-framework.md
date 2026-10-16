@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-266 commands across 12 domains (source of truth: `museoncli schema`).
+271 commands across 13 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -241,6 +241,16 @@ The tables below are generated — edit code, then run
 | `hireaicreator format +update` | write | yes | — | direct | Edit Format name, BGM, POV or playbook. Supply the read version to detect stale edits. Empty playbook string clears its override; null does not clear links. |
 | `hireaicreator format +retry` | write | yes | `--yes` | direct | Retry one Format processing step; may incur generation work and requires --yes. No server version or idempotency key is supported. |
 | `hireaicreator format +delete` | destructive | yes | `--yes` | direct | Delete a Format from this workspace; requires --yes. Read current details first; no server version or idempotency key is supported. |
+
+### publish
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `publish account +list` | read | — | — | direct | List the social accounts bound to this workspace, which are the accounts it can publish to. Filter by platform (tiktok) and device kind; follow every page before choosing accounts. |
+| `publish post +schedule` | write | yes | — | direct | Upload local videos (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes file or media_id, account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product. Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted. |
+| `publish job +list` | read | — | — | direct | List publish jobs (one per video and account) with status, scheduled time and error; --task-id narrows to one batch returned by publish post +schedule. |
+| `publish job +get` | read | — | — | direct | Read one publish job's status, scheduled time and error. |
+| `publish job +cancel` | write | yes | — | direct | Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires a workspace editor. |
 
 ### ai-slideshow
 
