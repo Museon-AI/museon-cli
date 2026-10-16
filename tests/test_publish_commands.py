@@ -100,7 +100,7 @@ def test_lost_response_reuses_upload_and_resends_the_exact_keyed_body(monkeypatc
 @pytest.mark.parametrize(
     ("change", "message"),
     [
-        ({"media_id": MEDIA}, "exactly one of file or media_id"),
+        ({"media_id": MEDIA}, "exactly one of file, media_id"),
         ({"scheduled_at": None}, "scheduled_at"),
         ({"account_ids": [ACCOUNT] * 101}, "invalid item count"),
     ],
@@ -142,3 +142,83 @@ def test_now_publishes_at_once_and_rejects_a_scheduled_time(monkeypatch, tmp_pat
     del args["items"][0]["scheduled_at"]
     assert invoke({**args, "now": True})["data"]["task_id"] == TASK
     assert submissions[0]["publish_immediately"] is True
+
+
+def test_photo_set_uploads_each_image_once_and_keeps_their_order(monkeypatch, tmp_path):
+    uploads = []
+    submissions = []
+    ids = iter(
+        [
+            "61000000-0000-4000-8000-000000000001",
+            "61000000-0000-4000-8000-000000000002",
+            "61000000-0000-4000-8000-000000000003",
+        ]
+    )
+
+    def handler(request):
+        if request.url.path.endswith("/media/upload"):
+            uploads.append(request.content)
+            assert b'name="media_type"\r\n\r\nimage' in request.content
+            return httpx.Response(
+                200, json={"success": True, "data": {"asset": {"media_id": next(ids)}}}
+            )
+        submissions.append(json.loads(request.content))
+        if len(submissions) == 1:
+            raise httpx.ReadTimeout("response lost", request=request)
+        return httpx.Response(
+            200, json={"success": True, "task_id": TASK, "total_jobs": 1, "message": "ok"}
+        )
+
+    args = setup(monkeypatch, tmp_path, handler)
+    images = []
+    for name in ("slide-1.jpg", "slide-2.jpg", "slide-3.jpg"):
+        image = tmp_path / name
+        image.write_bytes(name.encode())
+        images.append(str(image))
+    args["items"] = [
+        {
+            "image_files": images,
+            "account_ids": [ACCOUNT],
+            "caption": "three things I wish I knew",
+            "scheduled_at": "2030-10-01T18:00:00+08:00",
+        }
+    ]
+    with pytest.raises(httpx.ReadTimeout):
+        invoke(args)
+    invoke(args)
+
+    assert len(uploads) == 3
+    assert submissions[0] == submissions[1]
+    (item,) = submissions[1]["items"]
+    assert item["content_type"] == "image"
+    assert item["image_media_ids"] == [
+        "61000000-0000-4000-8000-000000000001",
+        "61000000-0000-4000-8000-000000000002",
+        "61000000-0000-4000-8000-000000000003",
+    ]
+    assert item["content_id"] == item["image_media_ids"][0]
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        ({"image_media_ids": [MEDIA]}, "exactly one of"),
+        ({"file": None, "image_media_ids": [MEDIA, MEDIA]}, "must not repeat"),
+        ({"file": None, "image_media_ids": [MEDIA], "product_id": "123"}, "video posts"),
+    ],
+)
+def test_photo_set_inputs_that_cannot_post_fail_before_any_request(
+    monkeypatch, tmp_path, change, message
+):
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(500)
+
+    args = setup(monkeypatch, tmp_path, handler)
+    item = {**args["items"][0], **change}
+    args["items"] = [{key: value for key, value in item.items() if value is not None}]
+    with pytest.raises(ValueError, match=message):
+        invoke(args)
+    assert requests == []

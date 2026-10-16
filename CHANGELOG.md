@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.13.0
+
+- `publish post +schedule` publishes TikTok photo sets: an item takes `image_files` (local images, uploaded in order) or `image_media_ids` (1-30 images; the first is the cover) instead of a video `file` / `media_id`. Photo sets publish to TikTok accounts on a GeeLark cloud phone; `product_id` stays video-only. Retries reuse each uploaded image under the same idempotency key.
+- Requires the Museon API that accepts `image_media_ids` on `POST /api/v2/pool-accounts/publish`.
+
 ## 0.12.0
 
 - New `publish` domain: publish finished videos to the social accounts bound to a workspace, without HireAICreator campaigns.
