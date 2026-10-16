@@ -26,14 +26,19 @@ from museoncli.domains.hireaicreator import (
 from museoncli.envelopes import direct_api_envelope
 from museoncli.execution import CommandContext
 
-# One API batch holds at most 100 posts (one post = one video on one account).
+# One API batch holds at most 100 posts (one post = one video or photo set on one account).
 _MAX_POSTS = 100
+# A TikTok photo set holds at most 30 images through the cloud phone.
+_MAX_IMAGES = 30
+_SOURCES = ("file", "media_id", "image_files", "image_media_ids")
 _PRODUCT_ID = {"type": "string", "pattern": r"^\d+$", "maxLength": 64}
 _CAPTION = {"type": "string", "minLength": 1, "maxLength": 2200}
 _POST_ITEM = obj(
     {
         "file": S,
         "media_id": U,
+        "image_files": arr(S, 1, _MAX_IMAGES),
+        "image_media_ids": arr(U, 1, _MAX_IMAGES),
         "account_ids": arr(U, 1, _MAX_POSTS),
         "caption": _CAPTION,
         "scheduled_at": DT,
@@ -48,6 +53,13 @@ def _digest_file(path: Path) -> str:
         return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
+def _local_file(value: str) -> Path:
+    path = Path(value).expanduser().resolve(strict=True)
+    if not path.is_file():
+        raise ValueError(f"Not a file: {path}")
+    return path
+
+
 def _save(path: Path, record: dict[str, Any]) -> None:
     temporary = path.with_suffix(".tmp")
     temporary.write_text(json.dumps(record, ensure_ascii=False))
@@ -58,8 +70,15 @@ def _check_items(payload: dict[str, Any]) -> None:
     now = bool(payload.get("now"))
     posts = 0
     for item in payload["items"]:
-        if ("file" in item) == ("media_id" in item):
-            raise ValueError("Each item takes exactly one of file or media_id")
+        if sum(source in item for source in _SOURCES) != 1:
+            raise ValueError(
+                "Each item takes exactly one of file, media_id, image_files or image_media_ids"
+            )
+        images = item.get("image_files") or item.get("image_media_ids")
+        if images is not None and len(set(images)) != len(images):
+            raise ValueError("A photo set must not repeat an image")
+        if images is not None and "product_id" in item:
+            raise ValueError("product_id attaches only to video posts")
         if now == ("scheduled_at" in item):
             raise ValueError(
                 "Give every item a scheduled_at, or pass now=true and omit scheduled_at"
@@ -80,10 +99,15 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
     items = []
     for item in args["items"]:
         if "file" in item:
-            path = Path(item["file"]).expanduser().resolve(strict=True)
-            if not path.is_file():
-                raise ValueError(f"Not a file: {path}")
+            path = _local_file(item["file"])
             item = {**item, "file": str(path), "sha256": _digest_file(path)}
+        if "image_files" in item:
+            paths = [_local_file(value) for value in item["image_files"]]
+            item = {
+                **item,
+                "image_files": [str(path) for path in paths],
+                "image_sha256": [_digest_file(path) for path in paths],
+            }
         items.append(item)
     fingerprint = hashlib.sha256(
         json.dumps(
@@ -117,24 +141,34 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
             return record["receipt"]
         _save(receipt_path, record)
         wire_items = []
+
+        async def uploaded(path: str, digest: str, media_type: str) -> str:
+            if digest not in record["uploaded"]:
+                upload = await ctx.upload_media_file(
+                    ctx.cfg,
+                    workspace_id=workspace_id,
+                    arguments={"file": path, "media_type": media_type},
+                )
+                record["uploaded"][digest] = upload["data"]["asset"]["media_id"]
+                _save(receipt_path, record)
+            return str(record["uploaded"][digest])
+
         for item in items:
+            image_ids: list[str] | None = item.get("image_media_ids")
+            if "image_files" in item:
+                image_ids = [
+                    await uploaded(path, digest, "image")
+                    for path, digest in zip(item["image_files"], item["image_sha256"], strict=True)
+                ]
             media_id = item.get("media_id")
-            if media_id is None:
-                digest = item["sha256"]
-                if digest not in record["uploaded"]:
-                    upload = await ctx.upload_media_file(
-                        ctx.cfg,
-                        workspace_id=workspace_id,
-                        arguments={"file": item["file"], "media_type": "video"},
-                    )
-                    record["uploaded"][digest] = upload["data"]["asset"]["media_id"]
-                    _save(receipt_path, record)
-                media_id = record["uploaded"][digest]
+            if "file" in item:
+                media_id = await uploaded(item["file"], item["sha256"], "video")
             for account_id in item["account_ids"]:
                 wire_items.append(
                     {
-                        "content_id": media_id,
-                        "content_type": "video",
+                        "content_id": image_ids[0] if image_ids else media_id,
+                        "content_type": "image" if image_ids else "video",
+                        **({"image_media_ids": image_ids} if image_ids else {}),
                         "account_id": account_id,
                         # The server ignores scheduled times for an immediate batch,
                         # but still requires the field.
@@ -192,11 +226,13 @@ def _schedule_spec() -> CommandSpec:
         idempotent=True,
         domain=Domain.PUBLISH,
         summary=(
-            "Upload local videos (or reuse media IDs) and schedule each on the workspace's bound "
-            "accounts with a caption. Each item takes file or media_id, account_ids, caption, and "
-            "scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 "
-            "posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. "
-            "ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product. "
+            "Upload local videos or photo sets (or reuse media IDs) and schedule each on the "
+            "workspace's bound accounts with a caption. Each item takes one of file / media_id "
+            "(a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in "
+            "order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass "
+            "now=true to publish at once. At most 100 posts per batch, 2 per account per day, "
+            "120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; "
+            "product_id attaches a TikTok Shop product to a video. "
             "Retry with the same idempotency key and unchanged files: uploads are reused and the "
             "server returns the batch it already accepted."
         ),
