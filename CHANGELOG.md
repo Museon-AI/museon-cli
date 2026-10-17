@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.14.0
+
+- `publish post +schedule` takes an optional `music_url` per item: a TikTok post link (`/video/<id>` or `/photo/<id>`) whose sound the cloud phone reuses as the post's background music, like "use this sound". Sound pages (`/music/...`), short links and bare IDs are rejected before any upload. Accounts not on a cloud phone publish without it; an item without it keeps the cloud phone's random sound.
+- Uses the existing `bgm_config.ref_video_id` of `POST /api/v2/pool-accounts/publish`; no new API is required.
+
 ## 0.13.0
 
 - `publish post +schedule` publishes TikTok photo sets: an item takes `image_files` (local images, uploaded in order) or `image_media_ids` (1-30 images; the first is the cover) instead of a video `file` / `media_id`. Photo sets publish to TikTok accounts on a GeeLark cloud phone; `product_id` stays video-only. Retries reuse each uploaded image under the same idempotency key.

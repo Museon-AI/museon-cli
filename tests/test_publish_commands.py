@@ -222,3 +222,53 @@ def test_photo_set_inputs_that_cannot_post_fail_before_any_request(
     with pytest.raises(ValueError, match=message):
         invoke(args)
     assert requests == []
+
+
+def test_music_url_sends_the_post_whose_sound_the_cloud_phone_reuses(monkeypatch, tmp_path):
+    submissions = []
+
+    def handler(request):
+        submissions.append(json.loads(request.content))
+        return httpx.Response(
+            200, json={"success": True, "task_id": TASK, "total_jobs": 1, "message": "ok"}
+        )
+
+    args = setup(monkeypatch, tmp_path, handler)
+    args["items"] = [
+        {
+            "image_media_ids": [MEDIA],
+            "account_ids": [ACCOUNT],
+            "caption": "three things I wish I knew",
+            "scheduled_at": "2030-10-01T18:00:00+08:00",
+            "music_url": "https://www.tiktok.com/@someone/photo/7339393672959757570?lang=en",
+        }
+    ]
+    invoke(args)
+
+    (item,) = submissions[0]["items"]
+    assert item["bgm_config"] == {"ref_video_id": "7339393672959757570"}
+
+
+@pytest.mark.parametrize(
+    ("music_url", "message"),
+    [
+        ("https://www.tiktok.com/music/original-sound-7082972948549733126", "not a sound page"),
+        ("https://vm.tiktok.com/ZMabc123/", "short links"),
+        ("7339393672959757570", "TikTok post link"),
+        ("https://www.instagram.com/reel/7339393672959757570/", "TikTok post link"),
+    ],
+)
+def test_music_url_that_is_not_a_tiktok_post_fails_before_any_request(
+    monkeypatch, tmp_path, music_url, message
+):
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(500)
+
+    args = setup(monkeypatch, tmp_path, handler)
+    args["items"][0]["music_url"] = music_url
+    with pytest.raises(ValueError, match=message):
+        invoke(args)
+    assert requests == []
