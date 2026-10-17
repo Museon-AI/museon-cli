@@ -5,9 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from dataclasses import replace
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains.hireaicreator import (
@@ -33,6 +35,16 @@ _MAX_IMAGES = 30
 _SOURCES = ("file", "media_id", "image_files", "image_media_ids")
 _PRODUCT_ID = {"type": "string", "pattern": r"^\d+$", "maxLength": 64}
 _CAPTION = {"type": "string", "minLength": 1, "maxLength": 2200}
+_MUSIC_URL = {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 2048,
+    "description": (
+        "TikTok post link (tiktok.com/@user/video/<id> or /photo/<id>) whose sound the "
+        "cloud phone reuses as background music, like tapping 'use this sound'."
+    ),
+}
+_TIKTOK_POST_PATH = re.compile(r"/(?:video|photo)/(\d+)(?:/|$)")
 _POST_ITEM = obj(
     {
         "file": S,
@@ -43,6 +55,7 @@ _POST_ITEM = obj(
         "caption": _CAPTION,
         "scheduled_at": DT,
         "product_id": _PRODUCT_ID,
+        "music_url": _MUSIC_URL,
     },
     ("account_ids", "caption"),
 )
@@ -66,6 +79,27 @@ def _save(path: Path, record: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
+def _sound_video_id(url: str) -> str:
+    """The TikTok post whose sound a cloud phone reuses; it takes a post, not a sound."""
+    parts = urlsplit(url.strip())
+    host = (parts.hostname or "").lower()
+    if parts.scheme not in ("http", "https") or not (
+        host == "tiktok.com" or host.endswith(".tiktok.com")
+    ):
+        raise ValueError(f"music_url must be a TikTok post link, got {url!r}")
+    if match := _TIKTOK_POST_PATH.search(parts.path):
+        return match.group(1)
+    if parts.path.startswith("/music/"):
+        raise ValueError(
+            "music_url takes a post, not a sound page: open the sound, pick a post that uses "
+            "it (listen for the version you want), and pass that post's link"
+        )
+    raise ValueError(
+        f"Could not read a post id from music_url {url!r}; open short links (vm.tiktok.com, "
+        "tiktok.com/t/) and pass the full tiktok.com/@user/video/<id> link"
+    )
+
+
 def _check_items(payload: dict[str, Any]) -> None:
     now = bool(payload.get("now"))
     posts = 0
@@ -79,6 +113,8 @@ def _check_items(payload: dict[str, Any]) -> None:
             raise ValueError("A photo set must not repeat an image")
         if images is not None and "product_id" in item:
             raise ValueError("product_id attaches only to video posts")
+        if "music_url" in item:
+            _sound_video_id(item["music_url"])
         if now == ("scheduled_at" in item):
             raise ValueError(
                 "Give every item a scheduled_at, or pass now=true and omit scheduled_at"
@@ -175,6 +211,11 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
                         "scheduled_at": item.get("scheduled_at") or "1970-01-01T00:00:00Z",
                         "caption": item["caption"],
                         **({"product_id": item["product_id"]} if "product_id" in item else {}),
+                        **(
+                            {"bgm_config": {"ref_video_id": _sound_video_id(item["music_url"])}}
+                            if "music_url" in item
+                            else {}
+                        ),
                     }
                 )
         body = {
@@ -232,7 +273,9 @@ def _schedule_spec() -> CommandSpec:
             "order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass "
             "now=true to publish at once. At most 100 posts per batch, 2 per account per day, "
             "120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; "
-            "product_id attaches a TikTok Shop product to a video. "
+            "product_id attaches a TikTok Shop product to a video; music_url, a TikTok post "
+            "link, gives the post that post's sound on a cloud-phone account (other accounts "
+            "publish without it). "
             "Retry with the same idempotency key and unchanged files: uploads are reused and the "
             "server returns the batch it already accepted."
         ),

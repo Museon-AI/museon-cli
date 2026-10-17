@@ -7972,7 +7972,7 @@
           "risk_level": "write",
           "shortcut": "+schedule",
           "stability": "stable",
-          "summary": "Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video. Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
+          "summary": "Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -10112,7 +10112,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.13.0",
+  "contract_revision": "0.14.0",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -42799,6 +42799,12 @@
                   "format": "uuid",
                   "type": "string"
                 },
+                "music_url": {
+                  "description": "TikTok post link (tiktok.com/@user/video/<id> or /photo/<id>) whose sound the cloud phone reuses as background music, like tapping 'use this sound'.",
+                  "maxLength": 2048,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "product_id": {
                   "maxLength": 64,
                   "pattern": "^\\d+$",
@@ -42894,7 +42900,7 @@
       "risk_level": "write",
       "shortcut": "+schedule",
       "stability": "stable",
-      "summary": "Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video. Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
+      "summary": "Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
