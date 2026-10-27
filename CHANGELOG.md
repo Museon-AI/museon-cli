@@ -2,6 +2,12 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.16.0
+
+- `social-account +connect-adb` routes ADB through a local relay. Museon now shuts down a cloud phone whose lease nobody renews; the relay renews it at most once a minute while ADB traffic flows and exits after 15 minutes without ADB traffic, so a phone stays on while a script or agent operates it and shuts down about 15 minutes after the last ADB command. An open but idle ADB connection sends no traffic and does not keep the phone on. The returned serial is the relay's local address (`127.0.0.1:<port>`); a later `+connect-adb` for the same account reuses it.
+- New `social-account +renew-phone-lease`: keeps an account's cloud phone on for 15 more minutes. The relay runs it; scripts that hold ADB some other way can run it themselves.
+- Requires the Museon API with `POST /agent-cli/social-accounts/{account_id}/phone-lease`.
+
 ## 0.15.0
 
 - 新增员工云机与 IP 管理：查询、批量添加、检测、分组、供应商、换 IP、待处理事项及资源回收。
