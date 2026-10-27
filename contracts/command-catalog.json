@@ -3649,6 +3649,737 @@
           "transport": "agent_cli_api"
         }
       ],
+      "cloud-phone": [
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.fleet-get",
+          "cli": "museoncli cloud-phone fleet +get",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.fleet-get",
+          "requires_confirmation": false,
+          "resource": "fleet",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read the complete phone fleet, IP occupancy and attention queue; timestamps and stale indicate freshness.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.summary-get",
+          "cli": "museoncli cloud-phone summary +get",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.summary-get",
+          "requires_confirmation": false,
+          "resource": "summary",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Summarize cloud phones, IP health and available slots by country.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.phone-list",
+          "cli": "museoncli cloud-phone phone +list",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.phone-list",
+          "requires_confirmation": false,
+          "resource": "phone",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "Find phones by name, account or IP, including current connection, exit IP, health, occupancy and last change.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.phone-get",
+          "cli": "museoncli cloud-phone phone +get",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.phone-get",
+          "requires_confirmation": false,
+          "resource": "phone",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Get one phone and its current IP details by its catalog ID.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.phone-set-proxy",
+          "cli": "museoncli cloud-phone phone +set-proxy",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.phone-set-proxy",
+          "requires_confirmation": true,
+          "resource": "phone",
+          "risk_level": "write",
+          "shortcut": "+set-proxy",
+          "stability": "stable",
+          "summary": "Assign explicit target IPs to up to 10 phones; each IP holds at most 5 phones. Read-back verifies each change. No automatic target selection or country restriction.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.proxy-list",
+          "cli": "museoncli cloud-phone proxy +list",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.proxy-list",
+          "requires_confirmation": false,
+          "resource": "proxy",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List IPs with groups, suppliers, health, exit IP, bound phones and available slots.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.proxy-get",
+          "cli": "museoncli cloud-phone proxy +get",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.proxy-get",
+          "requires_confirmation": false,
+          "resource": "proxy",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Get one IP and all its bound phones without per-phone lookups.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.proxy-add",
+          "cli": "museoncli cloud-phone proxy +add",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.proxy-add",
+          "requires_confirmation": false,
+          "resource": "proxy",
+          "risk_level": "write",
+          "shortcut": "+add",
+          "stability": "stable",
+          "summary": "Add up to 5000 IPs from entries or a JSON/CSV file; a supplier preset also accepts a text file of IPs. New IPs are checked in the background. Each row reports added, exists, invalid or failed.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.proxy-check",
+          "cli": "museoncli cloud-phone proxy +check",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.proxy-check",
+          "requires_confirmation": false,
+          "resource": "proxy",
+          "risk_level": "write",
+          "shortcut": "+check",
+          "stability": "stable",
+          "summary": "Check selected IPs; --wait waits for a newer check for every selected IP. Accepted does not mean healthy; inspect each result.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.proxy-move",
+          "cli": "museoncli cloud-phone proxy +move",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.proxy-move",
+          "requires_confirmation": false,
+          "resource": "proxy",
+          "risk_level": "write",
+          "shortcut": "+move",
+          "stability": "stable",
+          "summary": "Move selected IPs into one group; returns a result per IP.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.proxy-delete",
+          "cli": "museoncli cloud-phone proxy +delete",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.proxy-delete",
+          "requires_confirmation": true,
+          "resource": "proxy",
+          "risk_level": "destructive",
+          "shortcut": "+delete",
+          "stability": "stable",
+          "summary": "Delete selected unused IPs; IPs used by phones are refused. Inspect every result.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.group-list",
+          "cli": "museoncli cloud-phone group +list",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.group-list",
+          "requires_confirmation": false,
+          "resource": "group",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List all IP groups, including empty groups.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.group-create",
+          "cli": "museoncli cloud-phone group +create",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.group-create",
+          "requires_confirmation": false,
+          "resource": "group",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Create an IP group.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.group-delete",
+          "cli": "museoncli cloud-phone group +delete",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.group-delete",
+          "requires_confirmation": true,
+          "resource": "group",
+          "risk_level": "destructive",
+          "shortcut": "+delete",
+          "stability": "stable",
+          "summary": "Delete empty IP groups; occupied groups and the ungrouped category are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.supplier-list",
+          "cli": "museoncli cloud-phone supplier +list",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.supplier-list",
+          "requires_confirmation": false,
+          "resource": "supplier",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List saved IP supplier connection presets without passwords.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.supplier-create",
+          "cli": "museoncli cloud-phone supplier +create",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.supplier-create",
+          "requires_confirmation": false,
+          "resource": "supplier",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Create an IP supplier preset; read its password from --password-file.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.supplier-update",
+          "cli": "museoncli cloud-phone supplier +update",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.supplier-update",
+          "requires_confirmation": false,
+          "resource": "supplier",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Update an IP supplier preset; omitted password keeps its existing value.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.supplier-delete",
+          "cli": "museoncli cloud-phone supplier +delete",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.supplier-delete",
+          "requires_confirmation": true,
+          "resource": "supplier",
+          "risk_level": "destructive",
+          "shortcut": "+delete",
+          "stability": "stable",
+          "summary": "Delete a saved IP supplier preset.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.attention-list",
+          "cli": "museoncli cloud-phone attention +list",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.attention-list",
+          "requires_confirmation": false,
+          "resource": "attention",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List down, repeatedly failing or overloaded IPs, failed changes, reclaimable phones and unused IPs.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": true
+          },
+          "capability_key": "cloud-phone.recovery-preview",
+          "cli": "museoncli cloud-phone recovery +preview",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.recovery-preview",
+          "requires_confirmation": false,
+          "resource": "recovery",
+          "risk_level": "read",
+          "shortcut": "+preview",
+          "stability": "stable",
+          "summary": "Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it. Returns blockers and Museon device IDs; no resources are released.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": true
+          },
+          "capability_key": "cloud-phone.recovery-job-create",
+          "cli": "museoncli cloud-phone recovery-job +create",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.recovery-job-create",
+          "requires_confirmation": true,
+          "resource": "recovery-job",
+          "risk_level": "destructive",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Reclaim explicitly selected devices from a fresh recovery preview. Retry uncertain submission with the same key; accepted is not completed.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.recovery-job-list",
+          "cli": "museoncli cloud-phone recovery-job +list",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.recovery-job-list",
+          "requires_confirmation": false,
+          "resource": "recovery-job",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List resource-recovery jobs, including failed and partial outcomes.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.recovery-job-get",
+          "cli": "museoncli cloud-phone recovery-job +get",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.recovery-job-get",
+          "requires_confirmation": false,
+          "resource": "recovery-job",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Get a recovery job and every device's outcome and blockers.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.recovery-job-retry",
+          "cli": "museoncli cloud-phone recovery-job +retry",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.recovery-job-retry",
+          "requires_confirmation": true,
+          "resource": "recovery-job",
+          "risk_level": "destructive",
+          "shortcut": "+retry",
+          "stability": "stable",
+          "summary": "Retry eligible unfinished recovery items using a stable dispatch key.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.recovery-job-export",
+          "cli": "museoncli cloud-phone recovery-job +export",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.recovery-job-export",
+          "requires_confirmation": false,
+          "resource": "recovery-job",
+          "risk_level": "read",
+          "shortcut": "+export",
+          "stability": "stable",
+          "summary": "Export recovery history to a new local CSV file; refuses to overwrite an existing file.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.proxy-export-credentials",
+          "cli": "museoncli cloud-phone proxy +export-credentials",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.proxy-export-credentials",
+          "requires_confirmation": true,
+          "resource": "proxy",
+          "risk_level": "read",
+          "shortcut": "+export-credentials",
+          "stability": "stable",
+          "summary": "Save one connection's credentials to a new mode-0600 local JSON file; never print the password or overwrite an existing file.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.supplier-export-credentials",
+          "cli": "museoncli cloud-phone supplier +export-credentials",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.supplier-export-credentials",
+          "requires_confirmation": true,
+          "resource": "supplier",
+          "risk_level": "read",
+          "shortcut": "+export-credentials",
+          "stability": "stable",
+          "summary": "Save one connection's credentials to a new mode-0600 local JSON file; never print the password or overwrite an existing file.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        }
+      ],
       "content-analysis": [
         {
           "authorization": {
@@ -10104,6 +10835,7 @@
       "social-account",
       "hireaicreator",
       "publish",
+      "cloud-phone",
       "ai-slideshow",
       "campaign-monitor",
       "agentic-campaign",
@@ -10112,7 +10844,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.14.0",
+  "contract_revision": "0.15.0",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -23157,6 +23889,3016 @@
       "stability": "stable",
       "summary": "Resolve an account publish schedule item to its published social post.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.attention-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.attention-list",
+      "cli": "museoncli cloud-phone attention +list",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone attention +list",
+        "museoncli schema cloud-phone.attention-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "down",
+              "held",
+              "overloaded",
+              "change-failed",
+              "reclaimable",
+              "returnable"
+            ],
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "refresh": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.attention-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "attention",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List down, repeatedly failing or overloaded IPs, failed changes, reclaimable phones and unused IPs.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.fleet-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.fleet-get",
+      "cli": "museoncli cloud-phone fleet +get",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone fleet +get",
+        "museoncli schema cloud-phone.fleet-get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "last_known": {
+            "type": "boolean"
+          },
+          "refresh": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.fleet-get",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "fleet",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read the complete phone fleet, IP occupancy and attention queue; timestamps and stale indicate freshness.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.group-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.group-create",
+      "cli": "museoncli cloud-phone group +create",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone group +create --name <name>",
+        "museoncli schema cloud-phone.group-create"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.group-create",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read group +list.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "group",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Create an IP group.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.group-delete": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.group-delete",
+      "cli": "museoncli cloud-phone group +delete",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone group +delete --id <group-id> --yes",
+        "museoncli schema cloud-phone.group-delete"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "group_ids": {
+            "items": {
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "group_ids"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.group-delete",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read group +list.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "group",
+      "risk_level": "destructive",
+      "shortcut": "+delete",
+      "stability": "stable",
+      "summary": "Delete empty IP groups; occupied groups and the ungrouped category are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.group-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.group-list",
+      "cli": "museoncli cloud-phone group +list",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone group +list",
+        "museoncli schema cloud-phone.group-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "refresh": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.group-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "group",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List all IP groups, including empty groups.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.phone-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.phone-get",
+      "cli": "museoncli cloud-phone phone +get",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone phone +get --id <phone-id>",
+        "museoncli schema cloud-phone.phone-get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "refresh": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.phone-get",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "phone",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Get one phone and its current IP details by its catalog ID.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.phone-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.phone-list",
+      "cli": "museoncli cloud-phone phone +list",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone phone +list",
+        "museoncli schema cloud-phone.phone-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "country": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "descending": {
+            "type": "boolean"
+          },
+          "filter": {
+            "enum": [
+              "all",
+              "down",
+              "no-proxy",
+              "unmatched",
+              "no-accounts",
+              "recently-moved"
+            ],
+            "type": "string"
+          },
+          "group_id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "health": {
+            "enum": [
+              "healthy",
+              "suspect",
+              "down",
+              "unchecked",
+              "held"
+            ],
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "refresh": {
+            "type": "boolean"
+          },
+          "search": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sort": {
+            "enum": [
+              "name",
+              "ip",
+              "used",
+              "last-moved",
+              "accounts"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.phone-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "phone",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "Find phones by name, account or IP, including current connection, exit IP, health, occupancy and last change.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.phone-set-proxy": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.phone-set-proxy",
+      "cli": "museoncli cloud-phone phone +set-proxy",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone phone +set-proxy --id 123456789 --proxy-id 987654321 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "phone_id": {
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9_-]{1,100}$",
+                  "type": "string"
+                },
+                "proxy_id": {
+                  "minLength": 1,
+                  "pattern": "^[A-Za-z0-9_-]{1,100}$",
+                  "type": "string"
+                },
+                "reason": {
+                  "enum": [
+                    "manual",
+                    "down",
+                    "overloaded"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "phone_id",
+                "proxy_id"
+              ],
+              "type": "object"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "proxy_id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "manual",
+              "down",
+              "overloaded"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.phone-set-proxy",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read phone +get for each changed phone; inspect every failed or skipped outcome.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "phone",
+      "risk_level": "write",
+      "shortcut": "+set-proxy",
+      "stability": "stable",
+      "summary": "Assign explicit target IPs to up to 10 phones; each IP holds at most 5 phones. Read-back verifies each change. No automatic target selection or country restriction.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.proxy-add": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.proxy-add",
+      "cli": "museoncli cloud-phone proxy +add",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone proxy +add --entries-file ips.csv --group-id 0 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "password": {
+                  "type": "string"
+                },
+                "port": {
+                  "maximum": 65535,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "scheme": {
+                  "enum": [
+                    "socks5",
+                    "http",
+                    "https"
+                  ],
+                  "type": "string"
+                },
+                "server": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "server"
+              ],
+              "type": "object"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "type": "array"
+          },
+          "entries_file": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "group_id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "query_channel": {
+            "enum": [
+              "IP2Location",
+              "IP-API"
+            ],
+            "type": "string",
+            "x-preserve-wire-value": true
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.proxy-add",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read proxy +get or +list to verify new IPs and their checks.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "proxy",
+      "risk_level": "write",
+      "shortcut": "+add",
+      "stability": "stable",
+      "summary": "Add up to 5000 IPs from entries or a JSON/CSV file; a supplier preset also accepts a text file of IPs. New IPs are checked in the background. Each row reports added, exists, invalid or failed.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.proxy-check": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.proxy-check",
+      "cli": "museoncli cloud-phone proxy +check",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone proxy +check --id <proxy-id>",
+        "museoncli schema cloud-phone.proxy-check"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "proxy_ids": {
+            "items": {
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "timeout": {
+            "maximum": 1800,
+            "minimum": 1,
+            "type": "number"
+          },
+          "wait": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "proxy_ids"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.proxy-check",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read proxy +get for health and detection time.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "proxy",
+      "risk_level": "write",
+      "shortcut": "+check",
+      "stability": "stable",
+      "summary": "Check selected IPs; --wait waits for a newer check for every selected IP. Accepted does not mean healthy; inspect each result.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.proxy-delete": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.proxy-delete",
+      "cli": "museoncli cloud-phone proxy +delete",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone proxy +delete --id <proxy-id> --yes",
+        "museoncli schema cloud-phone.proxy-delete"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "proxy_ids": {
+            "items": {
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "proxy_ids"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.proxy-delete",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read proxy +list and verify successful deletions are absent.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "proxy",
+      "risk_level": "destructive",
+      "shortcut": "+delete",
+      "stability": "stable",
+      "summary": "Delete selected unused IPs; IPs used by phones are refused. Inspect every result.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.proxy-export-credentials": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.proxy-export-credentials",
+      "cli": "museoncli cloud-phone proxy +export-credentials",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone proxy +export-credentials --id <proxy-id> --output <output> --yes",
+        "museoncli schema cloud-phone.proxy-export-credentials"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "output": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "output"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.proxy-export-credentials",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "proxy",
+      "risk_level": "read",
+      "shortcut": "+export-credentials",
+      "stability": "stable",
+      "summary": "Save one connection's credentials to a new mode-0600 local JSON file; never print the password or overwrite an existing file.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.proxy-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.proxy-get",
+      "cli": "museoncli cloud-phone proxy +get",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone proxy +get --id <proxy-id>",
+        "museoncli schema cloud-phone.proxy-get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "refresh": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.proxy-get",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "proxy",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Get one IP and all its bound phones without per-phone lookups.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.proxy-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.proxy-list",
+      "cli": "museoncli cloud-phone proxy +list",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone proxy +list",
+        "museoncli schema cloud-phone.proxy-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "country": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "descending": {
+            "type": "boolean"
+          },
+          "group_id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "health": {
+            "enum": [
+              "healthy",
+              "suspect",
+              "down",
+              "unchecked",
+              "held"
+            ],
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "refresh": {
+            "type": "boolean"
+          },
+          "search": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sort": {
+            "enum": [
+              "name",
+              "ip",
+              "used",
+              "last-moved",
+              "accounts"
+            ],
+            "type": "string"
+          },
+          "supplier_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.proxy-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "proxy",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List IPs with groups, suppliers, health, exit IP, bound phones and available slots.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.proxy-move": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.proxy-move",
+      "cli": "museoncli cloud-phone proxy +move",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone proxy +move --id <proxy-id> --group-id <group-id>",
+        "museoncli schema cloud-phone.proxy-move"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "group_id": {
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]{1,100}$",
+            "type": "string"
+          },
+          "proxy_ids": {
+            "items": {
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "proxy_ids",
+          "group_id"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.proxy-move",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read proxy +list --group-id to verify membership.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "proxy",
+      "risk_level": "write",
+      "shortcut": "+move",
+      "stability": "stable",
+      "summary": "Move selected IPs into one group; returns a result per IP.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.recovery-job-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": true
+      },
+      "capability_key": "cloud-phone.recovery-job-create",
+      "cli": "museoncli cloud-phone recovery-job +create",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone recovery-job +create --account-ids <account-id> --device-ids <device-id> --idempotency-key <stable-key> --yes",
+        "museoncli schema cloud-phone.recovery-job-create"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "device_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "default": "global",
+            "enum": [
+              "workspace",
+              "global"
+            ],
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_ids",
+          "device_ids",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.recovery-job-create",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read recovery-job +get until terminal and inspect each item.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "recovery-job",
+      "risk_level": "destructive",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Reclaim explicitly selected devices from a fresh recovery preview. Retry uncertain submission with the same key; accepted is not completed.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.recovery-job-export": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.recovery-job-export",
+      "cli": "museoncli cloud-phone recovery-job +export",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone recovery-job +export --output <output>",
+        "museoncli schema cloud-phone.recovery-job-export"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "output": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "output"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.recovery-job-export",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "recovery-job",
+      "risk_level": "read",
+      "shortcut": "+export",
+      "stability": "stable",
+      "summary": "Export recovery history to a new local CSV file; refuses to overwrite an existing file.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.recovery-job-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.recovery-job-get",
+      "cli": "museoncli cloud-phone recovery-job +get",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone recovery-job +get --id <recovery-job-id>",
+        "museoncli schema cloud-phone.recovery-job-get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.recovery-job-get",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "recovery-job",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Get a recovery job and every device's outcome and blockers.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.recovery-job-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.recovery-job-list",
+      "cli": "museoncli cloud-phone recovery-job +list",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone recovery-job +list",
+        "museoncli schema cloud-phone.recovery-job-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.recovery-job-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "recovery-job",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List resource-recovery jobs, including failed and partial outcomes.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.recovery-job-retry": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.recovery-job-retry",
+      "cli": "museoncli cloud-phone recovery-job +retry",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone recovery-job +retry --id <recovery-job-id> --idempotency-key <stable-key> --yes",
+        "museoncli schema cloud-phone.recovery-job-retry"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.recovery-job-retry",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read recovery-job +get and inspect every result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "recovery-job",
+      "risk_level": "destructive",
+      "shortcut": "+retry",
+      "stability": "stable",
+      "summary": "Retry eligible unfinished recovery items using a stable dispatch key.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.recovery-preview": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": true
+      },
+      "capability_key": "cloud-phone.recovery-preview",
+      "cli": "museoncli cloud-phone recovery +preview",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone recovery +preview --account-ids <account-id>",
+        "museoncli schema cloud-phone.recovery-preview"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "scope": {
+            "default": "global",
+            "enum": [
+              "workspace",
+              "global"
+            ],
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_ids"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.recovery-preview",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "recovery",
+      "risk_level": "read",
+      "shortcut": "+preview",
+      "stability": "stable",
+      "summary": "Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it. Returns blockers and Museon device IDs; no resources are released.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.summary-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.summary-get",
+      "cli": "museoncli cloud-phone summary +get",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone summary +get",
+        "museoncli schema cloud-phone.summary-get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "refresh": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.summary-get",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "summary",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Summarize cloud phones, IP health and available slots by country.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.supplier-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.supplier-create",
+      "cli": "museoncli cloud-phone supplier +create",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone supplier +create --name <name>",
+        "museoncli schema cloud-phone.supplier-create"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "password_file": {
+            "description": "Local file containing the password; never printed.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "port": {
+            "maximum": 65535,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "scheme": {
+            "enum": [
+              "socks5",
+              "http",
+              "https"
+            ],
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.supplier-create",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read supplier +list.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "supplier",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Create an IP supplier preset; read its password from --password-file.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.supplier-delete": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.supplier-delete",
+      "cli": "museoncli cloud-phone supplier +delete",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone supplier +delete --id <supplier-id> --yes",
+        "museoncli schema cloud-phone.supplier-delete"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.supplier-delete",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read supplier +list.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "supplier",
+      "risk_level": "destructive",
+      "shortcut": "+delete",
+      "stability": "stable",
+      "summary": "Delete a saved IP supplier preset.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.supplier-export-credentials": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.supplier-export-credentials",
+      "cli": "museoncli cloud-phone supplier +export-credentials",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone supplier +export-credentials --id <supplier-id> --output <output> --yes",
+        "museoncli schema cloud-phone.supplier-export-credentials"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "output": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "output"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.supplier-export-credentials",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "supplier",
+      "risk_level": "read",
+      "shortcut": "+export-credentials",
+      "stability": "stable",
+      "summary": "Save one connection's credentials to a new mode-0600 local JSON file; never print the password or overwrite an existing file.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.supplier-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.supplier-list",
+      "cli": "museoncli cloud-phone supplier +list",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone supplier +list",
+        "museoncli schema cloud-phone.supplier-list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.supplier-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "supplier",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List saved IP supplier connection presets without passwords.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.supplier-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.supplier-update",
+      "cli": "museoncli cloud-phone supplier +update",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone supplier +update --id <supplier-id> --name <name>",
+        "museoncli schema cloud-phone.supplier-update"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "password_file": {
+            "description": "Local file containing the password; never printed.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "port": {
+            "maximum": 65535,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "scheme": {
+            "enum": [
+              "socks5",
+              "http",
+              "https"
+            ],
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.supplier-update",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Read supplier +list.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "supplier",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Update an IP supplier preset; omitted password keeps its existing value.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "content-analysis.get": {

@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.15.0
+
+- 新增员工云机与 IP 管理：查询、批量添加、检测、分组、供应商、换 IP、待处理事项及资源回收。
+- 连接凭据仅导出至受保护的本地文件；批量操作保留逐项失败，查询显示数据更新时间。
+
 ## 0.14.0
 
 - `publish post +schedule` takes an optional `music_url` per item: a TikTok post link (`/video/<id>` or `/photo/<id>`) whose sound the cloud phone reuses as the post's background music, like "use this sound". Sound pages (`/music/...`), short links and bare IDs are rejected before any upload. Accounts not on a cloud phone publish without it; an item without it keeps the cloud phone's random sound.
