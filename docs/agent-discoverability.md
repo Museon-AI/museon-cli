@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-271 commands across 13 domains (source of truth: `museoncli schema`).
+298 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -235,6 +235,38 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `publish job +list` | read | — | — | direct | List publish jobs (one per video and account) with status, scheduled time and error; --task-id narrows to one batch returned by publish post +schedule. |
 | `publish job +get` | read | — | — | direct | Read one publish job's status, scheduled time and error. |
 | `publish job +cancel` | write | yes | — | direct | Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires a workspace editor. |
+
+### cloud-phone
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `cloud-phone fleet +get` | read | — | — | direct | Read the complete phone fleet, IP occupancy and attention queue; timestamps and stale indicate freshness. |
+| `cloud-phone summary +get` | read | — | — | direct | Summarize cloud phones, IP health and available slots by country. |
+| `cloud-phone phone +list` | read | — | — | direct | Find phones by name, account or IP, including current connection, exit IP, health, occupancy and last change. |
+| `cloud-phone phone +get` | read | — | — | direct | Get one phone and its current IP details by its catalog ID. |
+| `cloud-phone phone +set-proxy` | write | yes | `--yes` | direct | Assign explicit target IPs to up to 10 phones; each IP holds at most 5 phones. Read-back verifies each change. No automatic target selection or country restriction. |
+| `cloud-phone proxy +list` | read | — | — | direct | List IPs with groups, suppliers, health, exit IP, bound phones and available slots. |
+| `cloud-phone proxy +get` | read | — | — | direct | Get one IP and all its bound phones without per-phone lookups. |
+| `cloud-phone proxy +add` | write | yes | — | direct | Add up to 5000 IPs from entries or a JSON/CSV file; a supplier preset also accepts a text file of IPs. New IPs are checked in the background. Each row reports added, exists, invalid or failed. |
+| `cloud-phone proxy +check` | write | yes | — | direct | Check selected IPs; --wait waits for a newer check for every selected IP. Accepted does not mean healthy; inspect each result. |
+| `cloud-phone proxy +move` | write | yes | — | direct | Move selected IPs into one group; returns a result per IP. |
+| `cloud-phone proxy +delete` | destructive | yes | `--yes` | direct | Delete selected unused IPs; IPs used by phones are refused. Inspect every result. |
+| `cloud-phone group +list` | read | — | — | direct | List all IP groups, including empty groups. |
+| `cloud-phone group +create` | write | yes | — | direct | Create an IP group. |
+| `cloud-phone group +delete` | destructive | yes | `--yes` | direct | Delete empty IP groups; occupied groups and the ungrouped category are refused. |
+| `cloud-phone supplier +list` | read | — | — | direct | List saved IP supplier connection presets without passwords. |
+| `cloud-phone supplier +create` | write | yes | — | direct | Create an IP supplier preset; read its password from --password-file. |
+| `cloud-phone supplier +update` | write | yes | — | direct | Update an IP supplier preset; omitted password keeps its existing value. |
+| `cloud-phone supplier +delete` | destructive | yes | `--yes` | direct | Delete a saved IP supplier preset. |
+| `cloud-phone attention +list` | read | — | — | direct | List down, repeatedly failing or overloaded IPs, failed changes, reclaimable phones and unused IPs. |
+| `cloud-phone recovery +preview` | read | — | — | direct | Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it. Returns blockers and Museon device IDs; no resources are released. |
+| `cloud-phone recovery-job +create` | destructive | yes | `--yes` | direct | Reclaim explicitly selected devices from a fresh recovery preview. Retry uncertain submission with the same key; accepted is not completed. |
+| `cloud-phone recovery-job +list` | read | — | — | direct | List resource-recovery jobs, including failed and partial outcomes. |
+| `cloud-phone recovery-job +get` | read | — | — | direct | Get a recovery job and every device's outcome and blockers. |
+| `cloud-phone recovery-job +retry` | destructive | yes | `--yes` | direct | Retry eligible unfinished recovery items using a stable dispatch key. |
+| `cloud-phone recovery-job +export` | read | — | — | direct | Export recovery history to a new local CSV file; refuses to overwrite an existing file. |
+| `cloud-phone proxy +export-credentials` | read | — | `--yes` | direct | Save one connection's credentials to a new mode-0600 local JSON file; never print the password or overwrite an existing file. |
+| `cloud-phone supplier +export-credentials` | read | — | `--yes` | direct | Save one connection's credentials to a new mode-0600 local JSON file; never print the password or overwrite an existing file. |
 
 ### ai-slideshow
 
