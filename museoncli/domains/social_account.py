@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import json
 import time
 from typing import Any
 
+from museoncli import adb_relay
 from museoncli.config import Config
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import (
@@ -155,6 +157,15 @@ def _build_social_account_id_arguments(args: argparse.Namespace) -> dict[str, An
     payload = _load_structured_args(args)
     payload["account_id"] = args.account_id
     return payload
+
+
+def _add_social_account_renew_phone_lease_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_social_account_id_arguments(parser)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate the intended account without renewing its cloud phone's lease.",
+    )
 
 
 def _add_social_account_adb_connect_arguments(parser: argparse.ArgumentParser) -> None:
@@ -831,6 +842,26 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
+            shortcut="+renew-phone-lease",
+            summary=(
+                "Keep this account's cloud phone on for 15 more minutes. The +connect-adb "
+                "relay runs it every minute while ADB traffic flows; Museon shuts down a "
+                "phone nobody renews."
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="social_account_renew_phone_lease",
+            input_schema=_social_account_get_input_schema(),
+            output_schema=_direct_output_schema(
+                "The renewed cloud phone and how long its lease now lasts."
+            ),
+            examples=["museoncli social-account +renew-phone-lease --id <pool_account_id>"],
+            add_arguments=_add_social_account_renew_phone_lease_arguments,
+            build_arguments=_build_social_account_id_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+get-stream-url",
             legacy_shortcuts=("+stream-url",),
             summary=(
@@ -1191,7 +1222,15 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
         resolved_account = connection
     if not isinstance(connection, dict):
         raise RuntimeError("invalid_adb_connection_response")
-    result = await _connect_adb(connection)
+    relay_account_id = account_id or str(connection.get("account_id") or "")
+    relay_workspace_id = (
+        workspace_id if account_id else str(connection.get("workspace_id") or "") or None
+    )
+    if not relay_account_id:
+        raise RuntimeError("invalid_adb_connection_response")
+    result = await _connect_adb(
+        connection, account_id=relay_account_id, workspace_id=relay_workspace_id
+    )
     if isinstance(resolved_account, dict):
         result.update(
             {
@@ -1200,6 +1239,22 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
             }
         )
     return result
+
+
+async def _execute_renew_phone_lease(ctx: CommandContext) -> Any:
+    account_id = str(ctx.arguments.get("account_id") or "")
+    if not account_id:
+        raise RuntimeError(f"{ctx.spec.schema_name} requires account_id")
+    if not ctx.workspace_id:
+        raise RuntimeError("missing_workspace")
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            f"/agent-cli/social-accounts/{account_id}/phone-lease",
+            params={"workspace_id": ctx.workspace_id},
+        )
+    )
 
 
 async def _execute_stream_url(ctx: CommandContext) -> Any:
@@ -1223,12 +1278,22 @@ async def _execute_stream_url(ctx: CommandContext) -> Any:
     )
 
 
-async def _connect_adb(connection: dict[str, Any]) -> dict[str, Any]:
-    serial = str(connection.get("serial") or "").strip()
+async def _connect_adb(
+    connection: dict[str, Any], *, account_id: str, workspace_id: str | None
+) -> dict[str, Any]:
+    target = str(connection.get("serial") or "").strip()
     password = str(connection.get("password") or "").strip()
-    if not serial or not password:
+    if not target or not password:
         raise RuntimeError("incomplete_adb_connection_response")
 
+    # Museon stops a phone whose lease nobody renews; the relay renews it while
+    # ADB traffic flows, so ADB always goes through the relay's local serial.
+    serial, stale_serial = await asyncio.to_thread(
+        adb_relay.ensure_relay, target=target, account_id=account_id, workspace_id=workspace_id
+    )
+    if stale_serial:
+        with contextlib.suppress(RuntimeError):
+            await _run_adb("disconnect", "disconnect", stale_serial)
     await _run_adb("connect", "connect", serial)
     await _run_adb("glogin", "-s", serial, "shell", "glogin", password)
     state = await _run_adb("get-state", "-s", serial, "get-state")
@@ -1237,7 +1302,10 @@ async def _connect_adb(connection: dict[str, Any]) -> dict[str, Any]:
     return {
         "serial": serial,
         "connected": True,
-        "next_step": "Use native adb or u2cli with this serial.",
+        "next_step": (
+            "Use native adb or u2cli with this serial. The phone stays on while ADB is in use "
+            "and shuts down about 15 minutes after the last ADB command."
+        ),
     }
 
 
@@ -1497,6 +1565,7 @@ EXECUTORS = {
     "social-account.get-connect-link": direct_enveloped(_execute_connect_link_status),
     "social-account.connect-adb": direct_enveloped(_execute_adb_connect),
     "social-account.get-stream-url": direct_enveloped(_execute_stream_url),
+    "social-account.renew-phone-lease": direct_enveloped(_execute_renew_phone_lease),
     "social-account.get": direct_enveloped(_execute_get),
     "social-account.get-performance": direct_enveloped(_execute_performance_get),
     "social-account.list": direct_enveloped(_execute_list),

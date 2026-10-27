@@ -10,6 +10,7 @@ RETAINED = {
     "get",
     "connect-adb",
     "get-stream-url",
+    "renew-phone-lease",
     "create-connect-link",
     "get-connect-link",
     "get-performance",

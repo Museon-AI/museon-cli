@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-271 commands across 13 domains (source of truth: `museoncli schema`).
+272 commands across 13 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -91,6 +91,7 @@ The tables below are generated — edit code, then run
 | `social-account +list` | read | — | — | direct | List social accounts available to the current workspace. For multiple known handles, repeat --search-term (max 100) in one request; do not concatenate handles into --search or page-scan the account list. |
 | `social-account +get` | read | — | — | direct | Read one workspace social account. |
 | `social-account +connect-adb` | write | yes | — | direct | Connect the current sandbox to this account's cloud phone over ADB. After success, use native adb or u2cli with the returned serial; the temporary connection password is never printed. |
+| `social-account +renew-phone-lease` | write | yes | — | direct | Keep this account's cloud phone on for 15 more minutes. The +connect-adb relay runs it every minute while ADB traffic flows; Museon shuts down a phone nobody renews. |
 | `social-account +get-stream-url` | read | — | — | direct | Return this account's cloud-phone live-stream URL. The sandbox stream sidecar renders it to capture fast motion the u2cli clip command needs; the URL views the same phone adb-connect controls. |
 | `social-account +create-connect-link` | write | yes | — | direct | Create a workspace self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, LinkedIn, and X. |
 | `social-account +get-connect-link` | read | — | — | direct | Read or wait for the authorization result of a social account connect link. |
