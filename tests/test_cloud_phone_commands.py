@@ -238,7 +238,7 @@ def test_all_snapshot_rows_are_returned_from_one_pair_of_reads(monkeypatch):
 def test_recovery_retries_keep_body_idempotency_and_never_resubmit_when_polling(monkeypatch):
     workspace = "50000000-0000-4000-8000-000000000005"
     job = "60000000-0000-4000-8000-000000000006"
-    setup(monkeypatch, handler := lambda req: httpx.Response(500))
+    setup(monkeypatch, lambda req: httpx.Response(500))
     monkeypatch.setattr(
         cli,
         "load_config",
