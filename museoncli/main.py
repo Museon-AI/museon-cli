@@ -550,6 +550,7 @@ async def download_api_file(
     params: dict[str, Any],
     destination: Path,
     max_bytes: int,
+    allowed_content_types: set[str] | None = None,
 ) -> dict[str, Any]:
     """Stream one authenticated API response to a caller-owned temporary file."""
     if not auth_headers(cfg):
@@ -567,12 +568,12 @@ async def download_api_file(
                     raise RuntimeError(forbidden_error_message(response))
                 raise ApiRequestError(response.status_code, response_error_payload(response))
             content_type = response.headers.get("content-type", "").split(";", 1)[0].lower()
-            if content_type not in {
+            if content_type not in (allowed_content_types or {
                 "video/mp4",
                 "video/quicktime",
                 "video/webm",
                 "video/x-msvideo",
-            }:
+            }):
                 raise RuntimeError("unsupported_media_type")
             declared_length = response.headers.get("content-length")
             if declared_length:
@@ -582,7 +583,7 @@ async def download_api_file(
                 except ValueError as exc:
                     raise RuntimeError("invalid_content_length") from exc
             written = 0
-            with destination.open("xb") as output:
+            with os.fdopen(os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as output:
                 async for chunk in response.aiter_bytes():
                     written += len(chunk)
                     if written > max_bytes:
@@ -1133,12 +1134,18 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
     arguments = command_payload(args)
     # HireAICreator validates declared UUID fields in its strict recursive schema.
     # Its account_id is an API string, and public collection tokens are not UUIDs.
-    if spec.domain.value != "hireaicreator":
+    if spec.domain.value not in {"hireaicreator", "cloud-phone"}:
         validate_uuid_arguments(arguments)
     workspace_id = workspace_id_arg_or_selected(args, cfg)
     if spec.domain.value == "hireaicreator":
         workspace_id = (arguments.get("workspace_id") or workspace_id) if "workspace_id" in spec.input_schema["properties"] else None
+    if not spec.workspace_bound:
+        workspace_id = None
     if getattr(args, "dry_run", False):
+        if spec.domain.value == "cloud-phone":
+            from museoncli.domains.cloud_phone import redact
+
+            arguments = redact(arguments)
         if spec.schema_name.startswith("skills."):
             dry_run_workspace_id = workspace_id if spec.schema_name == "skills.create" else None
             return domain_command_dry_run_envelope(

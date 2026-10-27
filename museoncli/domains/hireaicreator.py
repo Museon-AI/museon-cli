@@ -445,7 +445,9 @@ def _command(
     props = dict(properties)
     path_keys = tuple(re.findall(r"\{([^}]+)\}", path))
     for key in path_keys:
-        props[key] = {"type": "string", "minLength": 6, "maxLength": 100} if key == "token" else U
+        props.setdefault(
+            key, {"type": "string", "minLength": 6, "maxLength": 100} if key == "token" else U
+        )
         required = (key, *required)
     if workspace != "resource":
         props["workspace_id"] = U

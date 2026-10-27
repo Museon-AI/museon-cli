@@ -187,13 +187,22 @@ def test_command_specs_publish_auth_and_capability_metadata() -> None:
         else:
             assert spec.authentication_required is True
             assert spec.required_scopes == ("agent_cli.access",)
-            if spec.schema_name in STAFF_COMMANDS:
+            if (
+                spec.schema_name in STAFF_COMMANDS
+                or spec.resource_policy == "staff_global_cloud_phone_management"
+            ):
                 assert spec.required_roles == ("staff",)
             elif spec.schema_name in ADMIN_OR_STAFF_COMMANDS:
                 assert spec.required_roles == ("workspace_admin_or_staff",)
             else:
                 assert spec.required_roles == ("workspace_member",)
-            assert spec.workspace_bound is True
+            if spec.resource_policy == "staff_global_cloud_phone_management":
+                assert spec.workspace_bound == (
+                    spec.resource == "recovery"
+                    or spec.schema_name == "cloud-phone.recovery-job-create"
+                )
+            else:
+                assert spec.workspace_bound is True
             assert spec.transport == "agent_cli_api"
 
 
