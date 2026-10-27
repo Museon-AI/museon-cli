@@ -354,6 +354,19 @@ async def _check(ctx: CommandContext) -> dict:
         await asyncio.sleep(min(3, max(0, deadline - time.monotonic())))
 
 
+async def _recover(ctx: CommandContext) -> dict:
+    body = dict(ctx.arguments)
+    job_id = body.pop("id", None)
+    path = RECOVERY + (f"/jobs/{job_id}/retry" if job_id else "/jobs")
+    if not job_id:
+        body["workspace_id"] = body.get("workspace_id") or ctx.workspace_id
+        if not body["workspace_id"]:
+            raise RuntimeError("missing_workspace")
+    # Recovery owns body-level idempotency. Do not move this key to the generic
+    # HTTP header: an uncertain response must replay the same job, not create another.
+    return _envelope(ctx, await ctx.api_data(ctx.cfg, "POST", path, json_body=body))
+
+
 async def _recovery_list(ctx: CommandContext) -> dict:
     page, size = ctx.arguments.get("page", 1), ctx.arguments.get("page_size", 20)
     rows = await _get(ctx, RECOVERY + "/jobs", limit=size, offset=(page - 1) * size)
@@ -707,6 +720,7 @@ def specs() -> list[CommandSpec]:
             },
             required=("account_ids", "device_ids", "idempotency_key"),
             workspace=True,
+            executor=_recover,
             write=True,
             destructive=True,
             summary="Reclaim explicitly selected devices from a fresh recovery preview. Retry uncertain submission with the same key; accepted is not completed.",
@@ -736,6 +750,7 @@ def specs() -> list[CommandSpec]:
             RECOVERY + "/jobs/{id}/retry",
             {"id": U, "idempotency_key": {**S, "maxLength": 128}},
             required=("idempotency_key",),
+            executor=_recover,
             write=True,
             destructive=True,
             summary="Retry eligible unfinished recovery items using a stable dispatch key.",
@@ -817,6 +832,10 @@ def specs() -> list[CommandSpec]:
         payload = build_add(args)
         if ("entries" in payload) == ("entries_file" in payload):
             raise ValueError("Supply exactly one of entries or --entries-file")
+        if "entries_file" in payload:
+            payload["entries"] = _entries(
+                payload.pop("entries_file"), bool(payload.get("supplier_id"))
+            )
         return payload
 
     specs[specs.index(add_spec)] = replace(

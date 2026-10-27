@@ -9,7 +9,7 @@ import httpx
 import pytest
 
 import museoncli.main as cli
-from museoncli.config import AuthState, Config
+from museoncli.config import AuthState, Config, WorkspaceState
 
 HTTP_CLIENT = httpx.AsyncClient
 SUPPLIER = "40000000-0000-4000-8000-000000000004"
@@ -233,3 +233,51 @@ def test_all_snapshot_rows_are_returned_from_one_pair_of_reads(monkeypatch):
     assert len(result["data"]["items"]) == 2387
     assert result["page_info"]["complete"]
     assert len(calls) == 2
+
+
+def test_recovery_retries_keep_body_idempotency_and_never_resubmit_when_polling(monkeypatch):
+    workspace = "50000000-0000-4000-8000-000000000005"
+    job = "60000000-0000-4000-8000-000000000006"
+    setup(monkeypatch, handler := lambda req: httpx.Response(500))
+    monkeypatch.setattr(
+        cli,
+        "load_config",
+        lambda: Config(
+            api_base_url="https://api.example.test/api/v1",
+            auth=AuthState(api_key="test-only"),
+            workspace=WorkspaceState(id=workspace),
+        ),
+    )
+    submitted = []
+
+    def handler(req):
+        if req.method == "POST":
+            body = json.loads(req.content)
+            assert body["idempotency_key"] == "recovery-stable-key"
+            submitted.append(body)
+        return httpx.Response(200, json={"id": job, "status": "completed", "items": []})
+
+    monkeypatch.setattr(
+        cli.httpx,
+        "AsyncClient",
+        lambda **kw: HTTP_CLIENT(**kw, transport=httpx.MockTransport(handler)),
+    )
+    args = {
+        "account_ids": [SUPPLIER],
+        "device_ids": [SUPPLIER],
+        "idempotency_key": "recovery-stable-key",
+    }
+    for _ in range(2):
+        assert (
+            invoke("recovery-job", "create", "--args-json", json.dumps(args), "--yes")["data"]["id"]
+            == job
+        )
+    assert submitted[0] == submitted[1]
+    assert submitted[0]["workspace_id"] == workspace and submitted[0]["scope"] == "global"
+    invoke(
+        "recovery-job", "retry", "--id", job, "--idempotency-key", "recovery-stable-key", "--yes"
+    )
+    assert submitted[-1] == {"idempotency_key": "recovery-stable-key"}
+    count = len(submitted)
+    invoke("recovery-job", "get", "--id", job)
+    assert len(submitted) == count
