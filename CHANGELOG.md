@@ -2,7 +2,7 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
-## Unreleased
+## 0.17.0
 
 - New staff commands for social app versions on cloud phones:
   - `cloud-phone app +list` reads installed and team-pinned versions of YouTube, Facebook, Instagram and TikTok live from up to 50 phones (`--phone-id`) or accounts (`--account-id`). Each app reports `current`, `outdated`, `ahead`, `installing`, `missing` or `unpinned`.
