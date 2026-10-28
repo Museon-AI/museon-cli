@@ -472,3 +472,41 @@ def test_plan_generation_model_ids_retain_provider_spelling(monkeypatch, tmp_pat
     dispatch([*command(case), "--args-file", str(path)])
     assert len(requests) == 1
     request_matches(requests[0], case)
+
+
+def test_create_from_upload_warns_when_videos_stay_unscheduled(monkeypatch):
+    # A null scheduled_at is "not scheduled", not "publish now"; callers must be told.
+    def handler(request):
+        return httpx.Response(
+            201,
+            json={
+                "items": [
+                    {"id": "video-later", "status": "approved", "scheduled_at": None},
+                    {
+                        "id": "video-timed",
+                        "status": "scheduled",
+                        "scheduled_at": "2026-10-29T01:00:00Z",
+                    },
+                ]
+            },
+        )
+
+    attach_transport(monkeypatch, handler)
+    item = {"media_id": BASE_WORKSPACE, "publishing_account_ids": ["account"], "caption": "Done"}
+    result = dispatch(
+        [
+            "hireaicreator",
+            "video",
+            "+create-from-upload",
+            "--args-json",
+            json.dumps(
+                {
+                    "campaign_id": BASE_WORKSPACE,
+                    "idempotency_key": "upload-unscheduled",
+                    "items": [item],
+                }
+            ),
+        ]
+    )
+    assert any("will not publish: video-later" in warning for warning in result["warnings"])
+    assert any("+bulk-schedule" in step for step in result["next_steps"])

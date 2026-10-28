@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.17.1
+
+- `hireaicreator video +create-from-upload` documents `scheduled_at`: omit it or pass null and the video stays `approved` and never publishes until `video +bulk-schedule` gives it a time. There is no publish-now value; pass a time a few minutes ahead to publish soon. The command now warns and lists the video IDs it left unscheduled.
+- No API change is required.
+
 ## 0.17.0
 
 - New staff commands for social app versions on cloud phones:
