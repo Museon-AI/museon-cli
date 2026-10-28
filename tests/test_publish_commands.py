@@ -272,3 +272,44 @@ def test_music_url_that_is_not_a_tiktok_post_fails_before_any_request(
     with pytest.raises(ValueError, match=message):
         invoke(args)
     assert requests == []
+
+
+def test_job_reads_keep_the_delivery_report_but_not_provider_identity(monkeypatch, tmp_path):
+    reported = {
+        "result": "succeeded",
+        "error_code": None,
+        "error_message": None,
+        "settled_at": "2030-10-01T18:05:00Z",
+    }
+    verification = {
+        "deadline_at": "2030-10-01T19:05:00Z",
+        "last_outcome": "not_found",
+        "last_checked_at": "2030-10-01T18:10:00Z",
+        "platform_content_id": None,
+    }
+    jobs = [
+        {
+            "id": TASK,
+            "status": "processing",
+            "provider": "internal-vendor",
+            "delivery": {"stage": "verifying", "provider": reported, "verification": verification},
+        },
+        {"id": MEDIA, "status": "published", "delivery": None},
+    ]
+
+    def handler(request):
+        assert request.url.path == "/api/v2/pool-accounts/jobs"
+        return httpx.Response(
+            200, json={"items": jobs, "total": 2, "page": 1, "page_size": 20, "has_more": False}
+        )
+
+    setup(monkeypatch, tmp_path, handler)
+    result = asyncio.run(cli.dispatch(cli.build_parser().parse_args(["publish", "job", "+list"])))
+
+    verifying, legacy = result["data"]["items"]
+    assert verifying == {
+        "id": TASK,
+        "status": "processing",
+        "delivery": {"stage": "verifying", "upstream": reported, "verification": verification},
+    }
+    assert legacy == {"id": MEDIA, "status": "published", "delivery": None}

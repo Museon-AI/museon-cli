@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-299 commands across 14 domains (source of truth: `museoncli schema`).
+302 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -249,8 +249,8 @@ The tables below are generated — edit code, then run
 |---|---|---|---|---|---|
 | `publish account +list` | read | — | — | direct | List the social accounts bound to this workspace, which are the accounts it can publish to. Filter by platform (tiktok) and device kind; follow every page before choosing accounts. |
 | `publish post +schedule` | write | yes | — | direct | Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted. |
-| `publish job +list` | read | — | — | direct | List publish jobs (one per video and account) with status, scheduled time and error; --task-id narrows to one batch returned by publish post +schedule. |
-| `publish job +get` | read | — | — | direct | Read one publish job's status, scheduled time and error. |
+| `publish job +list` | read | — | — | direct | List publish jobs (one per video and account) with status, scheduled time, error and delivery; --task-id narrows to one batch returned by publish post +schedule. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs. |
+| `publish job +get` | read | — | — | direct | Read one publish job's status, scheduled time, error and delivery. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs. |
 | `publish job +cancel` | write | yes | — | direct | Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires a workspace editor. |
 
 ### cloud-phone
@@ -262,6 +262,9 @@ The tables below are generated — edit code, then run
 | `cloud-phone phone +list` | read | — | — | direct | Find phones by name, account or IP, including current connection, exit IP, health, occupancy and last change. |
 | `cloud-phone phone +get` | read | — | — | direct | Get one phone and its current IP details by its catalog ID. |
 | `cloud-phone phone +set-proxy` | write | yes | `--yes` | direct | Assign explicit target IPs to up to 10 phones; each IP holds at most 5 phones. Read-back verifies each change. No automatic target selection or country restriction. |
+| `cloud-phone app +list` | read | — | — | direct | Read installed and team-pinned versions of YouTube, Facebook, Instagram and TikTok live from up to 50 phones or accounts. The pinned version is always the upgrade target. Each app's state is current, outdated (below the pin; upgradable), ahead, installing, missing or unpinned. IDs matching no phone are listed in unresolved; a phone that could not be read carries an error. Rerun to follow app-upgrade +create. |
+| `cloud-phone app-upgrade +preview` | read | — | — | direct | Preview app-upgrade +create without changing anything: the phones whose selected apps are outdated and would move up to the team's pinned version, why other phones are skipped, and IDs matching no phone. Only outdated apps move up; nothing is downgraded or newly installed. At most 50 phones and accounts per request. |
+| `cloud-phone app-upgrade +create` | write | yes | `--yes` | direct | Upgrade outdated apps on up to 50 phones or accounts to the team's pinned version in the background: start each phone, install the pinned version, verify it. The target is always the pin; only outdated apps move up, never down, and missing apps are not installed. Retry an uncertain submission with the same idempotency key; a phone is never upgraded twice. Accepted is not completed: follow progress by rerunning app +list. |
 | `cloud-phone proxy +list` | read | — | — | direct | List IPs with groups, suppliers, health, exit IP, bound phones and available slots. |
 | `cloud-phone proxy +get` | read | — | — | direct | Get one IP and all its bound phones without per-phone lookups. |
 | `cloud-phone proxy +add` | write | yes | — | direct | Add up to 5000 IPs from entries or a JSON/CSV file; a supplier preset also accepts a text file of IPs. New IPs are checked in the background. Each row reports added, exists, invalid or failed. |

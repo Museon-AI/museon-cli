@@ -3798,6 +3798,87 @@
             "resource_policy": "staff_global_cloud_phone_management",
             "workspace_bound": false
           },
+          "capability_key": "cloud-phone.app-list",
+          "cli": "museoncli cloud-phone app +list",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.app-list",
+          "requires_confirmation": false,
+          "resource": "app",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "Read installed and team-pinned versions of YouTube, Facebook, Instagram and TikTok live from up to 50 phones or accounts. The pinned version is always the upgrade target. Each app's state is current, outdated (below the pin; upgradable), ahead, installing, missing or unpinned. IDs matching no phone are listed in unresolved; a phone that could not be read carries an error. Rerun to follow app-upgrade +create.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.app-upgrade-preview",
+          "cli": "museoncli cloud-phone app-upgrade +preview",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.app-upgrade-preview",
+          "requires_confirmation": false,
+          "resource": "app-upgrade",
+          "risk_level": "read",
+          "shortcut": "+preview",
+          "stability": "stable",
+          "summary": "Preview app-upgrade +create without changing anything: the phones whose selected apps are outdated and would move up to the team's pinned version, why other phones are skipped, and IDs matching no phone. Only outdated apps move up; nothing is downgraded or newly installed. At most 50 phones and accounts per request.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
+          "capability_key": "cloud-phone.app-upgrade-create",
+          "cli": "museoncli cloud-phone app-upgrade +create",
+          "domain": "cloud-phone",
+          "execution": "direct",
+          "name": "cloud-phone.app-upgrade-create",
+          "requires_confirmation": true,
+          "resource": "app-upgrade",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Upgrade outdated apps on up to 50 phones or accounts to the team's pinned version in the background: start each phone, install the pinned version, verify it. The target is always the pin; only outdated apps move up, never down, and missing apps are not installed. Retry an uncertain submission with the same idempotency key; a phone is never upgraded twice. Accepted is not completed: follow progress by rerunning app +list.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_global_cloud_phone_management",
+            "workspace_bound": false
+          },
           "capability_key": "cloud-phone.proxy-list",
           "cli": "museoncli cloud-phone proxy +list",
           "domain": "cloud-phone",
@@ -8730,7 +8811,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List publish jobs (one per video and account) with status, scheduled time and error; --task-id narrows to one batch returned by publish post +schedule.",
+          "summary": "List publish jobs (one per video and account) with status, scheduled time, error and delivery; --task-id narrows to one batch returned by publish post +schedule. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -8757,7 +8838,7 @@
           "risk_level": "read",
           "shortcut": "+get",
           "stability": "stable",
-          "summary": "Read one publish job's status, scheduled time and error.",
+          "summary": "Read one publish job's status, scheduled time, error and delivery. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -23946,6 +24027,406 @@
       "shortcut": "+resolve-post",
       "stability": "stable",
       "summary": "Resolve an account publish schedule item to its published social post.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.app-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.app-list",
+      "cli": "museoncli cloud-phone app +list",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone app +list --phone-id 123456789 --app youtube"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_ids": {
+            "description": "Social account UUID; resolved to the cloud phone it runs on",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "apps": {
+            "description": "App to read; omit for all four",
+            "items": {
+              "enum": [
+                "youtube",
+                "facebook",
+                "instagram",
+                "tiktok"
+              ],
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 0,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "phone_ids": {
+            "description": "Phone catalog ID, the --id of phone +get",
+            "items": {
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "cloud-phone.app-list",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "app",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "Read installed and team-pinned versions of YouTube, Facebook, Instagram and TikTok live from up to 50 phones or accounts. The pinned version is always the upgrade target. Each app's state is current, outdated (below the pin; upgradable), ahead, installing, missing or unpinned. IDs matching no phone are listed in unresolved; a phone that could not be read carries an error. Rerun to follow app-upgrade +create.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.app-upgrade-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.app-upgrade-create",
+      "cli": "museoncli cloud-phone app-upgrade +create",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone app-upgrade +create --phone-id 123456789 --app youtube --idempotency-key youtube-pin-20261028 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_ids": {
+            "description": "Social account UUID; resolved to the cloud phone it runs on",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "apps": {
+            "description": "App to upgrade where it is outdated",
+            "items": {
+              "enum": [
+                "youtube",
+                "facebook",
+                "instagram",
+                "tiktok"
+              ],
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "phone_ids": {
+            "description": "Phone catalog ID, the --id of phone +get",
+            "items": {
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "apps",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.app-upgrade-create",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. Rerun app +list for the returned phones until every app is current.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "app-upgrade",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Upgrade outdated apps on up to 50 phones or accounts to the team's pinned version in the background: start each phone, install the pinned version, verify it. The target is always the pin; only outdated apps move up, never down, and missing apps are not installed. Retry an uncertain submission with the same idempotency key; a phone is never upgraded twice. Accepted is not completed: follow progress by rerunning app +list.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "cloud-phone.app-upgrade-preview": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_global_cloud_phone_management",
+        "workspace_bound": false
+      },
+      "capability_key": "cloud-phone.app-upgrade-preview",
+      "cli": "museoncli cloud-phone app-upgrade +preview",
+      "domain": "cloud-phone",
+      "examples": [
+        "museoncli cloud-phone app-upgrade +preview --phone-id 123456789 --app youtube"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_ids": {
+            "description": "Social account UUID; resolved to the cloud phone it runs on",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "apps": {
+            "description": "App to upgrade where it is outdated",
+            "items": {
+              "enum": [
+                "youtube",
+                "facebook",
+                "instagram",
+                "tiktok"
+              ],
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "phone_ids": {
+            "description": "Phone catalog ID, the --id of phone +get",
+            "items": {
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "apps"
+        ],
+        "type": "object"
+      },
+      "name": "cloud-phone.app-upgrade-preview",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. ",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "app-upgrade",
+      "risk_level": "read",
+      "shortcut": "+preview",
+      "stability": "stable",
+      "summary": "Preview app-upgrade +create without changing anything: the phones whose selected apps are outdated and would move up to the team's pinned version, why other phones are skipped, and IDs matching no phone. Only outdated apps move up; nothing is downgraded or newly installed. At most 50 phones and accounts per request.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -46405,7 +46886,7 @@
       "risk_level": "read",
       "shortcut": "+get",
       "stability": "stable",
-      "summary": "Read one publish job's status, scheduled time and error.",
+      "summary": "Read one publish job's status, scheduled time, error and delivery. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -46518,7 +46999,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List publish jobs (one per video and account) with status, scheduled time and error; --task-id narrows to one batch returned by publish post +schedule.",
+      "summary": "List publish jobs (one per video and account) with status, scheduled time, error and delivery; --task-id narrows to one batch returned by publish post +schedule. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

@@ -136,11 +136,22 @@ _PROVIDER_NEUTRAL_KEYS = {
 }
 
 
+def _neutral_delivery(delivery: Any) -> Any:
+    # A publish job's delivery.provider is what the executing service reported
+    # (result, error, settle time), not who it is: keep it as delivery.upstream.
+    report = delivery.get("provider", "") if isinstance(delivery, dict) else ""
+    if report is not None and not isinstance(report, dict):
+        return delivery
+    return {("upstream" if key == "provider" else key): item for key, item in delivery.items()}
+
+
 def without_provider_metadata(value: Any) -> Any:
     """Hide provider identity while preserving the public result's semantics."""
     if isinstance(value, dict):
         return {
-            _PROVIDER_NEUTRAL_KEYS.get(key, key): without_provider_metadata(item)
+            _PROVIDER_NEUTRAL_KEYS.get(key, key): without_provider_metadata(
+                _neutral_delivery(item) if key == "delivery" else item
+            )
             for key, item in value.items()
             if key not in _PROVIDER_METADATA_KEYS
         }

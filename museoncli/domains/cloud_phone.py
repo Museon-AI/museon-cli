@@ -59,6 +59,28 @@ SUPPLIER = {
     "username": {"type": "string"},
     "password_file": {**S, "description": "Local file containing the password; never printed."},
 }
+# Each app read is one live call per phone, so a request touches at most 50.
+MAX_APP_PHONES = 50
+APP = enum("youtube", "facebook", "instagram", "tiktok")
+APP_TARGETS = {
+    "phone_ids": {
+        **arr(ID, 0, MAX_APP_PHONES),
+        "uniqueItems": True,
+        "description": "Phone catalog ID, the --id of phone +get",
+    },
+    "account_ids": {
+        **arr(U, 0, MAX_APP_PHONES),
+        "uniqueItems": True,
+        "description": "Social account UUID; resolved to the cloud phone it runs on",
+    },
+}
+READ_APPS = {**arr(APP, 0, 4), "uniqueItems": True, "description": "App to read; omit for all four"}
+UPGRADE_APPS = {
+    **arr(APP, 1, 4),
+    "uniqueItems": True,
+    "description": "App to upgrade where it is outdated",
+}
+APP_FLAGS = {"phone_ids": "--phone-id", "account_ids": "--account-id", "apps": "--app"}
 
 
 def redact(value: Any) -> Any:
@@ -367,6 +389,45 @@ async def _recover(ctx: CommandContext) -> dict:
     return _envelope(ctx, await ctx.api_data(ctx.cfg, "POST", path, json_body=body))
 
 
+async def _apps(ctx: CommandContext) -> dict:
+    body = dict(ctx.arguments)
+    create = ctx.spec.schema_name == "cloud-phone.app-upgrade-create"
+    if ctx.spec.resource == "app":
+        raw = await _get(ctx, FLEET + "/apps", **body)
+    else:
+        # Like recovery, the upgrade owns body-level idempotency: a retry with the
+        # same key replays the accepted upgrade instead of upgrading a phone twice.
+        path = FLEET + ("/app-upgrades" if create else "/app-upgrades/preview")
+        raw = await ctx.api_data(ctx.cfg, "POST", path, json_body=body)
+    result = _envelope(ctx, raw)
+    phones = raw.get("phones", [])
+    unreadable = [phone for phone in phones if phone.get("error")]
+    if unreadable:
+        result["warnings"].append(
+            f"{len(unreadable)} of {len(phones)} phones could not be read; inspect each error."
+        )
+    if raw.get("unresolved"):
+        result["warnings"].append(
+            f"No cloud phone found for {len(raw['unresolved'])} IDs; see unresolved."
+        )
+    if create and phones:
+        result["warnings"].append(
+            "Accepted, not completed: each phone is started, upgraded and verified in the "
+            "background. Retry an uncertain submission only with the same idempotency key."
+        )
+        result["next_steps"].append(
+            " ".join(
+                [
+                    "museoncli cloud-phone app +list",
+                    *(f"--phone-id {phone['phone_id']}" for phone in phones),
+                    *(f"--app {app}" for app in body["apps"]),
+                ]
+            )
+            + "; repeat until every app is current."
+        )
+    return result
+
+
 async def _recovery_list(ctx: CommandContext) -> dict:
     page, size = ctx.arguments.get("page", 1), ctx.arguments.get("page_size", 20)
     rows = await _get(ctx, RECOVERY + "/jobs", limit=size, offset=(page - 1) * size)
@@ -459,6 +520,40 @@ def _spec(
     )
 
 
+def _app_spec(
+    resource: str,
+    action: str,
+    method: str,
+    path: str,
+    properties: dict,
+    *,
+    example: str,
+    **kwargs,
+) -> CommandSpec:
+    spec = _spec(
+        resource,
+        action,
+        method,
+        path,
+        {**APP_TARGETS, **properties},
+        executor=_apps,
+        flags=APP_FLAGS,
+        **kwargs,
+    )
+    build = spec.build_arguments
+
+    def build_targets(args):
+        payload = build(args)
+        count = len(payload.get("phone_ids", ())) + len(payload.get("account_ids", ()))
+        if not count:
+            raise ValueError("Select at least one --phone-id or --account-id")
+        if count > MAX_APP_PHONES:
+            raise ValueError(f"Select at most {MAX_APP_PHONES} phones and accounts in total")
+        return payload
+
+    return replace(spec, build_arguments=build_targets, examples=[example])
+
+
 def specs() -> list[CommandSpec]:
     specs = [
         _spec(
@@ -529,6 +624,38 @@ def specs() -> list[CommandSpec]:
             requires_confirmation=True,
             summary="Assign explicit target IPs to up to 10 phones; each IP holds at most 5 phones. Read-back verifies each change. No automatic target selection or country restriction.",
             readback="Read phone +get for each changed phone; inspect every failed or skipped outcome.",
+        ),
+        _app_spec(
+            "app",
+            "list",
+            "GET",
+            FLEET + "/apps",
+            {"apps": READ_APPS},
+            example="museoncli cloud-phone app +list --phone-id 123456789 --app youtube",
+            summary="Read installed and team-pinned versions of YouTube, Facebook, Instagram and TikTok live from up to 50 phones or accounts. The pinned version is always the upgrade target. Each app's state is current, outdated (below the pin; upgradable), ahead, installing, missing or unpinned. IDs matching no phone are listed in unresolved; a phone that could not be read carries an error. Rerun to follow app-upgrade +create.",
+        ),
+        _app_spec(
+            "app-upgrade",
+            "preview",
+            "POST",
+            FLEET + "/app-upgrades/preview",
+            {"apps": UPGRADE_APPS},
+            required=("apps",),
+            example="museoncli cloud-phone app-upgrade +preview --phone-id 123456789 --app youtube",
+            summary="Preview app-upgrade +create without changing anything: the phones whose selected apps are outdated and would move up to the team's pinned version, why other phones are skipped, and IDs matching no phone. Only outdated apps move up; nothing is downgraded or newly installed. At most 50 phones and accounts per request.",
+        ),
+        _app_spec(
+            "app-upgrade",
+            "create",
+            "POST",
+            FLEET + "/app-upgrades",
+            {"apps": UPGRADE_APPS, "idempotency_key": {**S, "maxLength": 128}},
+            required=("apps", "idempotency_key"),
+            write=True,
+            requires_confirmation=True,
+            example="museoncli cloud-phone app-upgrade +create --phone-id 123456789 --app youtube --idempotency-key youtube-pin-20261028 --dry-run",
+            summary="Upgrade outdated apps on up to 50 phones or accounts to the team's pinned version in the background: start each phone, install the pinned version, verify it. The target is always the pin; only outdated apps move up, never down, and missing apps are not installed. Retry an uncertain submission with the same idempotency key; a phone is never upgraded twice. Accepted is not completed: follow progress by rerunning app +list.",
+            readback="Rerun app +list for the returned phones until every app is current.",
         ),
         _spec(
             "proxy",
