@@ -196,12 +196,20 @@ BULK_SLOT = obj(
     },
     ("video_id", "expected_version", "publishing_account_id", "scheduled_at"),
 )
+UNSCHEDULED_UPLOAD_NOTE = (
+    "Future publish time with a timezone offset. Omit or null leaves the video unscheduled: "
+    "it stays approved and never publishes until hireaicreator video +bulk-schedule gives it a "
+    "time. There is no publish-now value; to publish soon, pass a time a few minutes ahead."
+)
 UPLOADED_VIDEO_ITEM = obj(
     {
         "media_id": U,
         "publishing_account_ids": arr(S, 1, 100),
         "caption": {"type": "string", "minLength": 1, "maxLength": 2200},
-        "scheduled_at": nullable(DT),
+        "scheduled_at": {
+            **nullable(DT),
+            "description": UNSCHEDULED_UPLOAD_NOTE,
+        },
         "schedule_timezone": TZ,
     },
     ("media_id", "publishing_account_ids", "caption"),
@@ -421,6 +429,27 @@ LEGACY_ACTIONS: dict[tuple[str, str], tuple[str, ...]] = {
 }
 
 
+def _warn_unscheduled_uploads(result: dict[str, Any]) -> None:
+    data = result.get("data")
+    items = data.get("items") if isinstance(data, dict) else None
+    unscheduled = [
+        str(item.get("id"))
+        for item in items or []
+        if isinstance(item, dict)
+        and item.get("status") == "approved"
+        and not item.get("scheduled_at")
+    ]
+    if not unscheduled:
+        return
+    result["warnings"].append(
+        f"{len(unscheduled)} uploaded video(s) have no scheduled_at and will not publish: "
+        + ", ".join(unscheduled)
+    )
+    result["next_steps"].append(
+        "Schedule them with hireaicreator video +bulk-schedule (video id, version, account, future time)."
+    )
+
+
 def _command(
     resource: str,
     action: str,
@@ -582,6 +611,8 @@ def _command(
                 "Receipt only; verify persisted state before dependent writes."
             )
             result["next_steps"].append(readback)
+        if name == "hireaicreator.video-create-from-upload":
+            _warn_unscheduled_uploads(result)
         return result
 
     EXECUTORS[name] = execute
@@ -1263,7 +1294,7 @@ def specs() -> list[CommandSpec]:
             workspace="body",
             write=True,
             idempotent=True,
-            summary="Register finished videos uploaded with media +upload as publishing tasks in a campaign, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. Requires campaign_id. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+            summary="Register finished videos uploaded with media +upload as publishing tasks in a campaign, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. Requires campaign_id. They need no POV, overlay or render. Only items with a future scheduled_at are scheduled to publish; items without one stay approved and unpublished until video +bulk-schedule. Keep the idempotency key on retries.",
             readback="Read each returned video ID with hireaicreator video +get; change caption or time with video +update or video +bulk-schedule.",
         ),
         _command(

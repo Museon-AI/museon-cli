@@ -5966,7 +5966,7 @@
           "risk_level": "write",
           "shortcut": "+create-from-upload",
           "stability": "stable",
-          "summary": "Register finished videos uploaded with media +upload as publishing tasks in a campaign, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. Requires campaign_id. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+          "summary": "Register finished videos uploaded with media +upload as publishing tasks in a campaign, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. Requires campaign_id. They need no POV, overlay or render. Only items with a future scheduled_at are scheduled to publish; items without one stay approved and unpublished until video +bulk-schedule. Keep the idempotency key on retries.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -10983,7 +10983,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.17.0",
+  "contract_revision": "0.17.1",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -40783,6 +40783,7 @@
                   "type": "string"
                 },
                 "scheduled_at": {
+                  "description": "Future publish time with a timezone offset. Omit or null leaves the video unscheduled: it stays approved and never publishes until hireaicreator video +bulk-schedule gives it a time. There is no publish-now value; to publish soon, pass a time a few minutes ahead.",
                   "format": "date-time",
                   "type": [
                     "string",
@@ -40891,7 +40892,7 @@
       "risk_level": "write",
       "shortcut": "+create-from-upload",
       "stability": "stable",
-      "summary": "Register finished videos uploaded with media +upload as publishing tasks in a campaign, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. Requires campaign_id. They need no POV, overlay or render and publish like any video on the account. Keep the idempotency key on retries.",
+      "summary": "Register finished videos uploaded with media +upload as publishing tasks in a campaign, one per account: TikTok, Instagram or YouTube; up to 100 accounts per video. Requires campaign_id. They need no POV, overlay or render. Only items with a future scheduled_at are scheduled to publish; items without one stay approved and unpublished until video +bulk-schedule. Keep the idempotency key on retries.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
