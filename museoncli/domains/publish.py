@@ -45,6 +45,12 @@ _MUSIC_URL = {
     ),
 }
 _TIKTOK_POST_PATH = re.compile(r"/(?:video|photo)/(\d+)(?:/|$)")
+_DELIVERY = (
+    "delivery.stage tells where the post stands: verifying means the publishing service "
+    "already reported its result (delivery.upstream) and Museon is confirming the post on the "
+    "platform until delivery.verification.deadline_at; published, failed and cancelled are "
+    "final. delivery is null for older jobs."
+)
 _POST_ITEM = obj(
     {
         "file": S,
@@ -321,8 +327,9 @@ def specs() -> list[CommandSpec]:
             {**PAGE, "task_id": U, "status": S},
             domain=Domain.PUBLISH,
             summary=(
-                "List publish jobs (one per video and account) with status, scheduled time and "
-                "error; --task-id narrows to one batch returned by publish post +schedule."
+                "List publish jobs (one per video and account) with status, scheduled time, "
+                "error and delivery; --task-id narrows to one batch returned by publish post "
+                f"+schedule. {_DELIVERY}"
             ),
         ),
         _command(
@@ -332,7 +339,7 @@ def specs() -> list[CommandSpec]:
             "/pool-accounts/jobs/{id}",
             {},
             domain=Domain.PUBLISH,
-            summary="Read one publish job's status, scheduled time and error.",
+            summary=f"Read one publish job's status, scheduled time, error and delivery. {_DELIVERY}",
         ),
         _command(
             "job",

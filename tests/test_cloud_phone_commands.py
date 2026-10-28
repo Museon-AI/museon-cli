@@ -281,3 +281,137 @@ def test_recovery_retries_keep_body_idempotency_and_never_resubmit_when_polling(
     count = len(submitted)
     invoke("recovery-job", "get", "--id", job)
     assert len(submitted) == count
+
+
+def test_app_versions_are_read_for_repeated_targets_in_one_call(monkeypatch):
+    requests = []
+
+    def handler(req):
+        requests.append(req)
+        return httpx.Response(
+            200,
+            json={
+                "phones": [
+                    {
+                        "phone_id": "987654",
+                        "apps": [
+                            {
+                                "app": "youtube",
+                                "installed_version": "20.41.0",
+                                "pinned_version": "21.15.285",
+                                "state": "outdated",
+                            }
+                        ],
+                        "error": None,
+                    },
+                    {"phone_id": "987655", "apps": [], "error": "phone is offline"},
+                ],
+                "unresolved": ["987656"],
+            },
+        )
+
+    setup(monkeypatch, handler)
+    result = invoke(
+        "app",
+        "list",
+        "--phone-id",
+        "987654",
+        "--phone-id",
+        "987655",
+        "--phone-id",
+        "987656",
+        "--account-id",
+        SUPPLIER,
+        "--app",
+        "youtube",
+    )
+    (request,) = requests
+    assert request.method == "GET"
+    assert request.url.path == "/api/v1/agent-cli/cloud-phones/apps"
+    assert request.url.params.get_list("phone_ids") == ["987654", "987655", "987656"]
+    assert request.url.params.get_list("account_ids") == [SUPPLIER]
+    assert request.url.params.get_list("apps") == ["youtube"]
+    assert result["data"]["phones"][0]["apps"][0]["state"] == "outdated"
+    assert len(result["warnings"]) == 2
+
+
+@pytest.mark.parametrize(
+    ("args", "message"),
+    [
+        (["--app", "youtube"], "at least one"),
+        (["--phone-id", "987654"], "apps"),
+        (
+            [
+                "--args-json",
+                json.dumps(
+                    {
+                        "phone_ids": [str(n) for n in range(30)],
+                        "account_ids": [f"40000000-0000-4000-8000-{n:012d}" for n in range(21)],
+                        "apps": ["youtube"],
+                    }
+                ),
+            ],
+            "at most 50",
+        ),
+    ],
+)
+def test_app_upgrade_targets_are_checked_before_any_request(monkeypatch, args, message):
+    requests = []
+    setup(monkeypatch, lambda req: requests.append(req) or httpx.Response(500))
+    with pytest.raises(ValueError, match=message):
+        invoke("app-upgrade", "preview", *args)
+    assert requests == []
+
+
+def test_app_upgrade_keeps_body_idempotency_and_points_progress_at_app_list(monkeypatch):
+    submitted = []
+    plan = {
+        "phones": [
+            {
+                "phone_id": "987654",
+                "apps": [
+                    {
+                        "app": "youtube",
+                        "installed_version": "20.41.0",
+                        "pinned_version": "21.15.285",
+                        "state": "outdated",
+                    }
+                ],
+            }
+        ],
+        "skipped": {"987655": "already current"},
+        "unresolved": [],
+    }
+
+    def handler(req):
+        assert "Idempotency-Key" not in req.headers
+        submitted.append((req.url.path, json.loads(req.content)))
+        return httpx.Response(202 if req.url.path.endswith("/app-upgrades") else 200, json=plan)
+
+    setup(monkeypatch, handler)
+    target = ["--phone-id", "987654", "--phone-id", "987655", "--app", "youtube"]
+    preview = invoke("app-upgrade", "preview", *target)
+    assert submitted[0] == (
+        "/api/v1/agent-cli/cloud-phones/app-upgrades/preview",
+        {"phone_ids": ["987654", "987655"], "apps": ["youtube"]},
+    )
+    assert preview["data"]["skipped"] == {"987655": "already current"}
+
+    create = [*target, "--idempotency-key", "youtube-pin-20261028"]
+    with pytest.raises(RuntimeError, match="confirmation_required"):
+        invoke("app-upgrade", "create", *create)
+    invoke("app-upgrade", "create", *create, "--dry-run")
+    assert len(submitted) == 1
+    for _ in range(2):
+        result = invoke("app-upgrade", "create", *create, "--yes")
+    assert submitted[1] == submitted[2] == (
+        "/api/v1/agent-cli/cloud-phones/app-upgrades",
+        {
+            "phone_ids": ["987654", "987655"],
+            "apps": ["youtube"],
+            "idempotency_key": "youtube-pin-20261028",
+        },
+    )
+    assert result["next_steps"][0].startswith(
+        "museoncli cloud-phone app +list --phone-id 987654 --app youtube"
+    )

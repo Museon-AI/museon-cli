@@ -2,6 +2,15 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+- New staff commands for social app versions on cloud phones:
+  - `cloud-phone app +list` reads installed and team-pinned versions of YouTube, Facebook, Instagram and TikTok live from up to 50 phones (`--phone-id`) or accounts (`--account-id`). Each app reports `current`, `outdated`, `ahead`, `installing`, `missing` or `unpinned`.
+  - `cloud-phone app-upgrade +preview` shows which phones an upgrade would move up to the team's pinned version and why others are skipped; nothing changes.
+  - `cloud-phone app-upgrade +create` upgrades outdated apps to the pinned version in the background (never downgrades or installs a missing app). It needs `--yes` and an idempotency key; a retry with the same key never upgrades a phone twice. Follow progress by rerunning `cloud-phone app +list`.
+- `publish job +list` and `+get` return each job's `delivery`: `stage` (`verifying` means the publishing service already reported and Museon is confirming the post on the platform until `verification.deadline_at`), the service's own report as `upstream`, and `verification`. It is null for older jobs.
+- Requires the Museon API with `GET /agent-cli/cloud-phones/apps`, `POST /agent-cli/cloud-phones/app-upgrades/preview`, `POST /agent-cli/cloud-phones/app-upgrades`, and `delivery` on publish jobs.
+
 ## 0.16.0
 
 - `social-account +connect-adb` routes ADB through a local relay. Museon now shuts down a cloud phone whose lease nobody renews; the relay renews it at most once a minute while ADB traffic flows and exits after 15 minutes without ADB traffic, so a phone stays on while a script or agent operates it and shuts down about 15 minutes after the last ADB command. An open but idle ADB connection sends no traffic and does not keep the phone on. The returned serial is the relay's local address (`127.0.0.1:<port>`); a later `+connect-adb` for the same account reuses it.
