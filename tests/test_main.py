@@ -1226,6 +1226,77 @@ def test_dispatch_campaign_monitor_dimensions_reads_the_campaign_menu(
     ]
 
 
+def test_dispatch_campaign_monitor_breakdown_reads_one_dimension(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, json_body, unwrap_success
+        calls.append({"method": method, "path": path, "params": params})
+        return {
+            "domain": "campaign-monitor",
+            "operation": "breakdown",
+            "result": {"campaign_type": "ugc", "breakdown": "brief", "rows": [], "totals": {}},
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    args = parse(
+        [
+            "campaign-monitor",
+            "+get-breakdown",
+            "--id",
+            _DIMENSIONS_CAMPAIGN_ID,
+            "--by",
+            "brief",
+            "--link-status",
+            "linked",
+            "--date-from",
+            "2026-10-01",
+        ]
+    )
+    result = asyncio.run(main_module.dispatch(args))
+
+    assert result["command"] == "campaign-monitor.get-breakdown"
+    assert calls == [
+        {
+            "method": "GET",
+            "path": f"/agent-cli/campaign-monitors/{_DIMENSIONS_CAMPAIGN_ID}/breakdown",
+            "params": {
+                "workspace_id": "workspace-1",
+                "by": "brief",
+                "date_from": "2026-10-01",
+                "link_status": "linked",
+            },
+        }
+    ]
+
+    # The flag is kebab-case; the API names the dimension as +list-dimensions does.
+    calls.clear()
+    args = parse(
+        ["campaign-monitor", "+get-breakdown", "--id", _DIMENSIONS_CAMPAIGN_ID, "--by", "creator-tag"]
+    )
+    asyncio.run(main_module.dispatch(args))
+    assert calls[0]["params"] == {"workspace_id": "workspace-1", "by": "creator_tag"}
+
+
+def test_campaign_monitor_breakdown_only_takes_known_dimensions() -> None:
+    with pytest.raises(SystemExit):
+        parse(["campaign-monitor", "+get-breakdown", "--id", "campaign-1", "--by", "platform"])
+
+
 def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
     schema = main_module.schema_payload("campaign-monitor")
 
@@ -1234,6 +1305,7 @@ def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
         "campaign-monitor.list",
         "campaign-monitor.get",
         "campaign-monitor.list-dimensions",
+        "campaign-monitor.get-breakdown",
         "campaign-monitor.list-creators",
         "campaign-monitor.add-creators",
         "campaign-monitor.remove-creators",
@@ -1447,6 +1519,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "campaign-monitor.list",
         "campaign-monitor.get",
         "campaign-monitor.list-dimensions",
+        "campaign-monitor.get-breakdown",
         "campaign-monitor.list-creators",
         "campaign-monitor.add-creators",
         "campaign-monitor.remove-creators",
