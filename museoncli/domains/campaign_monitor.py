@@ -79,6 +79,7 @@ def _add_campaign_monitor_paged_tracking_arguments(
     parser.add_argument("--search")
     parser.add_argument("--platform")
     parser.add_argument("--sort")
+    parser.add_argument("--link-status", dest="link_status", choices=["linked"])
 
 
 def _add_campaign_monitor_creator_list_arguments(
@@ -99,6 +100,7 @@ def _build_campaign_monitor_creator_list_arguments(
                 "search": args.search,
                 "platform": args.platform,
                 "sort": args.sort,
+                "link_status": args.link_status,
             }
         )
     )
@@ -147,6 +149,7 @@ def _build_campaign_monitor_content_list_arguments(
                 "views_max": args.views_max,
                 "likes_min": args.likes_min,
                 "likes_max": args.likes_max,
+                "link_status": args.link_status,
             }
         )
     )
@@ -355,6 +358,14 @@ def _campaign_monitor_paged_input_schema() -> dict[str, Any]:
             "search": {"type": ["string", "null"]},
             "platform": {"type": ["string", "null"]},
             "sort": {"type": ["string", "null"]},
+            "link_status": {
+                "type": ["string", "null"],
+                "enum": ["linked", None],
+                "description": (
+                    "UGC campaigns only: 'linked' keeps the approved posts (the Campaign "
+                    "page's Approved scope); omit for every counted post."
+                ),
+            },
         }
     )
     return schema
@@ -544,6 +555,29 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 "museoncli campaign-monitor +get --id <campaign_monitor_id>",
+            ],
+            add_arguments=_add_campaign_monitor_id_arguments,
+            build_arguments=_build_campaign_monitor_id_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.CAMPAIGN_MONITOR,
+            shortcut="+list-dimensions",
+            summary=(
+                "Read what a campaign's posts can be broken down by, before analysing "
+                "them. Returns campaign_type and post_scopes: a ugc campaign offers "
+                "brief (each with the persona it is under), persona and tag over "
+                "approved (--link-status linked) or all posts; any other type, such as "
+                "tracking, offers creator_tag over all posts."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="campaign_monitor_dimensions",
+            input_schema=_campaign_monitor_id_input_schema(),
+            output_schema=_direct_output_schema(
+                "Campaign type, post scopes, and dimension values returned by Museon API."
+            ),
+            examples=[
+                "museoncli campaign-monitor +list-dimensions --id <campaign_id>",
             ],
             add_arguments=_add_campaign_monitor_id_arguments,
             build_arguments=_build_campaign_monitor_id_arguments,
@@ -879,6 +913,7 @@ async def _execute_content_list(ctx: CommandContext) -> Any:
                     "views_max": arguments.get("views_max"),
                     "likes_min": arguments.get("likes_min"),
                     "likes_max": arguments.get("likes_max"),
+                    "link_status": arguments.get("link_status"),
                 }
             ),
         )
@@ -912,6 +947,7 @@ async def _execute_creator_list(ctx: CommandContext) -> Any:
                     "search": arguments.get("search"),
                     "platform": arguments.get("platform"),
                     "sort": arguments.get("sort"),
+                    "link_status": arguments.get("link_status"),
                 }
             ),
         )
@@ -933,6 +969,24 @@ async def _execute_get(ctx: CommandContext) -> Any:
             "GET",
             f"/agent-cli/campaign-monitors/{campaign_id}",
             params=base_params,
+        )
+    )
+
+
+async def _execute_dimensions(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    campaign_id = str(arguments.get("campaign_id") or "")
+    return agent_domain_result(
+        await api_data(
+            cfg,
+            "GET",
+            f"/agent-cli/campaign-monitors/{campaign_id}/dimensions",
+            params={"workspace_id": workspace_id},
         )
     )
 
@@ -1112,6 +1166,7 @@ EXECUTORS = {
     "campaign-monitor.list-creators": direct_enveloped(_execute_creator_list),
     "campaign-monitor.remove-creators": direct_enveloped(_execute_creator_remove),
     "campaign-monitor.get": direct_enveloped(_execute_get),
+    "campaign-monitor.list-dimensions": direct_enveloped(_execute_dimensions),
     "campaign-monitor.list": direct_enveloped(_execute_list),
     "campaign-monitor.get-period-performance": direct_enveloped(_execute_period_performance),
     "campaign-monitor.get-summary": direct_enveloped(_execute_summary),

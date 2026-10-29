@@ -20,7 +20,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-302 commands across 14 domains (source of truth: `museoncli schema`).
+303 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -315,6 +315,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 |---|---|---|---|---|---|
 | `campaign-monitor +list` | read | — | — | direct | List campaign monitor collections available to the active workspace. |
 | `campaign-monitor +get` | read | — | — | direct | Read one campaign monitor collection. |
+| `campaign-monitor +list-dimensions` | read | — | — | direct | Read what a campaign's posts can be broken down by, before analysing them. Returns campaign_type and post_scopes: a ugc campaign offers brief (each with the persona it is under), persona and tag over approved (--link-status linked) or all posts; any other type, such as tracking, offers creator_tag over all posts. |
 | `campaign-monitor +list-creators` | read | — | — | direct | List creators covered by a campaign monitor. |
 | `campaign-monitor +add-creators` | write | yes | — | direct | Track creators in a campaign so their matching posts sync in going forward. --url imports new creators by public profile URL via a background task (response data.url_import_task); --creator-id attaches creators already known to Museon. Verify with +list-creators later. |
 | `campaign-monitor +remove-creators` | destructive | yes | `--yes` | direct | Stop tracking a creator in a campaign: removes the creator monitor and its derived content monitors from this campaign and resyncs. This does NOT delete the creator's social-platform account; explicit operator confirmation is required before running with --yes. Tracking is workspace-wide, so the monitor is only fully deleted when no other campaign references it. --creator-id is the creator_social_account_id from +list-creators. |
