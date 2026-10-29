@@ -2,6 +2,13 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.19.0
+
+- New `campaign-monitor +get-breakdown --id --by brief|persona|tag|creator-tag [--link-status linked] [--date-from] [--date-to] [--platform] [--timezone]`: groups a campaign's counted posts by one dimension, from `GET /agent-cli/campaign-monitors/{id}/breakdown`. The campaign type decides the menu and the default (`ugc`: brief; others: creator-tag). Rows are value / unassigned / awaiting_review with posts, creators, measured_posts, metric sums and median_views; tags overlap.
+- The flag is kebab-case (`creator-tag`); the API takes the dimension as `+list-dimensions` names it (`creator_tag`).
+- The campaign-monitor skill's analysis order gains the breakdown step: report unassigned and awaiting_review before per-brief numbers, compare on median.
+- Requires the Museon API with `GET /agent-cli/campaign-monitors/{id}/breakdown` deployed.
+
 ## 0.18.0
 
 - New `campaign-monitor +list-dimensions`: the campaign's type, its post scopes, and its dimensions (`ugc`: brief with its persona, persona, tag; other types: `creator_tag`), from `GET /agent-cli/campaign-monitors/{id}/dimensions`.
