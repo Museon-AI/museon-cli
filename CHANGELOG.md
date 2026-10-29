@@ -2,6 +2,13 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.18.0
+
+- New `campaign-monitor +list-dimensions`: the campaign's type, its post scopes, and its dimensions (`ugc`: brief with its persona, persona, tag; other types: `creator_tag`), from `GET /agent-cli/campaign-monitors/{id}/dimensions`.
+- New `--link-status linked` on `campaign-monitor +list-content` and `+list-creators`, matching the Campaign page's Approved scope.
+- The campaign-monitor skill gains the analysis order: dimensions first, then the scope, coverage before per-brief numbers, tags overlap.
+- Requires the Museon API with `GET /agent-cli/campaign-monitors/{id}/dimensions` deployed.
+
 ## 0.17.1
 
 - `hireaicreator video +create-from-upload` documents `scheduled_at`: omit it or pass null and the video stays `approved` and never publishes until `video +bulk-schedule` gives it a time. There is no publish-now value; pass a time a few minutes ahead to publish soon. The command now warns and lists the video IDs it left unscheduled.
