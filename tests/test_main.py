@@ -1147,6 +1147,8 @@ def test_campaign_monitor_content_list_parser() -> None:
             "10",
             "--likes-max",
             "99",
+            "--link-status",
+            "linked",
         ]
     )
 
@@ -1164,7 +1166,64 @@ def test_campaign_monitor_content_list_parser() -> None:
         "views_min": 10000,
         "likes_min": 10,
         "likes_max": 99,
+        "link_status": "linked",
     }
+
+
+def test_campaign_monitor_link_status_only_takes_the_approved_scope() -> None:
+    with pytest.raises(SystemExit):
+        parse(["campaign-monitor", "+list-creators", "--id", "campaign-1", "--link-status", "all"])
+
+
+_DIMENSIONS_CAMPAIGN_ID = "c6000000-0000-4000-8000-000000000001"
+
+
+def test_dispatch_campaign_monitor_dimensions_reads_the_campaign_menu(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = Config()
+    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    calls: list[dict[str, object]] = []
+
+    async def fake_api_data(
+        cfg_arg: Config,
+        method: str,
+        path: str,
+        *,
+        json_body: dict[str, object] | None = None,
+        params: dict[str, object] | None = None,
+        unwrap_success: bool = True,
+    ) -> dict[str, object]:
+        del cfg_arg, json_body, unwrap_success
+        calls.append({"method": method, "path": path, "params": params})
+        return {
+            "domain": "campaign-monitor",
+            "operation": "dimensions",
+            "result": {
+                "campaign_type": "ugc",
+                "post_scopes": [
+                    {"scope": "approved", "link_status": "linked"},
+                    {"scope": "all", "link_status": None},
+                ],
+                "dimensions": {"brief": [], "persona": [], "tag": []},
+            },
+        }
+
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", fake_api_data)
+
+    args = parse(["campaign-monitor", "+list-dimensions", "--id", _DIMENSIONS_CAMPAIGN_ID])
+    result = asyncio.run(main_module.dispatch(args))
+
+    assert result["command"] == "campaign-monitor.list-dimensions"
+    assert result["data"]["campaign_type"] == "ugc"
+    assert calls == [
+        {
+            "method": "GET",
+            "path": f"/agent-cli/campaign-monitors/{_DIMENSIONS_CAMPAIGN_ID}/dimensions",
+            "params": {"workspace_id": "workspace-1"},
+        }
+    ]
 
 
 def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
@@ -1174,6 +1233,7 @@ def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
     assert [command["name"] for command in schema["commands"]] == [
         "campaign-monitor.list",
         "campaign-monitor.get",
+        "campaign-monitor.list-dimensions",
         "campaign-monitor.list-creators",
         "campaign-monitor.add-creators",
         "campaign-monitor.remove-creators",
@@ -1386,6 +1446,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
     assert [item["name"] for item in result["data"]["commands"]["campaign-monitor"]] == [
         "campaign-monitor.list",
         "campaign-monitor.get",
+        "campaign-monitor.list-dimensions",
         "campaign-monitor.list-creators",
         "campaign-monitor.add-creators",
         "campaign-monitor.remove-creators",

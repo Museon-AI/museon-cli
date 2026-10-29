@@ -2627,6 +2627,77 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "campaign-monitor.list-dimensions",
+          "cli": "museoncli campaign-monitor +list-dimensions",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.list-dimensions",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+list-dimensions",
+          "stability": "stable",
+          "summary": "Read what a campaign's posts can be broken down by, before analysing them. Returns campaign_type and post_scopes: a ugc campaign offers brief (each with the persona it is under), persona and tag over approved (--link-status linked) or all posts; any other type, such as tracking, offers creator_tag over all posts.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "campaign-monitor.list-creators",
           "cli": "museoncli campaign-monitor +list-creators",
           "deprecated_aliases": [
@@ -23161,6 +23232,17 @@
               "null"
             ]
           },
+          "link_status": {
+            "description": "UGC campaigns only: 'linked' keeps the approved posts (the Campaign page's Approved scope); omit for every counted post.",
+            "enum": [
+              "linked",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "page": {
             "default": 1,
             "minimum": 1,
@@ -23362,6 +23444,17 @@
               "null"
             ]
           },
+          "link_status": {
+            "description": "UGC campaigns only: 'linked' keeps the approved posts (the Campaign page's Approved scope); omit for every counted post.",
+            "enum": [
+              "linked",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "page": {
             "default": 1,
             "minimum": 1,
@@ -23458,6 +23551,146 @@
       "shortcut": "+list-creators",
       "stability": "stable",
       "summary": "List creators covered by a campaign monitor.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.list-dimensions": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.list-dimensions",
+      "cli": "museoncli campaign-monitor +list-dimensions",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor +list-dimensions --id <campaign_id>"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.list-dimensions",
+      "output_schema": {
+        "description": "Campaign type, post scopes, and dimension values returned by Museon API.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+list-dimensions",
+      "stability": "stable",
+      "summary": "Read what a campaign's posts can be broken down by, before analysing them. Returns campaign_type and post_scopes: a ugc campaign offers brief (each with the persona it is under), persona and tag over approved (--link-status linked) or all posts; any other type, such as tracking, offers creator_tag over all posts.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
