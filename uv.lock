@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.11"
 
 [[package]]
@@ -330,7 +330,7 @@ wheels = [
 
 [[package]]
 name = "museoncli"
-version = "0.17.1"
+version = "0.18.0"
 source = { editable = "." }
 dependencies = [
     { name = "anyio" },
