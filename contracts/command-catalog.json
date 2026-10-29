@@ -2698,6 +2698,77 @@
             "resource_policy": "server_evaluated_workspace_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "campaign-monitor.get-breakdown",
+          "cli": "museoncli campaign-monitor +get-breakdown",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.get-breakdown",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+get-breakdown",
+          "stability": "stable",
+          "summary": "Group a campaign's counted posts by one dimension: brief, persona (the brief's) or tag for a ugc campaign, creator-tag for any other. Rows are bucket value (carries it), unassigned (approved, without one) or awaiting_review (ugc, not approved yet), each with posts, creators, measured_posts, metric sums and median_views. Tags overlap: rows can outnumber totals, which count each post once.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "campaign-monitor.list-creators",
           "cli": "museoncli campaign-monitor +list-creators",
           "deprecated_aliases": [
@@ -22068,6 +22139,197 @@
       "shortcut": "+get",
       "stability": "stable",
       "summary": "Read one campaign monitor collection.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.get-breakdown": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.get-breakdown",
+      "cli": "museoncli campaign-monitor +get-breakdown",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by brief --link-status linked --date-from 2026-10-01 --date-to 2026-10-28",
+        "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by creator-tag"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "by": {
+            "description": "Dimension. A ugc campaign takes brief (default), persona or tag; any other type takes creator-tag (default). See +list-dimensions.",
+            "enum": [
+              "brief",
+              "persona",
+              "tag",
+              "creator-tag",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "campaign_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "date_from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "date_to": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "link_status": {
+            "description": "UGC campaigns only: 'linked' reads the approved posts only; omit for every counted post (approved + awaiting review).",
+            "enum": [
+              "linked",
+              null
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platform": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
+            "description": "IANA timezone for the publication dates (default UTC).",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.get-breakdown",
+      "output_schema": {
+        "description": "Breakdown rows, totals and the post scope returned by Museon API.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+get-breakdown",
+      "stability": "stable",
+      "summary": "Group a campaign's counted posts by one dimension: brief, persona (the brief's) or tag for a ugc campaign, creator-tag for any other. Rows are bucket value (carries it), unassigned (approved, without one) or awaiting_review (ugc, not approved yet), each with posts, creators, measured_posts, metric sums and median_views. Tags overlap: rows can outnumber totals, which count each post once.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

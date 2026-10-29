@@ -70,6 +70,59 @@ def _build_campaign_monitor_date_range_arguments(
     return payload
 
 
+def _add_campaign_monitor_breakdown_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_campaign_monitor_date_range_arguments(parser)
+    parser.add_argument("--by", choices=["brief", "persona", "tag", "creator-tag"])
+    parser.add_argument("--link-status", dest="link_status", choices=["linked"])
+    parser.add_argument("--platform")
+    parser.add_argument("--timezone")
+
+
+def _build_campaign_monitor_breakdown_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _build_campaign_monitor_date_range_arguments(args)
+    payload.update(
+        _without_none(
+            {
+                "by": args.by,
+                "link_status": args.link_status,
+                "platform": args.platform,
+                "timezone": args.timezone,
+            }
+        )
+    )
+    return payload
+
+
+def _campaign_monitor_breakdown_input_schema() -> dict[str, Any]:
+    schema = _campaign_monitor_date_range_input_schema()
+    schema["properties"].update(
+        {
+            "by": {
+                "type": ["string", "null"],
+                "enum": ["brief", "persona", "tag", "creator-tag", None],
+                "description": (
+                    "Dimension. A ugc campaign takes brief (default), persona or tag; any "
+                    "other type takes creator-tag (default). See +list-dimensions."
+                ),
+            },
+            "link_status": {
+                "type": ["string", "null"],
+                "enum": ["linked", None],
+                "description": (
+                    "UGC campaigns only: 'linked' reads the approved posts only; omit for "
+                    "every counted post (approved + awaiting review)."
+                ),
+            },
+            "platform": {"type": ["string", "null"]},
+            "timezone": {
+                "type": ["string", "null"],
+                "description": "IANA timezone for the publication dates (default UTC).",
+            },
+        }
+    )
+    return schema
+
+
 def _add_campaign_monitor_paged_tracking_arguments(
     parser: argparse.ArgumentParser,
 ) -> None:
@@ -584,6 +637,34 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
+            shortcut="+get-breakdown",
+            summary=(
+                "Group a campaign's counted posts by one dimension: brief, persona (the "
+                "brief's) or tag for a ugc campaign, creator-tag for any other. Rows are "
+                "bucket value (carries it), unassigned (approved, without one) or "
+                "awaiting_review (ugc, not approved yet), each with posts, creators, "
+                "measured_posts, metric sums and median_views. Tags overlap: rows can "
+                "outnumber totals, which count each post once."
+            ),
+            risk_level="read",
+            execution="direct",
+            adapter_tool_name="campaign_monitor_breakdown",
+            input_schema=_campaign_monitor_breakdown_input_schema(),
+            output_schema=_direct_output_schema(
+                "Breakdown rows, totals and the post scope returned by Museon API."
+            ),
+            examples=[
+                (
+                    "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by brief "
+                    "--link-status linked --date-from 2026-10-01 --date-to 2026-10-28"
+                ),
+                "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by creator-tag",
+            ],
+            add_arguments=_add_campaign_monitor_breakdown_arguments,
+            build_arguments=_build_campaign_monitor_breakdown_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.CAMPAIGN_MONITOR,
             shortcut="+list-creators",
             legacy_shortcuts=("+creator-list",),
             summary="List creators covered by a campaign monitor.",
@@ -991,6 +1072,35 @@ async def _execute_dimensions(ctx: CommandContext) -> Any:
     )
 
 
+async def _execute_breakdown(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    workspace_id = ctx.workspace_id
+    api_data = ctx.api_data
+    if not workspace_id:
+        raise RuntimeError("missing_workspace")
+    campaign_id = str(arguments.get("campaign_id") or "")
+    return agent_domain_result(
+        await api_data(
+            cfg,
+            "GET",
+            f"/agent-cli/campaign-monitors/{campaign_id}/breakdown",
+            params=compact_params(
+                {
+                    "workspace_id": workspace_id,
+                    # The API names the dimensions as +list-dimensions returns them.
+                    "by": str(arguments["by"]).replace("-", "_") if arguments.get("by") else None,
+                    "date_from": arguments.get("date_from"),
+                    "date_to": arguments.get("date_to"),
+                    "link_status": arguments.get("link_status"),
+                    "platform": arguments.get("platform"),
+                    "timezone": arguments.get("timezone"),
+                }
+            ),
+        )
+    )
+
+
 async def _execute_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -1167,6 +1277,7 @@ EXECUTORS = {
     "campaign-monitor.remove-creators": direct_enveloped(_execute_creator_remove),
     "campaign-monitor.get": direct_enveloped(_execute_get),
     "campaign-monitor.list-dimensions": direct_enveloped(_execute_dimensions),
+    "campaign-monitor.get-breakdown": direct_enveloped(_execute_breakdown),
     "campaign-monitor.list": direct_enveloped(_execute_list),
     "campaign-monitor.get-period-performance": direct_enveloped(_execute_period_performance),
     "campaign-monitor.get-summary": direct_enveloped(_execute_summary),

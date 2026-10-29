@@ -32,8 +32,17 @@ A campaign monitor stores tracked creators and content with synchronized post an
 1. Run `+list-dimensions` first. `campaign_type` decides the menu.
 2. A `ugc` campaign breaks down by brief, persona and tag. A post's persona is its brief's persona. Only approved posts carry a brief or tag; a post awaiting review has none yet.
 3. Pick the post scope from `post_scopes`: `--link-status linked` reads approved posts only, omitting it reads every counted post. Say which one every number uses.
-4. A `tracking` campaign has no review step and no briefs: break it down by `creator_tag` over all posts.
-5. Report how many posts have no brief, persona or tag before any per-brief number. Tags overlap, so per-tag rows do not add up to the total.
+4. A `tracking` campaign has no review step and no briefs: break it down by `--by creator-tag` over all posts.
+5. Run `+get-breakdown --by <dimension>`. Rows come in three buckets: `value`, `unassigned` (approved, without one) and `awaiting_review`. Report the `unassigned` and `awaiting_review` share before any per-brief number; never fold one into the other.
+6. Compare on `median_views` with the post count beside it; one viral post moves the sum and the average. Tags overlap, so per-tag rows do not add up to `totals`.
+7. Drill into a row's posts with `+list-content --link-status linked` and the same window.
+
+| Situation | Start with |
+| --- | --- |
+| What can this campaign be broken down by | `museoncli campaign-monitor +list-dimensions --id <campaign_id>` |
+| Which brief performs best, approved posts | `museoncli campaign-monitor +get-breakdown --id <campaign_id> --by brief --link-status linked` |
+| Persona or tag comparison | `museoncli campaign-monitor +get-breakdown --id <campaign_id> --by persona` |
+| A tracking campaign by creator tag | `museoncli campaign-monitor +get-breakdown --id <campaign_id> --by creator-tag` |
 
 ## DON'T
 
