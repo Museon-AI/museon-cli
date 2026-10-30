@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-304 commands across 14 domains (source of truth: `museoncli schema`).
+324 commands across 14 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -348,6 +348,26 @@ The tables below are generated — edit code, then run
 | `campaign-monitor +get-post` | read | — | — | direct | Read one Museon-synced social post/content record. |
 | `campaign-monitor +get-post-performance` | read | — | — | direct | Read local synced performance history for one social post/content record. |
 | `campaign-monitor +resolve-post` | read | — | — | direct | Resolve an account publish schedule item to its published social post. |
+| `campaign-monitor campaign +get` | read | — | — | direct | Read a campaign's type (ugc or tracking), status, start date and UGC campaign identity, as its Dashboard header shows them. |
+| `campaign-monitor video +list` | read | — | — | direct | List a UGC campaign's videos as its Content tab does: each creative once for its confirmed posts, and posts still awaiting confirmation or review. Filter by --status confirmation, review or not-counted. Tracking campaigns use +list-content. |
+| `campaign-monitor video +get` | read | — | — | direct | Read one UGC post's detail, summary, daily metrics or insights, as its post drawer does. |
+| `campaign-monitor roster +list` | read | — | — | direct | List a UGC campaign's creators as the By Creator tab does: one row per enrollment with its stage, tags and post figures. |
+| `campaign-monitor format +list` | read | — | — | direct | Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format. |
+| `campaign-monitor format-post +list` | read | — | — | direct | List the posts behind one Format's figures in format +list. |
+| `campaign-monitor report +get` | read | — | — | direct | Read one Analytics tab widget over a date window: cumulative views, content tiers or creator countries. Period-over-period core metrics are +get-period-performance. |
+| `campaign-monitor creator-tag +list` | read | — | — | direct | List the creator tags set on a campaign's accounts. |
+| `campaign-monitor audience +get` | read | — | — | direct | Read a campaign's audience: by day as the trend tooltip shows it, or over the period. |
+| `campaign-monitor payment +list` | read | — | — | direct | List the selected workspace's creator payments, as its Payments page does. |
+| `campaign-monitor payment-summary +get` | read | — | — | direct | Read the selected workspace's payment totals, as the Payments page header shows them. |
+| `campaign-monitor settlement +get` | read | — | — | direct | Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. Agency team only. |
+| `campaign-monitor payout +list` | read | — | — | direct | List a UGC campaign's settled payouts and their lines. Agency team only. |
+| `campaign-monitor activity +list` | read | — | — | direct | List a UGC campaign's activity log, newest first. Agency team only. |
+| `campaign-monitor enrollment +list` | read | — | — | direct | List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. Agency team only. |
+| `campaign-monitor assignment +list` | read | — | — | direct | List a UGC campaign's brief assignments and what is due. Agency team only. |
+| `campaign-monitor creator-check +get` | read | — | — | direct | Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. Agency team only. |
+| `campaign-monitor creator-check +list` | read | — | — | direct | List the creators one check holds for. Agency team only. |
+| `campaign-monitor agency-campaign +list` | read | — | — | direct | List every campaign the Agency runs across its Brands, or their delivery progress with --with-progress. Agency team only. |
+| `campaign-monitor agency-analytics +get` | read | — | — | direct | Read the Agency's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. Agency team only. |
 
 ### agentic-campaign
 

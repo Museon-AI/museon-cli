@@ -3789,6 +3789,1426 @@
           "summary": "Resolve an account publish schedule item to its published social post.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.campaign-get",
+          "cli": "museoncli campaign-monitor campaign +get",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.campaign-get",
+          "requires_confirmation": false,
+          "resource": "campaign",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read a campaign's type (ugc or tracking), status, start date and UGC campaign identity, as its Dashboard header shows them.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.video-list",
+          "cli": "museoncli campaign-monitor video +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.video-list",
+          "requires_confirmation": false,
+          "resource": "video",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a UGC campaign's videos as its Content tab does: each creative once for its confirmed posts, and posts still awaiting confirmation or review. Filter by --status confirmation, review or not-counted. Tracking campaigns use +list-content.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.video-get",
+          "cli": "museoncli campaign-monitor video +get",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.video-get",
+          "requires_confirmation": false,
+          "resource": "video",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one UGC post's detail, summary, daily metrics or insights, as its post drawer does.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.roster-list",
+          "cli": "museoncli campaign-monitor roster +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.roster-list",
+          "requires_confirmation": false,
+          "resource": "roster",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a UGC campaign's creators as the By Creator tab does: one row per enrollment with its stage, tags and post figures.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.format-list",
+          "cli": "museoncli campaign-monitor format +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.format-list",
+          "requires_confirmation": false,
+          "resource": "format",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.format-post-list",
+          "cli": "museoncli campaign-monitor format-post +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.format-post-list",
+          "requires_confirmation": false,
+          "resource": "format-post",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the posts behind one Format's figures in format +list.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.report-get",
+          "cli": "museoncli campaign-monitor report +get",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.report-get",
+          "requires_confirmation": false,
+          "resource": "report",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one Analytics tab widget over a date window: cumulative views, content tiers or creator countries. Period-over-period core metrics are +get-period-performance.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.creator-tag-list",
+          "cli": "museoncli campaign-monitor creator-tag +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.creator-tag-list",
+          "requires_confirmation": false,
+          "resource": "creator-tag",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the creator tags set on a campaign's accounts.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.audience-get",
+          "cli": "museoncli campaign-monitor audience +get",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.audience-get",
+          "requires_confirmation": false,
+          "resource": "audience",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read a campaign's audience: by day as the trend tooltip shows it, or over the period.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.payment-list",
+          "cli": "museoncli campaign-monitor payment +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.payment-list",
+          "requires_confirmation": false,
+          "resource": "payment",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the selected workspace's creator payments, as its Payments page does.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.payment-summary-get",
+          "cli": "museoncli campaign-monitor payment-summary +get",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.payment-summary-get",
+          "requires_confirmation": false,
+          "resource": "payment-summary",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read the selected workspace's payment totals, as the Payments page header shows them.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.settlement-get",
+          "cli": "museoncli campaign-monitor settlement +get",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.settlement-get",
+          "requires_confirmation": false,
+          "resource": "settlement",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.payout-list",
+          "cli": "museoncli campaign-monitor payout +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.payout-list",
+          "requires_confirmation": false,
+          "resource": "payout",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a UGC campaign's settled payouts and their lines. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.activity-list",
+          "cli": "museoncli campaign-monitor activity +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.activity-list",
+          "requires_confirmation": false,
+          "resource": "activity",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a UGC campaign's activity log, newest first. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.enrollment-list",
+          "cli": "museoncli campaign-monitor enrollment +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.enrollment-list",
+          "requires_confirmation": false,
+          "resource": "enrollment",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.assignment-list",
+          "cli": "museoncli campaign-monitor assignment +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.assignment-list",
+          "requires_confirmation": false,
+          "resource": "assignment",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a UGC campaign's brief assignments and what is due. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.creator-check-get",
+          "cli": "museoncli campaign-monitor creator-check +get",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.creator-check-get",
+          "requires_confirmation": false,
+          "resource": "creator-check",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.creator-check-list",
+          "cli": "museoncli campaign-monitor creator-check +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.creator-check-list",
+          "requires_confirmation": false,
+          "resource": "creator-check",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the creators one check holds for. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.agency-campaign-list",
+          "cli": "museoncli campaign-monitor agency-campaign +list",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.agency-campaign-list",
+          "requires_confirmation": false,
+          "resource": "agency-campaign",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List every campaign the Agency runs across its Brands, or their delivery progress with --with-progress. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "required_roles": [
+              "workspace_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_workspace_and_resource_access",
+            "workspace_bound": true
+          },
+          "capability_key": "campaign-monitor.agency-analytics-get",
+          "cli": "museoncli campaign-monitor agency-analytics +get",
+          "domain": "campaign-monitor",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the campaign monitor list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open creators covered by one campaign monitor.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open posts/content covered by one campaign monitor.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign-monitor.agency-analytics-get",
+          "requires_confirmation": false,
+          "resource": "agency-analytics",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read the Agency's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. Agency team only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
         }
       ],
       "cloud-phone": [
@@ -21490,6 +22910,164 @@
       "supports_dry_run": false,
       "transport": "local_process"
     },
+    "campaign-monitor.activity-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.activity-list",
+      "cli": "museoncli campaign-monitor activity +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor activity +list --id <campaign_id>"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "description": "Only changes to creators whose name contains this.",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.activity-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "activity",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a UGC campaign's activity log, newest first. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "campaign-monitor.add-content": {
       "authorization": {
         "authentication_required": true,
@@ -21842,6 +23420,683 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "campaign-monitor.agency-analytics-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.agency-analytics-get",
+      "cli": "museoncli campaign-monitor agency-analytics +get",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor agency-analytics +get --date-from 2026-10-01 --date-to 2026-10-28"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "all_time": {
+            "description": "Every post ever published; ignores the dates.",
+            "type": "boolean"
+          },
+          "date_basis": {
+            "description": "upload: posts published in the window; view: views gained in it.",
+            "enum": [
+              "upload",
+              "view"
+            ],
+            "type": "string"
+          },
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "platform": {
+            "description": "One platform, e.g. tiktok or instagram.",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "description": "UGC campaigns: approved reads confirmed posts only; all adds those awaiting review.",
+            "enum": [
+              "all",
+              "approved"
+            ],
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone the dates are read in (default UTC).",
+            "format": "timezone",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "campaign-monitor.agency-analytics-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "agency-analytics",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read the Agency's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.agency-campaign-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.agency-campaign-list",
+      "cli": "museoncli campaign-monitor agency-campaign +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor agency-campaign +list --campaign-type ugc"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "campaign_type": {
+            "enum": [
+              "ugc",
+              "tracking"
+            ],
+            "type": "string"
+          },
+          "cursor": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "with_progress": {
+            "description": "Read each campaign's delivery progress instead of its settings.",
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "campaign-monitor.agency-campaign-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "agency-campaign",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List every campaign the Agency runs across its Brands, or their delivery progress with --with-progress. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.assignment-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.assignment-list",
+      "cli": "museoncli campaign-monitor assignment +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor assignment +list --id <campaign_id> --status assigned"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "assigned",
+              "in-progress",
+              "delivered",
+              "withdrawn"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.assignment-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "assignment",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a UGC campaign's brief assignments and what is due. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.audience-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.audience-get",
+      "cli": "museoncli campaign-monitor audience +get",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor audience +get --id <campaign_id> --by period --date-from 2026-10-01 --date-to 2026-10-28"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "by": {
+            "description": "day: each trend day's audience (Brand View too); period: the audience map and profile over the window (Agency team only).",
+            "enum": [
+              "day",
+              "period"
+            ],
+            "type": "string"
+          },
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "platform": {
+            "description": "One platform, e.g. tiktok or instagram.",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "description": "UGC campaigns: approved reads confirmed posts only; all adds those awaiting review.",
+            "enum": [
+              "all",
+              "approved"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "date_from",
+          "date_to"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.audience-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "audience",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read a campaign's audience: by day as the trend tooltip shows it, or over the period.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "campaign-monitor.bulk-remove-content": {
       "authorization": {
         "authentication_required": true,
@@ -22000,6 +24255,1137 @@
       "stability": "stable",
       "summary": "Remove content records from a campaign monitor in batch. This only removes the collection record from the campaign monitor (soft delete), it does NOT delete the original social-platform post; explicit operator confirmation is required before running with --yes. Batch size <=100, split into multiple batches if exceeded; response includes removed / missing detail; collection_content_id comes from the +list-content response.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.campaign-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.campaign-get",
+      "cli": "museoncli campaign-monitor campaign +get",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor campaign +get --id <campaign_id>"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.campaign-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "campaign",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read a campaign's type (ugc or tracking), status, start date and UGC campaign identity, as its Dashboard header shows them.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.creator-check-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.creator-check-get",
+      "cli": "museoncli campaign-monitor creator-check +get",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor creator-check +get --id <campaign_id>"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.creator-check-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "creator-check",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.creator-check-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.creator-check-list",
+      "cli": "museoncli campaign-monitor creator-check +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor creator-check +list --id <campaign_id> --kind quiet"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "cant-track",
+              "not-set-up",
+              "not-in-discord",
+              "quiet",
+              "not-healthy"
+            ],
+            "type": "string"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.creator-check-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "creator-check",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the creators one check holds for. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.creator-tag-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.creator-tag-list",
+      "cli": "museoncli campaign-monitor creator-tag +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor creator-tag +list --id <campaign_id>"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.creator-tag-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "creator-tag",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the creator tags set on a campaign's accounts.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.enrollment-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.enrollment-list",
+      "cli": "museoncli campaign-monitor enrollment +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor enrollment +list --id <campaign_id> --status participating"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "creator_id": {
+            "description": "One UGC creator's enrollment.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "cursor": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "participating",
+              "pending",
+              "rejected",
+              "onboarding",
+              "active",
+              "paused",
+              "removed"
+            ],
+            "type": "string"
+          },
+          "trial_only": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.enrollment-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "enrollment",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.format-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.format-list",
+      "cli": "museoncli campaign-monitor format +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor format +list --id <campaign_id> --all-time"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "all_time": {
+            "description": "Every post ever published; ignores the dates.",
+            "type": "boolean"
+          },
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "platform": {
+            "description": "One platform, e.g. tiktok or instagram.",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "description": "UGC campaigns: approved reads confirmed posts only; all adds those awaiting review.",
+            "enum": [
+              "all",
+              "approved"
+            ],
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone the dates are read in (default UTC).",
+            "format": "timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.format-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "format",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.format-post-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.format-post-list",
+      "cli": "museoncli campaign-monitor format-post +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor format-post +list --id <campaign_id> --brief-id <brief_id>"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "all_time": {
+            "description": "Every post ever published; ignores the dates.",
+            "type": "boolean"
+          },
+          "brief_id": {
+            "description": "The Format from format +list.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "platform": {
+            "description": "One platform, e.g. tiktok or instagram.",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "description": "UGC campaigns: approved reads confirmed posts only; all adds those awaiting review.",
+            "enum": [
+              "all",
+              "approved"
+            ],
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone the dates are read in (default UTC).",
+            "format": "timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "brief_id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.format-post-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "format-post",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the posts behind one Format's figures in format +list.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "campaign-monitor.get": {
@@ -24132,6 +27518,472 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "campaign-monitor.payment-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.payment-list",
+      "cli": "museoncli campaign-monitor payment +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor payment +list --bucket owed"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "bucket": {
+            "enum": [
+              "pending-approval",
+              "owed",
+              "overdue",
+              "sending",
+              "paid"
+            ],
+            "type": "string"
+          },
+          "cursor": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "campaign-monitor.payment-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "payment",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the selected workspace's creator payments, as its Payments page does.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.payment-summary-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.payment-summary-get",
+      "cli": "museoncli campaign-monitor payment-summary +get",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor payment-summary +get"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "campaign-monitor.payment-summary-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "payment-summary",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read the selected workspace's payment totals, as the Payments page header shows them.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.payout-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.payout-list",
+      "cli": "museoncli campaign-monitor payout +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor payout +list --id <campaign_id> --status confirmed"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "confirmed",
+              "approved",
+              "rejected"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.payout-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "payout",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a UGC campaign's settled payouts and their lines. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "campaign-monitor.remove-content": {
       "authorization": {
         "authentication_required": true,
@@ -24442,6 +28294,183 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "campaign-monitor.report-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.report-get",
+      "cli": "museoncli campaign-monitor report +get",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor report +get --id <campaign_id> --widget content-tiers --date-from 2026-10-01 --date-to 2026-10-28"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "scope": {
+            "description": "UGC campaigns: approved reads confirmed posts only; all adds those awaiting review.",
+            "enum": [
+              "all",
+              "approved"
+            ],
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone the dates are read in (default UTC).",
+            "format": "timezone",
+            "type": "string"
+          },
+          "widget": {
+            "description": "cumulative-views: the long tail of views; content-tiers: posts by view tier; creator-countries: views by creator audience country.",
+            "enum": [
+              "cumulative-views",
+              "content-tiers",
+              "creator-countries"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "widget",
+          "date_from",
+          "date_to"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.report-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "report",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one Analytics tab widget over a date window: cumulative views, content tiers or creator countries. Period-over-period core metrics are +get-period-performance.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "campaign-monitor.resolve-post": {
       "authorization": {
         "authentication_required": true,
@@ -24563,6 +28592,794 @@
       "shortcut": "+resolve-post",
       "stability": "stable",
       "summary": "Resolve an account publish schedule item to its published social post.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.roster-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.roster-list",
+      "cli": "museoncli campaign-monitor roster +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor roster +list --id <campaign_id> --sort views"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "description": "Count posts or videos.",
+            "enum": [
+              "post",
+              "video"
+            ],
+            "type": "string"
+          },
+          "cursor": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "desc",
+              "asc"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "platform": {
+            "description": "One platform, e.g. tiktok or instagram.",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "description": "UGC campaigns: approved reads confirmed posts only; all adds those awaiting review.",
+            "enum": [
+              "all",
+              "approved"
+            ],
+            "type": "string"
+          },
+          "search": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "section": {
+            "description": "main (default): creators in the campaign; removed: those taken out.",
+            "enum": [
+              "main",
+              "removed"
+            ],
+            "type": "string"
+          },
+          "sort": {
+            "enum": [
+              "views",
+              "content-count",
+              "avg-views",
+              "engagement-rate"
+            ],
+            "type": "string"
+          },
+          "stage": {
+            "items": {
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 0,
+            "type": "array"
+          },
+          "timezone": {
+            "description": "IANA timezone the dates are read in (default UTC).",
+            "format": "timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.roster-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "roster",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a UGC campaign's creators as the By Creator tab does: one row per enrollment with its stage, tags and post figures.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.settlement-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.settlement-get",
+      "cli": "museoncli campaign-monitor settlement +get",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor settlement +get --id <campaign_id> --date-from 2026-10-01 --date-to 2026-10-31"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "creator_id": {
+            "description": "One UGC creator's lines and evidence.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "date_from": {
+            "description": "Settlement period start (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Settlement period end (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone the dates are read in (default UTC).",
+            "format": "timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "date_from",
+          "date_to"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.settlement-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "settlement",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. Agency team only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.video-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.video-get",
+      "cli": "museoncli campaign-monitor video +get",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor video +get --id <campaign_id> --content-id <content_id> --section daily"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "content_id": {
+            "description": "The post's content id from video +list.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "scope": {
+            "description": "UGC campaigns: approved reads confirmed posts only; all adds those awaiting review.",
+            "enum": [
+              "all",
+              "approved"
+            ],
+            "type": "string"
+          },
+          "section": {
+            "description": "detail (default), summary, daily metrics or platform insights.",
+            "enum": [
+              "detail",
+              "summary",
+              "daily",
+              "insights"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "content_id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.video-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "video",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one UGC post's detail, summary, daily metrics or insights, as its post drawer does.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign-monitor.video-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "required_roles": [
+          "workspace_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_workspace_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "campaign-monitor.video-list",
+      "cli": "museoncli campaign-monitor video +list",
+      "domain": "campaign-monitor",
+      "examples": [
+        "museoncli campaign-monitor video +list --id <campaign_id> --date-from 2026-10-01 --date-to 2026-10-28 --sort views-desc"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the campaign monitor list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open creators covered by one campaign monitor.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open posts/content covered by one campaign monitor.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "all_time": {
+            "description": "Every post ever published; ignores the dates.",
+            "type": "boolean"
+          },
+          "creator_id": {
+            "description": "Only this UGC creator's posts.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "date_from": {
+            "description": "Published on or after (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "Published on or before (YYYY-MM-DD).",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "description": "Campaign id as campaign-monitor +list returns it.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "platform": {
+            "description": "One platform, e.g. tiktok or instagram.",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "description": "UGC campaigns: approved reads confirmed posts only; all adds those awaiting review.",
+            "enum": [
+              "all",
+              "approved"
+            ],
+            "type": "string"
+          },
+          "search": {
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "sort": {
+            "enum": [
+              "published-at-desc",
+              "published-at-asc",
+              "title-desc",
+              "title-asc",
+              "views-desc",
+              "views-asc",
+              "likes-desc",
+              "likes-asc",
+              "comments-desc",
+              "comments-asc",
+              "shares-desc",
+              "shares-asc",
+              "collects-desc",
+              "collects-asc",
+              "high-intent-engagement-desc",
+              "high-intent-engagement-asc",
+              "engagement-rate-desc",
+              "engagement-rate-asc",
+              "collect-like-ratio-desc",
+              "collect-like-ratio-asc",
+              "collect-view-ratio-desc",
+              "collect-view-ratio-asc"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "description": "What a post awaits, or the ones not counted.",
+            "enum": [
+              "confirmation",
+              "review",
+              "not-counted"
+            ],
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone the dates are read in (default UTC).",
+            "format": "timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign-monitor.video-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "video",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a UGC campaign's videos as its Content tab does: each creative once for its confirmed posts, and posts still awaiting confirmation or review. Filter by --status confirmation, review or not-counted. Tracking campaigns use +list-content.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
