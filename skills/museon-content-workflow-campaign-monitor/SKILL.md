@@ -66,6 +66,10 @@ showing coverage. It is not actual platform plays within a local calendar day.
 The old-post leader uses that same observation bucket, among posts published
 before the report's local day. Missing observations remain null.
 
+## Reading what the Dashboard shows
+
+The resource commands (`campaign`, `video`, `roster`, `format`, `report`, `audience`, `settlement`, `enrollment`, `agency-campaign` and the rest) read the same figures as the web Campaign Dashboard, through the same routes, so the login sees exactly what it sees in the browser. A Brand member reads the Brand View; the Agency team also reads settlement, operations, activity and audience. A refusal answers `not_found` (or `forbidden` for Agency-wide reads): report that the login cannot see it, never retry under another identity. Read [dashboard.md](references/dashboard.md) for the command per tab.
+
 ## DON'T
 
 - **DON'T** treat synchronized history as a live platform fetch.

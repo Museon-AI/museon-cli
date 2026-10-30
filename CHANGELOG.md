@@ -2,6 +2,15 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+- New Campaign Dashboard reads under `campaign-monitor`, each calling the route the web Dashboard calls for the same figures, so a login reads exactly what it sees in the browser:
+  - Both views: `campaign +get`, `video +list` / `+get` (UGC videos with their review status; detail, summary, daily and insights), `roster +list` (By Creator), `format +list`, `format-post +list`, `report +get --widget cumulative-views|content-tiers|creator-countries`, `creator-tag +list`, `audience +get` (by day), `payment +list`, `payment-summary +get`.
+  - Agency team only: `agency-campaign +list [--with-progress]`, `agency-analytics +get`, `audience +get --by period`, `settlement +get`, `payout +list`, `activity +list`, `enrollment +list`, `assignment +list`, `creator-check +get` / `+list`.
+- `--id` is the campaign as `campaign-monitor +list` returns it; UGC routes resolve the UGC campaign with one read, Agency-wide reads take the caller's Agency from `/ugc/agency/me`. These commands are not bound to the selected workspace.
+- The campaign-monitor skill gains the Dashboard command map (`references/dashboard.md`).
+- No API change is required to call them. The Museon API change that holds Brand members, read grants and share links out of the Agency-only routes, and holds CLI keys to their approved workspaces, ships separately.
+
 ## 0.20.0
 
 - Campaign summaries and post lists now accept `--timezone`, so daily reports use one publication calendar across summaries, breakdowns and post drilldown.
