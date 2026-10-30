@@ -2,6 +2,12 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.20.0
+
+- Campaign summaries and post lists now accept `--timezone`, so daily reports use one publication calendar across summaries, breakdowns and post drilldown.
+- Post lists now expose `--brief-id`, `--persona-id`, `--ugc-creator-id` and `--review-status approved|awaiting-review` for UGC fulfillment drilldown.
+- The Campaign workflow explains fulfillment identity, approval buckets, observation coverage and the distinction between local publication dates and UTC observed snapshot deltas.
+
 ## 0.19.0
 
 - New `campaign-monitor +get-breakdown --id --by brief|persona|tag|creator-tag [--link-status linked] [--date-from] [--date-to] [--platform] [--timezone]`: groups a campaign's counted posts by one dimension, from `GET /agent-cli/campaign-monitors/{id}/breakdown`. The campaign type decides the menu and the default (`ugc`: brief; others: creator-tag). Rows are value / unassigned / awaiting_review with posts, creators, measured_posts, metric sums and median_views; tags overlap.
