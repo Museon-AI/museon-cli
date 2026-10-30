@@ -2,7 +2,7 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
-## Unreleased
+## 0.21.0
 
 - New Campaign Dashboard reads under `campaign-monitor`, each calling the route the web Dashboard calls for the same figures, so a login reads exactly what it sees in the browser:
   - Both views: `campaign +get`, `video +list` / `+get` (UGC videos with their review status; detail, summary, daily and insights), `roster +list` (By Creator), `format +list`, `format-post +list`, `report +get --widget cumulative-views|content-tiers|creator-countries`, `creator-tag +list`, `audience +get` (by day), `payment +list`, `payment-summary +get`.
