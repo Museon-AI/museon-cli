@@ -23154,6 +23154,10 @@
               "string",
               "null"
             ]
+          },
+          "timezone": {
+            "default": "UTC",
+            "type": "string"
           }
         },
         "required": [
@@ -23458,6 +23462,13 @@
       ],
       "input_schema": {
         "properties": {
+          "brief_id": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "campaign_id": {
             "minLength": 1,
             "type": "string"
@@ -23516,7 +23527,25 @@
             "minimum": 1,
             "type": "integer"
           },
+          "persona_id": {
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "platform": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "review_status": {
+            "enum": [
+              "approved",
+              "awaiting-review",
+              null
+            ],
             "type": [
               "string",
               "null"
@@ -23529,6 +23558,18 @@
             ]
           },
           "sort": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
+            "default": "UTC",
+            "type": "string"
+          },
+          "ugc_creator_id": {
+            "description": "UGC person ID, distinct from the social account --creator-id.",
+            "format": "uuid",
             "type": [
               "string",
               "null"

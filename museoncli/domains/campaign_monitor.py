@@ -168,6 +168,12 @@ def _add_campaign_monitor_content_list_arguments(parser: argparse.ArgumentParser
     parser.add_argument("--likes-min", dest="likes_min", type=int)
     parser.add_argument("--likes-max", dest="likes_max", type=int)
 
+    parser.add_argument("--timezone", default="UTC")
+    parser.add_argument("--brief-id")
+    parser.add_argument("--persona-id")
+    parser.add_argument("--ugc-creator-id")
+    parser.add_argument("--review-status", choices=["approved", "awaiting-review"])
+
 
 def _add_campaign_monitor_content_remove_arguments(parser: argparse.ArgumentParser) -> None:
     _add_campaign_monitor_id_arguments(parser)
@@ -198,6 +204,11 @@ def _build_campaign_monitor_content_list_arguments(
                 "platform": args.platform,
                 "sort": args.sort,
                 "creator_id": args.creator_id,
+                "timezone": args.timezone,
+                "brief_id": args.brief_id,
+                "persona_id": args.persona_id,
+                "ugc_creator_id": args.ugc_creator_id,
+                "review_status": args.review_status,
                 "views_min": args.views_min,
                 "views_max": args.views_max,
                 "likes_min": args.likes_min,
@@ -329,12 +340,15 @@ def _add_campaign_monitor_summary_arguments(parser: argparse.ArgumentParser) -> 
     parser.add_argument("--metrics")
     parser.add_argument("--creator-id", dest="creator_id")
 
+    parser.add_argument("--timezone", default="UTC")
+
 
 def _build_campaign_monitor_summary_arguments(args: argparse.Namespace) -> dict[str, Any]:
     payload = _build_campaign_monitor_date_range_arguments(args)
     payload.update(
         _without_none(
             {
+                "timezone": args.timezone,
                 "granularity": args.granularity,
                 "search": args.search,
                 "platform": args.platform,
@@ -433,6 +447,18 @@ def _campaign_monitor_content_list_input_schema() -> dict[str, Any]:
     schema = _campaign_monitor_paged_input_schema()
     schema["properties"].update(
         {
+            "timezone": {"type": "string", "default": "UTC"},
+            "brief_id": {"type": ["string", "null"], "format": "uuid"},
+            "persona_id": {"type": ["string", "null"], "format": "uuid"},
+            "ugc_creator_id": {
+                "type": ["string", "null"],
+                "format": "uuid",
+                "description": "UGC person ID, distinct from the social account --creator-id.",
+            },
+            "review_status": {
+                "type": ["string", "null"],
+                "enum": ["approved", "awaiting-review", None],
+            },
             "creator_id": {"type": ["string", "null"]},
             "views_min": {"type": ["integer", "null"], "minimum": 0},
             "views_max": {"type": ["integer", "null"], "minimum": 0},
@@ -539,6 +565,7 @@ def _campaign_monitor_summary_input_schema() -> dict[str, Any]:
     schema = _campaign_monitor_date_range_input_schema()
     schema["properties"].update(
         {
+            "timezone": {"type": "string", "default": "UTC"},
             "granularity": {"type": "string", "default": "day"},
             "search": {"type": ["string", "null"]},
             "platform": {"type": ["string", "null"]},
@@ -990,6 +1017,15 @@ async def _execute_content_list(ctx: CommandContext) -> Any:
                     "platform": arguments.get("platform"),
                     "sort": arguments.get("sort"),
                     "creator_id": arguments.get("creator_id"),
+                    "timezone": arguments.get("timezone"),
+                    "brief_id": arguments.get("brief_id"),
+                    "persona_id": arguments.get("persona_id"),
+                    "ugc_creator_id": arguments.get("ugc_creator_id"),
+                    "review_status": (
+                        arguments["review_status"].replace("-", "_")
+                        if arguments.get("review_status")
+                        else None
+                    ),
                     "views_min": arguments.get("views_min"),
                     "views_max": arguments.get("views_max"),
                     "likes_min": arguments.get("likes_min"),
@@ -1150,6 +1186,7 @@ async def _execute_summary(ctx: CommandContext) -> Any:
             params=compact_params(
                 {
                     **date_params,
+                    "timezone": arguments.get("timezone", "UTC"),
                     "granularity": arguments.get("granularity", "day"),
                     "search": arguments.get("search"),
                     "platform": arguments.get("platform"),

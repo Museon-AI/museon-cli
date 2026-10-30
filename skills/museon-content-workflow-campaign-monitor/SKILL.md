@@ -44,6 +44,28 @@ A campaign monitor stores tracked creators and content with synchronized post an
 | Persona or tag comparison | `museoncli campaign-monitor +get-breakdown --id <campaign_id> --by persona` |
 | A tracking campaign by creator tag | `museoncli campaign-monitor +get-breakdown --id <campaign_id> --by creator-tag` |
 
+## Daily reports and post drilldown
+
+Pass the same `--timezone` to `+get-summary`, `+list-content`, `+get-breakdown`
+and `+get-period-performance`. Calendar dates are inclusive publication dates in
+that timezone. A latest content counter and a period-end snapshot are different
+cutoffs; do not mix them as daily growth.
+
+`+list-content --brief-id <id>` and `--persona-id <id>` read approved attribution.
+`--review-status approved|awaiting-review` drills into the review buckets.
+Each UGC post carries `ugc_creator_id`, `enrollment_id`, `link_status`,
+`creative_id`, `brief_id` and `persona_id`. Use `--ugc-creator-id` for a person;
+`--creator-id` is the social account. Do not infer the person from handles or the
+social account's unrelated `creator_info.creator_id`.
+
+The summary's `daily_report.timezone` describes publication counts;
+`observation_timezone` describes its observation bucket (UTC).
+`observed_views_delta` sums recorded snapshot deltas over the authorized campaign
+cohort, with `observed_views_content_count` / `observation_eligible_content_count`
+showing coverage. It is not actual platform plays within a local calendar day.
+The old-post leader uses that same observation bucket, among posts published
+before the report's local day. Missing observations remain null.
+
 ## DON'T
 
 - **DON'T** treat synchronized history as a live platform fetch.

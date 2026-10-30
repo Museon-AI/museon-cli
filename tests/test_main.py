@@ -1157,6 +1157,7 @@ def test_campaign_monitor_content_list_parser() -> None:
     assert args.domain_command == "campaign-monitor.list-content"
     assert main_module.command_payload(args) == {
         "campaign_id": "campaign-1",
+        "timezone": "UTC",
         "date_from": "2026-06-01",
         "page": 1,
         "page_size": 10,
