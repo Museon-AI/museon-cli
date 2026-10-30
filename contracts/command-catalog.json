@@ -12545,7 +12545,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.20.0",
+  "contract_revision": "0.21.0",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
