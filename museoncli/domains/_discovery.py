@@ -70,6 +70,8 @@ def flag_help(spec: CommandSpec, action: argparse.Action) -> str | None:
     if not action.option_strings:
         return None
     option = action.option_strings[0]
+    if option == "--dry-run" and spec.dry_run_reads_server:
+        return "Read the current state and show what would change, without writing anything."
     if option in _COMMON_FLAG_HELP:
         return _COMMON_FLAG_HELP[option]
     if option == "--id":

@@ -36,7 +36,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-324 commands across 14 domains (source of truth: `museoncli schema`).
+337 commands across 15 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -397,6 +397,24 @@ The tables below are generated — edit code, then run
 | `agentic-campaign +plan-get` | read | — | — | direct | Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-tags` | read | — | — | direct | Aggregate element tags across a Persona Plan, omitting account operation ids. |
 | `agentic-campaign +plan-attribution` | read | — | — | direct | Aggregate attribution across a Persona Plan, omitting account operation ids. |
+
+### ugc
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `ugc campaign +list` | read | — | — | direct | List the active workspace's UGC campaigns, newest first. Their ids are what every other ugc command takes as --campaign-id. |
+| `ugc enrollment +list` | read | — | — | direct | List a UGC campaign's roster: enrollment id, status, persona, creator name and accounts, newest first. Use it to find the enrollment ids to assign a brief to; participating is onboarding, active and paused together. |
+| `ugc brief +list` | read | — | — | direct | List the briefs a UGC campaign links, archived ones included: id, title, persona, status and current version. |
+| `ugc brief +get` | read | — | — | direct | Read one brief of a UGC campaign: its current version (or --version N) and, as document, the editable fields of the current version that +update changes. |
+| `ugc brief +progress` | read | — | — | direct | Read how far each brief of a UGC campaign has got: per brief, its live (not withdrawn) assignments, the videos they count and their video limits, plus one row per assignment. Raw counts only; nothing is judged owed or late. |
+| `ugc creative +list` | read | — | — | direct | List a UGC campaign's creatives (submitted cuts) with the brief each one cites. --brief-id none keeps the ones that cite no brief yet. |
+| `ugc creative +set-brief` | write | yes | — | direct | Set which brief a UGC creative cites; a creative delivered against an assignment keeps that assignment's brief. --dry-run returns the brief before and after without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. |
+| `ugc creative +apply-default-briefs` | write | yes | — | direct | Link every brief-less creative of a UGC campaign whose creator has exactly one live assignment there to that assignment's brief. --dry-run asks the workbench which creatives it would link, without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. |
+| `ugc brief +update` | write | yes | — | direct | Edit a UGC campaign's brief as a new version: only the fields passed change, the rest of the current version is kept. --dry-run returns the changes and how many creators are working on the brief, without writing; --notify sends each of them a brief-updated card. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Ask the user too whether to notify those creators. |
+| `ugc brief +upload-media` | write | yes | — | direct | Upload an image, video or file to a UGC campaign's brief library and return the reference to add to --references-json of +update. Uploading changes no brief by itself. Its --dry-run only checks the file locally; the Agent asks the user before uploading. |
+| `ugc assignment +create` | write | yes | — | direct | Assign one brief to one or more of a UGC campaign's enrollments, with optional video limit, due time, note and priority. --dry-run returns the brief, the terms and who would get it, with any assignment of this brief they already hold, without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. |
+| `ugc assignment +update-terms` | write | yes | — | direct | Change an assignment's video limit, due time, note or priority; terms not passed keep their value. Saving sends the creator one updated brief card. --dry-run returns the changes without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. |
+| `ugc assignment +withdraw` | destructive | yes | `--yes` | direct | Withdraw an assignment: the creator no longer has the brief. --dry-run returns the assignment without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Then pass --yes. |
 
 ### skills
 

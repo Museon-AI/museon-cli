@@ -1,6 +1,6 @@
 ---
 name: museon-content-workflow-campaign-monitor
-description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI."
+description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; edit UGC briefs, brief assignments and creative brief links."
 metadata:
   requires:
     bins: ["museoncli"]
@@ -69,6 +69,19 @@ before the report's local day. Missing observations remain null.
 ## Reading what the Dashboard shows
 
 The resource commands (`campaign`, `video`, `roster`, `format`, `report`, `audience`, `settlement`, `enrollment`, `agency-campaign` and the rest) read the same figures as the web Campaign Dashboard, through the same routes, so the login sees exactly what it sees in the browser. A Brand member reads the Brand View; the Agency team also reads settlement, operations, activity and audience. A refusal answers `not_found` (or `forbidden` for Agency-wide reads): report that the login cannot see it, never retry under another identity. Read [dashboard.md](references/dashboard.md) for the command per tab.
+
+## Editing UGC briefs and assignments (`ugc`)
+
+The `ugc` domain writes the UGC workbench: briefs, brief assignments, and which brief a creative cites. Its `--campaign-id` is the UGC campaign id from `museoncli ugc campaign +list`, not a campaign-monitor collection id.
+
+| Situation | Start with |
+| --- | --- |
+| Which briefs a campaign has | `museoncli ugc brief +list --campaign-id <id>` |
+| How far each brief has got | `museoncli ugc brief +progress --campaign-id <id>` |
+| Creatives that cite no brief | `museoncli ugc creative +list --campaign-id <id> --brief-id none` |
+| Who can be assigned | `museoncli ugc enrollment +list --campaign-id <id> --status participating` |
+
+The workbench never asks for confirmation, so the Agent does. Every write runs with `--dry-run` first. Its result reads the live state and changes nothing. Show the user what it returned (`changes`, `before`/`after`, who gets an assignment), ask them, and run it without `--dry-run` only after they say yes. Before `ugc brief +update`, also ask whether to `--notify` the `live_assignments` creators working on the brief. `+progress` returns raw counts: report them, and do not decide who owes a video.
 
 ## DON'T
 

@@ -309,7 +309,7 @@ def command_uses_network(args: argparse.Namespace) -> bool:
         spec = get_command_spec(domain_command)
         if spec.transport == "local_process":
             return False
-        if not getattr(args, "dry_run", False):
+        if not getattr(args, "dry_run", False) or spec.dry_run_reads_server:
             return True
         return False
     return False
@@ -1141,7 +1141,8 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
         workspace_id = (arguments.get("workspace_id") or workspace_id) if "workspace_id" in spec.input_schema["properties"] else None
     if not spec.workspace_bound:
         workspace_id = None
-    if getattr(args, "dry_run", False):
+    dry_run = bool(getattr(args, "dry_run", False))
+    if dry_run and not spec.dry_run_reads_server:
         if spec.domain.value == "cloud-phone":
             from museoncli.domains.cloud_phone import redact
 
@@ -1152,7 +1153,7 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
                 spec.schema_name, dry_run_workspace_id, arguments
             )
         return domain_command_dry_run_envelope(spec.schema_name, workspace_id, arguments)
-    if spec.requires_confirmation and not getattr(args, "yes", False):
+    if spec.requires_confirmation and not dry_run and not getattr(args, "yes", False):
         raise RuntimeError("confirmation_required")
     executor = command_executor(spec.schema_name)
 

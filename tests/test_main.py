@@ -1511,6 +1511,7 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "ai-slideshow",
         "campaign-monitor",
         "agentic-campaign",
+        "ugc",
         "skills",
         "staff-ops",
         "routines",

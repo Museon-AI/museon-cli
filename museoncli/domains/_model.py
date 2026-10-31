@@ -42,6 +42,7 @@ class Domain(str, Enum):
     AI_SLIDESHOW = "ai-slideshow"
     AGENTIC_CAMPAIGN = "agentic-campaign"
     CAMPAIGN_MONITOR = "campaign-monitor"
+    UGC = "ugc"
     SKILLS = "skills"
     STAFF_OPS = "staff-ops"
     ROUTINES = ROUTINES_DOMAIN
@@ -65,6 +66,9 @@ class CommandSpec:
     discoverable: bool = True
     adapter_type: AdapterType = "internal_tool"
     supports_dry_run: bool = False
+    dry_run_reads_server: bool = False
+    """--dry-run runs the executor, which reads live state and writes nothing,
+    instead of the generic local echo of the arguments."""
     requires_confirmation: bool = False
     authentication_required: bool = True
     required_scopes: tuple[str, ...] = ("agent_cli.access",)
