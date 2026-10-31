@@ -56,7 +56,10 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
 
 - `risk_level`: `read` / `write` / `destructive`.
 - Every `write` and `destructive` command supports `--dry-run` (generic
-  short-circuit in dispatch; no API call is made).
+  short-circuit in dispatch; no API call is made). A command whose spec sets
+  `dry_run_reads_server` runs its executor instead: it reads the live state,
+  reports what would change and writes nothing (`ugc`, whose workbench has no
+  confirmation step of its own). Its dry run also skips the `--yes` gate.
 - `destructive` commands set `requires_confirmation` and demand `--yes`;
   without it the CLI returns `{"ok": false, "reason": "confirmation_required"}`.
   Agents must confirm with the user, then retry with `--yes`.

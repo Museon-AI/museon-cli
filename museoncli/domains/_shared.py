@@ -298,6 +298,7 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
         "execution": spec.execution,
         "supports_dry_run": spec.supports_dry_run,
         "requires_confirmation": spec.requires_confirmation,
+        **({"dry_run_reads_server": True} if spec.dry_run_reads_server else {}),
         "stability": spec.stability,
         "transport": spec.transport,
         "authorization": {

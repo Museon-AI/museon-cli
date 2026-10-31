@@ -84,5 +84,6 @@ and Business Skill boundaries. Read only the reference needed for the current ca
 | --- | --- |
 | External evidence and research synthesis | `museon-research` |
 | Monitored creator/content history | `museon-content-workflow-campaign-monitor` |
+| UGC briefs, brief assignments and creative brief links (`ugc`) | `museon-content-workflow-campaign-monitor` |
 | Reusable slideshow assets, generation and publish | `museon-content-workflow-ai-slideshow` |
 | HireAICreator content planning, editing and delivery | `museon-content-workflow-hireaicreator` |
