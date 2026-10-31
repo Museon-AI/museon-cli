@@ -2,6 +2,15 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.22.0
+
+- New `ugc` domain lets an operator's agent read and edit UGC briefs through the UGC workbench (`/api/v2/ugc`), with the operator's own API key and the same workspace role as the web app:
+  - Reads: `ugc campaign +list`, `ugc enrollment +list`, `ugc brief +list/+get/+progress`, `ugc creative +list` (`--brief-id none` lists creatives with no brief).
+  - Writes: `ugc creative +set-brief/+apply-default-briefs`, `ugc brief +update/+upload-media`, `ugc assignment +create/+update-terms/+withdraw`.
+- Human in the loop: the workbench never asks for confirmation, so the agent does. A new `CommandSpec.dry_run_reads_server` field makes `--dry-run` run the executor, which reads live state (what changes, how many creators are working on the brief, whether the caption rule changes), writes nothing, and returns `warnings` and `next_steps` telling the agent what to ask the user. `brief +update --notify` asks the server to send each creator on a live assignment a "Your brief was updated" card.
+- The campaign-monitor skill and the base skill's routing table gain the `ugc` command map.
+- Requires the Museon API with Museon-AI/museon#6687 (the `notify` field and `POST /campaigns/{id}/creatives/default-briefs`) deployed.
+
 ## 0.21.0
 
 - New Campaign Dashboard reads under `campaign-monitor`, each calling the route the web Dashboard calls for the same figures, so a login reads exactly what it sees in the browser:
