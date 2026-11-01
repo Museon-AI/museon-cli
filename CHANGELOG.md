@@ -2,6 +2,11 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.22.1
+
+- `campaign-monitor payment +list` and `payment-summary +get` accept `--workspace-id`, like every other workspace command; they read the selected workspace only before.
+- Payments are the Agency team's: the Brand View has no Payments page, and these two commands now answer the team only (with the Museon API change that removes Brand access).
+
 ## 0.22.0
 
 - New `ugc` domain lets an operator's agent read and edit UGC briefs through the UGC workbench (`/api/v2/ugc`), with the operator's own API key and the same workspace role as the web app:
@@ -10,11 +15,6 @@ Museon CLI follows semantic versioning for its package and command contract.
 - Human in the loop: the workbench never asks for confirmation, so the agent does. A new `CommandSpec.dry_run_reads_server` field makes `--dry-run` run the executor, which reads live state (what changes, how many creators are working on the brief, whether the caption rule changes), writes nothing, and returns `warnings` and `next_steps` telling the agent what to ask the user. `brief +update --notify` asks the server to send each creator on a live assignment a "Your brief was updated" card.
 - The campaign-monitor skill and the base skill's routing table gain the `ugc` command map.
 - Requires the Museon API with Museon-AI/museon#6687 (the `notify` field and `POST /campaigns/{id}/creatives/default-briefs`) deployed.
-
-## Unreleased
-
-- `campaign-monitor payment +list` and `payment-summary +get` accept `--workspace-id`, like every other workspace command; they read the selected workspace only before.
-- Payments are the Agency team's: the Brand View has no Payments page, and these two commands now answer the team only (with the Museon API change that removes Brand access).
 
 ## 0.21.0
 
