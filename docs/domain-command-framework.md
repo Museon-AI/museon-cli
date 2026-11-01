@@ -357,8 +357,8 @@ The tables below are generated — edit code, then run
 | `campaign-monitor report +get` | read | — | — | direct | Read one Analytics tab widget over a date window: cumulative views, content tiers or creator countries. Period-over-period core metrics are +get-period-performance. |
 | `campaign-monitor creator-tag +list` | read | — | — | direct | List the creator tags set on a campaign's accounts. |
 | `campaign-monitor audience +get` | read | — | — | direct | Read a campaign's audience: by day as the trend tooltip shows it, or over the period. |
-| `campaign-monitor payment +list` | read | — | — | direct | List the selected workspace's creator payments, as its Payments page does. |
-| `campaign-monitor payment-summary +get` | read | — | — | direct | Read the selected workspace's payment totals, as the Payments page header shows them. |
+| `campaign-monitor payment +list` | read | — | — | direct | List a workspace's creator payments, as the Agency Payments module does. Agency team only. |
+| `campaign-monitor payment-summary +get` | read | — | — | direct | Read a workspace's payment totals, as the Agency Payments header shows them. Agency team only. |
 | `campaign-monitor settlement +get` | read | — | — | direct | Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. Agency team only. |
 | `campaign-monitor payout +list` | read | — | — | direct | List a UGC campaign's settled payouts and their lines. Agency team only. |
 | `campaign-monitor activity +list` | read | — | — | direct | List a UGC campaign's activity log, newest first. Agency team only. |

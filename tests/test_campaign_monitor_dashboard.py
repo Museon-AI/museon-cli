@@ -281,3 +281,12 @@ def test_a_campaign_no_ugc_campaign_stands_for_is_not_found(server, monkeypatch)
     assert result["ok"] is False and result["reason"] == "not_found"
     assert len(server["requests"]) == 1, "nothing is read past the campaign that is not there"
     assert result["error"]["server_code"] == "campaign_not_found"
+
+
+def test_payments_read_a_named_workspace(server):
+    """A Brand reads the payments of any workspace it belongs to, not only the selected one."""
+    other = "70000000-0000-4000-8000-000000000007"
+    run("payment", "+list", "--workspace-id", other)
+
+    (request,) = server["requests"]
+    assert query(request)["workspace_id"] == [other]

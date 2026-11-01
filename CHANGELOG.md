@@ -11,6 +11,11 @@ Museon CLI follows semantic versioning for its package and command contract.
 - The campaign-monitor skill and the base skill's routing table gain the `ugc` command map.
 - Requires the Museon API with Museon-AI/museon#6687 (the `notify` field and `POST /campaigns/{id}/creatives/default-briefs`) deployed.
 
+## Unreleased
+
+- `campaign-monitor payment +list` and `payment-summary +get` accept `--workspace-id`, like every other workspace command; they read the selected workspace only before.
+- Payments are the Agency team's: the Brand View has no Payments page, and these two commands now answer the team only (with the Museon API change that removes Brand access).
+
 ## 0.21.0
 
 - New Campaign Dashboard reads under `campaign-monitor`, each calling the route the web Dashboard calls for the same figures, so a login reads exactly what it sees in the browser:

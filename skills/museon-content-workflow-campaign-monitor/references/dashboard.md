@@ -2,7 +2,7 @@
 
 Every command below takes `--id` as `campaign-monitor +list` returns it. The resource
 commands (`campaign +get`, `video +list`, ...) work in any workspace the login can read; the
-selected workspace only scopes `payment` reads. The flat commands (`+get-summary`,
+selected workspace is only the default for `payment` reads. The flat commands (`+get-summary`,
 `+get-period-performance`, `+list-content`, `+list-creators`) read only the selected
 workspace's campaigns: pass `--workspace-id` with the campaign's `workspace_id`
 (from `campaign +get` or `agency-campaign +list`).
@@ -23,7 +23,6 @@ workspace's campaigns: pass `--workspace-id` with the campaign's `workspace_id`
 | Creator tags | `campaign-monitor creator-tag +list --id <id>` |
 | Performance by Format | `campaign-monitor format +list --id <id>`, then `format-post +list --brief-id <brief_id>` |
 | Daily audience (trend tooltip) | `campaign-monitor audience +get --id <id> --date-from D --date-to D` |
-| Payments page (selected workspace) | `campaign-monitor payment +list`, `campaign-monitor payment-summary +get` |
 
 ## Agency team only
 
@@ -36,6 +35,7 @@ workspace's campaigns: pass `--workspace-id` with the campaign's `workspace_id`
 | Settled payouts | `campaign-monitor payout +list --id <id>` |
 | Operations: enrollments, assignments, creator checks | `campaign-monitor enrollment +list`, `assignment +list`, `creator-check +get` / `+list --kind <kind>` |
 | Activity tab | `campaign-monitor activity +list --id <id>` |
+| Creator payments of a workspace | `campaign-monitor payment +list [--workspace-id <id>]`, `campaign-monitor payment-summary +get` |
 
 ## Scope and windows
 
