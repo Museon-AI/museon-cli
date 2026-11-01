@@ -105,6 +105,12 @@ def _read(
     def add_arguments(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--args-json")
         parser.add_argument("--args-file")
+        if target == "workspace":
+            parser.add_argument(
+                "--workspace-id",
+                dest="workspace_id",
+                help="Workspace whose payments to read; defaults to the selected workspace.",
+            )
         for key, field in props.items():
             kind = field["type"]
             base = next(x for x in kind if x != "null") if isinstance(kind, list) else kind
