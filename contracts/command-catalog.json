@@ -4496,7 +4496,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List the selected workspace's creator payments, as its Payments page does.",
+          "summary": "List a workspace's creator payments, as the Agency Payments module does. Agency team only.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -4567,7 +4567,7 @@
           "risk_level": "read",
           "shortcut": "+get",
           "stability": "stable",
-          "summary": "Read the selected workspace's payment totals, as the Payments page header shows them.",
+          "summary": "Read a workspace's payment totals, as the Agency Payments header shows them. Agency team only.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -28044,7 +28044,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List the selected workspace's creator payments, as its Payments page does.",
+      "summary": "List a workspace's creator payments, as the Agency Payments module does. Agency team only.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -28189,7 +28189,7 @@
       "risk_level": "read",
       "shortcut": "+get",
       "stability": "stable",
-      "summary": "Read the selected workspace's payment totals, as the Payments page header shows them.",
+      "summary": "Read a workspace's payment totals, as the Agency Payments header shows them. Agency team only.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

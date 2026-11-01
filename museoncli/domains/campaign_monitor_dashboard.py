@@ -511,7 +511,10 @@ def specs() -> list[CommandSpec]:
                     "q": a.get("search"),
                 },
             ),
-            summary="List the selected workspace's creator payments, as its Payments page does.",
+            summary=(
+                "List a workspace's creator payments, as the Agency Payments module does. "
+                "Agency team only."
+            ),
             example="museoncli campaign-monitor payment +list --bucket owed",
             paging="cursor",
         ),
@@ -528,7 +531,10 @@ def specs() -> list[CommandSpec]:
                     "date_to": a.get("date_to"),
                 },
             ),
-            summary="Read the selected workspace's payment totals, as the Payments page header shows them.",
+            summary=(
+                "Read a workspace's payment totals, as the Agency Payments header shows them. "
+                "Agency team only."
+            ),
             example="museoncli campaign-monitor payment-summary +get",
         ),
         # -- the Agency team's reads: settlement, operations, activity -------------

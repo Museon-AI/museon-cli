@@ -14,6 +14,7 @@ Museon CLI follows semantic versioning for its package and command contract.
 ## Unreleased
 
 - `campaign-monitor payment +list` and `payment-summary +get` accept `--workspace-id`, like every other workspace command; they read the selected workspace only before.
+- Payments are the Agency team's: the Brand View has no Payments page, and these two commands now answer the team only (with the Museon API change that removes Brand access).
 
 ## 0.21.0
 
