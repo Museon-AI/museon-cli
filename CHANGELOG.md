@@ -2,6 +2,10 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+- `social-account +connect-adb` waits for a cold cloud phone: when the Museon API answers `CLOUD_PHONE_BOOTING`, it backs off and asks again for up to 110 seconds in total, without starting the phone twice. After that it returns the same error, still `retryable`. Requires the Museon API change that introduces the code (Museon-AI/museon#6973); against an older API it behaves as before.
+
 ## 0.22.1
 
 - `campaign-monitor payment +list` and `payment-summary +get` accept `--workspace-id`, like every other workspace command; they read the selected workspace only before.
