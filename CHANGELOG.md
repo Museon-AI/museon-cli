@@ -2,9 +2,9 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
-## Unreleased
+## 0.22.2
 
-- `social-account +connect-adb` waits for a cold cloud phone: when the Museon API answers `CLOUD_PHONE_BOOTING`, it backs off and asks again for up to 110 seconds in total, without starting the phone twice. After that it returns the same error, still `retryable`. Requires the Museon API change that introduces the code (Museon-AI/museon#6973); against an older API it behaves as before.
+- `social-account +connect-adb` (alias `+adb-connect`) waits for a cold cloud phone: when the Museon API answers `CLOUD_PHONE_BOOTING`, it backs off and asks again for up to 110 seconds in total, without starting the phone twice. After that it returns the same error, still `retryable`. Requires the Museon API change that introduces the code (Museon-AI/museon#6973); against an older API it behaves as before.
 
 ## 0.22.1
 
