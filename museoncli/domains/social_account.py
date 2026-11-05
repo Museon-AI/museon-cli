@@ -53,6 +53,10 @@ SOCIAL_ACCOUNT_ALLOCATION_TYPE_CHOICES = [
 
 SOCIAL_ACCOUNT_SEARCH_TERMS_MAX = 100
 ADB_COMMAND_TIMEOUT_SECONDS = 20
+# How long +connect-adb waits for a cold cloud phone in total. Agent shell tools
+# commonly kill a command at 120 seconds, and a killed command loses its answer.
+ADB_BOOT_WAIT_SECONDS = 110
+ADB_BOOT_RETRY_AFTER_FALLBACK_SECONDS = 10
 
 
 SOCIAL_ACCOUNT_PROFILE_EDIT_TARGET_CHOICES = ["nickName", "bio", "avatar"]
@@ -1194,9 +1198,9 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
         if not workspace_id:
             raise RuntimeError("missing_workspace")
         connection = agent_domain_result(
-            await api_data(
+            await _request_adb_credentials(
+                api_data,
                 cfg,
-                "POST",
                 f"/agent-cli/social-accounts/{account_id}/adb-credentials",
                 params={"workspace_id": workspace_id},
             )
@@ -1212,9 +1216,9 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
         if explicit_workspace_id:
             body["workspace_id"] = explicit_workspace_id
         connection = agent_domain_result(
-            await api_data(
+            await _request_adb_credentials(
+                api_data,
                 cfg,
-                "POST",
                 "/agent-cli/social-accounts/adb-credentials",
                 json_body=body,
             )
@@ -1239,6 +1243,48 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
             }
         )
     return result
+
+
+async def _request_adb_credentials(api_data: Any, cfg: Config, path: str, **request: Any) -> Any:
+    """Ask for ADB credentials, waiting out a cold phone's boot up to a fixed total.
+
+    The server answers CLOUD_PHONE_BOOTING when the phone is not up within one
+    request; asking again does not start it twice. Once the total is spent the last
+    answer goes to the caller, still marked retryable.
+    """
+    from museoncli.main import ApiRequestError
+
+    deadline = time.monotonic() + ADB_BOOT_WAIT_SECONDS
+    booting: ApiRequestError | None = None
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            return await asyncio.wait_for(
+                api_data(cfg, "POST", path, **request),
+                timeout=max(0.0, deadline - time.monotonic()),
+            )
+        except ApiRequestError as exc:
+            if not _is_cloud_phone_booting(exc.detail):
+                raise
+            booting = exc
+        except TimeoutError as exc:
+            raise booting or RuntimeError("adb_credentials_timed_out") from exc
+        delay = attempt * _adb_boot_retry_after(booting.detail)
+        if time.monotonic() + delay >= deadline:
+            raise booting
+        await asyncio.sleep(delay)
+
+
+def _is_cloud_phone_booting(detail: Any) -> bool:
+    return isinstance(detail, dict) and detail.get("code") == "CLOUD_PHONE_BOOTING"
+
+
+def _adb_boot_retry_after(detail: dict[str, Any]) -> float:
+    value = detail.get("retry_after_seconds")
+    if isinstance(value, int | float) and not isinstance(value, bool) and value > 0:
+        return float(value)
+    return ADB_BOOT_RETRY_AFTER_FALLBACK_SECONDS
 
 
 async def _execute_renew_phone_lease(ctx: CommandContext) -> Any:
