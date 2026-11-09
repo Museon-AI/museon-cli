@@ -37,7 +37,14 @@ from museoncli.execution import (
 SOCIAL_ACCOUNT_PLAN_STATUS_CHOICES = ["all", "with-plan", "without-plan"]
 
 
-SOCIAL_ACCOUNT_CONNECT_PLATFORM_CHOICES = ["tiktok", "instagram", "facebook", "linkedin", "x"]
+SOCIAL_ACCOUNT_CONNECT_PLATFORM_CHOICES = [
+    "tiktok",
+    "instagram",
+    "facebook",
+    "youtube",
+    "linkedin",
+    "x",
+]
 
 
 SOCIAL_ACCOUNT_PERFORMANCE_PERIOD_CHOICES = ["last-7d", "last-30d", "last-60d"]
@@ -888,7 +895,7 @@ def specs() -> list[CommandSpec]:
             legacy_shortcuts=("+connect-link-create",),
             summary=(
                 "Create a workspace self-authorization link to connect a user-owned "
-                "social account. Supports TikTok, Instagram, Facebook, LinkedIn, and X."
+                "social account. Supports TikTok, Instagram, Facebook, YouTube, LinkedIn, and X."
             ),
             risk_level="write",
             execution="direct",
@@ -900,6 +907,7 @@ def specs() -> list[CommandSpec]:
             examples=[
                 "museoncli social-account +create-connect-link --platform tiktok --expires-in-days 7",
                 "museoncli social-account +create-connect-link --platform instagram",
+                "museoncli social-account +create-connect-link --platform youtube",
                 "museoncli social-account +create-connect-link --platform x",
             ],
             add_arguments=_add_social_account_connect_link_create_arguments,

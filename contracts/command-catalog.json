@@ -10346,7 +10346,7 @@
           "risk_level": "write",
           "shortcut": "+schedule",
           "stability": "stable",
-          "summary": "Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
+          "summary": "Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -11896,7 +11896,7 @@
           "risk_level": "write",
           "shortcut": "+create-connect-link",
           "stability": "stable",
-          "summary": "Create a workspace self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, LinkedIn, and X.",
+          "summary": "Create a workspace self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, YouTube, LinkedIn, and X.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -12905,7 +12905,7 @@
       "routines"
     ]
   },
-  "contract_revision": "0.22.2",
+  "contract_revision": "0.22.3",
   "package": "museoncli",
   "schema_version": 2,
   "schemas": {
@@ -52895,7 +52895,7 @@
       "risk_level": "write",
       "shortcut": "+schedule",
       "stability": "stable",
-      "summary": "Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, 2 per account per day, 120 minutes apart, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
+      "summary": "Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -57875,6 +57875,7 @@
       "examples": [
         "museoncli social-account +create-connect-link --platform tiktok --expires-in-days 7",
         "museoncli social-account +create-connect-link --platform instagram",
+        "museoncli social-account +create-connect-link --platform youtube",
         "museoncli social-account +create-connect-link --platform x"
       ],
       "execution": "direct",
@@ -57906,6 +57907,7 @@
               "tiktok",
               "instagram",
               "facebook",
+              "youtube",
               "linkedin",
               "x"
             ],
@@ -57985,7 +57987,7 @@
       "risk_level": "write",
       "shortcut": "+create-connect-link",
       "stability": "stable",
-      "summary": "Create a workspace self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, LinkedIn, and X.",
+      "summary": "Create a workspace self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, YouTube, LinkedIn, and X.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
