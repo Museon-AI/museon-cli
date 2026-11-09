@@ -2,6 +2,10 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.22.3
+
+- `social-account +create-connect-link --platform youtube` creates a YouTube self-authorization link. The Museon API already accepts `youtube`; the CLI's platform list did not.
+
 ## 0.22.2
 
 - `social-account +connect-adb` (alias `+adb-connect`) waits for a cold cloud phone: when the Museon API answers `CLOUD_PHONE_BOOTING`, it backs off and asks again for up to 110 seconds in total, without starting the phone twice. After that it returns the same error, still `retryable`. Requires the Museon API change that introduces the code (Museon-AI/museon#6973); against an older API it behaves as before.
