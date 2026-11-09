@@ -5,6 +5,7 @@ Museon CLI follows semantic versioning for its package and command contract.
 ## 0.22.3
 
 - `social-account +create-connect-link --platform youtube` creates a YouTube self-authorization link. The Museon API already accepts `youtube`; the CLI's platform list did not.
+- `publish post +schedule` help no longer cites a 2-per-day, 120-minute limit; the Museon API applies neither to manually scheduled media.
 
 ## 0.22.2
 
