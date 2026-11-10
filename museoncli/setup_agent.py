@@ -64,6 +64,23 @@ def install_agent_skill(agent: str, *, force: bool = False) -> dict[str, Any]:
     }
 
 
+def stale_skill_agents() -> list[str]:
+    """Agents whose installed Museon Skills differ from the ones this CLI bundles."""
+    digests = {name: _tree_digest(source) for name, source in _skill_sources().items()}
+    stale = []
+    for agent in SUPPORTED_AGENTS:
+        root = _agent_home(agent) / "skills"
+        # An Agent that never ran setup, or a same-named unmanaged folder that
+        # setup would refuse to touch, has nothing to remind about.
+        installed = {name for name in MANAGED_SKILLS if _is_managed_skill(root / name, name)}
+        if installed and (
+            len(installed) < len(MANAGED_SKILLS)
+            or any(_tree_digest(root / name) != digests[name] for name in installed)
+        ):
+            stale.append(agent)
+    return stale
+
+
 def _resolve_agents(agent: str) -> list[str]:
     if agent in SUPPORTED_AGENTS:
         return [agent]

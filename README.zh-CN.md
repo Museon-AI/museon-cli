@@ -70,11 +70,11 @@ https://www.museon.ai/cli/install.md
 升级前请阅读[迁移说明](docs/cli-2-migration.md)。HireAICreator 业务域已包含在这个未发布候选中。
 后端能力和数据没有随命令面退役而删除；权限仍由后端按用户、组织角色和 Campaign 范围检查。
 
-## 从工作区迁移（0.24.0）
+## 从工作区迁移（0.25.0）
 
 MuseOn 不再有工作区概念：访问权限由组织角色加 Campaign 范围决定，CLI 改为选择组织。
 
-| 旧（0.23.x） | 新（0.24.0） |
+| 旧（0.24.x） | 新（0.25.0） |
 | --- | --- |
 | `museoncli workspace list` | `museoncli org list`（含 role、`campaign_scope`、`is_default`） |
 | `museoncli workspace current` | `museoncli org current` |
@@ -102,7 +102,7 @@ MuseOn 不再有工作区概念：访问权限由组织角色加 Campaign 范围
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.24.0/museoncli-0.24.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.25.0/museoncli-0.25.0-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：

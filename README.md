@@ -88,12 +88,12 @@ readback from the owning domain, not with a request receipt alone.
 See [the migration guide](docs/cli-2-migration.md) before replacing an older CLI.
 The HireAICreator domain is included in this unpublished candidate.
 
-## Migration from workspaces (0.24.0)
+## Migration from workspaces (0.25.0)
 
 MuseOn no longer has a workspace concept: access is an organization role plus
 Campaign scope. The CLI selects an organization instead.
 
-| Before (0.23.x) | Now (0.24.0) |
+| Before (0.24.x) | Now (0.25.0) |
 | --- | --- |
 | `museoncli workspace list` | `museoncli org list` (role, `campaign_scope`, `is_default`) |
 | `museoncli workspace current` | `museoncli org current` |
@@ -128,7 +128,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.24.0/museoncli-0.24.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.25.0/museoncli-0.25.0-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:
