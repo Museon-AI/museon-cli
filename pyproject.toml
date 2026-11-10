@@ -32,8 +32,8 @@ dependencies = [
 ]
 
 [project.scripts]
-museoncli = "museoncli.main:main"
-museon = "museoncli.main:main"
+museoncli = "museoncli.bootstrap:main"
+museon = "museoncli.bootstrap:main"
 
 [project.urls]
 Homepage = "https://www.museon.ai/mel#cli"

@@ -241,6 +241,6 @@ def ensure_latest(argv: list[str]) -> dict[str, Any]:
     # that has already run. Neither dispatch nor credential loading has happened.
     os.environ[_REEXEC_VERSION] = restart
     os.execv(
-        sys.executable, [sys.executable, "-c", "from museoncli.main import main; main()", *argv]
+        sys.executable, [sys.executable, "-c", "from museoncli.bootstrap import main; main()", *argv]
     )
     raise RuntimeError("cli_update_failed: could not restart the upgraded CLI")

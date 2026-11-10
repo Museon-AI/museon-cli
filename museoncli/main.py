@@ -48,7 +48,6 @@ from museoncli.execution import (
 from museoncli.large_json import render_json
 from museoncli.paging import collect_all_pages, page_info
 from museoncli.setup_agent import SUPPORTED_AGENTS, install_agent_skill
-from museoncli.updates import ensure_latest
 
 
 _API_CONNECT_MAX_ATTEMPTS = 3
@@ -125,15 +124,9 @@ class JsonArgumentParser(argparse.ArgumentParser):
         raise UsageError(message, usage=self.format_usage().strip(), command=command)
 
 
-def main() -> None:
+def main(*, update: dict[str, Any] | None = None) -> None:
     _configure_utf8_stdout()
     argv = sys.argv[1:]
-    try:
-        update = ensure_latest(argv)
-    except Exception as exc:
-        payload, code = error_envelope(exc, command=None)
-        emit(payload)
-        raise SystemExit(code) from None
     parser = build_parser()
     try:
         args, extras = parser.parse_known_args([item for item in argv if item != "--json"])
@@ -167,7 +160,7 @@ def main() -> None:
             payload["warnings"] = [deprecation]
         emit(payload)
         raise SystemExit(code) from None
-    if result is not None and args.command == "version":
+    if result is not None and args.command == "version" and update is not None:
         result["data"]["update"] = update
     if result is not None and deprecation:
         result = {**result, "warnings": [*(result.get("warnings") or []), deprecation]}

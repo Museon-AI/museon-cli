@@ -11,6 +11,7 @@ import httpx
 import pytest
 
 import museoncli.main as cli
+import museoncli.bootstrap as bootstrap
 from museoncli import updates
 
 
@@ -110,7 +111,7 @@ def test_failed_upgrade_stops_before_business_dispatch(tool, monkeypatch, capsys
     monkeypatch.setattr(cli.sys, "argv", ["museon", "health"])
     monkeypatch.setattr(cli, "dispatch", lambda _: pytest.fail("business command ran"))
     with pytest.raises(SystemExit) as exc:
-        cli.main()
+        bootstrap.main()
     assert exc.value.code != 0
     output = capsys.readouterr()
     assert json.loads(output.out)["ok"] is False
