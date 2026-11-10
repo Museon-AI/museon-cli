@@ -17,7 +17,7 @@ content creation, authorized publishing, performance review, and the next improv
 Museon CLI is your execution layer; this Skill supplies the operating role.
 
 - Start from the user's product, audience, brand voice, accounts, materials, and goal.
-  Use available workspace context and ask only for missing information that affects
+  Use available organization context and ask only for missing information that affects
   the next decision.
 - Turn intent into concrete deliverables and carry authorized work through execution
   and readback. When asked to act, keep working through the relevant workflow rather
@@ -25,9 +25,9 @@ Museon CLI is your execution layer; this Skill supplies the operating role.
 - Ground recommendations in real sources and account data. Distinguish proposed,
   submitted, scheduled, published, and verified results; never invent performance,
   completed work, or access to an account.
-- Follow the authorization, workspace, and confirmation boundaries in
+- Follow the authorization, organization, and confirmation boundaries in
   [operating-model.md](references/operating-model.md). This role grants no additional
-  permissions. Keep private workspace data within its authorized scope.
+  permissions. Keep private organization data within its authorized scope.
 - For ongoing work, establish an authorized routine using the available scheduling
   capability and verify it before promising a follow-up. A local CLI installation
   alone does not provide background execution, Slack, or Feishu access.
@@ -40,13 +40,13 @@ unrelated tasks in their own context.
 ## Mental model
 
 Museon CLI is the execution layer; bundled workflow Skills provide durable operating judgment;
-runtime Business Skills provide workspace methodology. The live schema is the sole source for
+runtime Business Skills provide organization methodology. The live schema is the sole source for
 commands and inputs. Install the CLI when needed: if it is absent, install the reviewed wheel,
 verify `museoncli version`,
 then resume the original task:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.24.0/museoncli-0.24.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.25.0/museoncli-0.25.0-py3-none-any.whl"
 ```
 
 Read [operating-model.md](references/operating-model.md) for risk, async work, authentication,
@@ -66,9 +66,25 @@ and Business Skill boundaries. Read only the reference needed for the current ca
 | Strategic/research/audit work | `museoncli skills +list` |
 | Known Business Skill | `museoncli skills +get` |
 | Authentication failure | `museoncli auth start` |
-| Missing workspace | `museoncli workspace list` |
+| Missing organization | `museoncli org list`, then `museoncli org select --id <organization-id>` |
 | Need every page of a read | add `--all`, then check `page_info.complete` |
 | A command failed | branch on `error.code`, `error.server_code` and `error.retryable`; a usage error's `error.hint` names the help to read |
+
+## Migration from workspaces (0.25.0)
+
+MuseOn has no workspace concept any more: access is an organization role plus Campaign scope.
+Agents never need a workspace id; the server resolves it from the organization.
+
+| Old | New |
+| --- | --- |
+| `workspace list` / `workspace current` | `org list` / `org current` |
+| `workspace select --id <ws>` | `org select --id <organization-id>` (or `--name <exact name>`) |
+| `--workspace-id <ws>` on a command | drop it, or `--organization-id <org>` for one call |
+| envelope `.workspace` | envelope `.organization` (`{id, name}` or `null`) |
+
+`workspace ...` and `--workspace-id` remain deprecated aliases until 1.0 (stderr notice plus a
+`warnings` entry); mixing `--workspace-id` and `--organization-id` from different organizations
+returns `organization_workspace_mismatch` (`conflict`, exit 5). `whoami` lists `organizations[]`.
 
 ## DON'T
 
@@ -76,7 +92,7 @@ and Business Skill boundaries. Read only the reference needed for the current ca
 - Treat the user's request and existing authorization as sufficient within their stated scope. Ask only when a necessary target or authorization is missing; never supply a server-required confirmation on the user's behalf.
 - **DON'T** expose credentials, callback codes, raw customer payloads, or reconstructed `ref` values.
 - The official uv-installed CLI checks for stable updates before commands and upgrades automatically. During onboarding, run `museoncli version` and inspect `data.update`; versions without it need a one-time upgrade to the wheel above with `--force`.
-- **DON'T** add auth/version/workspace preflights before every task; the CLI owns update checks. Enter authentication/workspace recovery after a real failure.
+- **DON'T** add auth/version/organization preflights before every task; the CLI owns update checks. Enter authentication/organization recovery after a real failure.
 - When output carries `_notice.skills`, the Museon Skills installed for this Agent changed under you or are out of date. Finish the current request first. If it lists `updated`, re-read the Museon Skill you are using; if it lists `command`, run it once, then re-read. Tell the user when the host needs a restart. Don't paste `_notice` into answers or let it interrupt the task.
 - **DON'T** load bundled integration Skills through the runtime `skills` domain.
 

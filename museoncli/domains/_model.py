@@ -72,9 +72,10 @@ class CommandSpec:
     requires_confirmation: bool = False
     authentication_required: bool = True
     required_scopes: tuple[str, ...] = ("agent_cli.access",)
-    required_roles: tuple[str, ...] = ("workspace_member",)
-    workspace_bound: bool = True
-    resource_policy: str = "server_evaluated_workspace_and_resource_access"
+    required_roles: tuple[str, ...] = ("organization_member",)
+    organization_bound: bool = True
+    """The command acts inside one organization (X-Organization-Id)."""
+    resource_policy: str = "server_evaluated_organization_and_resource_access"
     stability: Stability = "stable"
     transport: Transport = "agent_cli_api"
 

@@ -19,3 +19,5 @@
 3. 新 wheel/setup/skills archive 仅分发 base、research、hireaicreator、ai-slideshow、campaign-monitor 五个 skill；artifacts、social-account、routines、content-analysis 归 base references，Instagram Hook 调研归 research references。旧 assets、generation、account-publish、agentic-campaign、evaluator skill 与 experiment-brain 不再分发。
 4. setup 不会自动删除宿主已安装的退役 skill。升级时先辨别这些目录是否由旧 CLI 安装、是否包含用户修改，再由用户明确执行迁移/移除；不要删除同名个人技能。本次没有操作真实宿主技能目录。
 5. 发布时需同步 monorepo command catalog、安装指引及 runtime prompt/skill 引用，并验证轮子与运行时包。当前版本号未变，不得以现有已发布版本覆盖发布候选产物。
+
+0.25.0 起 MuseOn 不再有工作区概念，CLI 改为选择组织：`workspace list/current/select` 对应 `org list/current/select`，业务命令的 `--workspace-id` 可去掉（单次跨组织用 `--organization-id`），输出信封读 `organization`。旧命令与 `--workspace-id` 作为弃用别名保留到 1.0，详见 [README](../README.zh-CN.md) 的「从工作区迁移（0.25.0）」。

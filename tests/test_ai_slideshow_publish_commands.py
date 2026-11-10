@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 from museoncli import main as main_module
-from museoncli.config import Config, WorkspaceState
+from museoncli.config import Config, OrganizationState
 from museoncli.domains import get_command_spec
 from museoncli.main import build_parser
 
@@ -53,7 +53,7 @@ def _parse(argv: list[str]) -> Any:
 
 def _config_with_workspace() -> Config:
     cfg = Config()
-    cfg.workspace = WorkspaceState(id=WORKSPACE_1, name="Workspace", organization_id="org-1")
+    cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     return cfg
 
 
@@ -647,7 +647,7 @@ def test_cancel_only_preview_and_batch_send_api_operation_and_workspace(
     }
     assert capture.calls[1]["path"] == "/account-publish/schedule-plans:batch"
     assert capture.calls[1]["json_body"] == {
-        "workspace_id": WORKSPACE_1,
+        "workspace_id": None,
         "operation": "cancel_only",
         "account_ids": [ACCOUNT_1, ACCOUNT_2],
         "cancel_reason": "operator requested schedule removal",
@@ -746,12 +746,12 @@ def test_status_and_cancel_use_job_resource_paths(monkeypatch: pytest.MonkeyPatc
             "method": "GET",
             "path": f"/account-publish/schedule-plans/{JOB_ID}",
             "json_body": None,
-            "params": {"workspace_id": WORKSPACE_1},
+            "params": {"workspace_id": None},
         },
         {
             "method": "POST",
             "path": f"/account-publish/schedule-plans/{JOB_ID}:cancel",
-            "json_body": {"workspace_id": WORKSPACE_1, "reason": "operator request"},
+            "json_body": {"reason": "operator request"},
             "params": None,
         },
     ]
@@ -894,12 +894,12 @@ def test_asset_pool_status_and_cancel_use_job_resource_paths(
             "method": "GET",
             "path": f"/account-publish/asset-pools/jobs/{JOB_ID}",
             "json_body": None,
-            "params": {"workspace_id": WORKSPACE_1},
+            "params": {"workspace_id": None},
         },
         {
             "method": "POST",
             "path": f"/account-publish/asset-pools/jobs/{JOB_ID}:cancel",
-            "json_body": {"workspace_id": WORKSPACE_1, "reason": "operator request"},
+            "json_body": {"reason": "operator request"},
             "params": None,
         },
     ]

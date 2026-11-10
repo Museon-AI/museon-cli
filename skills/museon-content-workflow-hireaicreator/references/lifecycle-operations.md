@@ -1,9 +1,9 @@
 # Lifecycle operations
 
 Read the live command schema before constructing JSON. CLI enum values use kebab
-case. Resolve the intended workspace and exact account/resource IDs once, then
-pass `--workspace-id` on commands that accept it. Resource-scoped video/plan
-commands authorize the resource itself; verify the returned workspace. A shared
+case. Resolve the intended organization (`museoncli org current`) and exact account/resource IDs once, then
+pass `--organization-id` on commands that must act in another organization. Resource-scoped video/plan
+commands authorize the resource itself; verify the returned organization/ownership. A shared
 conversation's execution identity belongs to that target conversation, not to an
 unrelated sender or source chat. Do not change credentials or tenant identity to
 bypass a managed-auth rejection.

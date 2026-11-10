@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from museoncli import main as main_module
-from museoncli.config import Config, WorkspaceState
+from museoncli.config import Config, OrganizationState
 from museoncli.main import build_parser
 
 CAMPAIGN = "10000000-0000-4000-8000-000000000001"
@@ -67,7 +67,7 @@ class _Workbench:
 
 def _run(monkeypatch: pytest.MonkeyPatch, workbench: _Workbench, argv: list[str]) -> dict:
     cfg = Config()
-    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data_v2", workbench)
     return asyncio.run(main_module.dispatch(build_parser().parse_args(argv)))
@@ -231,3 +231,70 @@ def test_creative_list_brief_none_keeps_only_brief_less_creatives(
 
     assert [item["id"] for item in none["data"]["items"]] == [CREATIVE]
     assert [item["brief_id"] for item in one["data"]["items"]] == [BRIEF]
+
+
+def _campaign(campaign_id: str, campaign_type: str, status: str) -> dict[str, Any]:
+    return {"id": campaign_id, "name": campaign_id, "campaign_type": campaign_type, "status": status}
+
+
+@pytest.mark.parametrize(
+    ("status", "query", "items", "expected"),
+    [
+        (None, {"campaign_type": "ugc", "limit": 50}, ["active", "paused"], ["c-active", "c-paused"]),
+        ("active", {"campaign_type": "ugc", "limit": 50}, ["active", "paused"], ["c-active"]),
+        (
+            "archived",
+            {"campaign_type": "ugc", "limit": 50, "archived": True},
+            ["archived"],
+            ["c-archived"],
+        ),
+    ],
+)
+def test_campaign_list_reads_the_organization_route(
+    monkeypatch: pytest.MonkeyPatch,
+    status: str | None,
+    query: dict[str, Any],
+    items: list[str],
+    expected: list[str],
+) -> None:
+    """The server filters the type and live vs archived; the command keeps --status."""
+    page = {
+        "items": [_campaign(f"c-{state}", "ugc", state) for state in items],
+        "next_cursor": "next",
+    }
+    workbench = _Workbench({("GET", "/ugc/organizations/org-1/campaigns"): page})
+
+    result = _run(
+        monkeypatch,
+        workbench,
+        ["ugc", "campaign", "+list", *(["--status", status] if status else [])],
+    )
+
+    assert workbench.calls == [
+        {"method": "GET", "path": "/ugc/organizations/org-1/campaigns", "params": query}
+    ]
+    assert [item["id"] for item in result["data"]["items"]] == expected
+    assert result["data"]["next_cursor"] == "next"
+
+
+def test_campaign_list_workspace_alias_keeps_the_workspace_route(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = "70000000-0000-4000-8000-000000000007"
+    path = f"/ugc/workspaces/{workspace}/campaigns"
+    workbench = _Workbench({("GET", path): {"items": [], "next_cursor": None}})
+
+    result = _run(
+        monkeypatch,
+        workbench,
+        ["ugc", "campaign", "+list", "--workspace-id", workspace, "--status", "active"],
+    )
+
+    assert workbench.calls == [
+        {
+            "method": "GET",
+            "path": path,
+            "params": {"campaign_type": "ugc", "status": "active", "limit": 50},
+        }
+    ]
+    assert result["workspace"] == {"id": workspace}

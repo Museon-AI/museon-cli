@@ -50,7 +50,7 @@ repository, choose CLI flags, or configure credentials by hand.
    workflow. ego lite is installed separately when authenticated browsing is
    needed.
 3. **You approve access in the browser.** Sign in to Museon and choose the
-   workspace the Agent may use.
+   organization the Agent may use.
 4. **You describe the work, not the commands.** The Agent discovers the right
    Museon actions and keeps the task moving.
 
@@ -78,15 +78,36 @@ at the last published release until a separate release is approved.
 | Validate, host and share durable reports | `artifacts` |
 | Connect and inspect accounts, use bound phones, read performance and edit profiles | `social-account` |
 | Schedule Agent work and retain run memory | `routines` |
-| Discover workspace methodology | `skills` |
+| Discover organization methodology | `skills` |
 
 Eight bundled Skills teach discovery, research, durable artifacts, account access, Hook analysis, monitoring and routines.
 The CLI executes atomic operations; the Agent composes workflows. Museon checks user,
-workspace membership, role and resource access for every request. Verify writes with
+organization role and Campaign scope for every request. Verify writes with
 readback from the owning domain, not with a request receipt alone.
 
 See [the migration guide](docs/cli-2-migration.md) before replacing an older CLI.
 The HireAICreator domain is included in this unpublished candidate.
+
+## Migration from workspaces (0.25.0)
+
+MuseOn no longer has a workspace concept: access is an organization role plus
+Campaign scope. The CLI selects an organization instead.
+
+| Before (0.24.x) | Now (0.25.0) |
+| --- | --- |
+| `museoncli workspace list` | `museoncli org list` (role, `campaign_scope`, `is_default`) |
+| `museoncli workspace current` | `museoncli org current` |
+| `museoncli workspace select --id <ws>` | `museoncli org select --id <organization-id>` or `--name <exact name>` |
+| `--workspace-id <ws>` on a command | drop it, or `--organization-id <org>` for one call |
+| envelope `.workspace` | envelope `.organization` (`{id, name}` or `null`) |
+
+- Every request carries `X-Organization-Id` for the selected organization; the server
+  resolves the workspace internally, so Agents never need a workspace id.
+- `workspace list|current|select` and `--workspace-id` still work as deprecated aliases
+  until 1.0 and print a deprecation notice on stderr. Giving `--workspace-id` and
+  `--organization-id` from different organizations fails with `organization_workspace_mismatch`.
+- `whoami` now returns `organizations[]`, `default_organization_id` and
+  `default_organization_name`.
 
 ## You stay in control
 
@@ -107,7 +128,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.24.0/museoncli-0.24.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.25.0/museoncli-0.25.0-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:
@@ -124,7 +145,7 @@ Use `--agent claude-code` or `--agent cursor` for those hosts; `--agent auto`
 uses the active host marker, or a single existing supported Agent home. If
 several Agent homes exist, choose one explicitly or use `--agent all`. Restart
 the Agent after installing the Skill. After authentication, `skills +list`
-shows the Business Skills available in the current workspace. `auth finish --wait` waits for approval
+shows the Business Skills available in the current organization. `auth finish --wait` waits for approval
 for up to five minutes by default; use `--timeout` to change that limit. The
 shorter `museon` command is an alias for `museoncli`.
 

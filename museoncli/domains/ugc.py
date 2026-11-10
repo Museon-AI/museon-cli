@@ -1,7 +1,7 @@
 """UGC workbench commands: campaigns, roster, briefs, creatives and assignments.
 
 Every call goes straight to the UGC workbench (``/api/v2/ugc``), which
-authorizes the CLI's API key with the same workspace role as the web app. The
+authorizes the CLI's API key with the same organization role as the web app. The
 ids are UGC campaign ids (``marketing_campaigns.id``), not campaign-monitor
 collection ids.
 
@@ -26,7 +26,12 @@ import httpx
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import _direct_output_schema, dekebab, kebab_choices
 from museoncli.envelopes import direct_api_envelope
-from museoncli.execution import CommandContext, Executor, compact_params, direct_enveloped
+from museoncli.execution import (
+    CommandContext,
+    Executor,
+    compact_params,
+    direct_enveloped,
+)
 from museoncli.paging import MAX_ALL_PAGES
 
 _PAGE_LIMIT = 100
@@ -298,21 +303,51 @@ def brief_progress(
 
 
 async def _execute_campaign_list(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     args = ctx.arguments
-    return await _get(
+    status = args.get("status")
+    if ctx.workspace_id:
+        # Deprecated --workspace-id: the workspace route, as before.
+        return await _get(
+            ctx,
+            f"/workspaces/{ctx.workspace_id}/campaigns",
+            compact_params(
+                {
+                    "campaign_type": "ugc",
+                    "status": status,
+                    "cursor": args.get("cursor"),
+                    "limit": args.get("page_size"),
+                }
+            ),
+        )
+    if not ctx.organization_id:
+        raise RuntimeError(
+            "missing_organization: select one with `museoncli org select` or pass --organization-id"
+        )
+    page = await _get(
         ctx,
-        f"/workspaces/{ctx.workspace_id}/campaigns",
+        f"/organizations/{ctx.organization_id}/campaigns",
         compact_params(
             {
                 "campaign_type": "ugc",
-                "status": args.get("status"),
                 "cursor": args.get("cursor"),
                 "limit": args.get("page_size"),
+                # The route lists live campaigns, or archived ones instead of them.
+                "archived": True if status == "archived" else None,
             }
         ),
     )
+    # The route has no status filter (draft/active/...); keep --status on the client.
+    # A filtered page can be shorter than its limit; next_cursor still pages on.
+    if status and isinstance(page, dict) and isinstance(page.get("items"), list):
+        page = {
+            **page,
+            "items": [
+                item
+                for item in page["items"]
+                if isinstance(item, dict) and item.get("status") == status
+            ],
+        }
+    return page
 
 
 def _enrollment_row(item: dict[str, Any]) -> dict[str, Any]:
@@ -1106,13 +1141,15 @@ def specs() -> list[CommandSpec]:
             resource="campaign",
             shortcut="+list",
             summary=(
-                "List the active workspace's UGC campaigns, newest first. Their ids are what "
+                "List the selected organization's UGC campaigns, newest first. Their ids are what "
                 "every other ugc command takes as --campaign-id."
             ),
             adapter_tool_name="ugc_campaign_list",
             input_schema=_schema(
                 {
-                    "workspace_id": _uuid_property("Workspace ID; defaults to the selected one."),
+                    "workspace_id": _uuid_property(
+                        "Deprecated: list one workspace's campaigns through the workspace route."
+                    ),
                     "status": {
                         "type": ["string", "null"],
                         "enum": [*CAMPAIGN_STATUSES, None],

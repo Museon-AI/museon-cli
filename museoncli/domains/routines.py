@@ -296,7 +296,7 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
             "domain": ROUTINES_DOMAIN,
             "shortcut": "list",
             "summary": (
-                "List routines visible to the current workspace. Each routine includes a ref "
+                "List routines visible to the selected organization. Each routine includes a ref "
                 "— paste it into report markdown to embed a live schedule card. "
                 f"{ROUTINE_OWNER_GUIDANCE}"
             ),

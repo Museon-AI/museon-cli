@@ -12,6 +12,8 @@
 | `media +upload --media-type file --file ... --file-id ...` | POST `/api/v1/media/files` | kind=file、artifact_id、workspace_id、private、临时下载URL |
 | `media +get --kind file --id ...` | 已有GET `/agent-artifacts/{artifact_id}?workspace_id=...` | 文件账本和重新签名下载URL；不是media表 |
 
+注：下表和下文的 `workspace_id` 是服务端接口的字面字段，由 CLI 按所选组织（或 `--organization-id`）解析，Agent 不传；产品上只有组织，没有独立的工作区概念。
+
 普通APIKey走已有认证，写入要求workspace editor，读取要求workspace访问权；还必须属于工作区组织，非grant_all密钥必须具备agent-cli scope和该workspace授权。新入口拒绝Mel capability，既有artifact GET保持原capability边界，不改allowlist。所有文件仍使用已有GCS和artifact账本；没有给media类型check新增file，也没有恢复artifacts业务命令。
 
 ## 生成账本

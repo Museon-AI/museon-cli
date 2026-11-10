@@ -92,7 +92,7 @@ _CONTENT_ANALYSIS_FRONTEND_URL_TEMPLATES = [
     _frontend_url_template(
         "Content Analyzer",
         "/content-analyzer",
-        description="Open the Content Analyzer workspace page.",
+        description="Open the Content Analyzer page.",
     ),
     _frontend_url_template(
         "Content Analyzer history",
@@ -129,7 +129,7 @@ _SOCIAL_ACCOUNT_CONNECT_LINK_FRONTEND_URL_TEMPLATES = [
     _frontend_url_template(
         "Social accounts",
         "/social-accounts",
-        description="Open the workspace page for connected social accounts.",
+        description="Open the page for connected social accounts.",
     ),
 ]
 
@@ -138,7 +138,7 @@ _SOCIAL_ACCOUNT_FRONTEND_URL_TEMPLATES = [
     _frontend_url_template(
         "Social accounts",
         "/social-accounts",
-        description="Open the social accounts workspace.",
+        description="Open the social accounts page.",
     ),
     _frontend_url_template(
         "Pool account performance",
@@ -167,7 +167,7 @@ _SOCIAL_MEDIA_POST_FRONTEND_URL_TEMPLATES = [
     _frontend_url_template(
         "Posts",
         "/posts",
-        description="Open the workspace posts page.",
+        description="Open the posts page.",
     ),
     _frontend_url_template(
         "Post detail",
@@ -305,7 +305,9 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
             "authentication_required": spec.authentication_required,
             "required_scopes": list(spec.required_scopes),
             "required_roles": list(spec.required_roles),
-            "workspace_bound": spec.workspace_bound,
+            "organization_bound": spec.organization_bound,
+            # Deprecated mirror of organization_bound for 0.22-era readers.
+            "workspace_bound": spec.organization_bound,
             "resource_policy": spec.resource_policy,
             "enforcement": "museon_server" if spec.authentication_required else "local_process",
         },
@@ -371,7 +373,15 @@ def _direct_output_schema(description: str) -> dict[str, Any]:
         "properties": {
             "ok": {"type": "boolean"},
             "command": {"type": "string"},
-            "workspace": {"type": ["object", "null"]},
+            "workspace": {
+                "type": ["object", "null"],
+                "deprecated": True,
+                "description": "Deprecated: the --workspace-id this command was given, if any.",
+            },
+            "organization": {
+                "type": ["object", "null"],
+                "description": "The organization this command addressed (id, name).",
+            },
             "data": {"type": ["object", "array", "string", "number", "boolean", "null"]},
             "run": {"type": ["object", "null"]},
             "warnings": {"type": "array", "items": {"type": "string"}},

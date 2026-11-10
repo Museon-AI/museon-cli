@@ -12,7 +12,7 @@ from typing import Any
 import pytest
 
 from museoncli import main as main_module
-from museoncli.config import Config, WorkspaceState
+from museoncli.config import Config, OrganizationState
 from museoncli.domains import get_command_spec
 from museoncli.main import build_parser
 
@@ -48,7 +48,7 @@ def parse(argv: list[str]) -> Any:
 
 def _config_with_workspace() -> Config:
     cfg = Config()
-    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     return cfg
 
 
@@ -127,7 +127,7 @@ def test_creator_add_posts_urls_ids_and_sync_flag(monkeypatch: pytest.MonkeyPatc
             "method": "POST",
             "path": f"/agent-cli/campaign-monitors/{CAMPAIGN_ID}/creators",
             "json_body": {
-                "workspace_id": "workspace-1",
+                "workspace_id": None,
                 "payload": {
                     "creator_urls": ["https://www.tiktok.com/@a"],
                     "creator_ids": [CREATOR_ID],
@@ -165,7 +165,7 @@ def test_content_add_posts_content_id(monkeypatch: pytest.MonkeyPatch) -> None:
     assert call["method"] == "POST"
     assert call["path"] == f"/agent-cli/campaign-monitors/{CAMPAIGN_ID}/content"
     assert call["json_body"] == {
-        "workspace_id": "workspace-1",
+        "workspace_id": None,
         "payload": {"content_ids": [CONTENT_ID]},
     }
 
@@ -224,7 +224,7 @@ def test_creator_remove_with_yes_posts_remove_path(monkeypatch: pytest.MonkeyPat
         {
             "method": "POST",
             "path": (f"/agent-cli/campaign-monitors/{CAMPAIGN_ID}/creators/{CREATOR_ID}/remove"),
-            "json_body": {"workspace_id": "workspace-1", "payload": {}},
+            "json_body": {"workspace_id": None, "payload": {}},
             "params": None,
         }
     ]

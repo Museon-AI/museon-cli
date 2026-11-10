@@ -6,7 +6,7 @@ import json
 import httpx
 import pytest
 
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 import museoncli.main as cli
 
 W = "40000000-0000-4000-8000-000000000004"
@@ -36,14 +36,14 @@ CREATE = {
 }
 # Expected HTTP shapes are written independently of the production route table.
 CASES = [
-    ("get", {"id": ID}, "GET", PATH, {"workspace_id": W}, None),
+    ("get", {"id": ID}, "GET", PATH, {}, None),
     (
         "create",
         CREATE,
         "POST",
         BASE + "/strategies",
         {},
-        {**CREATE, "action_type": "ai_hook", "workspace_id": W},
+        {**CREATE, "action_type": "ai_hook"},
     ),
     (
         "replace",
@@ -51,7 +51,7 @@ CASES = [
         "PUT",
         PATH,
         {},
-        {**CREATE, "action_type": "ai_hook", "workspace_id": W, "expected_version": 3},
+        {**CREATE, "action_type": "ai_hook", "expected_version": 3},
     ),
     (
         "configure",
@@ -59,7 +59,7 @@ CASES = [
         "PATCH",
         PATH + "/configuration",
         {},
-        {**CONFIG, "workspace_id": W, "expected_version": 4},
+        {**CONFIG, "expected_version": 4},
     ),
     (
         "list-accounts",
@@ -74,7 +74,6 @@ CASES = [
         "GET",
         PATH + "/accounts",
         {
-            "workspace_id": W,
             "status": ["warming", "terminated"],
             "device_kind": "real_device",
             "page": 2,
@@ -89,7 +88,7 @@ CASES = [
         "POST",
         PATH + "/accounts",
         {},
-        {"accounts": CREATE["accounts"], "expected_version": 5, "workspace_id": W},
+        {"accounts": CREATE["accounts"], "expected_version": 5},
     ),
     (
         "remove-accounts",
@@ -97,14 +96,14 @@ CASES = [
         "POST",
         PATH + "/accounts/remove",
         {},
-        {"pool_account_ids": [ACCOUNT], "expected_version": 6, "workspace_id": W},
+        {"pool_account_ids": [ACCOUNT], "expected_version": 6},
     ),
     (
         "get-account-stats",
         {"id": ID, "pool_account_ids": [ACCOUNT, FORMAT]},
         "GET",
         PATH + "/account-stats",
-        {"workspace_id": W, "pool_account_ids": [ACCOUNT, FORMAT]},
+        {"pool_account_ids": [ACCOUNT, FORMAT]},
         None,
     ),
     (
@@ -113,15 +112,15 @@ CASES = [
         "POST",
         BASE + "/accounts/readiness",
         {},
-        {"workspace_id": W, "pool_account_ids": [ACCOUNT], "action_type": "ai_hook"},
+        {"pool_account_ids": [ACCOUNT], "action_type": "ai_hook"},
     ),
-    ("preview", {"id": ID}, "POST", PATH + "/preview", {"workspace_id": W}, {}),
+    ("preview", {"id": ID}, "POST", PATH + "/preview", {}, {}),
     (
         "check-and-start",
         {"id": ID, "expected_version": 7, "expected_format_revisions": {FORMAT: "rev-2"}},
         "POST",
         PATH + "/check-and-start",
-        {"workspace_id": W},
+        {},
         {"expected_version": 7, "expected_format_revisions": {FORMAT: "rev-2"}},
     ),
     (
@@ -129,7 +128,7 @@ CASES = [
         {"id": ID, "expected_version": 8},
         "POST",
         PATH + "/activate",
-        {"workspace_id": W},
+        {},
         {"expected_version": 8},
     ),
     (
@@ -137,7 +136,7 @@ CASES = [
         {"id": ID, "expected_version": 9},
         "POST",
         PATH + "/pause",
-        {"workspace_id": W},
+        {},
         {"expected_version": 9},
     ),
     (
@@ -145,7 +144,7 @@ CASES = [
         {"id": ID, "expected_version": 10, "campaign_id": FORMAT},
         "POST",
         PATH + "/resume",
-        {"workspace_id": W},
+        {},
         {"expected_version": 10, "campaign_id": FORMAT},
     ),
     (
@@ -154,16 +153,16 @@ CASES = [
         "POST",
         PATH + "/journeys/reset",
         {},
-        {"workspace_id": W, "pool_account_ids": [ACCOUNT]},
+        {"pool_account_ids": [ACCOUNT]},
     ),
-    ("get-journey", {"id": ID}, "GET", BASE + "/journeys/" + ID, {"workspace_id": W}, None),
-    ("preview-deletion", {"id": ID}, "GET", PATH + "/deletion", {"workspace_id": W}, None),
+    ("get-journey", {"id": ID}, "GET", BASE + "/journeys/" + ID, {}, None),
+    ("preview-deletion", {"id": ID}, "GET", PATH + "/deletion", {}, None),
     (
         "delete",
         {"id": ID, "expected_version": 11},
         "DELETE",
         PATH,
-        {"workspace_id": W, "expected_version": 11},
+        {"expected_version": 11},
         {},
     ),
 ]
@@ -185,7 +184,7 @@ def requests(monkeypatch):
     seen = []
     cfg = Config(
         api_base_url="https://api.example.test/api/v1",
-        workspace=WorkspaceState(id=W),
+        organization=OrganizationState(id="org-1", name="MuseOn"),
         auth=AuthState(api_key="test-key"),
     )
     monkeypatch.setattr(cli, "load_config", lambda: cfg)
@@ -281,7 +280,7 @@ def test_rejection_is_not_automatically_refreshed_or_retried(monkeypatch, status
     calls = []
     cfg = Config(
         api_base_url="https://api.example.test/api/v1",
-        workspace=WorkspaceState(id=W),
+        organization=OrganizationState(id="org-1", name="MuseOn"),
         auth=AuthState(api_key="test-key"),
     )
     monkeypatch.setattr(cli, "load_config", lambda: cfg)

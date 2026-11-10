@@ -1,9 +1,11 @@
 # HireAICreator Test Group workflow
 
 Use `museoncli schema hireaicreator.<resource>-<action>` before a command and pass
-`--workspace-id` on every invocation, including follow-up turns in Codex or Mel.
-The command catalog describes CLI support; the server still checks the caller's
-capability and workspace/resource membership. A 403 is an authorization denial;
+`--organization-id <uuid>` on every invocation that must act outside the selected
+organization, including follow-up turns in Codex or Mel (never `--workspace-id`;
+it is a deprecated alias). The command catalog describes CLI support; the server
+still checks the caller's capability, organization role and Campaign scope, and
+resource access. A 403 is an authorization denial;
 404 can indicate missing/inaccessible resources and 422 indicates invalid input.
 Do not switch identity or interpret 404/422 as proof of missing capability.
 For large responses, read the JSON file at `raw_result.path` and complete all
@@ -11,7 +13,7 @@ pages before selecting accounts or content.
 
 ## Prepare content and accounts
 
-1. `test-plan +ensure` gets or creates the workspace plan (a write, with dry-run).
+1. `test-plan +ensure` gets or creates the organization's plan (a write, with dry-run).
    `test-plan +update` edits its defaults. Retain the actual returned plan ID.
 2. `content-group +list/+create/+update/+delete` manages named Hook, Recipe, BGM
    and POV collections. Use exact resource IDs, with no duplicate selections.

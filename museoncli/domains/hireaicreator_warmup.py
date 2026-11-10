@@ -1,4 +1,4 @@
-"""Warmup lifecycle commands backed by the workspace-scoped v2 operator API."""
+"""Warmup lifecycle commands backed by the organization-scoped v2 operator API."""
 
 from __future__ import annotations
 

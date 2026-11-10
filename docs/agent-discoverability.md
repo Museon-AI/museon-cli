@@ -10,7 +10,7 @@ never rely on memory or older transcripts for the command list.
 - `setup --agent [auto|codex|claude-code|cursor|all]`
 - `config get` / `config set`
 - `auth start` / `auth finish` / `auth login` / `auth status` / `auth logout`
-- `workspace list` / `workspace current` / `workspace select`
+- `org list` / `org current` / `org select` (`workspace list` / `workspace current` / `workspace select` remain as deprecated aliases until 1.0)
 - `schema [<domain>[.<shortcut>]]`
 
 ## Business commands
@@ -29,12 +29,12 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `research +search-web` | read | — | — | direct | Research public web evidence from a query or URL, including page text and official-site visual assets. |
 | `research +search-social-media` | read | — | — | direct | Search social-native evidence across TikTok, Instagram, YouTube, and XHS using a stable platform and intent contract. |
 | `research +create-hook-analysis` | write | yes | — | async_run | Start a durable Instagram Hook analysis batch from post and/or profile URLs. Returns immediately; poll batches together and read structured results by page. |
-| `research +submit-hook-candidates` | write | yes | — | async_run | Submit Agent-prefiltered Instagram Hook candidates, recheck workspace-scoped duplicates, and start the existing durable analysis batch. |
-| `research +check-hooks-analyzed` | read | — | — | direct | Check up to 40 Instagram post URLs against prior workspace-scoped Social Media Hook analyses. |
+| `research +submit-hook-candidates` | write | yes | — | async_run | Submit Agent-prefiltered Instagram Hook candidates, recheck organization-scoped duplicates, and start the existing durable analysis batch. |
+| `research +check-hooks-analyzed` | read | — | — | direct | Check up to 40 Instagram post URLs against prior organization-scoped Social Media Hook analyses. |
 | `research +get-hook-analysis` | read | — | — | direct | Read one Social Media Hook analysis batch and its aggregate progress. |
 | `research +bulk-get-hook-analyses` | read | — | — | direct | Poll up to 20 Social Media Hook analysis batches in one request. |
 | `research +list-hook-analysis-results` | read | — | — | direct | List versioned, structured Hook evidence for one analysis batch. Apply scoring and recommendation policy in the consuming Skill. |
-| `research +get-hook-analysis-media` | read | — | — | direct | Download one workspace-scoped temporary source video from a Social Media Hook analysis item without exposing a signed URL. |
+| `research +get-hook-analysis-media` | read | — | — | direct | Download one organization-scoped temporary source video from a Social Media Hook analysis item without exposing a signed URL. |
 | `research +search-community` | read | — | — | direct | Search community evidence across X, Reddit, and LinkedIn using a stable platform and intent contract. |
 | `research +create-ads-search` | write | yes | — | async_run | Start a durable Creative Search Ads task across Meta and TikTok ad libraries. Requires a stable idempotency key for safe retries. This is Ads-only and never falls back to organic social search. |
 | `research +get-ads-search` | read | — | — | direct | Read one Creative Search Ads task, including terminal aggregate statistics and sanitized partial-failure details. |
@@ -45,16 +45,16 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `content-analysis +run` | write | yes | — | async_run | Run Content Analyzer for supported platform content (including Xiaohongshu image notes), uploaded video media, or local video files, optionally using a workspace Business Skill. |
+| `content-analysis +run` | write | yes | — | async_run | Run Content Analyzer for supported platform content (including Xiaohongshu image notes), uploaded video media, or local video files, optionally using a organization Business Skill. |
 | `content-analysis +get` | read | — | — | direct | Read one Content Analyzer run by ID. |
-| `content-analysis +list` | read | — | — | direct | List Content Analyzer runs in the selected workspace. |
+| `content-analysis +list` | read | — | — | direct | List Content Analyzer runs in the selected organization. |
 
 ### artifacts
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
 | `artifacts +validate` | read | — | — | direct | Validate one local Artifact Markdown file before upload. Checks frontmatter, report-directions YAML and field schema, preview URLs, optional stats, and duplicate social Embed placements. This command performs no network calls. |
-| `artifacts +upload` | write | yes | — | direct | Upload or replace one local agent file artifact through multipart form-data. Markdown uploads are public by default. After upload, give BOTH links when both exist: data.public_url (public share link, anyone with the link) and data.url (workspace/private link, logged-in workspace members). Use --no-public only when the user explicitly wants a private artifact (then only data.url). To embed resources inside markdown, paste ready-made refs returned by retained domains such as routines verbatim. Do not hand-write resource links, file names, local paths, or storage paths as links. You can also paste a raw TikTok, Instagram, or YouTube URL on its own line to embed a player. |
+| `artifacts +upload` | write | yes | — | direct | Upload or replace one local agent file artifact through multipart form-data. Markdown uploads are public by default. After upload, give BOTH links when both exist: data.public_url (public share link, anyone with the link) and data.url (organization/private link, logged-in organization members). Use --no-public only when the user explicitly wants a private artifact (then only data.url). To embed resources inside markdown, paste ready-made refs returned by retained domains such as routines verbatim. Do not hand-write resource links, file names, local paths, or storage paths as links. You can also paste a raw TikTok, Instagram, or YouTube URL on its own line to embed a player. |
 | `artifacts +share` | write | yes | — | direct | Re-enable public internet access for one markdown artifact (for example after +unshare). Prefer +upload defaults for new reports. |
 | `artifacts +unshare` | write | yes | — | direct | Revoke the public internet link for one artifact. Use only when the user explicitly wants to revoke public access. |
 
@@ -66,18 +66,18 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `media +get-generation` | read | — | — | direct | Read durable generation phase, effective model parameters, errors and media readiness. |
 | `media +upload` | write | yes | — | direct | Upload local image/video/audio or a private general file. General files return artifact_id, with expiring download URL; read with --kind file. Read the returned media ID with media +get; upload success does not prove business generation or delivery completion. |
 | `media +import` | write | yes | — | direct | Import an image from a direct HTTP(S) URL. This API supports images only; upload local video/audio files with media +upload. |
-| `media +get` | read | — | — | direct | Read one media record in the selected workspace. Business output completion must be verified through its owning domain. |
+| `media +get` | read | — | — | direct | Read one media record in the selected organization. Business output completion must be verified through its owning domain. |
 
 ### social-account
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `social-account +list` | read | — | — | direct | List social accounts available to the current workspace. For multiple known handles, repeat --search-term (max 100) in one request; do not concatenate handles into --search or page-scan the account list. |
-| `social-account +get` | read | — | — | direct | Read one workspace social account. |
+| `social-account +list` | read | — | — | direct | List social accounts available to the selected organization. For multiple known handles, repeat --search-term (max 100) in one request; do not concatenate handles into --search or page-scan the account list. |
+| `social-account +get` | read | — | — | direct | Read one organization social account. |
 | `social-account +connect-adb` | write | yes | — | direct | Connect the current sandbox to this account's cloud phone over ADB. After success, use native adb or u2cli with the returned serial; the temporary connection password is never printed. |
 | `social-account +renew-phone-lease` | write | yes | — | direct | Keep this account's cloud phone on for 15 more minutes. The +connect-adb relay runs it every minute while ADB traffic flows; Museon shuts down a phone nobody renews. |
 | `social-account +get-stream-url` | read | — | — | direct | Return this account's cloud-phone live-stream URL. The sandbox stream sidecar renders it to capture fast motion the u2cli clip command needs; the URL views the same phone adb-connect controls. |
-| `social-account +create-connect-link` | write | yes | — | direct | Create a workspace self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, YouTube, LinkedIn, and X. |
+| `social-account +create-connect-link` | write | yes | — | direct | Create an organization self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, YouTube, LinkedIn, and X. |
 | `social-account +get-connect-link` | read | — | — | direct | Read or wait for the authorization result of a social account connect link. |
 | `social-account +get-performance` | read | — | — | direct | Live-read performance for one social account: authorized channels first, with automatic public-data fallback when authorization is missing/expired or the platform exposes no history. Payload `source` marks provenance (official/managed analytics vs public_data) — relay that difference to customers and never show internal retrieval details. First page includes the profile block; posts paginate via --cursor. |
 | `social-account +draft-profile-edit` | read | — | — | direct | Generate proposed TikTok display name, bio, or avatar drafts for one account. |
@@ -91,27 +91,27 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `hireaicreator account +get-publish-settings` | read | — | — | direct | Read publication methods, global authorization, readiness and pending schedule counts for up to 200 workspace accounts in one request. |
+| `hireaicreator account +get-publish-settings` | read | — | — | direct | Read publication methods, global authorization, readiness and pending schedule counts for up to 200 of the organization's accounts in one request. |
 | `hireaicreator account +set-publish-settings` | write | yes | — | direct | Batch configure account publication. First read settings, send preview=true with exact updated_at values, then apply the same changes with preview=false. The server rejects stale settings and changes during active delivery. Supports different methods per account. |
-| `hireaicreator account +list` | read | — | — | direct | Find exact account identities, workspace tags, and current stage/assignment state; --tags matches any listed workspace tag; complete pagination before fixing a selection. |
+| `hireaicreator account +list` | read | — | — | direct | Find exact account identities, organization tags, and current stage/assignment state; --tags matches any listed organization tag; complete pagination before fixing a selection. |
 | `hireaicreator account +get-assets` | read | — | — | direct | Read an account's Actor, Persona and other publish asset bindings. |
 | `hireaicreator account +set-actor` | write | yes | — | direct | Bind an existing Actor to an account; use its exact ID to resolve duplicate names. |
 | `hireaicreator account +set-persona` | write | yes | — | direct | Bind an existing Persona to an account. Managed-operation approval must be explicit. |
 | `hireaicreator account +check-eligibility` | read | — | — | direct | Read eligibility and blockers for an explicit account set. |
-| `hireaicreator actor +get-access` | read | — | — | direct | Inspect Actor workspace access, binding locks and supported resolutions in one batch. A shared Actor can be copied; there is no force-unlock operation. |
-| `hireaicreator actor +preview-assign` | read | — | — | direct | Live-preview an atomic Actor copy or move across workspaces. Returns blockers and an opaque preview token. Move rejects bound Actors; copy preserves the face and leaves the source intact. This reads server state, unlike local --dry-run. |
+| `hireaicreator actor +get-access` | read | — | — | direct | Inspect Actor access across organizations, binding locks and supported resolutions in one batch. A shared Actor can be copied; there is no force-unlock operation. |
+| `hireaicreator actor +preview-assign` | read | — | — | direct | Live-preview an atomic Actor copy or move across organizations. Returns blockers and an opaque preview token. Move rejects bound Actors; copy preserves the face and leaves the source intact. This reads server state, unlike local --dry-run. |
 | `hireaicreator actor +assign` | write | yes | `--yes` | direct | Atomically copy or move the exact previewed Actor batch. Requires matching preview token, explicit confirmation and a stable idempotency key. State drift fails the entire batch; never automatically refresh a conflicting preview or retry an unknown outcome with a new key. |
 | `hireaicreator actor +list` | read | — | — | direct | List Actors (independent identities), optionally by source Persona. |
 | `hireaicreator actor +get` | read | — | — | direct | Read one Actor; its ID is not a Persona ID. |
 | `hireaicreator actor +resolve` | read | — | — | direct | Read up to 200 Actors with their reference and profile image URLs in one call. Take actor_id from account +list instead of reading accounts one by one. |
-| `hireaicreator actor +create-from-persona` | write | yes | — | direct | Create one Actor from an existing Persona and one workspace image. |
+| `hireaicreator actor +create-from-persona` | write | yes | — | direct | Create one Actor from an existing Persona and one organization image. |
 | `hireaicreator actor +create-batch` | write | yes | — | direct | Start Persona-based Actor generation. Generated images remain candidates until selected. |
 | `hireaicreator actor +get-batch` | read | — | — | direct | Read the status and counts of one Actor generation batch. |
 | `hireaicreator actor +list-batch-items` | read | — | — | direct | Page through generated Actor candidates and their image/status details. |
 | `hireaicreator actor +select-batch-items` | write | yes | — | direct | Turn explicitly chosen successful candidates into Actors. |
 | `hireaicreator persona +list` | read | — | — | direct | List Personas and their actual identities. |
-| `hireaicreator persona +get` | read | — | — | direct | Read a Persona through resource access control; no workspace override. |
-| `hireaicreator product +list` | read | — | — | direct | List workspace products with description, selling points, target audiences and every image asset (logo, product image, website and app screenshots); complete pagination. |
+| `hireaicreator persona +get` | read | — | — | direct | Read a Persona through resource access control; no organization override. |
+| `hireaicreator product +list` | read | — | — | direct | List the organization's products with description, selling points, target audiences and every image asset (logo, product image, website and app screenshots); complete pagination. |
 | `hireaicreator format +list` | read | — | — | direct | List HireAICreator Formats, distinct from slideshow Formats. |
 | `hireaicreator format +get` | read | — | — | direct | Read Format processing state and source resources. |
 | `hireaicreator format +import-urls` | write | yes | — | direct | Import Format source URLs asynchronously; acceptance is not ready content. |
@@ -150,8 +150,8 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `hireaicreator delivery +export` | write | yes | — | direct | Request an export bound to video version; preserve the idempotency key on retry. |
 | `hireaicreator delivery +get-export` | read | — | — | direct | Read actual export status, version/revision, error and download URL. |
 | `hireaicreator video +publish-local` | write | yes | — | direct | Upload local finished videos into a campaign and schedule each on explicit accounts. Requires campaign_id; each item has file, account_ids, caption, and either now=true or scheduled_at. Uses account publication settings; disabled/unready accounts fail before upload. Local receipts reuse uploads on retry; retain the idempotency key and files unchanged. |
-| `hireaicreator test-plan +ensure` | write | yes | — | direct | Get or create the workspace Test Plan. |
-| `hireaicreator test-plan +update` | write | yes | — | direct | Update workspace Test Plan defaults. |
+| `hireaicreator test-plan +ensure` | write | yes | — | direct | Get or create the organization's Test Plan. |
+| `hireaicreator test-plan +update` | write | yes | — | direct | Update the organization's Test Plan defaults. |
 | `hireaicreator content-group +list` | read | — | — | direct | List reusable content groups; complete pagination. |
 | `hireaicreator content-group +create` | write | yes | — | direct | Create a reusable Hook, Recipe, BGM or POV group. |
 | `hireaicreator content-group +update` | write | yes | — | direct | Replace reusable content group name and resource selection. |
@@ -198,7 +198,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `hireaicreator warmup +activate` | write | yes | `--yes` | direct | Activate warmup with optimistic version control; requires --yes. May start automated generation/publication. |
 | `hireaicreator warmup +pause` | write | yes | `--yes` | direct | Pause warmup with optimistic version control; requires --yes. Read back paused state; already dispatched work may still complete. |
 | `hireaicreator warmup +resume` | write | yes | `--yes` | direct | Resume warmup with optimistic version control; requires --yes. May start automated generation/publication. |
-| `hireaicreator plan +list` | read | — | — | direct | List workspace video plans; complete pagination. |
+| `hireaicreator plan +list` | read | — | — | direct | List the organization's video plans; complete pagination. |
 | `hireaicreator plan +generate` | write | yes | — | direct | Start generation for a plan with a stable retry key. |
 | `hireaicreator plan +cancel` | write | yes | `--yes` | direct | Cancel remaining plan work at the expected version; inspect skipped items. |
 | `hireaicreator video +review` | write | yes | `--yes` | direct | Approve or request changes at the reviewed version; approval can enable scheduled publication. |
@@ -221,21 +221,21 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `hireaicreator video +regenerate-caption` | write | yes | — | direct | Regenerate caption at an explicit video version with a stable retry key. |
 | `hireaicreator video +generate-ai-hook-candidate` | write | yes | — | direct | Generate a ai-hook candidate; inspect it before +commit-candidates. |
 | `hireaicreator video +generate-pov-candidate` | write | yes | — | direct | Generate a pov candidate; inspect it before +commit-candidates. |
-| `hireaicreator format +list-tags` | read | — | — | direct | List the workspace's existing Format tags. |
+| `hireaicreator format +list-tags` | read | — | — | direct | List the organization's existing Format tags. |
 | `hireaicreator format +get-warmup-readiness` | read | — | — | direct | Read Format readiness, revisions and issues for warmup; does not start generation. |
 | `hireaicreator format +update` | write | yes | — | direct | Edit Format name, BGM, POV or playbook. Supply the read version to detect stale edits. Empty playbook string clears its override; null does not clear links. |
 | `hireaicreator format +retry` | write | yes | `--yes` | direct | Retry one Format processing step; may incur generation work and requires --yes. No server version or idempotency key is supported. |
-| `hireaicreator format +delete` | destructive | yes | `--yes` | direct | Delete a Format from this workspace; requires --yes. Read current details first; no server version or idempotency key is supported. |
+| `hireaicreator format +delete` | destructive | yes | `--yes` | direct | Delete a Format from this organization; requires --yes. Read current details first; no server version or idempotency key is supported. |
 
 ### publish
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `publish account +list` | read | — | — | direct | List the social accounts bound to this workspace, which are the accounts it can publish to. Filter by platform (tiktok) and device kind; follow every page before choosing accounts. |
-| `publish post +schedule` | write | yes | — | direct | Upload local videos or photo sets (or reuse media IDs) and schedule each on the workspace's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted. |
+| `publish account +list` | read | — | — | direct | List the social accounts bound to the selected organization, which are the accounts it can publish to. Filter by platform (tiktok) and device kind; follow every page before choosing accounts. |
+| `publish post +schedule` | write | yes | — | direct | Upload local videos or photo sets (or reuse media IDs) and schedule each on the organization's bound accounts with a caption. Each item takes one of file / media_id (a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass now=true to publish at once. At most 100 posts per batch, up to 7 days ahead. ai_tag marks the posts as AI-generated; product_id attaches a TikTok Shop product to a video; music_url, a TikTok post link, gives the post that post's sound on a cloud-phone account (other accounts publish without it). Retry with the same idempotency key and unchanged files: uploads are reused and the server returns the batch it already accepted. |
 | `publish job +list` | read | — | — | direct | List publish jobs (one per video and account) with status, scheduled time, error and delivery; --task-id narrows to one batch returned by publish post +schedule. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs. |
 | `publish job +get` | read | — | — | direct | Read one publish job's status, scheduled time, error and delivery. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs. |
-| `publish job +cancel` | write | yes | — | direct | Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires a workspace editor. |
+| `publish job +cancel` | write | yes | — | direct | Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires an organization role that can edit. |
 
 ### cloud-phone
 
@@ -263,7 +263,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `cloud-phone supplier +update` | write | yes | — | direct | Update an IP supplier preset; omitted password keeps its existing value. |
 | `cloud-phone supplier +delete` | destructive | yes | `--yes` | direct | Delete a saved IP supplier preset. |
 | `cloud-phone attention +list` | read | — | — | direct | List down, repeatedly failing or overloaded IPs, failed changes, reclaimable phones and unused IPs. |
-| `cloud-phone recovery +preview` | read | — | — | direct | Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it. Returns blockers and Museon device IDs; no resources are released. |
+| `cloud-phone recovery +preview` | read | — | — | direct | Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it to the selected organization. Returns blockers and Museon device IDs; no resources are released. |
 | `cloud-phone recovery-job +create` | destructive | yes | `--yes` | direct | Reclaim explicitly selected devices from a fresh recovery preview. Retry uncertain submission with the same key; accepted is not completed. |
 | `cloud-phone recovery-job +list` | read | — | — | direct | List resource-recovery jobs, including failed and partial outcomes. |
 | `cloud-phone recovery-job +get` | read | — | — | direct | Get a recovery job and every device's outcome and blockers. |
@@ -283,9 +283,9 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `ai-slideshow asset +create` | write | yes | — | direct | Create one reusable product, persona, topic, format, or media asset. Product requires name, category, and description; discover canonical categories with ai-slideshow asset +list-options and use --dry-run for authoritative server validation without writing. |
 | `ai-slideshow asset +update` | write | yes | — | direct | Update one reusable product, persona, topic, format, or media asset. |
 | `ai-slideshow asset +delete` | destructive | yes | `--yes` | direct | Delete one reusable product, persona, topic, format, or media asset. If another resource still references the asset, the server returns the blocking relationship; resolve it through its owning workflow before retrying. |
-| `ai-slideshow generation +create` | write | yes | — | async_run | Create and start one media generation — Museon's image-post (生图/图文) generation capability. Current type: slideshow, driven by format, topic, persona, and optional product assets. When the user asks to generate images or image posts but the workspace lacks these assets, do not refuse and do not ask the customer for asset IDs — follow the Content Replication flow to guide asset preparation first. Responses include a ready-made generation ref and a recommended wakeup delay. Present the ref in the current final response, tell the customer generation is in progress and the link shows live progress, then use the returned delay for the next status check instead of choosing one yourself. |
+| `ai-slideshow generation +create` | write | yes | — | async_run | Create and start one media generation — Museon's image-post (生图/图文) generation capability. Current type: slideshow, driven by format, topic, persona, and optional product assets. When the user asks to generate images or image posts but the organization lacks these assets, do not refuse and do not ask the customer for asset IDs — follow the Content Replication flow to guide asset preparation first. Responses include a ready-made generation ref and a recommended wakeup delay. Present the ref in the current final response, tell the customer generation is in progress and the link shows live progress, then use the returned delay for the next status check instead of choosing one yourself. |
 | `ai-slideshow generation +get` | read | — | — | direct | Read one media generation by id. Current type: slideshow. The response includes a ready-made generation ref; completed generations include grid_media, slide_media, and result_preview_image_urls when result media is available. |
-| `ai-slideshow generation +list` | read | — | — | direct | List media generations in the current workspace. Current type: slideshow. Each item includes a ready-made generation ref; completed generations include grid_media, slide_media, and result_preview_image_urls when result media is available. |
+| `ai-slideshow generation +list` | read | — | — | direct | List media generations in the selected organization. Current type: slideshow. Each item includes a ready-made generation ref; completed generations include grid_media, slide_media, and result_preview_image_urls when result media is available. |
 | `ai-slideshow publish +bulk-get-asset-pools` | read | — | — | direct | Read effective persona, product, format, topic, and BGM pools for MULTIPLE accounts in one request, with per-account issues and hydrated resource details by default. MUST use this for multi-account audits instead rather than issuing one request per account. This batch command is also valid for a complete five-pool inspection of one account. |
 | `ai-slideshow publish +bulk-preview-asset-pools` | read | — | — | direct | Live-preview one multi-account asset-pool change without writing. Supports a uniform patch plus per-account precise overrides for persona, product, formats, topics, and BGM. Always run this before +bulk-set-asset-pools, present every changed/skipped/failed account and existing-schedule impact, then obtain explicit approval. Fully-managed accounts are previewed normally and marked requires_managed_operation_approved=true; after explicit approval, submit with --managed-operation-approved. |
 | `ai-slideshow publish +bulk-set-asset-pools` | destructive | yes | `--yes` | async_run | Submit one durable Cloud Task job to change publish asset pools for MULTIPLE accounts. Use this instead of issuing one write per account or writing Python/shell scripts; keep the single command for small, precise one-account edits. This batch command is preferred when atomically configuring all five pools for one account. Requires the opaque token and identical normalized patches from a fresh live preview, plus a stable idempotency key and --yes. After submission, poll only +get-asset-pool-job and inspect every failed/skipped account. If preview marks any fully-managed account requires_managed_operation_approved=true, relay its impact and add --managed-operation-approved only after explicit approval; without it those accounts fail per-account. |
@@ -313,22 +313,22 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `campaign-monitor +list` | read | — | — | direct | List campaign monitor collections available to the active workspace. |
+| `campaign-monitor +list` | read | — | — | direct | List campaign monitor collections available to the selected organization. |
 | `campaign-monitor +get` | read | — | — | direct | Read one campaign monitor collection. |
 | `campaign-monitor +list-dimensions` | read | — | — | direct | Read what a campaign's posts can be broken down by, before analysing them. Returns campaign_type and post_scopes: a ugc campaign offers brief (each with the persona it is under), persona and tag over approved (--link-status linked) or all posts; any other type, such as tracking, offers creator_tag over all posts. |
 | `campaign-monitor +get-breakdown` | read | — | — | direct | Group a campaign's counted posts by one dimension: brief, persona (the brief's) or tag for a ugc campaign, creator-tag for any other. Rows are bucket value (carries it), unassigned (approved, without one) or awaiting_review (ugc, not approved yet), each with posts, creators, measured_posts, metric sums and median_views. Tags overlap: rows can outnumber totals, which count each post once. |
 | `campaign-monitor +list-creators` | read | — | — | direct | List creators covered by a campaign monitor. |
 | `campaign-monitor +add-creators` | write | yes | — | direct | Track creators in a campaign so their matching posts sync in going forward. --url imports new creators by public profile URL via a background task (response data.url_import_task); --creator-id attaches creators already known to Museon. Verify with +list-creators later. |
-| `campaign-monitor +remove-creators` | destructive | yes | `--yes` | direct | Stop tracking a creator in a campaign: removes the creator monitor and its derived content monitors from this campaign and resyncs. This does NOT delete the creator's social-platform account; explicit operator confirmation is required before running with --yes. Tracking is workspace-wide, so the monitor is only fully deleted when no other campaign references it. --creator-id is the creator_social_account_id from +list-creators. |
+| `campaign-monitor +remove-creators` | destructive | yes | `--yes` | direct | Stop tracking a creator in a campaign: removes the creator monitor and its derived content monitors from this campaign and resyncs. This does NOT delete the creator's social-platform account; explicit operator confirmation is required before running with --yes. Tracking is organization-wide, so the monitor is only fully deleted when no other campaign references it. --creator-id is the creator_social_account_id from +list-creators. |
 | `campaign-monitor +list-content` | read | — | — | direct | List posts/content covered by a campaign monitor. |
 | `campaign-monitor +add-content` | write | yes | — | direct | Track individual posts in a campaign. --url imports new posts by public URL via a background task (response data.url_import_task); --content-id attaches posts already known to Museon. Verify with +list-content later. |
 | `campaign-monitor +remove-content` | destructive | yes | `--yes` | direct | Remove one content record from a campaign monitor. This only removes the collection record from the campaign monitor (soft delete), it does NOT delete the original social-platform post; explicit operator confirmation is required before running with --yes. The collection_content_id comes from the +list-content response, and the response includes removed / missing detail. |
 | `campaign-monitor +bulk-remove-content` | destructive | yes | `--yes` | direct | Remove content records from a campaign monitor in batch. This only removes the collection record from the campaign monitor (soft delete), it does NOT delete the original social-platform post; explicit operator confirmation is required before running with --yes. Batch size <=100, split into multiple batches if exceeded; response includes removed / missing detail; collection_content_id comes from the +list-content response. |
 | `campaign-monitor +get-summary` | read | — | — | direct | Read daily content-trend totals for a campaign monitor. This is not the Campaign Analytics Period Performance comparison; use +get-period-performance for period-end snapshots and previous-period deltas. |
 | `campaign-monitor +get-period-performance` | read | — | — | direct | Read the Campaign Analytics Period Performance snapshot. The requested period end is the current performance cutoff; Museon derives the immediately preceding equal-length period and returns metric start/end values, changes, comparison rates, trends, coverage, and scope metadata. |
-| `campaign-monitor +get-creator` | read | — | — | direct | Read one workspace-visible social account profile from Museon's store. |
-| `campaign-monitor +list-posts` | read | — | — | direct | List Museon-synced posts for one workspace-visible social account; not a live platform-history fetch. |
-| `campaign-monitor +get-creator-performance` | read | — | — | direct | Read local synced performance history for one workspace-visible social account. |
+| `campaign-monitor +get-creator` | read | — | — | direct | Read one organization-visible social account profile from Museon's store. |
+| `campaign-monitor +list-posts` | read | — | — | direct | List Museon-synced posts for one organization-visible social account; not a live platform-history fetch. |
+| `campaign-monitor +get-creator-performance` | read | — | — | direct | Read local synced performance history for one organization-visible social account. |
 | `campaign-monitor +get-post` | read | — | — | direct | Read one Museon-synced social post/content record. |
 | `campaign-monitor +get-post-performance` | read | — | — | direct | Read local synced performance history for one social post/content record. |
 | `campaign-monitor +resolve-post` | read | — | — | direct | Resolve an account publish schedule item to its published social post. |
@@ -341,8 +341,8 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `campaign-monitor report +get` | read | — | — | direct | Read one Analytics tab widget over a date window: cumulative views, content tiers or creator countries. Period-over-period core metrics are +get-period-performance. |
 | `campaign-monitor creator-tag +list` | read | — | — | direct | List the creator tags set on a campaign's accounts. |
 | `campaign-monitor audience +get` | read | — | — | direct | Read a campaign's audience: by day as the trend tooltip shows it, or over the period. |
-| `campaign-monitor payment +list` | read | — | — | direct | List a workspace's creator payments, as the Agency Payments module does. Agency team only. |
-| `campaign-monitor payment-summary +get` | read | — | — | direct | Read a workspace's payment totals, as the Agency Payments header shows them. Agency team only. |
+| `campaign-monitor payment +list` | read | — | — | direct | List the organization's creator payments, as the Agency Payments module does. Agency team only. |
+| `campaign-monitor payment-summary +get` | read | — | — | direct | Read the organization's payment totals, as the Agency Payments header shows them. Agency team only. |
 | `campaign-monitor settlement +get` | read | — | — | direct | Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. Agency team only. |
 | `campaign-monitor payout +list` | read | — | — | direct | List a UGC campaign's settled payouts and their lines. Agency team only. |
 | `campaign-monitor activity +list` | read | — | — | direct | List a UGC campaign's activity log, newest first. Agency team only. |
@@ -368,14 +368,14 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `agentic-campaign +schedule-rollout-get` | read | — | — | direct | Read durable schedule-rollout status by rollout id or confirmed proposal id. Use this after +confirm-schedule-rollout's 202 response to inspect immutable assignments, seed bindings, and asynchronous progress. |
 | `agentic-campaign proposal +list` | read | — | — | direct | List Proposals for exactly one Plan or all Plans in one Campaign. Campaign scope returns each Proposal's Plan and Persona summary. |
 | `agentic-campaign proposal +get` | read | — | — | direct | Read an adjustment proposal, its latest revision guidance, and the full round-by-round annotation history (annotations). |
-| `agentic-campaign +campaign-create` | write | yes | — | direct | Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward. |
+| `agentic-campaign +campaign-create` | write | yes | — | direct | Create an Agentic Creative Campaign in the selected organization. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward. |
 | `agentic-campaign +campaign-update` | write | yes | `--yes` | direct | Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config. |
 | `agentic-campaign +plan-update` | write | yes | — | direct | Update plan tokens for the next generation while a campaign is active or paused, or update name/budget only during setup. |
 | `agentic-campaign +plan-create` | write | yes | — | direct | Create a Persona Plan under a campaign. Only allowed while the campaign is in setup (setting_up or setup_ready); the server rejects the request otherwise and the error is passed through unchanged. |
 | `agentic-campaign +campaign-activate` | write | yes | — | direct | Activate an Agentic Creative Campaign, resuming member account operations. |
 | `agentic-campaign +campaign-pause` | write | yes | — | direct | Pause an Agentic Creative Campaign, stopping member account operations. |
 | `agentic-campaign +campaign-archive` | destructive | yes | `--yes` | direct | Archive an Agentic Creative Campaign. This cascades to stop account operations for every member of every plan in the campaign; the operator must explicitly confirm before running with --yes. |
-| `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected workspace. |
+| `agentic-campaign +list` | read | — | — | direct | List Agentic Creative Campaign summaries in the selected organization. |
 | `agentic-campaign +get` | read | — | — | direct | Get an Agentic Creative Campaign detail by campaign id. |
 | `agentic-campaign +plan-list` | read | — | — | direct | List Persona Plans for one campaign with member pool account ids and handles; account operation ids are omitted. |
 | `agentic-campaign +plan-get` | read | — | — | direct | Get a Persona Plan by plan id with member pool account ids and handles; account operation ids are omitted. |
@@ -386,7 +386,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `ugc campaign +list` | read | — | — | direct | List the active workspace's UGC campaigns, newest first. Their ids are what every other ugc command takes as --campaign-id. |
+| `ugc campaign +list` | read | — | — | direct | List the selected organization's UGC campaigns, newest first. Their ids are what every other ugc command takes as --campaign-id. |
 | `ugc enrollment +list` | read | — | — | direct | List a UGC campaign's roster: enrollment id, status, persona, creator name and accounts, newest first. Use it to find the enrollment ids to assign a brief to; participating is onboarding, active and paused together. |
 | `ugc brief +list` | read | — | — | direct | List the briefs a UGC campaign links, archived ones included: id, title, persona, status and current version. |
 | `ugc brief +get` | read | — | — | direct | Read one brief of a UGC campaign: its current version (or --version N) and, as document, the editable fields of the current version that +update changes. |
@@ -406,8 +406,8 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 |---|---|---|---|---|---|
 | `skills +list` | read | — | — | direct | List business skills available to the current agent runtime. |
 | `skills +get` | read | — | — | direct | Read one business skill by name. |
-| `skills +create` | write | yes | — | direct | Create one workspace-private Museon skill from Markdown content; --is-public requires organization admin permission. |
-| `skills +update` | write | yes | — | direct | Update a workspace-private Museon skill's Markdown content, description, reference, or active status; changing --is-public requires organization admin permission. |
+| `skills +create` | write | yes | — | direct | Create one organization-private Museon skill from Markdown content; --is-public requires organization admin permission. |
+| `skills +update` | write | yes | — | direct | Update a organization-private Museon skill's Markdown content, description, reference, or active status; changing --is-public requires organization admin permission. |
 
 ### staff-ops
 
@@ -422,7 +422,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `routines +list` | read | — | — | direct | List routines visible to the current workspace. Each routine includes a ref — paste it into report markdown to embed a live schedule card. Lifecycle writes are only allowed on routines you own; when a routine belongs to someone else, surface the owner to the user instead of operating on it. |
+| `routines +list` | read | — | — | direct | List routines visible to the selected organization. Each routine includes a ref — paste it into report markdown to embed a live schedule card. Lifecycle writes are only allowed on routines you own; when a routine belongs to someone else, surface the owner to the user instead of operating on it. |
 | `routines +get` | read | — | — | direct | Read one routine, including its active trigger if present. Each routine includes a ref — paste it into report markdown to embed a live schedule card. Lifecycle writes are only allowed on routines you own; when a routine belongs to someone else, surface the owner to the user instead of operating on it. |
 | `routines +create-ad-hoc` | write | yes | — | direct | Create an agent-owned ad-hoc routine and immediately register its trigger with Museon's scheduler. |
 | `routines +create-draft` | write | yes | — | direct | Create a draft ad-hoc routine for user review without registering a trigger. |
@@ -445,7 +445,17 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 - Every request carries `X-CLI-Version`; servers below the minimum reply
   `cli_outdated` with upgrade instructions.
 - Remote commands require browser authorization and the `agent_cli.access`
-  scope. Workspace membership, roles, and target-resource access are evaluated
-  by Museon on every request; there is no public/internal command split.
+  scope. Organization role, Campaign scope, and target-resource access are evaluated
+  by Museon on every request (`resource_policy` is
+  `server_evaluated_organization_and_resource_access`); there is no public/internal
+  command split.
+- Requests act in the organization chosen with `museoncli org select`
+  (`X-Organization-Id`); pass `--organization-id <uuid>` on a domain command to address
+  another organization for one call. Catalog entries mark this with `organization_bound`
+  (with a deprecated `workspace_bound` mirror) and roles `organization_member` /
+  `organization_admin_or_staff`. `--workspace-id` is a deprecated alias until 1.0;
+  agents never need a workspace id.
+- Envelopes carry an `organization` key (`{id, name}` or `null`); the deprecated
+  `workspace` key is only set when `--workspace-id` was given.
 - Surface rules (ids, pagination, enum casing, `--dry-run` / `--yes`) live in
   [cli-surface-conventions.md](cli-surface-conventions.md).

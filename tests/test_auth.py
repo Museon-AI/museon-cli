@@ -5,7 +5,7 @@ import asyncio
 import pytest
 
 from museoncli import __version__
-from museoncli.config import AuthState, Config, PendingAuthState, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState, PendingAuthState
 import museoncli.auth as auth_module
 from museoncli.auth import auth_headers
 
@@ -20,7 +20,7 @@ def test_auth_headers_uses_scoped_api_key() -> None:
 def test_auth_headers_adds_usage_context_when_available() -> None:
     cfg = Config()
     cfg.auth = AuthState(api_key="api-key")
-    cfg.workspace = WorkspaceState(id="ws-selected")
+    cfg.organization = OrganizationState(id="org-selected")
     cfg.runtime_context = {
         "conversation_id": "conv-1",
         "sandbox_id": "sandbox-1",
@@ -32,20 +32,20 @@ def test_auth_headers_adds_usage_context_when_available() -> None:
     assert auth_headers(cfg) == {
         "X-API-KEY": "api-key",
         "X-CLI-Version": __version__,
+        "X-Organization-Id": "org-selected",
         "X-Museon-Conversation-Id": "conv-1",
         "X-Museon-Usage-Business-Type": "agent_session",
         "X-Museon-Usage-Business-Id": "conv-1",
         "X-Museon-Sandbox-Id": "sandbox-1",
         "X-Museon-Actor-Id": "actor-1",
+        # Usage attribution stays; X-Museon-Workspace-Id is no longer sent.
         "X-Museon-Organization-Id": "org-1",
-        "X-Museon-Workspace-Id": "ws-runtime",
     }
 
 
-def test_auth_headers_do_not_fallback_usage_context_to_selected_workspace() -> None:
-    cfg = Config()
+def test_auth_headers_address_no_organization_and_no_workspace_when_none_is_selected() -> None:
+    cfg = Config.from_dict({"workspace": {"id": "ws-022-without-organization"}})
     cfg.auth = AuthState(api_key="api-key")
-    cfg.workspace = WorkspaceState(id="ws-selected")
 
     assert auth_headers(cfg) == {"X-API-KEY": "api-key", "X-CLI-Version": __version__}
 
@@ -94,7 +94,7 @@ def test_web_approval_login_stores_api_key(monkeypatch) -> None:
         assert config is cfg
         assert path == "/agent-cli/auth/device/start"
         assert json_body == {
-            "requested_workspace_id": None,
+            "requested_organization_id": None,
             "requested_scopes": [auth_module.AGENT_CLI_API_SCOPE],
         }
         return {
@@ -137,8 +137,10 @@ def test_web_approval_login_stores_api_key(monkeypatch) -> None:
     assert result["auth_method"] == "api_key"
     assert cfg.auth.api_key == "raw-api-key"
     assert cfg.auth.expires_at == 1790812800
-    assert cfg.workspace.id == "workspace-1"
-    assert cfg.workspace.organization_name == "MuseOn"
+    # An older server names only the workspace; its organization is stored.
+    assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
+    assert result["organization"] == {"id": "org-1", "name": "MuseOn"}
+    assert result["workspace"]["id"] == "workspace-1"
     assert saved[-1].api_key == "raw-api-key"
 
 
@@ -148,11 +150,7 @@ def test_web_approval_start_stores_pending_state_without_returning_device_code(
     cfg = Config()
     cfg.api_base_url = "https://api.museon.ai/api/v1"
     cfg.site_url = "https://museon.ai"
-    cfg.workspace = WorkspaceState(
-        id="workspace-member",
-        name="Member Workspace",
-        organization_id="org-1",
-    )
+    cfg.organization = OrganizationState(id="org-member", name="Member Org")
     saved: list[PendingAuthState] = []
 
     async def fake_post_public(
@@ -164,7 +162,7 @@ def test_web_approval_start_stores_pending_state_without_returning_device_code(
         assert config is cfg
         assert path == "/agent-cli/auth/device/start"
         assert json_body == {
-            "requested_workspace_id": "workspace-member",
+            "requested_organization_id": "org-member",
             "requested_scopes": [auth_module.AGENT_CLI_API_SCOPE],
         }
         return {
@@ -246,8 +244,7 @@ def test_web_approval_finish_stores_api_key_and_clears_pending(monkeypatch) -> N
     assert result["status"] == "approved"
     assert result["auth_method"] == "api_key"
     assert cfg.auth.api_key == "raw-api-key"
-    assert cfg.workspace.id == "workspace-1"
-    assert cfg.workspace.organization_name == "MuseOn"
+    assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
     assert cfg.pending_auth.device_code is None
     assert saved[-1][0].api_key == "raw-api-key"
     assert saved[-1][1].device_code is None
@@ -358,31 +355,73 @@ def test_api_data_does_not_send_expired_credentials(monkeypatch) -> None:
     assert sent is False
 
 
-def test_api_data_maps_426_to_cli_outdated(monkeypatch) -> None:
-    import asyncio
+@pytest.mark.parametrize(
+    ("caller", "path", "url_path"),
+    [
+        ("api_data", "/agent-cli/whoami", "/api/v1/agent-cli/whoami"),
+        ("api_data_v2", "/ugc/agency/me", "/api/v2/ugc/agency/me"),
+    ],
+)
+def test_426_reads_the_same_on_agent_cli_and_v2_routes(monkeypatch, caller, path, url_path) -> None:
+    import httpx
 
     import museoncli.main as main_module
-    import pytest as _pytest
 
-    cfg = Config()
-    cfg.auth.api_key = "token"
+    cfg = Config(api_base_url="https://api.example.test/api/v1", auth=AuthState(api_key="token"))
+    seen: list[httpx.Request] = []
 
-    class _Resp:
-        status_code = 426
-        text = '{"detail": {"reason": "cli_outdated", "minimum_version": "0.2.0"}}'
+    def outdated(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(
+            426,
+            json={
+                "detail": {
+                    "reason": "cli_outdated",
+                    "minimum_version": "0.24.0",
+                    "received_version": "0.22.3",
+                    "install_hint": "Run `uv tool upgrade museoncli`, then retry.",
+                }
+            },
+        )
 
-        def json(self):
-            return {}
+    client = httpx.AsyncClient
+    monkeypatch.setattr(
+        main_module.httpx,
+        "AsyncClient",
+        lambda **kw: client(**kw, transport=httpx.MockTransport(outdated)),
+    )
 
-    async def fake_send(cfg_arg, method, url, *, json_body, params):
-        return _Resp()
+    with pytest.raises(main_module.CliOutdatedError) as excinfo:
+        asyncio.run(getattr(main_module, caller)(cfg, "GET", path))
 
-    monkeypatch.setattr(main_module, "_api_send", fake_send)
+    assert seen[0].url.path == url_path
+    payload, code = main_module.error_envelope(excinfo.value, command="whoami")
+    assert code == 1
+    assert payload["reason"] == "cli_outdated"
+    assert payload["error"] == {
+        "code": "cli_outdated",
+        "message": (
+            "Museon CLI 0.22.3 is no longer supported by the Museon API (minimum supported: "
+            "0.24.0). Run `uv tool upgrade museoncli`, then retry."
+        ),
+        "http_status": 426,
+        "server_code": "cli_outdated",
+        "retryable": False,
+        "hint": "Run `uv tool upgrade museoncli`, then retry.",
+    }
 
-    with _pytest.raises(RuntimeError) as excinfo:
-        asyncio.run(main_module.api_data(cfg, "GET", "/agent-cli/whoami"))
-    assert main_module.reason_from_exception(excinfo.value) == "cli_outdated"
-    assert "minimum_version" in str(excinfo.value)
+
+def test_organization_workspace_mismatch_is_explained(monkeypatch) -> None:
+    import museoncli.main as main_module
+
+    exc = main_module.ApiRequestError(409, {"code": "organization_workspace_mismatch"})
+    payload, code = main_module.error_envelope(exc, command="media.get")
+
+    assert code == main_module.EXIT_CONFLICT
+    assert payload["reason"] == "conflict"
+    assert payload["error"]["server_code"] == "organization_workspace_mismatch"
+    assert "--workspace-id" in payload["error"]["message"]
+    assert "organization" in payload["error"]["message"]
 
 
 def test_api_send_retries_connect_errors(monkeypatch) -> None:
@@ -442,3 +481,22 @@ def test_api_send_retries_connect_errors(monkeypatch) -> None:
         "https://api.example.test/agent-cli/research",
     ]
     assert sleeps == [0.25, 0.5]
+
+
+def test_approval_prefers_the_organization_a_new_server_returns(monkeypatch) -> None:
+    cfg = Config()
+    monkeypatch.setattr(auth_module, "save_config", lambda value: None)
+
+    result = auth_module.complete_web_approval_poll(
+        config=cfg,
+        poll={
+            "status": "approved",
+            "api_key": "raw-api-key",
+            "workspace": {"id": "ws-1", "organization_id": "org-1", "organization_name": "Old"},
+            "organization": {"id": "org-1", "name": "MuseOn"},
+        },
+        clear_pending=False,
+    )
+
+    assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
+    assert result["organization"] == {"id": "org-1", "name": "MuseOn"}

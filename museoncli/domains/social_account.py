@@ -105,7 +105,7 @@ def _add_social_account_list_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--include-null-level", action="store_true")
     parser.add_argument(
         "--tag",
-        help="Filter by workspace tag (single value, set via +assets-set --tag).",
+        help="Filter by organization tag (single value, set via +assets-set --tag).",
     )
     parser.add_argument("--group-name")
     parser.add_argument("--lookup-status")
@@ -402,7 +402,7 @@ def _social_account_list_input_schema() -> dict[str, Any]:
             "include_null_level": {"type": ["boolean", "null"]},
             "tag": {
                 "type": ["string", "null"],
-                "description": ("Filter by workspace-private tag (single value)."),
+                "description": ("Filter by organization-private tag (single value)."),
             },
             "group_name": {"type": ["string", "null"]},
             "lookup_status": {"type": ["string", "null"]},
@@ -451,8 +451,8 @@ def _social_account_adb_connect_input_schema() -> dict[str, Any]:
                 "type": ["string", "null"],
                 "format": "uuid",
                 "description": (
-                    "Optional explicit workspace scope for handle resolution. Omitted unless "
-                    "--workspace-id is passed; the selected workspace is not injected."
+                    "Deprecated: optional explicit workspace for handle resolution. Omitted unless "
+                    "--workspace-id is passed; the selected organization is used otherwise."
                 ),
             },
         },
@@ -787,7 +787,7 @@ def specs() -> list[CommandSpec]:
             domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+list",
             summary=(
-                "List social accounts available to the current workspace. For "
+                "List social accounts available to the selected organization. For "
                 "multiple known handles, repeat --search-term (max 100) "
                 "in one request; do not concatenate handles into --search or page-scan "
                 "the account list."
@@ -814,7 +814,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
             shortcut="+get",
-            summary="Read one workspace social account.",
+            summary="Read one organization social account.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="social_account_get",
@@ -894,7 +894,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+create-connect-link",
             legacy_shortcuts=("+connect-link-create",),
             summary=(
-                "Create a workspace self-authorization link to connect a user-owned "
+                "Create an organization self-authorization link to connect a user-owned "
                 "social account. Supports TikTok, Instagram, Facebook, YouTube, LinkedIn, and X."
             ),
             risk_level="write",
@@ -1112,8 +1112,6 @@ async def _execute_connect_link_create(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     payload = dict(arguments)
     turn_context = routine_turn_context(cfg)
     if turn_context:
@@ -1132,8 +1130,6 @@ async def _execute_connect_link_status(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     link_id = str(arguments.get("link_id") or "")
     if not link_id:
         raise RuntimeError("social-account.get-connect-link requires link_id")
@@ -1153,8 +1149,6 @@ async def _execute_performance_get(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1178,11 +1172,8 @@ async def _execute_performance_get(ctx: CommandContext) -> Any:
 async def _execute_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1203,8 +1194,6 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
     if account_id:
-        if not workspace_id:
-            raise RuntimeError("missing_workspace")
         connection = agent_domain_result(
             await _request_adb_credentials(
                 api_data,
@@ -1299,8 +1288,6 @@ async def _execute_renew_phone_lease(ctx: CommandContext) -> Any:
     account_id = str(ctx.arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{ctx.spec.schema_name} requires account_id")
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
@@ -1320,8 +1307,6 @@ async def _execute_stream_url(ctx: CommandContext) -> Any:
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await api_data(
             cfg,
@@ -1395,8 +1380,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await api_data(
             cfg,
@@ -1435,8 +1418,6 @@ async def _execute_profile_edit_draft(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1458,8 +1439,6 @@ async def _execute_avatar_generate_batch(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_ids = arguments.get("account_ids")
     if not isinstance(account_ids, list) or not account_ids:
         raise RuntimeError(
@@ -1497,10 +1476,7 @@ async def _execute_avatar_generate_batch(ctx: CommandContext) -> Any:
 async def _execute_avatar_generate_status(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     task_id = str(arguments.get("task_id") or "")
     if not task_id:
         raise RuntimeError("social-account.get-avatar-generation requires task_id")
@@ -1516,10 +1492,7 @@ async def _execute_avatar_generate_status(ctx: CommandContext) -> Any:
 async def _execute_profile_edit_status(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     task_id = str(arguments.get("task_id") or "")
     if not task_id:
         raise RuntimeError("social-account.get-profile-edit requires task_id")
@@ -1538,8 +1511,6 @@ async def _execute_profile_edit_submit(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1573,8 +1544,6 @@ async def _execute_profile_edit_batch_submit(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_updates = arguments.get("account_updates")
     if not isinstance(account_updates, list) or not account_updates:
         raise RuntimeError(
@@ -1635,7 +1604,7 @@ EXECUTORS = {
 async def _poll_connect_link_status(
     cfg: Config,
     *,
-    workspace_id: str,
+    workspace_id: str | None,
     link_id: str,
     wait: bool,
     timeout_seconds: int,

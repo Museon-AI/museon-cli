@@ -11,6 +11,7 @@ import pytest
 from museoncli.config import (
     AuthState,
     Config,
+    OrganizationState,
     PendingAuthState,
     load_config,
     normalize_api_base_url,
@@ -49,21 +50,87 @@ def test_config_from_dict_normalizes_existing_versionless_config() -> None:
     assert cfg.api_base_url == "https://api.museon.ai/api/v1"
 
 
-def test_config_from_dict_preserves_workspace_organization_name() -> None:
+_LEGACY_WORKSPACE = {
+    "id": "workspace-1",
+    "name": "MuseOn Official",
+    "organization_id": "org-1",
+    "organization_name": "MuseOn",
+}
+
+
+def test_022_config_with_a_workspace_migrates_to_its_organization(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+    config_file.write_text(
+        json.dumps(
+            {
+                "api_base_url": "https://api.example.test/api/v1",
+                "site_url": "https://example.test",
+                "runtime_context": {"conversation_id": "conv-1"},
+                "auth": {"expires_at": None, "user": {"id": "user-1", "email": "u@example.test"}},
+                "workspace": _LEGACY_WORKSPACE,
+                "pending_auth": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cfg = load_config()
+
+    assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
+    assert cfg.legacy_workspace_id == "workspace-1"
+    save_config(cfg)
+    payload = json.loads(config_file.read_text())
+    assert payload["organization"] == {"id": "org-1", "name": "MuseOn"}
+    # 0.22 still reads its own block, untouched; nothing else is lost.
+    assert payload["workspace"] == _LEGACY_WORKSPACE
+    assert payload["api_base_url"] == "https://api.example.test/api/v1"
+    assert payload["runtime_context"] == {"conversation_id": "conv-1"}
+    assert payload["auth"]["user"] == {"id": "user-1", "email": "u@example.test"}
+
+
+def test_organization_block_wins_over_a_stale_022_workspace() -> None:
     cfg = Config.from_dict(
         {
-            "workspace": {
-                "id": "workspace-1",
-                "name": "MuseOn Official",
-                "organization_id": "org-1",
-                "organization_name": "MuseOn",
-            }
+            "organization": {"id": "org-2", "name": "Brand"},
+            "workspace": _LEGACY_WORKSPACE,
         }
     )
 
-    assert cfg.workspace.id == "workspace-1"
-    assert cfg.workspace.organization_id == "org-1"
-    assert cfg.workspace.organization_name == "MuseOn"
+    assert cfg.organization == OrganizationState(id="org-2", name="Brand")
+    assert cfg.document()["workspace"] == _LEGACY_WORKSPACE
+    assert "workspace" not in cfg.safe_dict()
+
+
+def test_config_round_trip_keeps_keys_this_version_does_not_own(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config_file = tmp_path / "config.json"
+    monkeypatch.setenv("MUSEONCLI_CONFIG", str(config_file))
+    monkeypatch.setenv("MUSEONCLI_CREDENTIAL_BACKEND", "file")
+    config_file.write_text(
+        json.dumps(
+            {
+                "organization": {"id": "org-1", "name": "MuseOn"},
+                "future_setting": {"nested": [1, 2]},
+                "telemetry": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cfg = load_config()
+    cfg.organization = OrganizationState(id="org-2", name="Brand")
+    save_config(cfg)
+
+    payload = json.loads(config_file.read_text())
+    assert payload["future_setting"] == {"nested": [1, 2]}
+    assert payload["telemetry"] is False
+    assert payload["organization"] == {"id": "org-2", "name": "Brand"}
+    assert "workspace" not in payload
 
 
 def test_safe_dict_redacts_pending_auth_device_code_and_url() -> None:
@@ -268,13 +335,14 @@ def test_saving_public_state_preserves_legacy_inline_capability(
         json.dumps({"auth": {"api_key": capability}, "workspace": {}}), encoding="utf-8"
     )
     cfg = load_config()
-    cfg.workspace.id = "workspace-2"
+    cfg.organization = OrganizationState(id="org-2")
 
     save_config(cfg)
 
     payload = json.loads(config_file.read_text())
     assert payload["auth"] == {"api_key": capability}
-    assert payload["workspace"]["id"] == "workspace-2"
+    assert payload["organization"]["id"] == "org-2"
+    assert payload["workspace"] == {}
     assert load_config().auth.api_key == capability
 
 

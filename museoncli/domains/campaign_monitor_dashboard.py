@@ -109,7 +109,7 @@ def _read(
             parser.add_argument(
                 "--workspace-id",
                 dest="workspace_id",
-                help="Workspace whose payments to read; defaults to the selected workspace.",
+                help="DEPRECATED: one workspace whose payments to read; otherwise the organization's.",
             )
         for key, field in props.items():
             kind = field["type"]
@@ -192,9 +192,8 @@ async def _resolve(
         if not isinstance(view, dict) or not view.get("enabled") or not view.get("organization_id"):
             raise RuntimeError("forbidden: this login is not on an Agency team")
         return {"agency_id": view["organization_id"]}
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
-    return {"workspace_id": ctx.workspace_id}
+    # The payments routes read X-Organization-Id; --workspace-id is the deprecated alias.
+    return {"workspace_id": ctx.workspace_id} if ctx.workspace_id else {}
 
 
 def _approved(arguments: dict[str, Any]) -> str | None:
@@ -504,7 +503,7 @@ def specs() -> list[CommandSpec]:
             lambda a: Route(
                 "/ugc/payments",
                 {
-                    "workspace_id": a["workspace_id"],
+                    "workspace_id": a.get("workspace_id"),
                     "bucket": a.get("bucket"),
                     "date_from": a.get("date_from"),
                     "date_to": a.get("date_to"),
@@ -512,7 +511,7 @@ def specs() -> list[CommandSpec]:
                 },
             ),
             summary=(
-                "List a workspace's creator payments, as the Agency Payments module does. "
+                "List the organization's creator payments, as the Agency Payments module does. "
                 "Agency team only."
             ),
             example="museoncli campaign-monitor payment +list --bucket owed",
@@ -526,13 +525,13 @@ def specs() -> list[CommandSpec]:
             lambda a: Route(
                 "/ugc/payments/summary",
                 {
-                    "workspace_id": a["workspace_id"],
+                    "workspace_id": a.get("workspace_id"),
                     "date_from": a.get("date_from"),
                     "date_to": a.get("date_to"),
                 },
             ),
             summary=(
-                "Read a workspace's payment totals, as the Agency Payments header shows them. "
+                "Read the organization's payment totals, as the Agency Payments header shows them. "
                 "Agency team only."
             ),
             example="museoncli campaign-monitor payment-summary +get",

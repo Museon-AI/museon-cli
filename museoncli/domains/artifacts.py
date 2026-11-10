@@ -216,7 +216,7 @@ def specs() -> list[CommandSpec]:
             authentication_required=False,
             required_scopes=(),
             required_roles=(),
-            workspace_bound=False,
+            organization_bound=False,
             resource_policy="local_file_only",
             transport="local_process",
         ),
@@ -227,7 +227,7 @@ def specs() -> list[CommandSpec]:
                 "Upload or replace one local agent file artifact through multipart form-data. "
                 "Markdown uploads are public by default. After upload, give BOTH links when both "
                 "exist: data.public_url (public share link, anyone with the link) and data.url "
-                "(workspace/private link, logged-in workspace members). Use --no-public only when "
+                "(organization/private link, logged-in organization members). Use --no-public only when "
                 "the user explicitly wants a private artifact (then only data.url). To embed "
                 "resources inside markdown, paste ready-made refs returned by retained domains "
                 "such as routines verbatim. Do not hand-write resource links, file names, local "
@@ -240,7 +240,7 @@ def specs() -> list[CommandSpec]:
             input_schema=_artifact_upload_input_schema(),
             output_schema=_direct_output_schema(
                 "Uploaded artifact payload. data.public_url is the public share link; data.url is "
-                "the workspace/private link. Give both when public_url is present; if private-only, "
+                "the organization/private link. Give both when public_url is present; if private-only, "
                 "give data.url only."
             ),
             examples=[
@@ -317,8 +317,6 @@ async def _execute_validate(ctx: CommandContext) -> Any:
 
 
 async def _execute_share(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     artifact_id = str(ctx.arguments.get("artifact_id") or "")
     return await ctx.api_data(
         ctx.cfg,
@@ -329,8 +327,6 @@ async def _execute_share(ctx: CommandContext) -> Any:
 
 
 async def _execute_unshare(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     artifact_id = str(ctx.arguments.get("artifact_id") or "")
     return await ctx.api_data(
         ctx.cfg,

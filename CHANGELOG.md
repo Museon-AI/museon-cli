@@ -2,6 +2,33 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.25.0
+
+MuseOn has organizations only: your organization role and Campaign scope decide what you can see and change. The CLI now addresses an organization instead of a workspace.
+
+- New `museoncli org list | current | select --id <organization-id> | --name <name>`. `org list` returns each organization with your `role` (owner/admin/operator/member), `campaign_scope` (all/chosen) and `is_default`. The selection is stored in `~/.museoncli/config.json` as `organization {id, name}`.
+- Every API request (`/api/v1` and `/api/v2`, uploads and downloads included) carries `X-Organization-Id` for the selected organization. Any domain command takes `--organization-id` to address another organization for one call. The CLI no longer picks a workspace: the server resolves it from the organization. `X-Museon-Workspace-Id` is no longer sent; `X-Museon-Organization-Id` (usage attribution) is unchanged.
+- `whoami` adds `organizations[]`, `default_organization_id` and `default_organization_name`; against an older server the CLI derives them from `workspaces[]`. `auth login` / `auth start` request the selected organization (`requested_organization_id`) and store the approved one.
+- `ugc campaign +list` reads the organization's UGC campaigns across all its workspaces (`/ugc/organizations/{id}/campaigns?campaign_type=ugc`; `--status archived` lists archived ones instead of live ones); `--workspace-id` keeps the workspace route. `campaign-monitor payment +list` and `payment-summary +get` address the organization through the header alone.
+- Output envelopes gain an `organization` key next to `workspace`. `workspace` stays until 1.0 but is only set when `--workspace-id` was given.
+- HTTP 426 `cli_outdated` reads the same on every route (agent-cli, `/api/v2`, uploads): `reason: cli_outdated`, a message with the minimum version, and `error.hint` with the upgrade command. HTTP 409 `organization_workspace_mismatch` is explained in `error.message`.
+- Command contract: `authorization.organization_bound` (with a deprecated `workspace_bound` mirror), roles `organization_member` / `organization_admin_or_staff`, resource policy `server_evaluated_organization_and_resource_access`. Every input schema that has `workspace_id` marks it deprecated and adds an optional `organization_id`.
+
+### Migration
+
+| Before (0.24 and earlier) | Now |
+| --- | --- |
+| `museoncli workspace list` | `museoncli org list` |
+| `museoncli workspace current` | `museoncli org current` |
+| `museoncli workspace select --id <workspace-id>` | `museoncli org select --id <organization-id>` |
+| `--workspace-id <workspace-id>` on a command | drop it, or `--organization-id <organization-id>` |
+| envelope `.workspace` | envelope `.organization` |
+
+- `workspace list | current | select` and `--workspace-id` keep working as deprecated aliases until 1.0. Each use prints a one-line notice on stderr and adds it to `warnings`. `workspace select` selects that workspace's organization.
+- The selected workspace is no longer a default. A script that relied on it now acts in the selected organization; pass `--workspace-id` only to keep the old addressing during the transition. A workspace from another organization than the addressed one is refused with 409 `organization_workspace_mismatch` (exit 5).
+- Existing configs migrate on read: a 0.23/0.24 `workspace` block selects its organization. The block itself is left untouched so an older CLI can still read the file, but it is never used to address requests. A config written by 0.25 stays readable by 0.22–0.24, which ignore `organization`.
+- Requires the Museon API that accepts `X-Organization-Id` and resolves workspaces from organizations (Museon-AI/museon, organization phase 1). Against an older API, `/agent-cli` commands fall back to the key's default workspace as before; `/api/v2` commands (agentic-campaign, hireaicreator, ugc) need the new API or an explicit `--workspace-id`.
+
 ## 0.24.0
 
 - 自动升级同样覆盖 `setup` 装过的 Agent Skills：发现本机为 Codex / Claude Code / Cursor 安装的 Museon Skills 与当前 CLI 自带版本不一致（含 CLI 自动升级后）时自动同步，并在该次命令的 JSON（成功、失败和大结果清单）里带 `_notice.skills.updated`，提醒 Agent 重读 Skill。同步失败或 `MUSEONCLI_UPDATE_CHECK=0` 时不写入，改为每条命令带 `_notice.skills.command` 提示手动运行 `museoncli setup`。没跑过 setup 的 Agent 不处理；托管 runtime 和源码环境不检查。

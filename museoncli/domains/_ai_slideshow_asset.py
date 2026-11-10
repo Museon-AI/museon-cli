@@ -961,7 +961,11 @@ def _asset_list_input_schema() -> dict[str, Any]:
             "type": _asset_type_property(),
             "filters": {"type": ["object", "null"]},
             "product_id": {"type": ["string", "null"]},
-            "scope": {"type": "string", "enum": ["all", "workspace", "public"]},
+            "scope": {
+                "type": "string",
+                "enum": ["all", "workspace", "public"],
+                "description": "workspace = the selected organization's own library; public = shared library.",
+            },
             "search": {
                 "type": ["string", "null"],
                 "description": (
@@ -1367,8 +1371,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     resource_type = str(arguments.get("type") or "")
     filters = arguments.get("filters") if isinstance(arguments.get("filters"), dict) else {}
     page = arguments.get("page") if isinstance(arguments.get("page"), dict) else {}
@@ -1405,8 +1407,6 @@ async def _execute_get(ctx: CommandContext) -> Any:
     api_data = ctx.api_data
     resource_type = str(arguments.get("type") or "")
     resource_id = str(arguments.get("id") or "")
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     return await api_data(
         cfg,
         "GET",
@@ -1420,8 +1420,6 @@ async def _execute_get_batch(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     return await api_data(
         cfg,
         "POST",
@@ -1456,8 +1454,6 @@ async def _execute_write(ctx: CommandContext) -> Any:
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     upload_media_file = ctx.upload_media_file
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     resource_type = str(arguments.get("type") or "")
     payload = arguments.get("payload") if isinstance(arguments.get("payload"), dict) else {}
     public_type = public_asset_type(resource_type)
@@ -1511,8 +1507,6 @@ async def _execute_delete(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     resource_type = str(arguments.get("type") or "")
     resource_id = str(arguments.get("id") or "")
     if not resource_id:
@@ -1551,7 +1545,7 @@ async def _run_write(ctx: CommandContext) -> dict[str, Any]:
     ):
         return format_create_envelope(
             ctx.spec.schema_name,
-            ctx.workspace_id or "",
+            ctx.workspace_id,
             raw.get("asset", raw) if isinstance(raw, dict) else raw,
         )
     # Create/update responses name the resource the reply will surface — attach
@@ -1596,7 +1590,7 @@ def public_asset_type(resource_type: str) -> str:
 def product_api_payload(
     payload: dict[str, Any],
     *,
-    workspace_id: str,
+    workspace_id: str | None,
     create: bool,
 ) -> dict[str, Any]:
     allowed = {"name", "category", "description", "website_url", "tags", "assets"}
@@ -1614,7 +1608,7 @@ def product_api_payload(
 def persona_api_payload(
     payload: dict[str, Any],
     *,
-    workspace_id: str,
+    workspace_id: str | None,
     create: bool,
 ) -> dict[str, Any]:
     allowed = {"name", "description", "tags", "assets"}
@@ -1673,8 +1667,6 @@ def validate_asset_write_arguments(
     arguments: dict[str, Any],
     command_name: str,
 ) -> None:
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     resource_type = str(arguments.get("type") or "")
     payload = arguments.get("payload") if isinstance(arguments.get("payload"), dict) else {}
     if resource_type == "brand_product":

@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from museoncli import main as main_module
-from museoncli.config import Config, WorkspaceState
+from museoncli.config import Config, OrganizationState
 from museoncli.main import build_parser
 
 
@@ -51,7 +51,7 @@ def parse(argv: list[str]) -> Any:
 
 def _config_with_workspace() -> Config:
     cfg = Config()
-    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     return cfg
 
 
@@ -163,7 +163,7 @@ def test_campaign_monitor_content_remove_with_yes_posts_single_id(
             "method": "POST",
             "path": f"/agent-cli/campaign-monitors/{CAMPAIGN_ID}/content/batch-remove",
             "json_body": {
-                "workspace_id": "workspace-1",
+                "workspace_id": None,
                 "payload": {"collection_content_ids": [CC_ID_1]},
             },
             "params": None,
@@ -199,27 +199,3 @@ def test_campaign_monitor_content_batch_remove_parses_and_dedupes_ids(
         CC_ID_1,
         CC_ID_2,
     ]
-
-
-def test_campaign_monitor_content_batch_remove_missing_workspace(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    cfg = Config()
-    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
-
-    with pytest.raises(RuntimeError, match="missing_workspace"):
-        asyncio.run(
-            main_module.dispatch(
-                parse(
-                    [
-                        "campaign-monitor",
-                        "+bulk-remove-content",
-                        "--id",
-                        CAMPAIGN_ID,
-                        "--collection-content-ids",
-                        CC_ID_1,
-                        "--yes",
-                    ]
-                )
-            )
-        )

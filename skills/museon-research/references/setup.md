@@ -32,7 +32,7 @@ host explicitly when auto-detection is ambiguous.
 
 Do not check authentication during ordinary setup. Start authentication
 recovery only after a real Museon command returns `missing_auth`,
-`unauthorized`, or a missing-workspace error. Preserve the returned browser URL
+`unauthorized`, or a missing-organization error. Preserve the returned browser URL
 and finish with `museoncli auth finish --wait`, then retry the original command.
 
 ## Ready condition

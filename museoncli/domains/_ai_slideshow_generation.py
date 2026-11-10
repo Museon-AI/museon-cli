@@ -192,7 +192,7 @@ def specs() -> list[CommandSpec]:
                 "Create and start one media generation — Museon's image-post (生图/图文) "
                 "generation capability. Current type: slideshow, driven by format, topic, "
                 "persona, and optional product assets. When the user asks to generate "
-                "images or image posts but the workspace lacks these assets, do not "
+                "images or image posts but the organization lacks these assets, do not "
                 "refuse and do not ask the customer for asset IDs — follow the Content "
                 "Replication flow to guide asset preparation first. Responses include a "
                 "ready-made generation ref and a recommended wakeup delay. Present the ref "
@@ -248,7 +248,7 @@ def specs() -> list[CommandSpec]:
             domain=Domain.AI_SLIDESHOW,
             shortcut="+list",
             summary=(
-                "List media generations in the current workspace. Current type: slideshow. "
+                "List media generations in the selected organization. Current type: slideshow. "
                 "Each item includes a ready-made generation ref; completed generations "
                 "include grid_media, slide_media, and result_preview_image_urls when "
                 "result media is available."

@@ -38,6 +38,8 @@ class CommandContext:
     upload_media_file: Callable[..., Awaitable[Any]]
     upload_artifact_file: Callable[..., Awaitable[Any]]
     download_api_file: Callable[..., Awaitable[Any]] | None = None
+    organization_id: str | None = None
+    """The organization requests address (--organization-id or the selected one)."""
 
 
 Executor = Callable[[CommandContext], Awaitable[dict[str, Any]]]

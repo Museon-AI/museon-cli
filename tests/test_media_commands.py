@@ -15,7 +15,7 @@ import json
 import httpx
 import pytest
 
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 from museoncli.domains import get_command_spec, schema_payload
 import museoncli.main as cli
 
@@ -68,7 +68,7 @@ def transport_fixture(monkeypatch, handler):
     cfg = Config(
         api_base_url="https://api.example.test/api/v1",
         auth=AuthState(api_key="test-only"),
-        workspace=WorkspaceState(id=WORKSPACE),
+        organization=OrganizationState(id="org-1", name="MuseOn"),
     )
     monkeypatch.setattr(cli, "load_config", lambda: cfg)
     real_client = httpx.AsyncClient
@@ -224,7 +224,7 @@ def test_image_import_forwards_only_supported_fields(monkeypatch, source_page):
     if source_page is not None:
         expected["source_page_url"] = source_page
     assert json.loads(request.content) == {
-        "workspace_id": OVERRIDE if source_page is not None else WORKSPACE,
+        **({"workspace_id": OVERRIDE} if source_page is not None else {}),
         "type": "media",
         "payload": expected,
     }
@@ -248,7 +248,6 @@ def test_content_analysis_still_uploads_video_and_preserves_false_force(monkeypa
     run(["content-analysis", "+run", "--type", "content-analysis", "--file", str(file)])
     assert len(requests) == 2
     assert multipart(requests[0]) == {
-        "workspace_id": WORKSPACE.encode(),
         "media_type": b"video",
         "file": b"video",
     }
@@ -530,3 +529,27 @@ def test_private_file_receipt_must_prove_scope_and_privacy(monkeypatch, tmp_path
     with pytest.raises(RuntimeError, match="file_upload_unverified"):
         run(["media", "+upload", "--workspace-id", OVERRIDE, "--media-type", "file",
              "--file", str(file), "--file-id", MEDIA])
+
+
+def test_generation_without_workspace_accepts_the_servers_workspace(monkeypatch):
+    """No --workspace-id: the server picks the workspace; the receipt must still name one."""
+    requests = []
+    receipts = [
+        {"workspace_id": OVERRIDE, "task_id": MEDIA, "media_id": MEDIA},
+        {"task_id": MEDIA, "media_id": MEDIA},
+    ]
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(202, json=receipts[len(requests) - 1])
+
+    transport_fixture(monkeypatch, handler)
+    argv = ["media", "+generate", "--type", "image", "--prompt", "test",
+            "--idempotency-key", "keep-this-key"]
+    receipt = run(argv)
+
+    assert receipt["data"]["task_id"] == MEDIA
+    assert "workspace_id" not in json.loads(requests[0].content)
+    assert requests[0].headers["X-Organization-Id"] == "org-1"
+    with pytest.raises(RuntimeError, match="media_generation_unverified"):
+        run(argv)

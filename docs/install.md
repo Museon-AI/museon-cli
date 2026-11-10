@@ -19,7 +19,7 @@ Onboarding is complete only when all of the following are true:
 - If the host requires a restart to load the Skill, the user has been told and
   the Agent does not claim that the current session is ready.
 - Browser authorization has completed.
-- An active Museon workspace is selected.
+- An active Museon organization is selected.
 - `museoncli whoami` and `museoncli schema` succeed.
 
 `museon` is an equivalent alias for `museoncli`, but use `museoncli` in the
@@ -42,7 +42,7 @@ museoncli version
 不要把“命令能执行”当作“已经是最新版”。
 
 网络不可用时会明确提示检查未完成并继续使用已安装版本；发现新版但安装失败时，
-原业务命令不会执行。升级完成后保留登录和 workspace，并用新版继续原命令，
+原业务命令不会执行。升级完成后保留登录和所选组织，并用新版继续原命令，
 不会重放已经执行过的写操作。升级日志写入 stderr，stdout 保持 JSON。
 
 从 0.24.0 起，`museoncli setup` 装过的 Agent Skills 也随 CLI 自动同步；同步后该次命令的 JSON
@@ -59,7 +59,7 @@ If the command is unavailable:
    reviewed wheel from the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.24.0/museoncli-0.24.0-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.25.0/museoncli-0.25.0-py3-none-any.whl"
    ```
 
    Do not clone the repository, install from a mutable branch, or substitute a
@@ -92,11 +92,11 @@ or `current` and includes their destination paths.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install the workflow Skill folders and Hook Analysis Skill:
 
-https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-content-workflow-base
-https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-research
-https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-content-workflow-hireaicreator
-https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-content-workflow-ai-slideshow
-https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-content-workflow-campaign-monitor
+https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-content-workflow-base
+https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-research
+https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-content-workflow-hireaicreator
+https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-content-workflow-ai-slideshow
+https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-content-workflow-campaign-monitor
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and
@@ -113,7 +113,7 @@ Check the current authorization state:
 museoncli auth status
 ```
 
-If it is already authenticated, continue to workspace selection. Otherwise,
+If it is already authenticated, continue to organization selection. Otherwise,
 start a browser authorization:
 
 ```bash
@@ -140,7 +140,7 @@ Museon CLI. Do not ask the user to authenticate a different installation.
 ## 4. Discover Business Skills
 
 After authentication, list the strategy and operations playbooks available in
-the current workspace:
+the current organization:
 
 ```bash
 museoncli skills +list
@@ -149,29 +149,43 @@ museoncli skills +list
 Read directly relevant entries with `museoncli skills +get --name <name>` before
 strategy, research, audit, review, onboarding, or operating-plan work.
 
-## 5. Confirm the active workspace
+## 5. Confirm the active organization
 
-Read the authenticated identity and current workspace:
+Read the authenticated identity and current organization:
 
 ```bash
 museoncli whoami
-museoncli workspace current
+museoncli org current
 ```
 
-If no workspace is selected, list the available workspaces:
+If no organization is selected, list the organizations this login can act in
+(each entry has `role`, `campaign_scope` and `is_default`):
 
 ```bash
-museoncli workspace list
+museoncli org list
 ```
 
-When exactly one valid workspace is available, select it. When several are
+When exactly one valid organization is available, select it. When several are
 plausible, ask the user which one to use instead of guessing.
 
 ```bash
-museoncli workspace select --id <workspace_id>
+museoncli org select --id <organization-id>
 ```
 
-Use the exact workspace ID returned by the CLI.
+Use the exact organization ID returned by the CLI (`--name <exact name>` also works).
+To address another organization for a single call, pass `--organization-id <uuid>` to that
+domain command. Agents never need a workspace ID.
+
+### 从工作区迁移（0.25.0）
+
+MuseOn 不再有工作区概念，访问权限由组织角色加 Campaign 范围决定。
+
+- `workspace list` -> `org list`；`workspace current` -> `org current`；
+  `workspace select --id <ws>` -> `org select --id <organization-id>`。
+- 业务命令上的 `--workspace-id <ws>` 直接去掉；需要单次指定其他组织时用 `--organization-id <org>`。
+- 输出信封读 `.organization`（`{id, name}` 或 `null`），不再读 `.workspace`。
+- `workspace ...` 与 `--workspace-id` 作为弃用别名保留到 1.0，会在 stderr 打印弃用提示。
+- `whoami` 新增 `organizations[]`、`default_organization_id`、`default_organization_name`。
 
 ## 5. Verify Museon is ready
 
@@ -190,7 +204,7 @@ summary containing:
 - CLI version
 - Skill status and whether a restart is required
 - authenticated Museon identity
-- active workspace
+- active organization
 - whether the command schema is available
 
 If any completion criterion is still missing, state the exact blocker and the

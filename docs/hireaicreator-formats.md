@@ -1,6 +1,6 @@
 # Format maintenance
 
-Use `format +tags` to discover workspace tags and `format +warmup-readiness`
+Use `format +tags` to discover organization tags and `format +warmup-readiness`
 with explicit Format IDs to read the current readiness revisions and issues.
 These commands do not start processing or publication.
 
@@ -18,6 +18,6 @@ The server offers neither a version precondition nor an idempotency header for
 retry. Reconcile an uncertain response before requesting another retry.
 
 `format +delete --id ID --yes` deletes the Format. Read its current detail and
-workspace first; this endpoint has no version parameter. A 204 receipt has no
+organization first; this endpoint has no version parameter. A 204 receipt has no
 JSON body. Verify not-found afterward. All three writes support `--dry-run`
 without network requests; retry and deletion require explicit confirmation.

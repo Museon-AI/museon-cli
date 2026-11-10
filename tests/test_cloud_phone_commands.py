@@ -9,7 +9,7 @@ import httpx
 import pytest
 
 import museoncli.main as cli
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 
 HTTP_CLIENT = httpx.AsyncClient
 SUPPLIER = "40000000-0000-4000-8000-000000000004"
@@ -236,7 +236,6 @@ def test_all_snapshot_rows_are_returned_from_one_pair_of_reads(monkeypatch):
 
 
 def test_recovery_retries_keep_body_idempotency_and_never_resubmit_when_polling(monkeypatch):
-    workspace = "50000000-0000-4000-8000-000000000005"
     job = "60000000-0000-4000-8000-000000000006"
     setup(monkeypatch, lambda req: httpx.Response(500))
     monkeypatch.setattr(
@@ -245,7 +244,7 @@ def test_recovery_retries_keep_body_idempotency_and_never_resubmit_when_polling(
         lambda: Config(
             api_base_url="https://api.example.test/api/v1",
             auth=AuthState(api_key="test-only"),
-            workspace=WorkspaceState(id=workspace),
+            organization=OrganizationState(id="org-1", name="MuseOn"),
         ),
     )
     submitted = []
@@ -273,7 +272,8 @@ def test_recovery_retries_keep_body_idempotency_and_never_resubmit_when_polling(
             == job
         )
     assert submitted[0] == submitted[1]
-    assert submitted[0]["workspace_id"] == workspace and submitted[0]["scope"] == "global"
+    # No workspace is chosen locally; the server resolves it from the organization.
+    assert "workspace_id" not in submitted[0] and submitted[0]["scope"] == "global"
     invoke(
         "recovery-job", "retry", "--id", job, "--idempotency-key", "recovery-stable-key", "--yes"
     )

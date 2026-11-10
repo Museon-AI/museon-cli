@@ -43,7 +43,7 @@ def specs() -> list[CommandSpec]:
             "GET",
             "/ai-hook-formats/tags",
             {},
-            summary="List the workspace's existing Format tags.",
+            summary="List the organization's existing Format tags.",
         ),
         _command(
             "format",
@@ -76,7 +76,7 @@ def specs() -> list[CommandSpec]:
             {},
             write=True,
             destructive=True,
-            summary="Delete a Format from this workspace; requires --yes. Read current details first; no server version or idempotency key is supported.",
+            summary="Delete a Format from this organization; requires --yes. Read current details first; no server version or idempotency key is supported.",
             readback="hireaicreator format +get --id FORMAT_ID; verify not_found.",
         ),
     ]

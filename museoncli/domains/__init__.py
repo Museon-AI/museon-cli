@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 from typing import Any
 
 from museoncli.domains._model import (
@@ -64,10 +65,51 @@ _DOMAIN_MODULES = (
 )
 
 
+_ORGANIZATION_ID_PROPERTY = {
+    "type": "string",
+    "format": "uuid",
+    "description": (
+        "Organization to act in, sent as the X-Organization-Id header (never in the body). "
+        "Defaults to the selected organization."
+    ),
+}
+_WORKSPACE_ID_DEPRECATION = (
+    "DEPRECATED: a workspace inside the organization. Optional; the server resolves the "
+    "workspace from the organization and refuses one from another organization "
+    "(409 organization_workspace_mismatch)."
+)
+
+
+def _organization_addressed(spec: CommandSpec) -> CommandSpec:
+    """Declare organization_id next to the deprecated workspace_id input."""
+    properties = spec.input_schema.get("properties")
+    if (
+        not spec.organization_bound
+        or not isinstance(properties, dict)
+        or "workspace_id" not in properties
+    ):
+        return spec
+    workspace_property = properties["workspace_id"]
+    workspace_property = {
+        **(workspace_property if isinstance(workspace_property, dict) else {}),
+        "deprecated": True,
+        "description": _WORKSPACE_ID_DEPRECATION,
+    }
+    schema = {
+        **spec.input_schema,
+        "properties": {
+            **properties,
+            "workspace_id": workspace_property,
+            "organization_id": dict(_ORGANIZATION_ID_PROPERTY),
+        },
+    }
+    return dataclasses.replace(spec, input_schema=schema)
+
+
 def command_specs() -> list[CommandSpec]:
     specs: list[CommandSpec] = []
     for module in _DOMAIN_MODULES:
-        specs.extend(module.specs())
+        specs.extend(_organization_addressed(spec) for spec in module.specs())
     return specs
 
 
@@ -170,6 +212,12 @@ def add_domain_command_parsers(
             flags = {
                 option for action in shortcut_parser._actions for option in action.option_strings
             }
+            if (
+                spec.organization_bound
+                and spec.transport == "agent_cli_api"
+                and "--organization-id" not in flags
+            ):
+                shortcut_parser.add_argument("--organization-id", dest="organization_id")
             if spec.risk_level == "read" and {"--page", "--page-size"} <= flags:
                 shortcut_parser.add_argument(
                     "--all",

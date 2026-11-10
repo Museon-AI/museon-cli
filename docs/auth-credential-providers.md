@@ -36,7 +36,7 @@ precedence:
 4. legacy inline config value
 
 The resolver changes only where the credential is obtained. Museon's server
-still owns API-key scopes, workspace authorization, revocation, and usage
+still owns API-key scopes, organization authorization, revocation, and usage
 accounting.
 
 ## Legacy capability compatibility

@@ -55,11 +55,11 @@ class AuthState:
 
 
 @dataclass
-class WorkspaceState:
+class OrganizationState:
+    """The organization this CLI addresses (sent as ``X-Organization-Id``)."""
+
     id: str | None = None
     name: str | None = None
-    organization_id: str | None = None
-    organization_name: str | None = None
 
 
 @dataclass
@@ -78,12 +78,20 @@ class Config:
     site_url: str = DEFAULT_SITE_URL
     runtime_context: dict[str, Any] = field(default_factory=dict)
     auth: AuthState = field(default_factory=AuthState)
-    workspace: WorkspaceState = field(default_factory=WorkspaceState)
+    organization: OrganizationState = field(default_factory=OrganizationState)
     pending_auth: PendingAuthState = field(default_factory=PendingAuthState)
+    extra: dict[str, Any] = field(default_factory=dict)
+    """Top-level keys this version does not own, written back unchanged.
+
+    It holds the ``workspace`` block written by museoncli 0.22 and earlier: it
+    is kept so an older CLI can still read the file, and never used to address
+    a request.
+    """
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> "Config":
         cfg = cls()
+        cfg.extra = {key: item for key, item in value.items() if key not in _OWNED_KEYS}
         for key in (
             "api_base_url",
             "site_url",
@@ -97,10 +105,12 @@ class Config:
             cfg.auth = AuthState(
                 **{k: value["auth"].get(k) for k in AuthState.__dataclass_fields__}
             )
-        if isinstance(value.get("workspace"), dict):
-            cfg.workspace = WorkspaceState(
-                **{k: value["workspace"].get(k) for k in WorkspaceState.__dataclass_fields__}
+        if isinstance(value.get("organization"), dict):
+            cfg.organization = OrganizationState(
+                **{k: value["organization"].get(k) for k in OrganizationState.__dataclass_fields__}
             )
+        else:
+            cfg.organization = organization_from_legacy_workspace(value.get("workspace"))
         if isinstance(value.get("pending_auth"), dict):
             cfg.pending_auth = PendingAuthState(
                 **{k: value["pending_auth"].get(k) for k in PendingAuthState.__dataclass_fields__}
@@ -109,8 +119,22 @@ class Config:
             cfg.runtime_context = dict(value["runtime_context"])
         return cfg
 
+    @property
+    def legacy_workspace_id(self) -> str | None:
+        """The workspace a 0.22-era config selected; only used to find its organization."""
+        legacy = self.extra.get("workspace")
+        value = legacy.get("id") if isinstance(legacy, dict) else None
+        return value if isinstance(value, str) and value else None
+
+    def document(self) -> dict[str, Any]:
+        """The config file content: owned fields over the preserved unknown keys."""
+        data = asdict(self)
+        extra = data.pop("extra")
+        return {**extra, **data}
+
     def safe_dict(self) -> dict[str, Any]:
         data = asdict(self)
+        data.pop("extra")
         auth = data.get("auth") or {}
         auth_expired = self.auth.is_expired()
         authenticated = bool(auth.get("api_key")) and not auth_expired
@@ -138,6 +162,21 @@ class Config:
             "user_code": pending_auth.get("user_code"),
         }
         return data
+
+
+_OWNED_KEYS = frozenset(
+    {"api_base_url", "site_url", "runtime_context", "auth", "organization", "pending_auth"}
+)
+
+
+def organization_from_legacy_workspace(value: Any) -> OrganizationState:
+    """Read the organization out of a 0.22-era ``workspace`` block."""
+    if not isinstance(value, dict) or not value.get("organization_id"):
+        return OrganizationState()
+    return OrganizationState(
+        id=value.get("organization_id"),
+        name=value.get("organization_name"),
+    )
 
 
 def config_path() -> Path:
@@ -217,7 +256,7 @@ def stored_auth_fields() -> tuple[str, ...]:
 
 
 def _write_non_secret_config(path: Path, config: Config) -> None:
-    data = asdict(config)
+    data = config.document()
     for field_name in stored_auth_fields():
         data["auth"].pop(field_name, None)
     write_private_json(path, data)
@@ -233,7 +272,7 @@ def _write_legacy_inline_config(path: Path, config: Config) -> None:
     inline = current_auth.get("api_key") if isinstance(current_auth, dict) else None
     if not isinstance(inline, str) or not inline.startswith("mcap_"):
         return
-    data = asdict(config)
+    data = config.document()
     data["auth"] = dict(current_auth)
     write_private_json(path, data)
 

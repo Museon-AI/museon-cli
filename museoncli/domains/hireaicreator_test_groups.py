@@ -66,7 +66,7 @@ PREVIEW = {
     "publish_times": nullable(arr(S, maximum=100)),
 }
 READBACK = (
-    "Read test-group +get and +get-publishing for the same workspace and group before dependent writes."
+    "Read test-group +get and +get-publishing for the same organization and group before dependent writes."
 )
 
 
@@ -96,7 +96,7 @@ def specs() -> list[CommandSpec]:
             "GET",
             plan,
             write=True,
-            summary="Get or create the workspace Test Plan.",
+            summary="Get or create the organization's Test Plan.",
             readback="Read the returned plan ID and persisted settings.",
         ),
         cmd(
@@ -112,8 +112,8 @@ def specs() -> list[CommandSpec]:
             },
             required=("name",),
             write=True,
-            summary="Update workspace Test Plan defaults.",
-            readback="Read test-plan +ensure in the same workspace.",
+            summary="Update the organization's Test Plan defaults.",
+            readback="Read test-plan +ensure in the same organization.",
         ),
         cmd(
             "content-group",
@@ -132,7 +132,7 @@ def specs() -> list[CommandSpec]:
             required=("kind", "name", "resource_ids"),
             write=True,
             summary="Create a reusable Hook, Recipe, BGM or POV group.",
-            readback="Read content-group +list for this workspace.",
+            readback="Read content-group +list for this organization.",
         ),
         cmd(
             "content-group",
@@ -143,7 +143,7 @@ def specs() -> list[CommandSpec]:
             required=("kind", "name", "resource_ids"),
             write=True,
             summary="Replace reusable content group name and resource selection.",
-            readback="Read content-group +list for this workspace.",
+            readback="Read content-group +list for this organization.",
         ),
         cmd(
             "content-group",

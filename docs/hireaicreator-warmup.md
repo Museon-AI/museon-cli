@@ -1,8 +1,8 @@
 # HireAICreator warmup
 
 Inspect each command with `museoncli schema hireaicreator.warmup-COMMAND`.
-Use `--args-file` for nested configuration, and `--workspace-id` to select the
-workspace explicitly. Omitted fields are not expanded into client defaults.
+Use `--args-file` for nested configuration, and `--organization-id` to address a
+non-selected organization explicitly. Omitted fields are not expanded into client defaults.
 
 1. Run `warmup +readiness` for the intended account IDs and action type.
 2. Run `warmup +create --args-file strategy.json --dry-run`, inspect the payload,
@@ -31,7 +31,8 @@ header for warmup. Do not invent one: after an uncertain create or reset,
 reconcile list/detail/journey state before retrying. Never auto-refresh a stale
 version and repeat a rejected write without reviewing the changed state.
 
-The API uses workspace query parameters for reads, preview, check-and-start,
-transitions and deletion; create/configuration/account mutations and reset place
-workspace in the JSON body. Deletion's expected version is a query parameter.
+The CLI resolves the organization's workspace for the API. On the wire, reads, preview,
+check-and-start, transitions and deletion use a workspace query parameter;
+create/configuration/account mutations and reset place the workspace in the JSON
+body (it is never typed by the Agent). Deletion's expected version is a query parameter.
 These distinctions are covered by transport-level contract tests.

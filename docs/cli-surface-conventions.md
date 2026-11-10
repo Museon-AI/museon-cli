@@ -11,7 +11,9 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
 ```
 
 - Domains come from the fixed `Domain` enum (`museoncli/domains/_model.py`).
-  Built-in commands (`auth`, `workspace`, `schema`, `config`, ...) use plain verbs.
+  Built-in commands (`auth`, `org`, `schema`, `config`, ...) use plain verbs.
+  `workspace` is a deprecated alias of `org` (selecting a workspace selects its
+  organization) and is removed in 1.0.
 - Actions always carry the `+` sigil. No bare aliases.
 - Target shape for new commands is `<domain> <resource> +<verb>`: nouns belong in
   the resource, the action is a verb. Do not fold a second noun into the action
@@ -80,6 +82,9 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
   `rate_limited`, `server_error`, `service_unavailable`, `network_error`,
   `usage_error`, `confirmation_required`, `command_failed`, ...), never an
   exception class name.
+- Envelopes carry `organization` (`{id, name}` or `null`), the organization the request
+  acted in. The deprecated `workspace` key is kept until 1.0 and is set only when
+  `--workspace-id` was given; parsers should read `organization`.
 - Exit codes: `0` success, `1` failure, `2` usage error, `3` not found,
   `4` authentication required, `5` conflict, `130` interrupted. The envelope
   remains the source of truth.

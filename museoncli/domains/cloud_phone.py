@@ -382,8 +382,6 @@ async def _recover(ctx: CommandContext) -> dict:
     path = RECOVERY + (f"/jobs/{job_id}/retry" if job_id else "/jobs")
     if not job_id:
         body["workspace_id"] = body.get("workspace_id") or ctx.workspace_id
-        if not body["workspace_id"]:
-            raise RuntimeError("missing_workspace")
     # Recovery owns body-level idempotency. Do not move this key to the generic
     # HTTP header: an uncertain response must replay the same job, not create another.
     return _envelope(ctx, await ctx.api_data(ctx.cfg, "POST", path, json_body=body))
@@ -515,7 +513,7 @@ def _spec(
     return replace(
         base,
         required_roles=("staff",),
-        workspace_bound=workspace,
+        organization_bound=workspace,
         resource_policy="staff_global_cloud_phone_management",
     )
 
@@ -832,7 +830,7 @@ def specs() -> list[CommandSpec]:
             },
             required=("account_ids",),
             workspace=True,
-            summary="Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it. Returns blockers and Museon device IDs; no resources are released.",
+            summary="Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it to the selected organization. Returns blockers and Museon device IDs; no resources are released.",
         ),
         _spec(
             "recovery-job",

@@ -20,8 +20,8 @@
 ## 授权边界
 
 - 第 6 步会生成真实的发布任务：自动发布的账号到点会发帖。只有用户明确要求「发布」或「排期」时才执行；只要求上传或出下载链接时，停在第 5 步。
-- 先解析一次工作区，此后每条接受 `--workspace-id` 的命令都显式传入，不依赖跨轮保留的选择。
-- 开始前用 `museoncli workspace list` 确认目标工作区在列表里。上传走的是 CLI 凭证的授权范围：只授权了部分工作区的 API key，即使用户是目标工作区成员、前面的读取都能成功，上传也会被拒（`Workspace is not available to the current user`）。这时由用户调整 key 的授权或重新登录，不要换工作区凑合。
+- 先用 `museoncli org current` 确认一次目标组织；需要在另一个组织操作时，对每条命令显式传 `--organization-id "$ORG"`，不依赖跨轮保留的选择，也不要传已弃用的 `--workspace-id`。
+- 开始前用 `museoncli org list` 确认目标组织在列表里。上传走的是 CLI 凭证的授权范围：只授权了部分组织的 API key，即使用户是目标组织成员、前面的读取都能成功，上传也会被拒（服务端消息可能仍写作 `Workspace is not available to the current user`）。这时由用户调整 key 的授权或重新登录，不要换组织凑合。
 - 视频里的人必须是发布账号绑定的 Actor。平台不会检查成片里是谁，匹配完全由调用方保证，见第 2 步的对照表。
 - 写操作先用 `--dry-run` 校验本地参数；dry-run 不访问服务端，不能证明服务端会接受。
 - 每一步以服务端回读为准。收到回执、上传成功或 dry-run 通过，都不代表发布完成。
@@ -29,7 +29,7 @@
 ## 1. 选账号
 
 ```bash
-museoncli hireaicreator account +list --workspace-id "$WS" \
+museoncli hireaicreator account +list \
   --platform tiktok --platform instagram --is-active --has-actor --page-size 100
 ```
 
@@ -45,7 +45,7 @@ museoncli hireaicreator account +list --workspace-id "$WS" \
 把第 1 步得到的 `actor_id` 去重，一次最多 200 个：
 
 ```bash
-museoncli hireaicreator actor +resolve --workspace-id "$WS" \
+museoncli hireaicreator actor +resolve \
   --actor-ids <actor_id_1> --actor-ids <actor_id_2>
 ```
 
@@ -76,7 +76,7 @@ museoncli hireaicreator actor +resolve --workspace-id "$WS" \
 ## 3. 取产品资料与图片
 
 ```bash
-museoncli hireaicreator product +list --workspace-id "$WS" --page-size 100
+museoncli hireaicreator product +list --page-size 100
 ```
 
 - 一次返回产品的 `name`、`description`、`website_url`、`tags`、`selling_points`、`target_audiences`，以及 `brand_logos`、`product_images`、`website_screenshots`、`app_screenshots`（每项带 `media_url`）。
@@ -112,8 +112,8 @@ museoncli hireaicreator product +list --workspace-id "$WS" --page-size 100
 ## 5. 上传成片
 
 ```bash
-museoncli media +upload --workspace-id "$WS" --media-type video --file out/tiktok-001.mp4
-museoncli media +get --workspace-id "$WS" --id <media_id>
+museoncli media +upload --media-type video --file out/tiktok-001.mp4
+museoncli media +get --id <media_id>
 ```
 
 - 每个文件上传一次，把返回的 `media_id` 写回映射文件。
@@ -126,7 +126,7 @@ museoncli media +get --workspace-id "$WS" --id <media_id>
 每批 1–50 条。提交前重新核对绑定，确认生成期间没有人改过账号的 Actor：
 
 ```bash
-museoncli hireaicreator account +list --workspace-id "$WS" --actor-id <actor_id> --page-size 100
+museoncli hireaicreator account +list --actor-id <actor_id> --page-size 100
 ```
 
 返回的账号必须包含映射文件里这条视频的每个账号；对不上就停下，回到第 2 步，不要照旧提交。
@@ -134,11 +134,11 @@ museoncli hireaicreator account +list --workspace-id "$WS" --actor-id <actor_id>
 先 dry-run，再正式提交：
 
 ```bash
-museoncli hireaicreator video +create-from-upload --workspace-id "$WS" \
+museoncli hireaicreator video +create-from-upload \
   --idempotency-key "external-upload-<批次标识>" \
   --args-file batch.json --dry-run
 
-museoncli hireaicreator video +create-from-upload --workspace-id "$WS" \
+museoncli hireaicreator video +create-from-upload \
   --idempotency-key "external-upload-<批次标识>" \
   --args-file batch.json
 ```
@@ -165,14 +165,14 @@ museoncli hireaicreator video +create-from-upload --workspace-id "$WS" \
 - 幂等键在提交前生成并写进映射文件；结果未知时用同一个键、同一份 `batch.json` 重试，会拿回同一批任务。换键或改内容重试会重复排期或报 `IDEMPOTENCY_KEY_REUSED`。
 - `scheduled_at` 必须带时区偏移，并且在未来。平台在临近发布时间（约提前 1 小时）开始准备发布，给足余量。
 - 不填 `scheduled_at` 时任务只登记不发布，之后必须先排期（第 8 步）才会发布，人工确认发布也要求先排期。
-- `campaign_id` 必填：看板和 Campaign 同步都按它找视频，任务创建后不能再改归属；缺少它提交会被拒绝（`UPLOADED_CAMPAIGN_REQUIRED`）。`agentic-campaign +list` 不接受 `--workspace-id`，读的是当前选中的工作区，所以先 `museoncli workspace select --id "$WS"`，再 `museoncli agentic-campaign +list --all` 取 ID。
+- `campaign_id` 必填：看板和 Campaign 同步都按它找视频，任务创建后不能再改归属；缺少它提交会被拒绝（`UPLOADED_CAMPAIGN_REQUIRED`）。`agentic-campaign +list` 读的是当前选中的组织，所以先 `museoncli org select --id "$ORG"`（或对该命令传 `--organization-id "$ORG"`），再 `museoncli agentic-campaign +list --all` 取 ID。
 
 常见拒绝：
 
 | 错误码 | 含义 | 处理 |
 | --- | --- | --- |
 | `UPLOADED_SCHEDULE_PAST` | 排期时间不在未来 | 换一个未来时间 |
-| `UPLOADED_ACCOUNT_UNAVAILABLE` | 账号不在该工作区或未启用 | 回到第 1 步重新选 |
+| `UPLOADED_ACCOUNT_UNAVAILABLE` | 账号不在该组织或未启用 | 回到第 1 步重新选 |
 | `UPLOADED_PLATFORM_LIMIT` | 同平台选了多个账号，或账号超过 2 个 | 每个平台只留 1 个 |
 | `UPLOADED_PLATFORM_UNSUPPORTED` | 账号不是 TikTok / Instagram | 换账号 |
 | `UPLOADED_MEDIA_NOT_FOUND` / `UPLOADED_MEDIA_NOT_READY` | 媒体不存在、不是视频或未完成 | 回到第 5 步核对 |
@@ -187,7 +187,7 @@ museoncli hireaicreator video +create-from-upload --workspace-id "$WS" \
 
 ```bash
 museoncli hireaicreator video +get --id <video_id>
-museoncli hireaicreator video +list --workspace-id "$WS" \
+museoncli hireaicreator video +list \
   --publishing-account-id <account_id> --scheduled-from <开始> --scheduled-to <结束>
 ```
 

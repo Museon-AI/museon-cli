@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 import webbrowser
+from dataclasses import asdict
 from datetime import datetime
 from sys import stderr
 from typing import Any
@@ -9,9 +10,19 @@ from typing import Any
 import httpx
 
 from museoncli import __version__
-from museoncli.config import AuthState, Config, PendingAuthState, WorkspaceState, save_config
+from museoncli.config import (
+    AuthState,
+    Config,
+    OrganizationState,
+    PendingAuthState,
+    organization_from_legacy_workspace,
+    save_config,
+)
 
 AGENT_CLI_API_SCOPE = "agent_cli.access"
+# The organization a request addresses: the selected one or --organization-id.
+# Distinct from X-Museon-Organization-Id, which only attributes agent usage.
+ORGANIZATION_HEADER = "X-Organization-Id"
 
 
 async def run_web_approval_login(
@@ -111,7 +122,7 @@ async def begin_web_approval(*, config: Config) -> dict[str, Any]:
         config=config,
         path="/agent-cli/auth/device/start",
         json_body={
-            "requested_workspace_id": config.workspace.id,
+            "requested_organization_id": config.organization.id,
             "requested_scopes": [AGENT_CLI_API_SCOPE],
         },
     )
@@ -172,13 +183,9 @@ def complete_web_approval_poll(
             expires_at=credential_expires_at,
             user=user,
         )
-        if workspace:
-            config.workspace = WorkspaceState(
-                id=workspace.get("id"),
-                name=workspace.get("name"),
-                organization_id=workspace.get("organization_id"),
-                organization_name=workspace.get("organization_name"),
-            )
+        organization = approved_organization(poll)
+        if organization.id:
+            config.organization = organization
         if clear_pending:
             config.pending_auth = PendingAuthState()
         save_config(config)
@@ -187,6 +194,7 @@ def complete_web_approval_poll(
             "status": "approved",
             "auth_method": "api_key",
             "user": user,
+            "organization": asdict(organization) if organization.id else None,
             "workspace": workspace,
             "key_prefix": poll.get("key_prefix"),
             "credential_expires_at": poll.get("credential_expires_at"),
@@ -237,11 +245,25 @@ async def api_post_public(
     return payload.get("data") if isinstance(payload, dict) and "data" in payload else payload
 
 
+def approved_organization(poll: dict[str, Any]) -> OrganizationState:
+    """The organization an approved login is for.
+
+    A server with organizations returns ``organization``; an older one only
+    returns the approved ``workspace``, which names its organization.
+    """
+    organization = poll.get("organization")
+    if isinstance(organization, dict) and organization.get("id"):
+        return OrganizationState(id=organization.get("id"), name=organization.get("name"))
+    return organization_from_legacy_workspace(poll.get("workspace"))
+
+
 def auth_headers(config: Config) -> dict[str, str]:
     if not config.auth.api_key or config.auth.is_expired():
         return {}
     headers = {"X-API-KEY": config.auth.api_key}
     headers["X-CLI-Version"] = __version__
+    if config.organization.id:
+        headers[ORGANIZATION_HEADER] = config.organization.id
     headers.update(_usage_context_headers(config))
     return headers
 
@@ -257,7 +279,6 @@ def _usage_context_headers(config: Config) -> dict[str, str]:
     sandbox_id = _optional_text(runtime_context.get("sandbox_id"))
     actor_id = _optional_text(runtime_context.get("actor_id"))
     organization_id = _optional_text(runtime_context.get("organization_id"))
-    workspace_id = _optional_text(runtime_context.get("workspace_id"))
 
     headers: dict[str, str] = {}
     if conversation_id:
@@ -270,8 +291,6 @@ def _usage_context_headers(config: Config) -> dict[str, str]:
         headers["X-Museon-Actor-Id"] = actor_id
     if organization_id:
         headers["X-Museon-Organization-Id"] = organization_id
-    if workspace_id:
-        headers["X-Museon-Workspace-Id"] = workspace_id
     return headers
 
 

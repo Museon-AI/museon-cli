@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from museoncli import main as main_module
-from museoncli.config import Config, WorkspaceState
+from museoncli.config import Config, OrganizationState
 from museoncli.domains import command_payload, schema_payload
 
 
@@ -20,11 +20,7 @@ def _parse(argv: list[str]):
 
 def _config() -> Config:
     cfg = Config()
-    cfg.workspace = WorkspaceState(
-        id="workspace-1",
-        name="Workspace",
-        organization_id="org-1",
-    )
+    cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     return cfg
 
 
@@ -339,7 +335,7 @@ def test_dispatch_creative_search_ads_returns_async_run(
             "method": "POST",
             "path": "/agent-cli/research/creative-search-ads",
             "json_body": {
-                "workspace_id": "workspace-1",
+                "workspace_id": None,
                 "payload": {
                     "idempotency_key": "ads-search-dispatch-1",
                     "keywords": ["eco soap"],
@@ -393,7 +389,7 @@ def test_dispatch_creative_search_ads_get_stops_polling_when_terminal(
         {
             "method": "GET",
             "path": f"/agent-cli/research/creative-search-ads/{TASK_ID}",
-            "params": {"workspace_id": "workspace-1"},
+            "params": {"workspace_id": None},
         }
     ]
 
@@ -457,7 +453,7 @@ def test_dispatch_creative_search_ads_results_uses_pagination_query(
             "method": "GET",
             "path": f"/agent-cli/research/creative-search-ads/{TASK_ID}/results",
             "params": {
-                "workspace_id": "workspace-1",
+                "workspace_id": None,
                 "platform": "tiktok_ads",
                 "time_range": "30d",
                 "page": 2,

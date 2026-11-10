@@ -11,7 +11,7 @@ import httpx
 import pytest
 
 import museoncli.main as cli
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 
 W = "40000000-0000-4000-8000-000000000004"
 COLLECTION = "10000000-0000-4000-8000-000000000001"
@@ -30,7 +30,7 @@ def server(monkeypatch):
         "load_config",
         lambda: Config(
             api_base_url="https://api.example.test/api/v1",
-            workspace=WorkspaceState(id=W),
+            organization=OrganizationState(id="org-1", name="MuseOn"),
             auth=AuthState(api_key="test-key"),
         ),
     )
@@ -257,12 +257,14 @@ def test_a_login_off_the_agency_team_is_refused_before_any_agency_read(server):
     assert [r.url.path for r in server["requests"]] == ["/api/v2/ugc/agency/me"]
 
 
-def test_payments_read_the_selected_workspace(server):
+def test_payments_address_the_selected_organization(server):
+    """The payments routes read X-Organization-Id; no workspace is looked up or sent."""
     run("payment", "+list", "--bucket", "pending-approval")
 
     (request,) = server["requests"]
     assert request.url.path == "/api/v2/ugc/payments"
-    assert query(request) == {"workspace_id": [W], "bucket": ["pending_approval"], "limit": ["50"]}
+    assert request.headers["X-Organization-Id"] == "org-1"
+    assert query(request) == {"bucket": ["pending_approval"], "limit": ["50"]}
 
 
 def test_a_campaign_no_ugc_campaign_stands_for_is_not_found(server, monkeypatch):

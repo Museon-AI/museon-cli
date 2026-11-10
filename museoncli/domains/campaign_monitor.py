@@ -608,7 +608,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.CAMPAIGN_MONITOR,
             shortcut="+list",
-            summary="List campaign monitor collections available to the active workspace.",
+            summary="List campaign monitor collections available to the selected organization.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="campaign_monitor_list",
@@ -748,7 +748,7 @@ def specs() -> list[CommandSpec]:
                 "its derived content monitors from this campaign and resyncs. This does "
                 "NOT delete the creator's social-platform account; explicit operator "
                 "confirmation is required before running with --yes. Tracking is "
-                "workspace-wide, so the monitor is only fully deleted when no other "
+                "organization-wide, so the monitor is only fully deleted when no other "
                 "campaign references it. --creator-id is the creator_social_account_id "
                 "from +list-creators."
             ),
@@ -946,8 +946,6 @@ async def _execute_content_remove(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = str(arguments.get("campaign_id") or "")
     collection_content_id = str(arguments.get("collection_content_id") or "")
     return agent_domain_result(
@@ -968,8 +966,6 @@ async def _execute_content_batch_remove(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = str(arguments.get("campaign_id") or "")
     raw_ids = arguments.get("collection_content_ids")
     if isinstance(raw_ids, list):
@@ -994,8 +990,6 @@ async def _execute_content_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     base_params = {"workspace_id": workspace_id}
     campaign_id = str(arguments.get("campaign_id") or "")
     date_params = {
@@ -1042,8 +1036,6 @@ async def _execute_creator_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     base_params = {"workspace_id": workspace_id}
     campaign_id = str(arguments.get("campaign_id") or "")
     date_params = {
@@ -1076,8 +1068,6 @@ async def _execute_get(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     base_params = {"workspace_id": workspace_id}
     campaign_id = str(arguments.get("campaign_id") or "")
     return agent_domain_result(
@@ -1095,8 +1085,6 @@ async def _execute_dimensions(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = str(arguments.get("campaign_id") or "")
     return agent_domain_result(
         await api_data(
@@ -1113,8 +1101,6 @@ async def _execute_breakdown(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = str(arguments.get("campaign_id") or "")
     return agent_domain_result(
         await api_data(
@@ -1142,8 +1128,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     base_params = {"workspace_id": workspace_id}
     return agent_domain_result(
         await api_data(
@@ -1169,8 +1153,6 @@ async def _execute_summary(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     base_params = {"workspace_id": workspace_id}
     campaign_id = str(arguments.get("campaign_id") or "")
     date_params = {
@@ -1203,8 +1185,6 @@ async def _execute_period_performance(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = str(arguments.get("campaign_id") or "")
     return agent_domain_result(
         await api_data(
@@ -1226,8 +1206,6 @@ async def _execute_creator_add(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = str(arguments.get("campaign_id") or "")
     payload = compact_params(
         {
@@ -1253,8 +1231,6 @@ async def _execute_creator_remove(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = str(arguments.get("campaign_id") or "")
     creator_social_account_id = str(arguments.get("creator_social_account_id") or "")
     return agent_domain_result(
@@ -1272,8 +1248,6 @@ async def _execute_content_add(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = str(arguments.get("campaign_id") or "")
     payload = compact_params(
         {
