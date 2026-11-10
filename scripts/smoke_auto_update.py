@@ -85,6 +85,13 @@ if importlib.util.find_spec("museoncli"):
     client = httpx.Client
     updates.httpx.Client = lambda **kw: client(**kw, transport=httpx.MockTransport(
         lambda _: httpx.Response(200, content=wheel.read_bytes())))
+    original_install = updates._install
+    def install(*args, **kwargs):
+        try:
+            return original_install(*args, **kwargs)
+        except Exception as exc:
+            raise AssertionError("synthetic update cause: " + repr(exc.__cause__ or exc)) from exc
+    updates._install = install
     original = subprocess.run
     def run(command, **kwargs):
         if len(command) > 3 and command[1:3] == ["tool", "install"]:
