@@ -73,7 +73,7 @@ def smoke_auto_update(wheel: Path, current: str) -> None:
         (hooks / "sitecustomize.py").write_text(
             f"""import importlib.util
 if importlib.util.find_spec("museoncli"):
-    import httpx, subprocess
+    import httpx, os, subprocess
     from pathlib import Path
     from museoncli import updates
     wheel = Path({str(target)!r})
@@ -88,7 +88,9 @@ if importlib.util.find_spec("museoncli"):
     original_install = updates._install
     def install(*args, **kwargs):
         try:
-            return original_install(*args, **kwargs)
+            result = original_install(*args, **kwargs)
+            os.environ.pop("PYTHONPATH", None)
+            return result
         except Exception as exc:
             raise AssertionError("synthetic update cause: " + repr(exc.__cause__ or exc)) from exc
     updates._install = install
@@ -98,6 +100,9 @@ if importlib.util.find_spec("museoncli"):
             assert Path(command[3]).read_bytes() == wheel.read_bytes()
             with open({str(counter)!r}, "a") as output:
                 output.write("install\\n")
+        if "-c" in command:
+            # Do not let our test hook pre-import and hide cwd module shadowing.
+            kwargs["env"] = {{**os.environ, "PYTHONPATH": ""}}
         try:
             return original(command, **kwargs)
         except subprocess.CalledProcessError as exc:
@@ -108,11 +113,17 @@ if importlib.util.find_spec("museoncli"):
             encoding="utf-8",
         )
         env["PYTHONPATH"] = str(hooks)
+        untrusted = root / "untrusted-cwd"
+        untrusted.mkdir()
+        (untrusted / "museoncli").mkdir()
+        for name in ("museoncli/__init__.py", "json.py", "httpx.py", "pathlib.py"):
+            (untrusted / name).write_text("raise RuntimeError('untrusted cwd module executed')\n")
         for alias, expected in (("museon", "updated"), ("museoncli", "current")):
             executable = root / "bin" / (f"{alias}.exe" if os.name == "nt" else alias)
             result = subprocess.run(
                 [str(executable), "version", "--json"],
                 env=env,
+                cwd=untrusted,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",

@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -74,7 +75,7 @@ def test_default_upgrade_verifies_wheel_then_restarts_original_argv(tool, monkey
 
     def restart(executable, arguments):
         assert len(calls) == 2  # Installation and a fresh-interpreter version check.
-        assert arguments[3:] == argv
+        assert arguments[4:] == argv
         assert executable == sys.executable
         assert updates.os.environ[updates._REEXEC_VERSION] == LATEST
         raise Restarted
@@ -288,3 +289,28 @@ def test_host_wrapper_entrypoint_reports_managed_version(monkeypatch, capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["data"]["cli_version"] == cli.__version__
     assert payload["data"]["update"] == {"status": "managed_externally"}
+
+
+@pytest.mark.parametrize("fresh_cache", [False, True])
+def test_read_only_tools_directory_does_not_block_commands(tool, monkeypatch, capsys, fresh_cache):
+    directory = tool[0].parent
+    if fresh_cache:
+        updates._cache_current(directory / ".museoncli-update.json", CURRENT)
+
+    async def dispatch(_):
+        return {"data": {"executed": True}}
+
+    monkeypatch.setattr(cli, "dispatch", dispatch)
+    monkeypatch.setattr(cli.sys, "argv", ["museon", "health"])
+    monkeypatch.setattr(updates, "_release", lambda: pytest.fail("unlocked update check"))
+    mode = directory.stat().st_mode
+    try:
+        directory.chmod(0o555)
+        if os.access(directory, os.W_OK):
+            pytest.skip("current user can bypass directory permissions")
+        bootstrap.main()
+    finally:
+        directory.chmod(mode)
+    output = capsys.readouterr()
+    assert json.loads(output.out) == {"ok": True, "data": {"executed": True}}
+    assert "using the installed version" in output.err

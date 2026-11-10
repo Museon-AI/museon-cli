@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from importlib.metadata import version
+import errno
 import hashlib
 import json
 import os
@@ -52,31 +53,45 @@ def _tool_bin(prefix: Path) -> Path | None:
 
 
 @contextmanager
-def _update_lock(path: Path) -> Iterator[None]:
-    # The lock lives outside the environment uv replaces. OS locks release on crash.
-    with path.open("a+b") as handle:
-        if os.fstat(handle.fileno()).st_size == 0:
-            handle.write(b"\0")
-            handle.flush()
-        deadline = time.monotonic() + 180
-        while True:
-            try:
-                if sys.platform == "win32":
-                    import msvcrt
-
-                    handle.seek(0)
-                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-                else:
-                    import fcntl
-
-                    fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except OSError:
-                if time.monotonic() >= deadline:
-                    raise RuntimeError("cli_update_failed: another CLI upgrade is still running")
-                time.sleep(0.1)
+def _update_lock(path: Path) -> Iterator[bool]:
+    # A read-only tool directory must not turn optional maintenance into a
+    # failure of the user's command. Yield False only before acquiring the lock.
+    try:
+        handle = path.open("a+b")
+    except OSError:
+        yield False
+        return
+    with handle:
         try:
-            yield
+            if os.fstat(handle.fileno()).st_size == 0:
+                handle.write(b"\0")
+                handle.flush()
+            deadline = time.monotonic() + 180
+            while True:
+                try:
+                    if sys.platform == "win32":
+                        import msvcrt
+
+                        handle.seek(0)
+                        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    else:
+                        import fcntl
+
+                        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except OSError as exc:
+                    if exc.errno not in {errno.EACCES, errno.EAGAIN}:
+                        raise
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError(
+                            "cli_update_failed: another CLI upgrade is still running"
+                        )
+                    time.sleep(0.1)
+        except OSError:
+            yield False
+            return
+        try:
+            yield True
         finally:
             if sys.platform == "win32":
                 handle.seek(0)
@@ -174,6 +189,7 @@ def _install(release: dict[str, Any], latest: str, prefix: Path) -> None:
         installed = subprocess.run(
             [
                 sys.executable,
+                "-I",
                 "-c",
                 "from importlib.metadata import version; print(version('museoncli'))",
             ],
@@ -215,7 +231,13 @@ def ensure_latest(argv: list[str]) -> dict[str, Any]:
         return {"status": "managed_externally"}
     cache = prefix.parent / ".museoncli-update.json"
     restart = None
-    with _update_lock(prefix.parent / ".museoncli-update.lock"):
+    with _update_lock(prefix.parent / ".museoncli-update.lock") as locked:
+        if not locked:
+            print(
+                "Museon CLI: update lock unavailable; using the installed version.",
+                file=sys.stderr,
+            )
+            return {"status": "check_failed", "reason": "update_lock_unavailable"}
         current = version("museoncli")
         if current != __version__:
             # Another process upgraded while this process was waiting for the lock.
@@ -242,7 +264,7 @@ def ensure_latest(argv: list[str]) -> dict[str, Any]:
     # Release the lock before starting the new interpreter; never replay a command
     # that has already run. Neither dispatch nor credential loading has happened.
     os.environ[_REEXEC_VERSION] = restart
-    command = [sys.executable, "-c", "from museoncli.bootstrap import main; main()", *argv]
+    command = [sys.executable, "-I", "-c", "from museoncli.bootstrap import main; main()", *argv]
     if sys.platform == "win32":
         # Windows exec creates another process; explicitly wait and preserve its
         # exit status so agents never mistake a failed business command for success.
