@@ -153,7 +153,7 @@ def _content_analysis_run_input_schema() -> dict[str, Any]:
                 "maxLength": 80,
                 "description": (
                     "Optional active Business Skill name. The server resolves it only when it "
-                    "is public or belongs to the selected workspace; raw prompt text is not accepted."
+                    "is public or belongs to the selected organization; raw prompt text is not accepted."
                 ),
             },
             "force_reanalysis": {"type": "boolean", "default": False},
@@ -215,7 +215,7 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Run Content Analyzer for supported platform content (including Xiaohongshu "
                 "image notes), uploaded video media, or local video files, optionally using a "
-                "workspace Business Skill."
+                "organization Business Skill."
             ),
             risk_level="write",
             execution="async_run",
@@ -269,7 +269,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.CONTENT_ANALYSIS,
             shortcut="+list",
-            summary="List Content Analyzer runs in the selected workspace.",
+            summary="List Content Analyzer runs in the selected organization.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="content_analysis_list",
@@ -293,8 +293,6 @@ async def _execute_get(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     run_id = str(arguments.get("run_id") or "")
     if not run_id:
         raise RuntimeError("content-analysis +get requires --id")
@@ -313,8 +311,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await api_data(
             cfg,
@@ -331,8 +327,6 @@ async def _execute_run(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     upload_media_file = ctx.upload_media_file
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     payload = dict(arguments)
     file_path = payload.pop("file", None)
     if file_path:

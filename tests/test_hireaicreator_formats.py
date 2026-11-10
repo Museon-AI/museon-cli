@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 import museoncli.main as cli
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 
 W = "40000000-0000-4000-8000-000000000004"
 ID = "10000000-0000-4000-8000-000000000001"
@@ -22,7 +22,7 @@ def requests(monkeypatch):
         "load_config",
         lambda: Config(
             api_base_url="https://api.example.test/api/v1",
-            workspace=WorkspaceState(id=W),
+            organization=OrganizationState(id="org-1", name="MuseOn"),
             auth=AuthState(api_key="test-key"),
         ),
     )
@@ -71,7 +71,7 @@ def test_patch_preserves_omissions_nulls_and_empty_string(requests, payload):
     run("patch", {"id": ID, **payload})
     r = requests[0]
     assert (r.method, r.url.path) == ("PATCH", "/api/v2/ai-hook-formats/" + ID)
-    assert dict(r.url.params) == {"workspace_id": W}
+    assert dict(r.url.params) == {}
     assert json.loads(r.content) == payload
     assert "Idempotency-Key" not in r.headers
 
@@ -100,7 +100,7 @@ def test_retry_requires_confirmation_and_sends_exact_step(requests, step):
     run("retry", {"id": ID, "step": step}, "--yes")
     r = requests[0]
     assert r.url.path == "/api/v2/ai-hook-formats/" + ID + "/retry"
-    assert dict(r.url.params) == {"workspace_id": W}
+    assert dict(r.url.params) == {}
     assert json.loads(r.content) == {"step": step}
 
 
@@ -124,7 +124,7 @@ def test_delete_204_and_confirmation(requests):
     result = run("delete", {"id": ID}, "--yes")
     assert result["data"] is None
     assert requests[0].method == "DELETE"
-    assert dict(requests[0].url.params) == {"workspace_id": W}
+    assert dict(requests[0].url.params) == {}
 
 
 def test_readiness_is_body_scoped_read_and_tags_is_query_scoped(requests):
@@ -132,8 +132,8 @@ def test_readiness_is_body_scoped_read_and_tags_is_query_scoped(requests):
     r = requests[0]
     assert r.method == "POST" and r.url.path == "/api/v2/ai-hook-formats/warmup-readiness"
     assert not r.url.query
-    assert json.loads(r.content) == {"format_ids": [ID], "workspace_id": W}
+    assert json.loads(r.content) == {"format_ids": [ID]}
     run("tags", {})
     assert requests[1].method == "GET"
     assert requests[1].url.path == "/api/v2/ai-hook-formats/tags"
-    assert dict(requests[1].url.params) == {"workspace_id": W}
+    assert dict(requests[1].url.params) == {}

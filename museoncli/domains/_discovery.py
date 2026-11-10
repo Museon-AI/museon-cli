@@ -13,7 +13,14 @@ from typing import Any
 from museoncli.domains._model import CommandSpec
 
 _COMMON_FLAG_HELP = {
-    "--workspace-id": "Workspace ID; defaults to the selected workspace.",
+    "--workspace-id": (
+        "DEPRECATED: a workspace in the organization; the server resolves the workspace "
+        "from the organization."
+    ),
+    "--organization-id": (
+        "Organization to act in (sent as X-Organization-Id); defaults to the selected "
+        "organization (`museoncli org select`)."
+    ),
     "--page": "Page number, starting at 1.",
     "--page-size": "Records per page.",
     "--cursor": "Opaque cursor returned by the previous page.",

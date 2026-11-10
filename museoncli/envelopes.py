@@ -750,14 +750,14 @@ def _performance_page_next_steps(data: dict[str, Any]) -> list[str]:
 
 def format_create_envelope(
     command_name: str,
-    workspace_id: str,
+    workspace_id: str | None,
     api_response: Any,
 ) -> dict[str, Any]:
     response = api_response if isinstance(api_response, dict) else {}
     format_id = response.get("format_id")
     return {
         "command": command_name,
-        "workspace": {"id": workspace_id},
+        "workspace": {"id": workspace_id} if workspace_id else None,
         "data": response,
         "run": {
             "id": format_id,

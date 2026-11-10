@@ -38,6 +38,8 @@ class CommandContext:
     upload_media_file: Callable[..., Awaitable[Any]]
     upload_artifact_file: Callable[..., Awaitable[Any]]
     download_api_file: Callable[..., Awaitable[Any]] | None = None
+    organization_id: str | None = None
+    """The organization requests address (--organization-id or the selected one)."""
 
 
 Executor = Callable[[CommandContext], Awaitable[dict[str, Any]]]
@@ -56,6 +58,29 @@ def direct_enveloped(fn: RawCommand, *, with_workspace: bool = True) -> Executor
         )
 
     return run
+
+
+async def organization_workspace_id(ctx: CommandContext) -> str:
+    """A workspace for the few UGC workbench routes that still address one in the path.
+
+    --workspace-id wins; otherwise the addressed organization's default workspace,
+    read from whoami (one call). Every other route resolves it on the server.
+    """
+    if ctx.workspace_id:
+        return ctx.workspace_id
+    # Late import avoids the execution <-> main module cycle.
+    from museoncli.main import organizations_from_whoami
+
+    whoami = await ctx.api_data(ctx.cfg, "GET", "/agent-cli/whoami")
+    organizations, default_id = organizations_from_whoami(whoami if isinstance(whoami, dict) else {})
+    target = ctx.organization_id or default_id
+    for organization in organizations:
+        if organization.get("id") == target and organization.get("default_workspace_id"):
+            return str(organization["default_workspace_id"])
+    raise RuntimeError(
+        "not_found: the organization has no default workspace for this login; "
+        "run `museoncli org list`"
+    )
 
 
 def deep_redact_operation_ids(value: Any, *, _in_op_units: bool = False) -> Any:

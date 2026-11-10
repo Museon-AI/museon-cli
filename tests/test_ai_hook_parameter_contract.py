@@ -16,7 +16,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 from museoncli.domains import command_specs, get_command_spec
 import museoncli.main as cli
 
@@ -48,7 +48,7 @@ def dispatch(argv):
 def attach_transport(monkeypatch, handler):
     cfg = Config(
         api_base_url="https://api.example.test/api/v1",
-        workspace=WorkspaceState(id=BASE_WORKSPACE),
+        organization=OrganizationState(id="org-1", name="MuseOn"),
         auth=AuthState(api_key="test-only"),
     )
     monkeypatch.setattr(cli, "load_config", lambda: cfg)
@@ -170,7 +170,8 @@ def test_every_declared_field_and_flag_has_an_independent_request_case():
         covered = set().union(
             *(set(value_paths(other["input"])) for other in CASES if other["name"] == case["name"])
         )
-        assert set(schema_paths(spec.input_schema)) <= covered, case["name"]
+        # organization_id is the X-Organization-Id header, never a request field.
+        assert set(schema_paths(spec.input_schema)) - {"/organization_id"} <= covered, case["name"]
         parser = argparse.ArgumentParser(add_help=False)
         spec.add_arguments(parser)
         declared = {a.dest for a in parser._actions}
@@ -185,7 +186,7 @@ def test_every_declared_field_and_flag_has_an_independent_request_case():
         if case["name"] == "delivery-share":
             tested.add("collection_id")
         # local consumers have their own tests: mutually exclusive files and dry-run.
-        assert declared - {"args_file", "dry_run"} <= tested, (
+        assert declared - {"args_file", "dry_run", "organization_id"} <= tested, (
             case["name"],
             declared - tested,
         )
@@ -206,10 +207,8 @@ def test_test_group_list_needs_no_plan_id_or_write(monkeypatch):
     assert len(requests) == 1
     assert requests[0].method == "GET"
     assert requests[0].url.path == "/api/v2/ai-hook-test-groups"
-    assert dict(requests[0].url.params) == {
-        "workspace_id": BASE_WORKSPACE,
-        "search": "pilot",
-    }
+    assert dict(requests[0].url.params) == {"search": "pilot"}
+    assert requests[0].headers["X-Organization-Id"] == "org-1"
 
 
 @pytest.mark.parametrize("source", ["csv", "repeated", "mixed", "json"])
@@ -231,7 +230,7 @@ def test_video_list_multiple_accounts_returns_single_account_union(monkeypatch, 
         assert request.method == "GET"
         assert request.url.path == "/api/v2/ai-hook-videos"
         params = request.url.params
-        assert params["workspace_id"] == BASE_WORKSPACE
+        assert "workspace_id" not in params
         assert params["scheduled_from"] == "2026-11-09T10:30:00+08:00"
         # Match the API's repeated-query list contract, without splitting CSV here.
         ids = params.get_list("publishing_account_ids") or [params["publishing_account_id"]]
@@ -325,10 +324,11 @@ def test_account_bindings_resolve_workspace_and_preserve_approval_omission(
     sent = (
         dict(requests[0].url.params) if action == "assets-get" else json.loads(requests[0].content)
     )
-    assert sent["workspace_id"] == (override or BASE_WORKSPACE)
+    assert sent.get("workspace_id") == override
     assert "managed_operation_approved" not in sent
     assert "approval_note" not in sent
-    assert result["workspace"] == {"id": override or BASE_WORKSPACE}
+    assert result["workspace"] == ({"id": override} if override else None)
+    assert result["organization"] == {"id": "org-1", "name": "MuseOn"}
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c["name"])

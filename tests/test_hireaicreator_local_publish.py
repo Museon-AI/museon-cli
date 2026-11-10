@@ -8,7 +8,7 @@ import httpx
 import pytest
 
 import museoncli.main as cli
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 
 WS = "40000000-0000-4000-8000-000000000004"
 ACCOUNT = "50000000-0000-4000-8000-000000000005"
@@ -31,7 +31,7 @@ def invoke(arguments):
 def setup(monkeypatch, tmp_path, handler):
     cfg = Config(
         api_base_url="https://api.example.test/api/v1",
-        workspace=WorkspaceState(id=WS),
+        organization=OrganizationState(id="org-1", name="MuseOn"),
         auth=AuthState(api_key="test-only"),
     )
     monkeypatch.setattr(cli, "load_config", lambda: cfg)

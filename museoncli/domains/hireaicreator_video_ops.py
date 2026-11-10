@@ -53,7 +53,7 @@ def specs() -> list[CommandSpec]:
             plan,
             PAGE,
             workspace="query",
-            summary="List workspace video plans; complete pagination.",
+            summary="List the organization's video plans; complete pagination.",
         ),
         cmd(
             "plan",
@@ -111,7 +111,7 @@ def specs() -> list[CommandSpec]:
             write=True,
             destructive=True,
             summary="Delete a video at its expected version; requires explicit destructive intent.",
-            readback="Read video +list in the original workspace and confirm absence.",
+            readback="Read video +list in the original organization and confirm absence.",
         ),
         cmd(
             "video",
@@ -123,7 +123,7 @@ def specs() -> list[CommandSpec]:
             write=True,
             destructive=True,
             summary="Delete explicit video versions; inspect per-item failures before retrying.",
-            readback="Read video +list in the original workspace and verify each result.",
+            readback="Read video +list in the original organization and verify each result.",
         ),
         cmd(
             "video",

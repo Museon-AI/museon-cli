@@ -31,8 +31,6 @@ def _save(path: Path, record: dict[str, Any]) -> None:
 async def _publish(ctx: CommandContext) -> dict[str, Any]:
     args = ctx.arguments
     workspace_id = str(args.get("workspace_id") or ctx.workspace_id or "").strip()
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     campaign_id = args["campaign_id"]
     items = args["items"]
     account_ids = sorted({value for item in items for value in item["account_ids"]})
@@ -47,7 +45,9 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
             raise ValueError("Each item requires exactly one of now=true or scheduled_at")
         fingerprint_items.append({**item, "file": str(path), "sha256": _digest_file(path)})
     fingerprint = hashlib.sha256(json.dumps(fingerprint_items, sort_keys=True).encode()).hexdigest()
-    identity = json.dumps([ctx.cfg.api_base_url, workspace_id, args["idempotency_key"]])
+    identity = json.dumps(
+        [ctx.cfg.api_base_url, workspace_id or ctx.organization_id or "", args["idempotency_key"]]
+    )
     key = hashlib.sha256(identity.encode()).hexdigest()
     receipt_dir = (
         Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "museoncli" / "publication"

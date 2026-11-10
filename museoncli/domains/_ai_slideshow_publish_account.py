@@ -1079,8 +1079,6 @@ async def _execute_config_get(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1100,8 +1098,6 @@ async def _execute_config_update(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1133,8 +1129,6 @@ async def _execute_config_batch_update(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_updates = arguments.get("account_updates")
     if not isinstance(account_updates, list) or not account_updates:
         raise RuntimeError(f"{command_name} requires a non-empty account_updates array")
@@ -1157,8 +1151,6 @@ async def _execute_schedule_create(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1179,8 +1171,6 @@ async def _execute_schedule_delete(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1202,8 +1192,6 @@ async def _execute_schedule_generate(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1230,8 +1218,6 @@ async def _execute_schedule_get(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1252,8 +1238,6 @@ async def _execute_schedule_list(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1281,8 +1265,6 @@ async def _execute_schedule_update(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1304,8 +1286,6 @@ async def _execute_version_activate(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1339,8 +1319,6 @@ async def _execute_version_create(ctx: CommandContext) -> Any:
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1369,8 +1347,6 @@ async def _execute_version_get(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1391,8 +1367,6 @@ async def _execute_version_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
@@ -1423,7 +1397,7 @@ _ALL_EXECUTORS = {
 async def _social_account_list_versions(
     cfg: Config,
     *,
-    workspace_id: str,
+    workspace_id: str | None,
     account_id: str,
 ) -> Any:
     return agent_domain_result(

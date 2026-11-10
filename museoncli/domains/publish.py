@@ -1,4 +1,4 @@
-"""Publish finished videos to a workspace's bound social accounts on a schedule."""
+"""Publish finished videos to an organization's bound social accounts on a schedule."""
 
 from __future__ import annotations
 
@@ -135,8 +135,6 @@ def _check_items(payload: dict[str, Any]) -> None:
 async def _schedule(ctx: CommandContext) -> dict[str, Any]:
     args = ctx.arguments
     workspace_id = str(args.get("workspace_id") or ctx.workspace_id or "").strip()
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     now = bool(args.get("now"))
     items = []
     for item in args["items"]:
@@ -156,7 +154,9 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
             {"now": now, "ai_tag": bool(args.get("ai_tag")), "items": items}, sort_keys=True
         ).encode()
     ).hexdigest()
-    identity = json.dumps([ctx.cfg.api_base_url, workspace_id, args["idempotency_key"]])
+    identity = json.dumps(
+        [ctx.cfg.api_base_url, workspace_id or ctx.organization_id or "", args["idempotency_key"]]
+    )
     key = hashlib.sha256(identity.encode()).hexdigest()
     receipt_dir = (
         Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "museoncli" / "publish"
@@ -274,7 +274,7 @@ def _schedule_spec() -> CommandSpec:
         domain=Domain.PUBLISH,
         summary=(
             "Upload local videos or photo sets (or reuse media IDs) and schedule each on the "
-            "workspace's bound accounts with a caption. Each item takes one of file / media_id "
+            "organization's bound accounts with a caption. Each item takes one of file / media_id "
             "(a video) or image_files / image_media_ids (a TikTok photo set of 1-30 images, in "
             "order), plus account_ids, caption, and scheduled_at with a timezone offset; or pass "
             "now=true to publish at once. At most 100 posts per batch, up to 7 days ahead. "
@@ -313,7 +313,7 @@ def specs() -> list[CommandSpec]:
             },
             domain=Domain.PUBLISH,
             summary=(
-                "List the social accounts bound to this workspace, which are the accounts it "
+                "List the social accounts bound to the selected organization, which are the accounts it "
                 "can publish to. Filter by platform (tiktok) and device kind; follow every page "
                 "before choosing accounts."
             ),
@@ -351,7 +351,7 @@ def specs() -> list[CommandSpec]:
             domain=Domain.PUBLISH,
             summary=(
                 "Cancel a publish job that has not been published yet (scheduled no more than an "
-                "hour ago). Requires a workspace editor."
+                "hour ago). Requires an organization role that can edit."
             ),
             readback="museoncli publish job +get --id JOB_ID; verify status cancelled.",
         ),

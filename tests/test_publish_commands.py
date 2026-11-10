@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 import museoncli.main as cli
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 
 WS = "40000000-0000-4000-8000-000000000004"
 ACCOUNT = "50000000-0000-4000-8000-000000000005"
@@ -30,7 +30,7 @@ def invoke(arguments, *extra):
 def setup(monkeypatch, tmp_path, handler):
     cfg = Config(
         api_base_url="https://api.example.test/api/v1",
-        workspace=WorkspaceState(id=WS),
+        organization=OrganizationState(id="org-1", name="MuseOn"),
         auth=AuthState(api_key="test-only"),
     )
     monkeypatch.setattr(cli, "load_config", lambda: cfg)
@@ -82,7 +82,7 @@ def test_lost_response_reuses_upload_and_resends_the_exact_keyed_body(monkeypatc
     assert len(uploads) == 1
     assert submissions[0] == submissions[1]
     body = submissions[1]
-    assert body["workspace_id"] == WS and body["publish_immediately"] is False
+    assert "workspace_id" not in body and body["publish_immediately"] is False
     assert [(item["account_id"], item["content_id"]) for item in body["items"]] == [
         (ACCOUNT, MEDIA),
         (OTHER_ACCOUNT, MEDIA),

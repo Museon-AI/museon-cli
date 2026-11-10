@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from museoncli import main as main_module
-from museoncli.config import Config, WorkspaceState
+from museoncli.config import Config, OrganizationState
 from museoncli.main import build_parser
 
 CAMPAIGN = "10000000-0000-4000-8000-000000000001"
@@ -67,7 +67,7 @@ class _Workbench:
 
 def _run(monkeypatch: pytest.MonkeyPatch, workbench: _Workbench, argv: list[str]) -> dict:
     cfg = Config()
-    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data_v2", workbench)
     return asyncio.run(main_module.dispatch(build_parser().parse_args(argv)))

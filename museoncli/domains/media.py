@@ -68,8 +68,6 @@ def _get_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 
 async def _upload(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     if ctx.arguments["media_type"] == "file":
         try:
             receipt = await ctx.upload_artifact_file(
@@ -78,7 +76,9 @@ async def _upload(ctx: CommandContext) -> Any:
             if (
                 not isinstance(receipt, dict)
                 or receipt.get("artifact_id") != ctx.arguments["file_id"]
-                or receipt.get("workspace_id") != ctx.workspace_id
+                # The server picks the workspace unless --workspace-id named one.
+                or (ctx.workspace_id and receipt.get("workspace_id") != ctx.workspace_id)
+                or not receipt.get("workspace_id")
                 or receipt.get("kind") != "file"
                 or receipt.get("is_public") is not False
             ):
@@ -98,8 +98,6 @@ async def _upload(ctx: CommandContext) -> Any:
 
 
 async def _import(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     receipt = await ctx.api_data(
         ctx.cfg,
         "POST",
@@ -122,8 +120,6 @@ async def _import(ctx: CommandContext) -> Any:
 
 
 async def _get(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return await ctx.api_data(
         ctx.cfg,
         "GET",
@@ -188,8 +184,6 @@ def _status_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 
 async def _generate(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     body = {key: value for key, value in ctx.arguments.items() if key != "idempotency_key"}
     body["workspace_id"] = ctx.workspace_id
     receipt = await ctx.api_data(
@@ -200,7 +194,10 @@ async def _generate(ctx: CommandContext) -> Any:
         idempotency_key=ctx.arguments["idempotency_key"],
     )
     try:
-        if not isinstance(receipt, dict) or receipt.get("workspace_id") != ctx.workspace_id:
+        if not isinstance(receipt, dict) or not receipt.get("workspace_id"):
+            raise ValueError("receipt without workspace")
+        # The server picks the workspace unless --workspace-id named one.
+        if ctx.workspace_id and receipt.get("workspace_id") != ctx.workspace_id:
             raise ValueError("workspace mismatch")
         UUID(str(receipt.get("task_id")))
         UUID(str(receipt.get("media_id")))
@@ -213,8 +210,6 @@ async def _generate(ctx: CommandContext) -> Any:
 
 
 async def _status(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return await ctx.api_data(
         ctx.cfg,
         "GET",
@@ -344,7 +339,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=Domain.MEDIA,
             shortcut="+get",
-            summary="Read one media record in the selected workspace. Business output completion must be verified through its owning domain.",
+            summary="Read one media record in the selected organization. Business output completion must be verified through its owning domain.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="media_get",

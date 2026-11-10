@@ -592,9 +592,8 @@ def _command(
         scope = None
         if workspace != "resource":
             scope = arguments.pop("workspace_id", None) or ctx.workspace_id
-            if not scope:
-                raise RuntimeError("missing_workspace")
-            arguments["workspace_id"] = scope
+            if scope:
+                arguments["workspace_id"] = scope
         wire = _wire(arguments, schema)
         if resource == "account" and action == "list" and "tags" in wire:
             # The API takes workspace tags as one comma-separated value (any match).
@@ -658,7 +657,7 @@ def specs() -> list[CommandSpec]:
             {"account_ids": arr(U, 1, 200)},
             required=("account_ids",),
             workspace="body",
-            summary="Read publication methods, global authorization, readiness and pending schedule counts for up to 200 workspace accounts in one request.",
+            summary="Read publication methods, global authorization, readiness and pending schedule counts for up to 200 of the organization's accounts in one request.",
         ),
         _command(
             "account",
@@ -708,7 +707,7 @@ def specs() -> list[CommandSpec]:
                 "tags": arr(S, maximum=50),
             },
             flags={"search_terms": "--search-term"},
-            summary="Find exact account identities, workspace tags, and current stage/assignment state; --tags matches any listed workspace tag; complete pagination before fixing a selection.",
+            summary="Find exact account identities, organization tags, and current stage/assignment state; --tags matches any listed organization tag; complete pagination before fixing a selection.",
         ),
         _command(
             "account",
@@ -728,7 +727,7 @@ def specs() -> list[CommandSpec]:
             workspace="body",
             write=True,
             summary="Bind an existing Actor to an account; use its exact ID to resolve duplicate names.",
-            readback="Read hireaicreator account +get-assets for the same account and workspace.",
+            readback="Read hireaicreator account +get-assets for the same account and organization.",
         ),
         _command(
             "account",
@@ -744,7 +743,7 @@ def specs() -> list[CommandSpec]:
             workspace="body",
             write=True,
             summary="Bind an existing Persona to an account. Managed-operation approval must be explicit.",
-            readback="Read hireaicreator account +get-assets for the same account and workspace.",
+            readback="Read hireaicreator account +get-assets for the same account and organization.",
         ),
         _command(
             "account",
@@ -767,7 +766,7 @@ def specs() -> list[CommandSpec]:
             {"actor_ids": arr(U, 1, 100)},
             required=("actor_ids",),
             workspace="body",
-            summary="Inspect Actor workspace access, binding locks and supported resolutions in one batch. A shared Actor can be copied; there is no force-unlock operation.",
+            summary="Inspect Actor access across organizations, binding locks and supported resolutions in one batch. A shared Actor can be copied; there is no force-unlock operation.",
         ),
         _command(
             "actor",
@@ -781,7 +780,7 @@ def specs() -> list[CommandSpec]:
             },
             required=("actor_ids", "target_workspace_id", "mode"),
             workspace="body",
-            summary="Live-preview an atomic Actor copy or move across workspaces. Returns blockers and an opaque preview token. Move rejects bound Actors; copy preserves the face and leaves the source intact. This reads server state, unlike local --dry-run.",
+            summary="Live-preview an atomic Actor copy or move across organizations. Returns blockers and an opaque preview token. Move rejects bound Actors; copy preserves the face and leaves the source intact. This reads server state, unlike local --dry-run.",
         ),
         _command(
             "actor",
@@ -800,7 +799,7 @@ def specs() -> list[CommandSpec]:
             idempotent=True,
             requires_confirmation=True,
             summary="Atomically copy or move the exact previewed Actor batch. Requires matching preview token, explicit confirmation and a stable idempotency key. State drift fails the entire batch; never automatically refresh a conflicting preview or retry an unknown outcome with a new key.",
-            readback="Read actor +get-access in the target workspace using the returned Actor IDs. Copy creates independent identities; move retains the existing IDs. Account bindings and publication are separate operations.",
+            readback="Read actor +get-access in the target organization using the returned Actor IDs. Copy creates independent identities; move retains the existing IDs. Account bindings and publication are separate operations.",
         ),
         _command(
             "actor",
@@ -849,7 +848,7 @@ def specs() -> list[CommandSpec]:
             ),
             workspace="body",
             write=True,
-            summary="Create one Actor from an existing Persona and one workspace image.",
+            summary="Create one Actor from an existing Persona and one organization image.",
             readback="Read the returned Actor ID with actor +get. On an unknown outcome, reconcile before retrying because this endpoint has no idempotency key.",
         ),
         _command(
@@ -915,7 +914,7 @@ def specs() -> list[CommandSpec]:
             {},
             version=1,
             workspace="resource",
-            summary="Read a Persona through resource access control; no workspace override.",
+            summary="Read a Persona through resource access control; no organization override.",
         ),
         _command(
             "product",
@@ -924,7 +923,7 @@ def specs() -> list[CommandSpec]:
             "/products",
             {**SEARCH_PAGE, "tag": S},
             version=1,
-            summary="List workspace products with description, selling points, target audiences and every image asset (logo, product image, website and app screenshots); complete pagination.",
+            summary="List the organization's products with description, selling points, target audiences and every image asset (logo, product image, website and app screenshots); complete pagination.",
         ),
         _command(
             "format",

@@ -197,7 +197,7 @@ def specs() -> list[CommandSpec]:
             domain=Domain.SKILLS,
             shortcut="+create",
             summary=(
-                "Create one workspace-private Museon skill from Markdown content; "
+                "Create one organization-private Museon skill from Markdown content; "
                 "--is-public requires organization admin permission."
             ),
             risk_level="write",
@@ -219,7 +219,7 @@ def specs() -> list[CommandSpec]:
             domain=Domain.SKILLS,
             shortcut="+update",
             summary=(
-                "Update a workspace-private Museon skill's Markdown content, description, "
+                "Update a organization-private Museon skill's Markdown content, description, "
                 "reference, or active status; changing --is-public requires organization "
                 "admin permission."
             ),

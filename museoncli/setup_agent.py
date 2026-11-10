@@ -59,7 +59,7 @@ def install_agent_skill(agent: str, *, force: bool = False) -> dict[str, Any]:
             "Run `museoncli auth start`, approve access in the browser, then run "
             "`museoncli auth finish --wait` (waits up to five minutes by default).",
             "After authentication, run `museoncli skills +list` to discover the "
-            "Business Skills available in the current workspace.",
+            "Business Skills available in the selected organization (`museoncli org current`).",
         ],
     }
 

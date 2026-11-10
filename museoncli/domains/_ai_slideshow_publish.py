@@ -1173,8 +1173,6 @@ def specs() -> list[CommandSpec]:
 
 
 async def _execute_asset_pools_batch_get(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",
@@ -1184,8 +1182,6 @@ async def _execute_asset_pools_batch_get(ctx: CommandContext) -> Any:
 
 
 async def _execute_asset_pools_batch_preview(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",
@@ -1195,8 +1191,6 @@ async def _execute_asset_pools_batch_preview(ctx: CommandContext) -> Any:
 
 
 async def _execute_asset_pools_batch_set(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",
@@ -1206,8 +1200,6 @@ async def _execute_asset_pools_batch_set(ctx: CommandContext) -> Any:
 
 
 async def _execute_asset_pools_batch_status(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     job_id = str(ctx.arguments.get("job_id") or "")
     return await ctx.api_data_v2(
         ctx.cfg,
@@ -1218,8 +1210,6 @@ async def _execute_asset_pools_batch_status(ctx: CommandContext) -> Any:
 
 
 async def _execute_asset_pools_batch_cancel(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     job_id = str(ctx.arguments.get("job_id") or "")
     return await ctx.api_data_v2(
         ctx.cfg,
@@ -1232,8 +1222,6 @@ async def _execute_asset_pools_batch_cancel(ctx: CommandContext) -> Any:
 
 
 async def _execute_schedule_plan_preview(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",
@@ -1243,8 +1231,6 @@ async def _execute_schedule_plan_preview(ctx: CommandContext) -> Any:
 
 
 async def _execute_schedule_plan_batch(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return await ctx.api_data_v2(
         ctx.cfg,
         "POST",
@@ -1254,8 +1240,6 @@ async def _execute_schedule_plan_batch(ctx: CommandContext) -> Any:
 
 
 async def _execute_schedule_plan_status(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     job_id = str(ctx.arguments.get("job_id") or "")
     return await ctx.api_data_v2(
         ctx.cfg,
@@ -1266,8 +1250,6 @@ async def _execute_schedule_plan_status(ctx: CommandContext) -> Any:
 
 
 async def _execute_schedule_plan_cancel(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     job_id = str(ctx.arguments.get("job_id") or "")
     return await ctx.api_data_v2(
         ctx.cfg,

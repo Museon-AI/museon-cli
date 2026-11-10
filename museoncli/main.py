@@ -7,6 +7,7 @@ import mimetypes
 import os
 import sys
 from contextvars import ContextVar
+from dataclasses import asdict
 import time
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,7 @@ import httpx
 
 from museoncli import __version__
 from museoncli.auth import (
+    ORGANIZATION_HEADER,
     auth_headers,
     finish_pending_web_approval_login,
     run_web_approval_login,
@@ -24,8 +26,8 @@ from museoncli.auth import (
 from museoncli.config import (
     AuthState,
     Config,
+    OrganizationState,
     PendingAuthState,
-    WorkspaceState,
     delete_auth_credentials,
     load_config,
     save_config,
@@ -55,6 +57,10 @@ _API_CONNECT_RETRY_BASE_DELAY_SECONDS = 0.25
 _ACTIVE_COMMAND_NAME: ContextVar[str | None] = ContextVar(
     "museoncli_active_command_name", default=None
 )
+# --organization-id of the running command; overrides the selected organization.
+_ACTIVE_ORGANIZATION_ID: ContextVar[str | None] = ContextVar(
+    "museoncli_active_organization_id", default=None
+)
 
 
 class ApiRequestError(RuntimeError):
@@ -69,6 +75,50 @@ class ApiRequestError(RuntimeError):
             else str(detail)
         )
         super().__init__(f"HTTP {status_code}: {rendered}")
+
+
+class CliOutdatedError(ApiRequestError):
+    """HTTP 426: the server no longer accepts this CLI version."""
+
+    def __init__(self, detail: dict[str, Any]) -> None:
+        super().__init__(426, detail)
+
+    def __str__(self) -> str:
+        return str(self.detail.get("message") or "cli_outdated")
+
+
+def cli_outdated_error(response: httpx.Response) -> CliOutdatedError:
+    """Turn any 426 answer (agent-cli, /api/v2, uploads) into one readable failure."""
+    payload = response_error_payload(response)
+    body = payload if isinstance(payload, dict) else {}
+    minimum = body.get("minimum_version")
+    received = body.get("received_version") or __version__
+    install_hint = body.get("install_hint") or (
+        "Update Museon CLI with `uv tool upgrade museoncli` (or your package manager), then retry."
+    )
+    required = f" (minimum supported: {minimum})" if minimum else ""
+    return CliOutdatedError(
+        {
+            "code": "cli_outdated",
+            "message": (
+                f"Museon CLI {received} is no longer supported by the Museon API{required}. "
+                f"{install_hint}"
+            ),
+            "minimum_version": minimum,
+            "received_version": received,
+            "install_hint": install_hint,
+        }
+    )
+
+
+# Messages for server codes whose body carries no readable text of its own.
+_SERVER_CODE_MESSAGES = {
+    "organization_workspace_mismatch": (
+        "The workspace given with --workspace-id is not in the organization this request "
+        "addresses (--organization-id, or the organization selected with `museoncli org "
+        "select`). Drop --workspace-id, or address the organization it belongs to."
+    ),
+}
 
 
 # Exit codes are part of the output contract (docs/cli-surface-conventions.md).
@@ -141,7 +191,9 @@ def main(*, update: dict[str, Any] | None = None) -> None:
         raise SystemExit(code) from None
     args.json = True
     command = invoked_command_name(args)
-    deprecation = deprecation_notice(args)
+    deprecations = deprecation_notices(args)
+    for notice in deprecations:
+        print(f"museoncli: {notice}", file=sys.stderr, flush=True)
     try:
         result = asyncio.run(dispatch(args))
     except KeyboardInterrupt:
@@ -156,14 +208,14 @@ def main(*, update: dict[str, Any] | None = None) -> None:
         raise SystemExit(EXIT_INTERRUPTED) from None
     except Exception as exc:
         payload, code = error_envelope(exc, command=command)
-        if deprecation:
-            payload["warnings"] = [deprecation]
+        if deprecations:
+            payload["warnings"] = deprecations
         emit(payload)
         raise SystemExit(code) from None
     if result is not None and args.command == "version":
         result["data"]["update"] = update or {"status": "managed_externally"}
-    if result is not None and deprecation:
-        result = {**result, "warnings": [*(result.get("warnings") or []), deprecation]}
+    if result is not None and deprecations:
+        result = {**result, "warnings": [*(result.get("warnings") or []), *deprecations]}
     if result is not None:
         if not emit(
             {"ok": True, **result},
@@ -237,11 +289,37 @@ def build_parser() -> argparse.ArgumentParser:
     auth_sub.add_parser("status")
     auth_sub.add_parser("logout")
 
-    workspace = sub.add_parser("workspace")
+    org = sub.add_parser(
+        "org",
+        help="List, show or select the organization commands act in.",
+        description=(
+            "The selected organization is sent with every request as X-Organization-Id; "
+            "your role and Campaign scope in it decide what you can see and change."
+        ),
+    )
+    org_sub = org.add_subparsers(dest="org_command", required=True)
+    org_sub.add_parser("list", help="Organizations this login can act in.")
+    org_sub.add_parser("current", help="The selected organization.")
+    org_select = org_sub.add_parser("select", help="Select the organization to act in.")
+    org_select_target = org_select.add_mutually_exclusive_group(required=True)
+    org_select_target.add_argument("--id", help="Organization ID (from `museoncli org list`).")
+    org_select_target.add_argument("--name", help="Exact organization name.")
+
+    workspace = sub.add_parser(
+        "workspace",
+        help="DEPRECATED: use `museoncli org`. Kept as an alias until the next major version.",
+        description=(
+            "DEPRECATED: MuseOn has organizations only. `workspace list` lists what it did "
+            "before; `workspace select` selects the workspace's organization. Use `museoncli "
+            "org list|current|select`."
+        ),
+    )
     workspace_sub = workspace.add_subparsers(dest="workspace_command", required=True)
-    workspace_sub.add_parser("list")
-    workspace_sub.add_parser("current")
-    select = workspace_sub.add_parser("select")
+    workspace_sub.add_parser("list", help="DEPRECATED: use `museoncli org list`.")
+    workspace_sub.add_parser("current", help="DEPRECATED: use `museoncli org current`.")
+    select = workspace_sub.add_parser(
+        "select", help="DEPRECATED: use `museoncli org select`; selects the workspace's organization."
+    )
     select.add_argument("--id")
     select.add_argument("--name")
 
@@ -269,8 +347,10 @@ async def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
         }
     if args.command == "whoami":
         data = await api_data(cfg, "GET", "/agent-cli/whoami")
-        sync_current_workspace_from_whoami(cfg, data)
-        return {"data": data}
+        sync_current_organization_from_whoami(cfg, data)
+        return {"data": with_whoami_organizations(data)}
+    if args.command == "org":
+        return await dispatch_org(args, cfg)
     if args.command == "workspace":
         return await dispatch_workspace(args, cfg)
     if args.command == "schema":
@@ -300,7 +380,7 @@ async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]
     if args.auth_command == "logout":
         delete_auth_credentials()
         cfg.auth = AuthState()
-        cfg.workspace = WorkspaceState()
+        cfg.organization = OrganizationState()
         cfg.pending_auth = PendingAuthState()
         save_config(cfg)
         return {"data": {"authenticated": False}}
@@ -321,7 +401,8 @@ async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]
             "auth_method": auth_method(cfg),
             "expires_at": cfg.auth.expires_at,
             "user": safe_user(cfg.auth.user),
-            "workspace": cfg.workspace.__dict__,
+            "organization": organization_view(cfg),
+            "workspace": legacy_workspace_view(cfg),
             "pending_web_approval": pending_web_approval_status(cfg),
         }
         if cfg.auth.provider is not None:
@@ -341,24 +422,142 @@ async def dispatch_auth(args: argparse.Namespace, cfg: Config) -> dict[str, Any]
             timeout_seconds=args.timeout,
             poll_interval_seconds=args.poll_interval,
         )
-        return {"data": data, "workspace": data.get("workspace")}
+        return {
+            "data": data,
+            "workspace": data.get("workspace"),
+            "organization": data.get("organization"),
+        }
     data = await run_web_approval_login(
         config=cfg,
         timeout_seconds=args.timeout,
         open_browser=not args.no_browser,
         poll_interval_seconds=args.poll_interval,
     )
-    return {"data": data, "workspace": data.get("workspace")}
+    return {
+        "data": data,
+        "workspace": data.get("workspace"),
+        "organization": data.get("organization"),
+    }
+
+
+def organization_view(cfg: Config) -> dict[str, Any] | None:
+    return asdict(cfg.organization) if cfg.organization.id else None
+
+
+def legacy_workspace_view(cfg: Config) -> dict[str, Any]:
+    """The 0.22 ``workspace`` shape for parsers that still read it: no workspace, its organization."""
+    return {
+        "id": None,
+        "name": None,
+        "organization_id": cfg.organization.id,
+        "organization_name": cfg.organization.name,
+    }
+
+
+def organizations_from_whoami(data: dict[str, Any]) -> tuple[list[dict[str, Any]], str | None]:
+    """Organizations a login can act in, and its default one.
+
+    A server with organizations lists them; an older one only lists workspaces,
+    so they are grouped by the organization they belong to.
+    """
+    organizations = data.get("organizations")
+    if isinstance(organizations, list):
+        rows = [row for row in organizations if isinstance(row, dict) and row.get("id")]
+        default_id = data.get("default_organization_id")
+        if not default_id:
+            default_id = next((row["id"] for row in rows if row.get("is_default")), None)
+        return rows, default_id
+    workspaces = [row for row in data.get("workspaces") or [] if isinstance(row, dict)]
+    default_workspace_id = data.get("default_workspace_id")
+    grouped: dict[str, dict[str, Any]] = {}
+    default_id: str | None = None
+    for workspace in workspaces:
+        organization_id = workspace.get("organization_id")
+        if not organization_id:
+            continue
+        is_default = bool(workspace.get("is_default")) or (
+            default_workspace_id is not None and workspace.get("id") == default_workspace_id
+        )
+        row = grouped.setdefault(
+            organization_id,
+            {
+                "id": organization_id,
+                "name": workspace.get("organization_name"),
+                "slug": None,
+                "role": None,
+                "campaign_scope": None,
+                "is_default": False,
+                "default_workspace_id": workspace.get("id"),
+            },
+        )
+        if is_default:
+            row["is_default"] = True
+            row["default_workspace_id"] = workspace.get("id")
+            default_id = default_id or organization_id
+    return list(grouped.values()), default_id
+
+
+def with_whoami_organizations(data: Any) -> Any:
+    """Add ``organizations`` to an older server's whoami, derived from its workspaces."""
+    if not isinstance(data, dict) or isinstance(data.get("organizations"), list):
+        return data
+    organizations, default_id = organizations_from_whoami(data)
+    default_name = next(
+        (row.get("name") for row in organizations if row.get("id") == default_id), None
+    )
+    return {
+        **data,
+        "organizations": organizations,
+        "default_organization_id": default_id,
+        "default_organization_name": default_name,
+    }
+
+
+async def dispatch_org(args: argparse.Namespace, cfg: Config) -> dict[str, Any]:
+    if args.org_command == "current":
+        current = organization_view(cfg)
+        return {"organization": current, "data": current}
+    data = await api_data(cfg, "GET", "/agent-cli/whoami")
+    organizations, default_id = organizations_from_whoami(data)
+    if args.org_command == "list":
+        sync_current_organization_from_whoami(cfg, data)
+        return {
+            "data": {"organizations": organizations, "default_organization_id": default_id},
+            "organization": organization_view(cfg),
+        }
+    if args.id:
+        matches = [row for row in organizations if row.get("id") == args.id]
+    else:
+        matches = [row for row in organizations if row.get("name") == args.name]
+    if not matches:
+        raise RuntimeError(
+            "not_found: organization is not available to the current credential; "
+            "run `museoncli org list`"
+        )
+    if len(matches) > 1:
+        raise RuntimeError(
+            f"conflict: {len(matches)} organizations are named {args.name!r}; select one with --id"
+        )
+    selected = matches[0]
+    cfg.organization = OrganizationState(id=selected.get("id"), name=selected.get("name"))
+    save_config(cfg)
+    return {"organization": organization_view(cfg), "data": selected}
 
 
 async def dispatch_workspace(args: argparse.Namespace, cfg: Config) -> dict[str, Any]:
+    """Deprecated alias of ``org``: a workspace stands for the organization it belongs to."""
     if args.workspace_command == "current":
-        return {"workspace": cfg.workspace.__dict__, "data": cfg.workspace.__dict__}
+        view = legacy_workspace_view(cfg)
+        return {"workspace": view, "organization": organization_view(cfg), "data": view}
     data = await api_data(cfg, "GET", "/agent-cli/whoami")
     workspaces = data.get("workspaces") or []
     if args.workspace_command == "list":
-        sync_current_workspace_from_whoami(cfg, data)
-        return {"data": {"workspaces": workspaces}, "workspace": cfg.workspace.__dict__}
+        sync_current_organization_from_whoami(cfg, data)
+        return {
+            "data": {"workspaces": workspaces},
+            "workspace": legacy_workspace_view(cfg),
+            "organization": organization_view(cfg),
+        }
     selected = None
     for workspace in workspaces:
         if args.id and workspace.get("id") == args.id:
@@ -369,38 +568,37 @@ async def dispatch_workspace(args: argparse.Namespace, cfg: Config) -> dict[str,
             break
     if selected is None:
         raise RuntimeError("not_found: workspace is not available to the current credential")
-    cfg.workspace = WorkspaceState(
-        id=selected.get("id"),
-        name=selected.get("name"),
-        organization_id=selected.get("organization_id"),
-        organization_name=selected.get("organization_name"),
+    if not selected.get("organization_id"):
+        raise RuntimeError("not_found: the workspace's organization is unknown; use `museoncli org select`")
+    cfg.organization = OrganizationState(
+        id=selected.get("organization_id"), name=selected.get("organization_name")
     )
     save_config(cfg)
-    return {"workspace": selected, "data": selected}
+    return {"workspace": selected, "organization": organization_view(cfg), "data": selected}
 
 
-def sync_current_workspace_from_whoami(cfg: Config, data: dict[str, Any]) -> bool:
-    current_id = cfg.workspace.id
-    if not current_id:
+def sync_current_organization_from_whoami(cfg: Config, data: dict[str, Any]) -> bool:
+    """Refresh the selected organization's name, or adopt a 0.22 workspace's organization."""
+    organizations, _ = organizations_from_whoami(data)
+    by_id = {row["id"]: row for row in organizations}
+    next_organization: OrganizationState | None = None
+    if cfg.organization.id:
+        row = by_id.get(cfg.organization.id)
+        if row is not None:
+            next_organization = OrganizationState(id=row["id"], name=row.get("name"))
+    elif cfg.legacy_workspace_id:
+        for workspace in data.get("workspaces") or []:
+            if not isinstance(workspace, dict) or workspace.get("id") != cfg.legacy_workspace_id:
+                continue
+            row = by_id.get(workspace.get("organization_id") or "")
+            if row is not None:
+                next_organization = OrganizationState(id=row["id"], name=row.get("name"))
+            break
+    if next_organization is None or next_organization == cfg.organization:
         return False
-    workspaces = data.get("workspaces")
-    if not isinstance(workspaces, list):
-        return False
-    for raw in workspaces:
-        if not isinstance(raw, dict) or raw.get("id") != current_id:
-            continue
-        next_workspace = WorkspaceState(
-            id=raw.get("id"),
-            name=raw.get("name"),
-            organization_id=raw.get("organization_id"),
-            organization_name=raw.get("organization_name"),
-        )
-        if next_workspace == cfg.workspace:
-            return False
-        cfg.workspace = next_workspace
-        save_config(cfg)
-        return True
-    return False
+    cfg.organization = next_organization
+    save_config(cfg)
+    return True
 
 
 async def api_data(
@@ -439,7 +637,7 @@ async def download_api_file(
     url = f"{cfg.api_base_url.rstrip('/')}{path}"
     async with httpx.AsyncClient(timeout=None) as client:
         async with client.stream(
-            "GET", url, headers=_request_headers(cfg), params=params
+            "GET", url, headers=_request_headers(cfg), params=_without_unset_workspace(params)
         ) as response:
             if response.status_code >= 400:
                 await response.aread()
@@ -447,6 +645,8 @@ async def download_api_file(
                     raise RuntimeError("unauthorized")
                 if response.status_code == 403:
                     raise RuntimeError(forbidden_error_message(response))
+                if response.status_code == 426:
+                    raise cli_outdated_error(response)
                 raise ApiRequestError(response.status_code, response_error_payload(response))
             content_type = response.headers.get("content-type", "").split(";", 1)[0].lower()
             if content_type not in (allowed_content_types or {
@@ -490,7 +690,8 @@ async def _api_request(
     if not auth_headers(cfg):
         raise RuntimeError("missing_auth")
     response = await _api_send(
-        cfg, method, url, json_body=json_body, params=params,
+        cfg, method, url, json_body=_without_unset_workspace(json_body),
+        params=_without_unset_workspace(params),
         **({"idempotency_key": idempotency_key} if idempotency_key is not None else {}),
     )
     if response.status_code == 401:
@@ -498,7 +699,7 @@ async def _api_request(
     if response.status_code == 403:
         raise RuntimeError(forbidden_error_message(response))
     if response.status_code == 426:
-        raise RuntimeError(f"cli_outdated: {response.text[:500]}")
+        raise cli_outdated_error(response)
     if response.status_code >= 400:
         raise ApiRequestError(response.status_code, response_error_payload(response))
     if response.status_code == 204:
@@ -546,7 +747,17 @@ def _request_headers(cfg: Config) -> dict[str, str]:
     command_name = _ACTIVE_COMMAND_NAME.get()
     if headers and command_name:
         headers["X-Museon-CLI-Command"] = command_name
+    organization_id = _ACTIVE_ORGANIZATION_ID.get()
+    if headers and organization_id:
+        headers[ORGANIZATION_HEADER] = organization_id
     return headers
+
+
+def _without_unset_workspace(values: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Leave out an unset workspace_id: the server resolves it from the organization."""
+    if isinstance(values, dict) and "workspace_id" in values and not values["workspace_id"]:
+        return {key: value for key, value in values.items() if key != "workspace_id"}
+    return values
 
 
 async def api_data_v2(
@@ -577,8 +788,46 @@ def api_version_base_url(cfg: Config, *, version: str) -> str:
     return f"{base}/api/{version}"
 
 
-def workspace_id_arg_or_selected(args: argparse.Namespace, cfg: Config) -> str | None:
-    return getattr(args, "workspace_id", None) or cfg.workspace.id
+def workspace_id_arg(args: argparse.Namespace) -> str | None:
+    """The deprecated --workspace-id, when given. A selected workspace is no longer a default."""
+    return getattr(args, "workspace_id", None) or None
+
+
+def organization_id_arg(args: argparse.Namespace, arguments: dict[str, Any]) -> str | None:
+    """--organization-id (or organization_id in --args-json); it never travels in a body."""
+    value = getattr(args, "organization_id", None) or arguments.pop("organization_id", None)
+    if value is None:
+        return None
+    _validate_uuid_value("organization_id", value)
+    return str(value)
+
+
+def envelope_organization(
+    cfg: Config, organization_id: str | None
+) -> dict[str, Any] | None:
+    """The organization a command addressed, for the envelope's ``organization`` key."""
+    if organization_id and organization_id != cfg.organization.id:
+        return {"id": organization_id, "name": None}
+    return organization_view(cfg)
+
+
+def with_organization_key(result: Any, organization: dict[str, Any] | None) -> Any:
+    """Put ``organization`` right after the envelope's ``workspace`` key (kept until 1.0)."""
+    if not isinstance(result, dict) or "workspace" not in result or "organization" in result:
+        return result
+    if organization is None:
+        workspace = result.get("workspace")
+        if isinstance(workspace, dict) and workspace.get("organization_id"):
+            organization = {
+                "id": workspace.get("organization_id"),
+                "name": workspace.get("organization_name"),
+            }
+    output: dict[str, Any] = {}
+    for key, value in result.items():
+        output[key] = value
+        if key == "workspace":
+            output["organization"] = organization
+    return output
 
 
 # Museon resource IDs are always canonical UUIDs, but agent-driven callers have
@@ -678,7 +927,7 @@ def validate_uuid_arguments(arguments: dict[str, Any]) -> None:
 async def upload_media_file(
     cfg: Config,
     *,
-    workspace_id: str,
+    workspace_id: str | None,
     arguments: dict[str, Any],
 ) -> Any:
     media_type = str(arguments.get("media_type") or "image")
@@ -687,7 +936,7 @@ async def upload_media_file(
         raise RuntimeError(f"media file not found: {path}")
     content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
     form_data = {
-        "workspace_id": workspace_id,
+        **({"workspace_id": workspace_id} if workspace_id else {}),
         **{
             key: str(value)
             for key in ("title", "description")
@@ -709,6 +958,8 @@ async def upload_media_file(
         raise RuntimeError("unauthorized")
     if response.status_code == 403:
         raise RuntimeError(forbidden_error_message(response))
+    if response.status_code == 426:
+        raise cli_outdated_error(response)
     if response.status_code >= 400:
         raise ApiRequestError(response.status_code, response_error_payload(response))
     receipt = response.json()
@@ -733,14 +984,12 @@ async def upload_artifact_file(
     workspace_id: str | None,
     arguments: dict[str, Any],
 ) -> Any:
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     path = Path(str(arguments.get("file") or "")).expanduser()
     if not path.is_file():
         raise RuntimeError(f"artifact file not found: {path}")
     content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
     private_media_file = arguments.get("media_type") == "file"
-    form_data: dict[str, str] = {"workspace_id": workspace_id}
+    form_data: dict[str, str] = {"workspace_id": workspace_id} if workspace_id else {}
     if private_media_file:
         form_data["file_id"] = str(arguments["file_id"])
     else:
@@ -785,6 +1034,8 @@ async def upload_artifact_file(
         raise RuntimeError("unauthorized")
     if response.status_code == 403:
         raise RuntimeError(forbidden_error_message(response))
+    if response.status_code == 426:
+        raise cli_outdated_error(response)
     if response.status_code >= 400:
         raise RuntimeError(f"HTTP {response.status_code}: {response.text[:500]}")
     payload = response.json()
@@ -835,6 +1086,8 @@ def clear_expired_pending_web_approval(cfg: Config) -> None:
 def reason_from_exception(exc: Exception) -> str:
     if isinstance(exc, UsageError):
         return "usage_error"
+    if isinstance(exc, CliOutdatedError):
+        return "cli_outdated"
     if isinstance(exc, ApiRequestError):
         if exc.status_code in {400, 422}:
             return "invalid_input"
@@ -899,6 +1152,10 @@ def error_envelope(exc: Exception, *, command: str | None) -> tuple[dict[str, An
         error["http_status"] = exc.status_code
     if isinstance(detail, dict) and isinstance(detail.get("code"), str) and detail["code"]:
         error["server_code"] = detail["code"]
+        if detail["code"] in _SERVER_CODE_MESSAGES and not detail.get("message"):
+            error["message"] = _SERVER_CODE_MESSAGES[detail["code"]]
+    if isinstance(exc, CliOutdatedError):
+        error["hint"] = exc.detail.get("install_hint")
     error["retryable"] = reason in _RETRYABLE_REASONS
     payload: dict[str, Any] = {
         "ok": False,
@@ -935,16 +1192,36 @@ def _error_message(detail: Any) -> str:
     return str(detail)
 
 
-def deprecation_notice(args: argparse.Namespace) -> str | None:
-    """Warn when a command was invoked through a name it answered to before a rename."""
+_WORKSPACE_COMMAND_REPLACEMENTS = {
+    "list": "museoncli org list",
+    "current": "museoncli org current",
+    "select": "museoncli org select --id <organization-id>",
+}
+
+
+def deprecation_notices(args: argparse.Namespace) -> list[str]:
+    """Warn when a command was invoked through a name or flag it is moving away from."""
+    notices: list[str] = []
     legacy = getattr(args, "legacy_invocation", None)
     command = getattr(args, "domain_command", None)
-    if not legacy or not command:
-        return None
-    return (
-        f"`{legacy}` is deprecated and will be removed; use "
-        f"`{get_command_spec(command).cli_path}` (same inputs and output)."
-    )
+    if legacy and command:
+        notices.append(
+            f"`{legacy}` is deprecated and will be removed; use "
+            f"`{get_command_spec(command).cli_path}` (same inputs and output)."
+        )
+    if getattr(args, "command", None) == "workspace":
+        subcommand = getattr(args, "workspace_command", None) or "list"
+        notices.append(
+            f"`museoncli workspace {subcommand}` is deprecated; use "
+            f"`{_WORKSPACE_COMMAND_REPLACEMENTS.get(subcommand, 'museoncli org')}`. "
+            "MuseOn has organizations only; a workspace selects its organization."
+        )
+    if command and getattr(args, "workspace_id", None):
+        notices.append(
+            "--workspace-id is deprecated; commands act in the selected organization "
+            "(`museoncli org select`) or --organization-id."
+        )
+    return notices
 
 
 def invoked_command_name(args: argparse.Namespace) -> str | None:
@@ -955,7 +1232,7 @@ def invoked_command_name(args: argparse.Namespace) -> str | None:
     command = getattr(args, "command", None)
     if not command:
         return None
-    for attribute in ("auth_command", "workspace_command", "config_command"):
+    for attribute in ("auth_command", "org_command", "workspace_command", "config_command"):
         subcommand = getattr(args, attribute, None)
         if subcommand:
             return f"{command}.{subcommand}"
@@ -1015,13 +1292,15 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
     arguments = command_payload(args)
     # HireAICreator validates declared UUID fields in its strict recursive schema.
     # Its account_id is an API string, and public collection tokens are not UUIDs.
+    organization_id = organization_id_arg(args, arguments)
     if spec.domain.value not in {"hireaicreator", "cloud-phone"}:
         validate_uuid_arguments(arguments)
-    workspace_id = workspace_id_arg_or_selected(args, cfg)
+    workspace_id = workspace_id_arg(args)
     if spec.domain.value == "hireaicreator":
         workspace_id = (arguments.get("workspace_id") or workspace_id) if "workspace_id" in spec.input_schema["properties"] else None
-    if not spec.workspace_bound:
+    if not spec.organization_bound:
         workspace_id = None
+    organization = envelope_organization(cfg, organization_id)
     dry_run = bool(getattr(args, "dry_run", False))
     if dry_run and not spec.dry_run_reads_server:
         if spec.domain.value == "cloud-phone":
@@ -1030,10 +1309,14 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
             arguments = redact(arguments)
         if spec.schema_name.startswith("skills."):
             dry_run_workspace_id = workspace_id if spec.schema_name == "skills.create" else None
-            return domain_command_dry_run_envelope(
-                spec.schema_name, dry_run_workspace_id, arguments
+            return with_organization_key(
+                domain_command_dry_run_envelope(spec.schema_name, dry_run_workspace_id, arguments),
+                organization,
             )
-        return domain_command_dry_run_envelope(spec.schema_name, workspace_id, arguments)
+        return with_organization_key(
+            domain_command_dry_run_envelope(spec.schema_name, workspace_id, arguments),
+            organization,
+        )
     if spec.requires_confirmation and not dry_run and not getattr(args, "yes", False):
         raise RuntimeError("confirmation_required")
     executor = command_executor(spec.schema_name)
@@ -1045,6 +1328,7 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
             args=args,
             arguments=page_arguments,
             workspace_id=workspace_id,
+            organization_id=organization_id or cfg.organization.id,
             api_data=api_data,
             api_data_v2=api_data_v2,
             upload_media_file=upload_media_file,
@@ -1054,17 +1338,19 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
         return await executor(ctx)
 
     command_token = _ACTIVE_COMMAND_NAME.set(spec.schema_name)
+    organization_token = _ACTIVE_ORGANIZATION_ID.set(organization_id)
     try:
         if getattr(args, "all", False):
-            return await collect_all_pages(run, arguments)
+            return with_organization_key(await collect_all_pages(run, arguments), organization)
         result = await run(arguments)
     finally:
+        _ACTIVE_ORGANIZATION_ID.reset(organization_token)
         _ACTIVE_COMMAND_NAME.reset(command_token)
     if isinstance(result, dict) and "page_info" not in result:
         info = page_info(result)
         if info:
             result["page_info"] = info
-    return result
+    return with_organization_key(result, organization)
 
 
 if __name__ == "__main__":

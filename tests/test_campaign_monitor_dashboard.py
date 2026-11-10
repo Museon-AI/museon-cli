@@ -11,7 +11,7 @@ import httpx
 import pytest
 
 import museoncli.main as cli
-from museoncli.config import AuthState, Config, WorkspaceState
+from museoncli.config import AuthState, Config, OrganizationState
 
 W = "40000000-0000-4000-8000-000000000004"
 COLLECTION = "10000000-0000-4000-8000-000000000001"
@@ -30,7 +30,7 @@ def server(monkeypatch):
         "load_config",
         lambda: Config(
             api_base_url="https://api.example.test/api/v1",
-            workspace=WorkspaceState(id=W),
+            organization=OrganizationState(id="org-1", name="MuseOn"),
             auth=AuthState(api_key="test-key"),
         ),
     )
@@ -41,6 +41,14 @@ def server(monkeypatch):
             return httpx.Response(200, json={"id": CAMPAIGN, "campaign_type": "ugc"})
         if request.url.path == "/api/v2/ugc/agency/me":
             return httpx.Response(200, json=state["agency"])
+        if request.url.path == "/api/v1/agent-cli/whoami":
+            return httpx.Response(
+                200,
+                json={
+                    "organizations": [{"id": "org-1", "name": "MuseOn", "default_workspace_id": W}],
+                    "default_organization_id": "org-1",
+                },
+            )
         return httpx.Response(200, json={"items": [], "next_cursor": None})
 
     monkeypatch.setattr(
@@ -257,11 +265,14 @@ def test_a_login_off_the_agency_team_is_refused_before_any_agency_read(server):
     assert [r.url.path for r in server["requests"]] == ["/api/v2/ugc/agency/me"]
 
 
-def test_payments_read_the_selected_workspace(server):
+def test_payments_read_the_organizations_default_workspace(server):
+    """The payments route still takes a workspace: the organization's default one."""
     run("payment", "+list", "--bucket", "pending-approval")
 
-    (request,) = server["requests"]
+    whoami, request = server["requests"]
+    assert whoami.url.path == "/api/v1/agent-cli/whoami"
     assert request.url.path == "/api/v2/ugc/payments"
+    assert request.headers["X-Organization-Id"] == "org-1"
     assert query(request) == {"workspace_id": [W], "bucket": ["pending_approval"], "limit": ["50"]}
 
 

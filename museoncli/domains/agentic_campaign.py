@@ -507,7 +507,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=domain,
             shortcut="+members-reconcile",
-            required_roles=("workspace_admin_or_staff",),
+            required_roles=("organization_admin_or_staff",),
             resource="plan",
             summary=(
                 "Atomically reconcile a Plan's managed accounts and matching Plan budget. "
@@ -710,7 +710,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=domain,
             shortcut="+campaign-create",
-            summary="Create an Agentic Creative Campaign in the selected workspace. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward.",
+            summary="Create an Agentic Creative Campaign in the selected organization. Confirm the intent (name, total budget, planned persona count) with the operator before creating, and report the campaign link back afterward.",
             risk_level="write",
             execution="direct",
             adapter_tool_name="agentic_campaign_campaign_create",
@@ -823,7 +823,7 @@ def specs() -> list[CommandSpec]:
                     "persona_id": {
                         "type": ["string", "null"],
                         "format": "uuid",
-                        "description": "Existing workspace persona to bind",
+                        "description": "Existing organization persona to bind",
                     },
                     "name": {"type": "string", "minLength": 1, "maxLength": 160},
                     "account_budget": {"type": "integer", "minimum": 0},
@@ -915,7 +915,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=domain,
             shortcut="+list",
-            summary="List Agentic Creative Campaign summaries in the selected workspace.",
+            summary="List Agentic Creative Campaign summaries in the selected organization.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="agentic_campaign_list",
@@ -1086,7 +1086,7 @@ async def _locate_plan(ctx: CommandContext) -> tuple[str, dict[str, Any], dict[s
         for plan in detail.get("agentic_persona_plans") or []:
             if isinstance(plan, dict) and str(plan.get("id") or "") == plan_id:
                 return campaign_id, plan, detail
-    raise ValueError("Plan is not a member of the selected Campaign and workspace")
+    raise ValueError("Plan is not a member of the selected Campaign and organization")
 
 
 async def _execute_list(ctx: CommandContext) -> Any:
@@ -1671,7 +1671,7 @@ def _supply_spec() -> CommandSpec:
         ),
         examples=[],
         supports_dry_run=True,
-        required_roles=("workspace_admin_or_staff",),
+        required_roles=("organization_admin_or_staff",),
         add_arguments=_add_supply_arguments,
         build_arguments=_build_supply_arguments,
     )
@@ -1759,7 +1759,7 @@ def _account_control_spec() -> CommandSpec:
         examples=[],
         supports_dry_run=True,
         requires_confirmation=True,
-        required_roles=("workspace_admin_or_staff",),
+        required_roles=("organization_admin_or_staff",),
         add_arguments=_add_account_control_arguments,
         build_arguments=_build_account_control_arguments,
     )
@@ -1880,13 +1880,17 @@ def _managed_enveloped(fn, *, redact_api_errors: bool = True):
             returned_campaign.get("id") if isinstance(returned_campaign, dict) else None
         )
         plan_id = ctx.arguments.get("plan_id")
+        # The admin page still takes a workspace: the one the server answered with.
+        page_workspace_id = ctx.workspace_id or (
+            returned_campaign.get("workspace_id") if isinstance(returned_campaign, dict) else None
+        )
         if campaign_id and plan_id:
             path = f"/admin/account-ops-lab/experiment-brain/{quote(str(campaign_id), safe='')}/plans/{quote(str(plan_id), safe='')}/review"
             response["web_url"] = (
                 ctx.cfg.site_url.rstrip("/")
                 + path
                 + "?"
-                + urlencode({"workspace_id": ctx.workspace_id or ""})
+                + urlencode({"workspace_id": page_workspace_id or ""})
             )
         elif campaign_id:
             response["web_url"] = (
@@ -1896,7 +1900,7 @@ def _managed_enveloped(fn, *, redact_api_errors: bool = True):
                     {
                         "surface": "session-operations",
                         "campaign": campaign_id,
-                        "workspace_id": ctx.workspace_id or "",
+                        "workspace_id": page_workspace_id or "",
                     }
                 )
             )

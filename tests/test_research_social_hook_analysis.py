@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from museoncli import main as main_module
-from museoncli.config import Config, WorkspaceState
+from museoncli.config import Config, OrganizationState
 from museoncli.domains import command_payload, schema_payload
 
 ANALYSIS_ID = "11111111-1111-4111-8111-111111111111"
@@ -19,7 +19,7 @@ def _parse(argv: list[str]):
 
 def _config() -> Config:
     cfg = Config()
-    cfg.workspace = WorkspaceState(id="workspace-1", name="Workspace", organization_id="org-1")
+    cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     return cfg
 
 
@@ -342,7 +342,7 @@ def test_results_uses_stable_pagination_query(monkeypatch: pytest.MonkeyPatch) -
         {
             "method": "GET",
             "path": f"/agent-cli/research/social-media-hook-analyze/{ANALYSIS_ID}/results",
-            "params": {"workspace_id": "workspace-1", "page": 2, "page_size": 10},
+            "params": {"workspace_id": None, "page": 2, "page_size": 10},
         }
     ]
 
@@ -382,7 +382,7 @@ def test_media_get_atomically_writes_video(monkeypatch: pytest.MonkeyPatch, tmp_
             "path": (
                 f"/agent-cli/research/social-media-hook-analyze/{ANALYSIS_ID}/items/{ITEM_ID}/media"
             ),
-            "params": {"workspace_id": "workspace-1"},
+            "params": {"workspace_id": None},
             "max_bytes": 30 * 1024 * 1024,
         }
     ]

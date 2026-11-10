@@ -188,7 +188,7 @@ def specs() -> list[CommandSpec]:
             domain=Domain.CAMPAIGN_MONITOR,
             shortcut="+get-creator",
             legacy_shortcuts=("+creator-get",),
-            summary="Read one workspace-visible social account profile from Museon's store.",
+            summary="Read one organization-visible social account profile from Museon's store.",
             risk_level="read",
             execution="direct",
             adapter_tool_name="social_media_creator_get",
@@ -205,7 +205,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+list-posts",
             legacy_shortcuts=("+post-list",),
             summary=(
-                "List Museon-synced posts for one workspace-visible social account; "
+                "List Museon-synced posts for one organization-visible social account; "
                 "not a live platform-history fetch."
             ),
             risk_level="read",
@@ -227,7 +227,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+get-creator-performance",
             legacy_shortcuts=("+creator-performance-get",),
             summary=(
-                "Read local synced performance history for one workspace-visible social account."
+                "Read local synced performance history for one organization-visible social account."
             ),
             risk_level="read",
             execution="direct",
@@ -304,8 +304,6 @@ async def _execute_creator_get(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     creator_id = str(arguments.get("creator_id") or "")
     return agent_domain_result(
         await api_data(
@@ -322,8 +320,6 @@ async def _execute_creator_performance_get(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     creator_id = str(arguments.get("creator_id") or "")
     return agent_domain_result(
         await api_data(
@@ -347,8 +343,6 @@ async def _execute_post_get(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     content_id = str(arguments.get("content_id") or "")
     return agent_domain_result(
         await api_data(
@@ -365,8 +359,6 @@ async def _execute_post_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     creator_id = str(arguments.get("creator_id") or "")
     return agent_domain_result(
         await api_data(
@@ -389,8 +381,6 @@ async def _execute_post_performance_get(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     content_id = str(arguments.get("content_id") or "")
     return agent_domain_result(
         await api_data(
@@ -414,8 +404,6 @@ async def _execute_post_resolve(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    if not workspace_id:
-        raise RuntimeError("missing_workspace")
     schedule_item_id = str(arguments.get("schedule_item_id") or "")
     return agent_domain_result(
         await api_data(

@@ -1331,7 +1331,7 @@ def specs() -> list[CommandSpec]:
             legacy_shortcuts=("+social-media-hook-source",),
             summary=(
                 "Submit Agent-prefiltered Instagram Hook candidates, recheck "
-                "workspace-scoped duplicates, and start the existing durable analysis batch."
+                "organization-scoped duplicates, and start the existing durable analysis batch."
             ),
             risk_level="write",
             execution="async_run",
@@ -1356,7 +1356,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+check-hooks-analyzed",
             legacy_shortcuts=("+social-media-hook-analyze-seen",),
             summary=(
-                "Check up to 40 Instagram post URLs against prior workspace-scoped "
+                "Check up to 40 Instagram post URLs against prior organization-scoped "
                 "Social Media Hook analyses."
             ),
             risk_level="read",
@@ -1364,7 +1364,7 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="social_media_hook_analyze_seen",
             input_schema=_social_hook_analyze_seen_input_schema(),
             output_schema=_direct_output_schema(
-                "Workspace-scoped seen status for each supplied Instagram post URL."
+                "Organization-scoped seen status for each supplied Instagram post URL."
             ),
             examples=[
                 (
@@ -1433,7 +1433,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+get-hook-analysis-media",
             legacy_shortcuts=("+social-media-hook-analyze-media-get",),
             summary=(
-                "Download one workspace-scoped temporary source video from a Social Media "
+                "Download one organization-scoped temporary source video from a Social Media "
                 "Hook analysis item without exposing a signed URL."
             ),
             risk_level="read",
@@ -1621,8 +1621,6 @@ _RESEARCH_PATHS = {
 
 
 async def _execute_research(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
@@ -1634,8 +1632,6 @@ async def _execute_research(ctx: CommandContext) -> Any:
 
 
 async def _execute_creative_search_ads(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
@@ -1647,8 +1643,6 @@ async def _execute_creative_search_ads(ctx: CommandContext) -> Any:
 
 
 async def _execute_social_hook_analyze(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
@@ -1660,8 +1654,6 @@ async def _execute_social_hook_analyze(ctx: CommandContext) -> Any:
 
 
 async def _execute_social_hook_source(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
@@ -1673,8 +1665,6 @@ async def _execute_social_hook_source(ctx: CommandContext) -> Any:
 
 
 async def _execute_social_hook_analyze_seen(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
@@ -1686,8 +1676,6 @@ async def _execute_social_hook_analyze_seen(ctx: CommandContext) -> Any:
 
 
 async def _execute_social_hook_get(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     analysis_id = ctx.arguments["analysis_id"]
     return agent_domain_result(
         await ctx.api_data(
@@ -1700,8 +1688,6 @@ async def _execute_social_hook_get(ctx: CommandContext) -> Any:
 
 
 async def _execute_social_hook_poll(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
@@ -1713,8 +1699,6 @@ async def _execute_social_hook_poll(ctx: CommandContext) -> Any:
 
 
 async def _execute_social_hook_results(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     analysis_id = ctx.arguments["analysis_id"]
     params = {
         "workspace_id": ctx.workspace_id,
@@ -1731,8 +1715,6 @@ async def _execute_social_hook_results(ctx: CommandContext) -> Any:
 
 
 async def _execute_social_hook_media_get(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     if ctx.download_api_file is None:
         raise RuntimeError("download_transport_unavailable")
     destination = Path(str(ctx.arguments["output"])).expanduser().resolve()
@@ -1768,8 +1750,6 @@ async def _execute_social_hook_media_get(ctx: CommandContext) -> Any:
 
 
 async def _execute_creative_search_ads_get(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     task_id = ctx.arguments["task_id"]
     return agent_domain_result(
         await ctx.api_data(
@@ -1782,8 +1762,6 @@ async def _execute_creative_search_ads_get(ctx: CommandContext) -> Any:
 
 
 async def _execute_creative_search_ads_results(ctx: CommandContext) -> Any:
-    if not ctx.workspace_id:
-        raise RuntimeError("missing_workspace")
     task_id = ctx.arguments["task_id"]
     params = {
         "workspace_id": ctx.workspace_id,
