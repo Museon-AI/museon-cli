@@ -126,7 +126,7 @@ def _install(release: dict[str, Any], latest: str, prefix: Path, bin_dir: Path) 
     if not uv:
         raise RuntimeError("cli_update_failed: uv is required to upgrade this installation")
     env = {**os.environ, "UV_TOOL_DIR": str(prefix.parent), "UV_TOOL_BIN_DIR": str(bin_dir)}
-    print(f"Museon CLI: upgrading {__version__} → {latest}…", file=sys.stderr)
+    print(f"Museon CLI: upgrading {__version__} -> {latest}...", file=sys.stderr)
     try:
         # uv tool install does not enforce URL hash fragments. Verify the exact
         # bytes ourselves, then install that file (not a second network fetch).
@@ -159,12 +159,14 @@ def _install(release: dict[str, Any], latest: str, prefix: Path, bin_dir: Path) 
                 str(verified),
                 "--force",
                 "--python",
-                str(Path(sys.executable).resolve()),
+                str(Path(getattr(sys, "_base_executable", None) or sys.executable).resolve()),
             ],
             env=env,
             check=True,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=120,
         )
         installed = subprocess.run(
@@ -176,6 +178,8 @@ def _install(release: dict[str, Any], latest: str, prefix: Path, bin_dir: Path) 
             check=True,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=10,
         ).stdout.strip()
         if installed != latest:

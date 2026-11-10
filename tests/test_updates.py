@@ -93,7 +93,7 @@ def test_default_upgrade_verifies_wheel_then_restarts_original_argv(tool, monkey
     assert kwargs["capture_output"] is True
     captured = capsys.readouterr()
     assert not captured.out
-    assert f"{CURRENT} → {LATEST}" in captured.err
+    assert f"{CURRENT} -> {LATEST}" in captured.err
 
 
 @pytest.mark.parametrize("failure", ["install", "timeout", "wrong_version"])

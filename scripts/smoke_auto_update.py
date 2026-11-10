@@ -91,7 +91,11 @@ if importlib.util.find_spec("museoncli"):
             assert Path(command[3]).read_bytes() == wheel.read_bytes()
             with open({str(counter)!r}, "a") as output:
                 output.write("install\\n")
-        return original(command, **kwargs)
+        try:
+            return original(command, **kwargs)
+        except subprocess.CalledProcessError as exc:
+            # Only synthetic local inputs are used by this smoke test.
+            raise AssertionError("synthetic installer failed: " + str(exc.stderr)) from exc
     subprocess.run = run
 """,
             encoding="utf-8",
