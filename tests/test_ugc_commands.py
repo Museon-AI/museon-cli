@@ -238,26 +238,28 @@ def _campaign(campaign_id: str, campaign_type: str, status: str) -> dict[str, An
 
 
 @pytest.mark.parametrize(
-    ("status", "query", "expected"),
+    ("status", "query", "items", "expected"),
     [
-        (None, {"limit": 50}, ["ugc-active", "ugc-archived"]),
-        ("active", {"limit": 50}, ["ugc-active"]),
-        ("archived", {"limit": 50, "archived": True}, ["ugc-archived"]),
+        (None, {"campaign_type": "ugc", "limit": 50}, ["active", "paused"], ["c-active", "c-paused"]),
+        ("active", {"campaign_type": "ugc", "limit": 50}, ["active", "paused"], ["c-active"]),
+        (
+            "archived",
+            {"campaign_type": "ugc", "limit": 50, "archived": True},
+            ["archived"],
+            ["c-archived"],
+        ),
     ],
 )
-def test_campaign_list_reads_the_organization_route_and_keeps_ugc_meaning(
+def test_campaign_list_reads_the_organization_route(
     monkeypatch: pytest.MonkeyPatch,
     status: str | None,
     query: dict[str, Any],
+    items: list[str],
     expected: list[str],
 ) -> None:
-    """The organization route lists every type with no status filter; the command keeps both."""
+    """The server filters the type and live vs archived; the command keeps --status."""
     page = {
-        "items": [
-            _campaign("ugc-active", "ugc", "active"),
-            _campaign("tracking", "tracking", "active"),
-            _campaign("ugc-archived", "ugc", "archived"),
-        ],
+        "items": [_campaign(f"c-{state}", "ugc", state) for state in items],
         "next_cursor": "next",
     }
     workbench = _Workbench({("GET", "/ugc/organizations/org-1/campaigns"): page})

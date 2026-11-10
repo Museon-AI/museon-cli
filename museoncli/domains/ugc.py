@@ -328,24 +328,23 @@ async def _execute_campaign_list(ctx: CommandContext) -> Any:
         f"/organizations/{ctx.organization_id}/campaigns",
         compact_params(
             {
+                "campaign_type": "ugc",
                 "cursor": args.get("cursor"),
                 "limit": args.get("page_size"),
+                # The route lists live campaigns, or archived ones instead of them.
                 "archived": True if status == "archived" else None,
             }
         ),
     )
-    # The organization route lists every campaign type and has no status filter;
-    # keep this command's meaning. A page can come back shorter than its limit,
-    # next_cursor still pages on.
-    if isinstance(page, dict) and isinstance(page.get("items"), list):
+    # The route has no status filter (draft/active/...); keep --status on the client.
+    # A filtered page can be shorter than its limit; next_cursor still pages on.
+    if status and isinstance(page, dict) and isinstance(page.get("items"), list):
         page = {
             **page,
             "items": [
                 item
                 for item in page["items"]
-                if isinstance(item, dict)
-                and item.get("campaign_type") == "ugc"
-                and (status is None or item.get("status") == status)
+                if isinstance(item, dict) and item.get("status") == status
             ],
         }
     return page
