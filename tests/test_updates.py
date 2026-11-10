@@ -278,3 +278,22 @@ def test_corrupt_download_cannot_replace_installed_tool(tool, monkeypatch):
     with pytest.raises(RuntimeError, match="SHA-256 did not match"):
         updates.ensure_latest(["health"])
     assert not list((tool[0].parent / ".museoncli-wheels").glob("*.whl"))
+
+
+@pytest.mark.parametrize("installed", [True, False])
+def test_windows_launchers_restore_on_failure_or_keep_new_files(tmp_path, monkeypatch, installed):
+    monkeypatch.setattr(updates.sys, "platform", "win32")
+    for name in ("museon.exe", "museoncli.exe"):
+        (tmp_path / name).write_bytes(b"old")
+    try:
+        with updates._windows_launchers(tmp_path):
+            assert not (tmp_path / "museon.exe").exists()
+            if not installed:
+                raise RuntimeError("synthetic installer failure")
+            for name in ("museon.exe", "museoncli.exe"):
+                (tmp_path / name).write_bytes(b"new")
+    except RuntimeError:
+        assert not installed
+    for name in ("museon.exe", "museoncli.exe"):
+        assert (tmp_path / name).read_bytes() == (b"new" if installed else b"old")
+    assert not list(tmp_path.glob(".museoncli-old-*"))
