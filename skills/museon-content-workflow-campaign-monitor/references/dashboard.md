@@ -1,11 +1,11 @@
 # Campaign Dashboard reads
 
 Every command below takes `--id` as `campaign-monitor +list` returns it. The resource
-commands (`campaign +get`, `video +list`, ...) work in any workspace the login can read; the
-selected workspace is only the default for `payment` reads. The flat commands (`+get-summary`,
+commands (`campaign +get`, `video +list`, ...) work in any organization and Campaign the login can read;
+the selected organization is only the default for `payment` reads. The flat commands (`+get-summary`,
 `+get-period-performance`, `+list-content`, `+list-creators`) read only the selected
-workspace's campaigns: pass `--workspace-id` with the campaign's `workspace_id`
-(from `campaign +get` or `agency-campaign +list`).
+organization's campaigns: for another organization's campaign pass `--organization-id` with the
+organization that owns it (from `museoncli org list`, `campaign +get` or `agency-campaign +list`).
 
 ## Both views (Brand View and Agency workbench)
 
@@ -35,7 +35,7 @@ workspace's campaigns: pass `--workspace-id` with the campaign's `workspace_id`
 | Settled payouts | `campaign-monitor payout +list --id <id>` |
 | Operations: enrollments, assignments, creator checks | `campaign-monitor enrollment +list`, `assignment +list`, `creator-check +get` / `+list --kind <kind>` |
 | Activity tab | `campaign-monitor activity +list --id <id>` |
-| Creator payments of a workspace | `campaign-monitor payment +list [--workspace-id <id>]`, `campaign-monitor payment-summary +get` |
+| Creator payments of an organization | `campaign-monitor payment +list [--organization-id <id>]`, `campaign-monitor payment-summary +get` |
 
 ## Scope and windows
 

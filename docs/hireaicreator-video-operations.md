@@ -1,10 +1,11 @@
 # HireAICreator video lifecycle in Codex and Mel
 
 Run `museoncli schema hireaicreator.<resource>-<action>` before constructing an
-operation. For workspace-scoped list/calendar commands pass `--workspace-id`
-every turn. Video/plan ID operations are resource-scoped; their APIs authorize
-membership from the resource itself and accept no workspace argument. Resolve
-the resource in the intended workspace before operating on its exact ID.
+operation. Organization-scoped list/calendar commands use the selected organization; pass
+`--organization-id` every turn when acting in another one. Video/plan ID operations
+are resource-scoped; their APIs authorize access from the resource itself and accept
+no organization argument. Resolve the resource in the intended organization before
+operating on its exact ID.
 Read full `raw_result.path` JSON when output is large and complete pagination.
 
 ## Generate and refine

@@ -25,7 +25,7 @@ When the operator wants daily image posts to continue after Codex closes, use
 The server performs recurring generation, publishing and metrics collection.
 Do not schedule a local Codex loop or use the manual generation path for this intent.
 
-1. Resolve workspace, existing Campaign/Plan, persona and the explicit account
+1. Resolve organization, existing Campaign/Plan, persona and the explicit account
    roster. Do not enroll every account that happens to reference the persona.
 2. Analyze each supplied link/image page by page. Preserve its topic, facts,
    order and page count; mark unreadable text instead of inventing it. Create or

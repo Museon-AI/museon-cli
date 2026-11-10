@@ -2,6 +2,32 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.24.0
+
+MuseOn has organizations only: your organization role and Campaign scope decide what you can see and change. The CLI now addresses an organization instead of a workspace.
+
+- New `museoncli org list | current | select --id <organization-id> | --name <name>`. `org list` returns each organization with your `role` (owner/admin/operator/member), `campaign_scope` (all/chosen) and `is_default`. The selection is stored in `~/.museoncli/config.json` as `organization {id, name}`.
+- Every API request (`/api/v1` and `/api/v2`, uploads and downloads included) carries `X-Organization-Id` for the selected organization. Any domain command takes `--organization-id` to address another organization for one call. The CLI no longer picks a workspace: the server resolves it from the organization. `X-Museon-Workspace-Id` is no longer sent; `X-Museon-Organization-Id` (usage attribution) is unchanged.
+- `whoami` adds `organizations[]`, `default_organization_id` and `default_organization_name`; against an older server the CLI derives them from `workspaces[]`. `auth login` / `auth start` request the selected organization (`requested_organization_id`) and store the approved one.
+- Output envelopes gain an `organization` key next to `workspace`. `workspace` stays until 1.0 but is only set when `--workspace-id` was given.
+- HTTP 426 `cli_outdated` reads the same on every route (agent-cli, `/api/v2`, uploads): `reason: cli_outdated`, a message with the minimum version, and `error.hint` with the upgrade command. HTTP 409 `organization_workspace_mismatch` is explained in `error.message`.
+- Command contract: `authorization.organization_bound` (with a deprecated `workspace_bound` mirror), roles `organization_member` / `organization_admin_or_staff`, resource policy `server_evaluated_organization_and_resource_access`. Every input schema that has `workspace_id` marks it deprecated and adds an optional `organization_id`.
+
+### Migration
+
+| Before (0.23 and earlier) | Now |
+| --- | --- |
+| `museoncli workspace list` | `museoncli org list` |
+| `museoncli workspace current` | `museoncli org current` |
+| `museoncli workspace select --id <workspace-id>` | `museoncli org select --id <organization-id>` |
+| `--workspace-id <workspace-id>` on a command | drop it, or `--organization-id <organization-id>` |
+| envelope `.workspace` | envelope `.organization` |
+
+- `workspace list | current | select` and `--workspace-id` keep working as deprecated aliases until 1.0. Each use prints a one-line notice on stderr and adds it to `warnings`. `workspace select` selects that workspace's organization.
+- The selected workspace is no longer a default. A script that relied on it now acts in the selected organization; pass `--workspace-id` only to keep the old addressing during the transition. A workspace from another organization than the addressed one is refused with 409 `organization_workspace_mismatch` (exit 5).
+- Existing configs migrate on read: a 0.23 `workspace` block selects its organization. The block itself is left untouched so an older CLI can still read the file, but it is never used to address requests. A config written by 0.24 stays readable by 0.22/0.23, which ignore `organization`.
+- Requires the Museon API that accepts `X-Organization-Id` and resolves workspaces from organizations (Museon-AI/museon, organization phase 1). Against an older API, `/agent-cli` commands fall back to the key's default workspace as before; `/api/v2` commands (agentic-campaign, hireaicreator, ugc) need the new API or an explicit `--workspace-id`.
+
 ## 0.23.0
 
 - 官方 `uv tool` 安装默认在执行命令前检查稳定版并自动升级，校验官方 wheel 的 SHA-256，再用新版继续原命令。普通检查缓存 15 分钟，`version` 强制检查并报告状态；并行命令共享升级锁。源码和托管 runtime 由各自发布流程更新。

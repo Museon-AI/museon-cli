@@ -24,7 +24,6 @@ while it is still visible, then immediately run:
 
 ```bash
 museoncli research +check-hooks-analyzed \
-  --workspace-id <workspace-id> \
   --url <canonical-permalink>
 ```
 

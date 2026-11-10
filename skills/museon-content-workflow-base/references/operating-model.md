@@ -4,9 +4,9 @@
 
 Read state before changing it. A user request or existing authorization is sufficient within its stated scope; ask only when a necessary target or authorization is missing. Honor command-specific confirmation requirements and never supply confirmation on the user's behalf. Async work has a returned handle, a matching status command, and server-owned wakeup guidance. A returned `ref` is an opaque presentation object, not a URL template.
 
-Runtime Business Skills are workspace-visible strategy/methodology. List them before strategic, research, audit, review, onboarding, or operating-plan work; load every directly relevant one. Bundled workflow Skills instead teach the host Agent how to operate the CLI.
+Runtime Business Skills are organization-visible strategy/methodology. List them before strategic, research, audit, review, onboarding, or operating-plan work; load every directly relevant one. Bundled workflow Skills instead teach the host Agent how to operate the CLI.
 
-Authentication recovery begins only after `missing_auth`, `unauthorized`, or missing-workspace failure: start browser authorization, show `verification_uri_complete`, wait with `auth finish`, select a workspace when needed, then resume the original task.
+Authentication recovery begins only after `missing_auth`, `unauthorized`, or missing-organization failure: start browser authorization, show `verification_uri_complete`, wait with `auth finish`, select an organization (`museoncli org list`, `museoncli org select`) when needed, then resume the original task.
 
 ## Shortcuts
 

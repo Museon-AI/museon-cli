@@ -44,7 +44,7 @@ https://www.museon.ai/cli/install.md
    并确认 CLI 命令真正可用。
 2. **Museon CLI 安装 Skills。** CLI 会同时安装按任务结果拆分的工作流 Skills 和 Instagram Hook
    调研 Skill；需要登录态浏览时，再单独安装并初始化 ego lite。
-3. **你在浏览器里完成授权。** 登录 Museon，然后选择允许 Agent 使用的工作区。
+3. **你在浏览器里完成授权。** 登录 Museon，然后选择允许 Agent 使用的组织。
 4. **你只需要描述工作。** Agent 会自己找到合适的 Museon 能力并继续完成任务，
    不需要你提供命令。
 
@@ -68,7 +68,24 @@ https://www.museon.ai/cli/install.md
 写入后必须回读所属业务状态，不能把请求成功当成任务完成。
 
 升级前请阅读[迁移说明](docs/cli-2-migration.md)。HireAICreator 业务域已包含在这个未发布候选中。
-后端能力和数据没有随命令面退役而删除；权限仍由后端按用户、工作区和资源检查。
+后端能力和数据没有随命令面退役而删除；权限仍由后端按用户、组织角色和 Campaign 范围检查。
+
+## 从工作区迁移（0.24.0）
+
+MuseOn 不再有工作区概念：访问权限由组织角色加 Campaign 范围决定，CLI 改为选择组织。
+
+| 旧（0.23.x） | 新（0.24.0） |
+| --- | --- |
+| `museoncli workspace list` | `museoncli org list`（含 role、`campaign_scope`、`is_default`） |
+| `museoncli workspace current` | `museoncli org current` |
+| `museoncli workspace select --id <ws>` | `museoncli org select --id <organization-id>` 或 `--name <组织全名>` |
+| 命令上的 `--workspace-id <ws>` | 去掉；单次跨组织调用用 `--organization-id <org>` |
+| 输出信封 `.workspace` | 输出信封 `.organization`（`{id, name}` 或 `null`） |
+
+- 每个请求都携带所选组织的 `X-Organization-Id`；服务端在内部解析工作区，Agent 不再需要工作区 ID。
+- `workspace list|current|select` 与 `--workspace-id` 作为弃用别名保留到 1.0，会在 stderr 打印弃用提示。
+  同时给出来自不同组织的 `--workspace-id` 与 `--organization-id` 会返回 `organization_workspace_mismatch`。
+- `whoami` 新增 `organizations[]`、`default_organization_id`、`default_organization_name`。
 
 ## 重要操作仍由你决定
 
@@ -85,7 +102,7 @@ https://www.museon.ai/cli/install.md
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.23.0/museoncli-0.23.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.24.0/museoncli-0.24.0-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：
@@ -101,7 +118,7 @@ museoncli whoami
 Claude Code 和 Cursor 分别使用 `--agent claude-code`、`--agent cursor`；
 `--agent auto` 会优先识别当前运行的 Agent；没有运行环境标记时，只会在唯一一个
 已有的 Agent 目录中安装。如果检测到多个目录，请明确选择一个 Agent，或使用
-`--agent all`。安装 Skills 后需要重启 Agent。完成授权后，`skills +list` 会列出当前工作区可用的业务 Skill。`auth finish --wait` 默认等待授权最多
+`--agent all`。安装 Skills 后需要重启 Agent。完成授权后，`skills +list` 会列出当前组织可用的业务 Skill。`auth finish --wait` 默认等待授权最多
 五分钟，可以通过 `--timeout` 调整。CLI 可以使用 `museoncli`，也可以使用更短的
 别名 `museon`。
 

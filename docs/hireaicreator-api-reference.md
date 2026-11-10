@@ -2,7 +2,7 @@
 
 基于 Museon API 源码核对；历史受控验收结果见 [验收与覆盖口径](hireaicreator-test-coverage.md)。命令使用 `hireaicreator <resource> +<action>`；v1/v2 是 HTTP API 版本，不是两套 CLI 领域。字段仅以生成 schema 实际暴露的子集为准，不声明完整覆盖后端。沙箱 capability 仅能调用服务端逐项审定的 Actor 创建、候选选择和单视频导出写入路由，并继续接受工作区与资源归属校验。
 
-Q 表示 workspace_id 位于 query，B 表示位于 body，R 表示后端按资源身份鉴权、没有 workspace 参数。R 命令不接受假 workspace override，输出不贴默认工作区标签。JSON 与 flag 的枚举值统一使用 schema 声明的 kebab-case（例如 `real-device`、`fixed-count`），发送 HTTP 时转换为后端 snake_case；字段名保持 snake_case。不要直接复制后端枚举值。JSON 来源互斥，与显式 flag 同字段也报冲突；未知和嵌套未知字段在 dry-run 前拒绝。
+Q 表示 workspace_id 位于 query，B 表示位于 body（后端字段名仍叫 workspace_id；CLI 由所选组织或 `--organization-id` 解析，Agent 不必传 workspace），R 表示后端按资源身份鉴权、没有 workspace 参数。R 命令不接受假的组织/workspace override，输出不贴默认组织标签。JSON 与 flag 的枚举值统一使用 schema 声明的 kebab-case（例如 `real-device`、`fixed-count`），发送 HTTP 时转换为后端 snake_case；字段名保持 snake_case。不要直接复制后端枚举值。JSON 来源互斥，与显式 flag 同字段也报冲突；未知和嵌套未知字段在 dry-run 前拒绝。
 
 | 命令资源/动作 | Method / path | 输入位置 / workspace | 返回与下一阶段 ground truth |
 | --- | --- | --- | --- |
@@ -45,8 +45,8 @@ Q 表示 workspace_id 位于 query，B 表示位于 body，R 表示后端按资�
 
 - Plan 可以使用现有Format或Hook与Demo/Clip规则组合；具体组合约束由服务端preview最终核验。JSON schema的本地校验不是业务preview。
 - Actor可从现有Persona和图片创建，也可先生成候选再明确选入；Persona创建、账号绑定和账号迁移仍不在这些命令范围内。
-- Clip batch幂等身份是workspace+client_key+mapping_version；批次参数不能因重试换身份。没有通用header幂等。
+- Clip batch幂等身份是组织（服务端的workspace_id）+client_key+mapping_version；批次参数不能因重试换身份。没有通用header幂等。
 - 分享固定快照必须先完成video列表分页、显式提供video_ids；动态过滤集合会随时间变化。preview仅支持带scheduled_from/to的日期过滤，拒绝video_ids及test-group/warmup-plan类型；只有统计，不是ID集合。share无通用幂等，超时结果未知就停止依赖写入，不盲重试。
 - 生成/导出用同一操作的Idempotency-Key，冲突不自动改版本重试。回执只证明受理，必须按资源ID回读，并对齐期望video_version/render_revision。
-- 资源绑定接口不接workspace参数；只有Q/B接口才发送工作区。不得把一个workspace的默认选择误作资源权限证明。
+- 资源绑定接口不接workspace参数；只有Q/B接口才发送工作区（由所选组织解析）。不得把所选组织的默认选择误作资源权限证明。
 - 公共集合GET虽服务端无需登录，首版沿用CLI普通APIKey客户端；token只用于指定集合读取，不写入报告或测试生产fixture。
