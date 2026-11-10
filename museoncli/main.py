@@ -160,8 +160,8 @@ def main(*, update: dict[str, Any] | None = None) -> None:
             payload["warnings"] = [deprecation]
         emit(payload)
         raise SystemExit(code) from None
-    if result is not None and args.command == "version" and update is not None:
-        result["data"]["update"] = update
+    if result is not None and args.command == "version":
+        result["data"]["update"] = update or {"status": "managed_externally"}
     if result is not None and deprecation:
         result = {**result, "warnings": [*(result.get("warnings") or []), deprecation]}
     if result is not None:

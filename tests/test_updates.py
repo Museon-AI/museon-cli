@@ -277,3 +277,14 @@ def test_corrupt_download_cannot_replace_installed_tool(tool, monkeypatch):
     with pytest.raises(RuntimeError, match="SHA-256 did not match"):
         updates.ensure_latest(["health"])
     assert not list((tool[0].parent / ".museoncli-wheels").glob("*.whl"))
+
+
+def test_host_wrapper_entrypoint_reports_managed_version(monkeypatch, capsys):
+    from museoncli.config import Config
+
+    monkeypatch.setattr(cli, "load_config", Config)
+    monkeypatch.setattr(cli.sys, "argv", ["museon", "version"])
+    cli.main()
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["data"]["cli_version"] == cli.__version__
+    assert payload["data"]["update"] == {"status": "managed_externally"}
