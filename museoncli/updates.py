@@ -151,13 +151,16 @@ def _install(release: dict[str, Any], latest: str, prefix: Path, bin_dir: Path) 
             if checksum.hexdigest() != digest[7:]:
                 raise RuntimeError("cli_update_failed: release wheel SHA-256 did not match")
             downloaded.replace(verified)
+        # Keep the existing environment: --force recreates it and cannot remove
+        # the running Python executable on Windows.
         subprocess.run(
             [
                 uv,
                 "tool",
                 "install",
                 str(verified),
-                "--force",
+                "--upgrade-package",
+                "museoncli",
                 "--python",
                 str(Path(getattr(sys, "_base_executable", None) or sys.executable).resolve()),
             ],
