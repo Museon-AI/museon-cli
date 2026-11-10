@@ -16,7 +16,6 @@ import tempfile
 import time
 import tomllib
 from typing import Any, Iterator
-from uuid import uuid4
 
 import httpx
 
@@ -114,32 +113,7 @@ def _release() -> dict[str, Any]:
     return release
 
 
-@contextmanager
-def _windows_launchers(bin_dir: Path) -> Iterator[None]:
-    # Windows allows renaming a running executable, but not deleting it. uv must
-    # see free destination names; retain the old launchers until their users exit.
-    retired: list[tuple[Path, Path]] = []
-    try:
-        if sys.platform == "win32":
-            for name in ("museon.exe", "museoncli.exe"):
-                original = bin_dir / name
-                if original.exists():
-                    old = bin_dir / f".museoncli-old-{uuid4().hex}-{name}"
-                    original.rename(old)
-                    retired.append((original, old))
-        yield
-    finally:
-        for original, old in retired:
-            if not original.exists():
-                old.replace(original)
-            else:
-                try:
-                    old.unlink()
-                except OSError:
-                    pass  # The next invocation cleans up after the old process exits.
-
-
-def _install(release: dict[str, Any], latest: str, prefix: Path, bin_dir: Path) -> None:
+def _install(release: dict[str, Any], latest: str, prefix: Path) -> None:
     wheel = f"museoncli-{latest}-py3-none-any.whl"
     url = f"{DOWNLOAD_ROOT}/v{latest}/{wheel}"
     asset: dict[str, Any] = next(
@@ -151,7 +125,6 @@ def _install(release: dict[str, Any], latest: str, prefix: Path, bin_dir: Path) 
     uv = shutil.which("uv")
     if not uv:
         raise RuntimeError("cli_update_failed: uv is required to upgrade this installation")
-    env = {**os.environ, "UV_TOOL_DIR": str(prefix.parent), "UV_TOOL_BIN_DIR": str(bin_dir)}
     print(f"Museon CLI: upgrading {__version__} -> {latest}...", file=sys.stderr)
     try:
         # uv tool install does not enforce URL hash fragments. Verify the exact
@@ -177,28 +150,27 @@ def _install(release: dict[str, Any], latest: str, prefix: Path, bin_dir: Path) 
             if checksum.hexdigest() != digest[7:]:
                 raise RuntimeError("cli_update_failed: release wheel SHA-256 did not match")
             downloaded.replace(verified)
-        # Keep the existing environment: --force recreates it and cannot remove
-        # the running Python executable on Windows.
-        with _windows_launchers(bin_dir):
-            subprocess.run(
-                [
-                    uv,
-                    "tool",
-                    "install",
-                    str(verified),
-                    "--upgrade-package",
-                    "museoncli",
-                    "--python",
-                    str(Path(getattr(sys, "_base_executable", None) or sys.executable).resolve()),
-                ],
-                env=env,
-                check=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                timeout=120,
-            )
+        # The uv-owned launchers and Python executable stay in place. Replacing
+        # those running executables is forbidden on Windows; only update the
+        # package inside this already-identified tool environment.
+        subprocess.run(
+            [
+                uv,
+                "pip",
+                "install",
+                str(verified),
+                "--upgrade-package",
+                "museoncli",
+                "--python",
+                sys.executable,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+        )
         installed = subprocess.run(
             [
                 sys.executable,
@@ -244,12 +216,6 @@ def ensure_latest(argv: list[str]) -> dict[str, Any]:
     cache = prefix.parent / ".museoncli-update.json"
     restart = None
     with _update_lock(prefix.parent / ".museoncli-update.lock"):
-        if sys.platform == "win32":
-            for old in bin_dir.glob(".museoncli-old-*-museon*.exe"):
-                try:
-                    old.unlink()
-                except OSError:
-                    pass
         current = version("museoncli")
         if current != __version__:
             # Another process upgraded while this process was waiting for the lock.
@@ -270,14 +236,16 @@ def ensure_latest(argv: list[str]) -> dict[str, Any]:
             if not newer:
                 _cache_current(cache, current)
                 return {"status": "current", "latest_version": latest}
-            _install(release, latest, prefix, bin_dir)
+            _install(release, latest, prefix)
             _cache_current(cache, latest)
             restart = latest
     # Release the lock before starting the new interpreter; never replay a command
     # that has already run. Neither dispatch nor credential loading has happened.
     os.environ[_REEXEC_VERSION] = restart
-    os.execv(
-        sys.executable,
-        [sys.executable, "-c", "from museoncli.bootstrap import main; main()", *argv],
-    )
+    command = [sys.executable, "-c", "from museoncli.bootstrap import main; main()", *argv]
+    if sys.platform == "win32":
+        # Windows exec creates another process; explicitly wait and preserve its
+        # exit status so agents never mistake a failed business command for success.
+        raise SystemExit(subprocess.call(command))
+    os.execv(sys.executable, command)
     raise RuntimeError("cli_update_failed: could not restart the upgraded CLI")

@@ -94,7 +94,7 @@ if importlib.util.find_spec("museoncli"):
     updates._install = install
     original = subprocess.run
     def run(command, **kwargs):
-        if len(command) > 3 and command[1:3] == ["tool", "install"]:
+        if len(command) > 3 and command[1:3] == ["pip", "install"]:
             assert Path(command[3]).read_bytes() == wheel.read_bytes()
             with open({str(counter)!r}, "a") as output:
                 output.write("install\\n")
