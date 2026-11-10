@@ -31,7 +31,6 @@ from museoncli.execution import (
     Executor,
     compact_params,
     direct_enveloped,
-    organization_workspace_id,
 )
 from museoncli.paging import MAX_ALL_PAGES
 
@@ -305,19 +304,51 @@ def brief_progress(
 
 async def _execute_campaign_list(ctx: CommandContext) -> Any:
     args = ctx.arguments
-    workspace_id = await organization_workspace_id(ctx)
-    return await _get(
+    status = args.get("status")
+    if ctx.workspace_id:
+        # Deprecated --workspace-id: the workspace route, as before.
+        return await _get(
+            ctx,
+            f"/workspaces/{ctx.workspace_id}/campaigns",
+            compact_params(
+                {
+                    "campaign_type": "ugc",
+                    "status": status,
+                    "cursor": args.get("cursor"),
+                    "limit": args.get("page_size"),
+                }
+            ),
+        )
+    if not ctx.organization_id:
+        raise RuntimeError(
+            "missing_organization: select one with `museoncli org select` or pass --organization-id"
+        )
+    page = await _get(
         ctx,
-        f"/workspaces/{workspace_id}/campaigns",
+        f"/organizations/{ctx.organization_id}/campaigns",
         compact_params(
             {
-                "campaign_type": "ugc",
-                "status": args.get("status"),
                 "cursor": args.get("cursor"),
                 "limit": args.get("page_size"),
+                "archived": True if status == "archived" else None,
             }
         ),
     )
+    # The organization route lists every campaign type and has no status filter;
+    # keep this command's meaning. A page can come back shorter than its limit,
+    # next_cursor still pages on.
+    if isinstance(page, dict) and isinstance(page.get("items"), list):
+        page = {
+            **page,
+            "items": [
+                item
+                for item in page["items"]
+                if isinstance(item, dict)
+                and item.get("campaign_type") == "ugc"
+                and (status is None or item.get("status") == status)
+            ],
+        }
+    return page
 
 
 def _enrollment_row(item: dict[str, Any]) -> dict[str, Any]:
@@ -1117,7 +1148,9 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="ugc_campaign_list",
             input_schema=_schema(
                 {
-                    "workspace_id": _uuid_property("Workspace ID; defaults to the selected one."),
+                    "workspace_id": _uuid_property(
+                        "Deprecated: list one workspace's campaigns through the workspace route."
+                    ),
                     "status": {
                         "type": ["string", "null"],
                         "enum": [*CAMPAIGN_STATUSES, None],

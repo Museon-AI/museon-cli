@@ -231,3 +231,68 @@ def test_creative_list_brief_none_keeps_only_brief_less_creatives(
 
     assert [item["id"] for item in none["data"]["items"]] == [CREATIVE]
     assert [item["brief_id"] for item in one["data"]["items"]] == [BRIEF]
+
+
+def _campaign(campaign_id: str, campaign_type: str, status: str) -> dict[str, Any]:
+    return {"id": campaign_id, "name": campaign_id, "campaign_type": campaign_type, "status": status}
+
+
+@pytest.mark.parametrize(
+    ("status", "query", "expected"),
+    [
+        (None, {"limit": 50}, ["ugc-active", "ugc-archived"]),
+        ("active", {"limit": 50}, ["ugc-active"]),
+        ("archived", {"limit": 50, "archived": True}, ["ugc-archived"]),
+    ],
+)
+def test_campaign_list_reads_the_organization_route_and_keeps_ugc_meaning(
+    monkeypatch: pytest.MonkeyPatch,
+    status: str | None,
+    query: dict[str, Any],
+    expected: list[str],
+) -> None:
+    """The organization route lists every type with no status filter; the command keeps both."""
+    page = {
+        "items": [
+            _campaign("ugc-active", "ugc", "active"),
+            _campaign("tracking", "tracking", "active"),
+            _campaign("ugc-archived", "ugc", "archived"),
+        ],
+        "next_cursor": "next",
+    }
+    workbench = _Workbench({("GET", "/ugc/organizations/org-1/campaigns"): page})
+
+    result = _run(
+        monkeypatch,
+        workbench,
+        ["ugc", "campaign", "+list", *(["--status", status] if status else [])],
+    )
+
+    assert workbench.calls == [
+        {"method": "GET", "path": "/ugc/organizations/org-1/campaigns", "params": query}
+    ]
+    assert [item["id"] for item in result["data"]["items"]] == expected
+    assert result["data"]["next_cursor"] == "next"
+
+
+def test_campaign_list_workspace_alias_keeps_the_workspace_route(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = "70000000-0000-4000-8000-000000000007"
+    path = f"/ugc/workspaces/{workspace}/campaigns"
+    workbench = _Workbench({("GET", path): {"items": [], "next_cursor": None}})
+
+    result = _run(
+        monkeypatch,
+        workbench,
+        ["ugc", "campaign", "+list", "--workspace-id", workspace, "--status", "active"],
+    )
+
+    assert workbench.calls == [
+        {
+            "method": "GET",
+            "path": path,
+            "params": {"campaign_type": "ugc", "status": "active", "limit": 50},
+        }
+    ]
+    assert result["workspace"] == {"id": workspace}

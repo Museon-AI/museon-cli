@@ -23,7 +23,7 @@ from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import _direct_output_schema
 from museoncli.domains.hireaicreator import D, TZ, U, _load, _wire, arr, enum, obj
 from museoncli.envelopes import direct_api_envelope
-from museoncli.execution import CommandContext, organization_workspace_id
+from museoncli.execution import CommandContext
 
 Target = Literal["collection", "campaign", "agency", "workspace"]
 Paging = Literal["offset", "cursor"] | None
@@ -109,7 +109,7 @@ def _read(
             parser.add_argument(
                 "--workspace-id",
                 dest="workspace_id",
-                help="DEPRECATED: the workspace whose payments to read; defaults to the organization's.",
+                help="DEPRECATED: one workspace whose payments to read; otherwise the organization's.",
             )
         for key, field in props.items():
             kind = field["type"]
@@ -192,7 +192,8 @@ async def _resolve(
         if not isinstance(view, dict) or not view.get("enabled") or not view.get("organization_id"):
             raise RuntimeError("forbidden: this login is not on an Agency team")
         return {"agency_id": view["organization_id"]}
-    return {"workspace_id": await organization_workspace_id(ctx)}
+    # The payments routes read X-Organization-Id; --workspace-id is the deprecated alias.
+    return {"workspace_id": ctx.workspace_id} if ctx.workspace_id else {}
 
 
 def _approved(arguments: dict[str, Any]) -> str | None:
@@ -502,7 +503,7 @@ def specs() -> list[CommandSpec]:
             lambda a: Route(
                 "/ugc/payments",
                 {
-                    "workspace_id": a["workspace_id"],
+                    "workspace_id": a.get("workspace_id"),
                     "bucket": a.get("bucket"),
                     "date_from": a.get("date_from"),
                     "date_to": a.get("date_to"),
@@ -524,7 +525,7 @@ def specs() -> list[CommandSpec]:
             lambda a: Route(
                 "/ugc/payments/summary",
                 {
-                    "workspace_id": a["workspace_id"],
+                    "workspace_id": a.get("workspace_id"),
                     "date_from": a.get("date_from"),
                     "date_to": a.get("date_to"),
                 },

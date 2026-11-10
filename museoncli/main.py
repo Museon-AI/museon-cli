@@ -1104,7 +1104,7 @@ def reason_from_exception(exc: Exception) -> str:
     if isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout)):
         return "network_error"
     text = str(exc)
-    for prefixed_reason in ("not_found", "conflict"):
+    for prefixed_reason in ("not_found", "conflict", "missing_organization"):
         if text == prefixed_reason or text.startswith(f"{prefixed_reason}:"):
             return prefixed_reason
     if text in {

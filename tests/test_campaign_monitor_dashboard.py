@@ -41,14 +41,6 @@ def server(monkeypatch):
             return httpx.Response(200, json={"id": CAMPAIGN, "campaign_type": "ugc"})
         if request.url.path == "/api/v2/ugc/agency/me":
             return httpx.Response(200, json=state["agency"])
-        if request.url.path == "/api/v1/agent-cli/whoami":
-            return httpx.Response(
-                200,
-                json={
-                    "organizations": [{"id": "org-1", "name": "MuseOn", "default_workspace_id": W}],
-                    "default_organization_id": "org-1",
-                },
-            )
         return httpx.Response(200, json={"items": [], "next_cursor": None})
 
     monkeypatch.setattr(
@@ -265,15 +257,14 @@ def test_a_login_off_the_agency_team_is_refused_before_any_agency_read(server):
     assert [r.url.path for r in server["requests"]] == ["/api/v2/ugc/agency/me"]
 
 
-def test_payments_read_the_organizations_default_workspace(server):
-    """The payments route still takes a workspace: the organization's default one."""
+def test_payments_address_the_selected_organization(server):
+    """The payments routes read X-Organization-Id; no workspace is looked up or sent."""
     run("payment", "+list", "--bucket", "pending-approval")
 
-    whoami, request = server["requests"]
-    assert whoami.url.path == "/api/v1/agent-cli/whoami"
+    (request,) = server["requests"]
     assert request.url.path == "/api/v2/ugc/payments"
     assert request.headers["X-Organization-Id"] == "org-1"
-    assert query(request) == {"workspace_id": [W], "bucket": ["pending_approval"], "limit": ["50"]}
+    assert query(request) == {"bucket": ["pending_approval"], "limit": ["50"]}
 
 
 def test_a_campaign_no_ugc_campaign_stands_for_is_not_found(server, monkeypatch):
