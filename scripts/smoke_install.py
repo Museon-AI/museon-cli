@@ -12,6 +12,7 @@ import tempfile
 import tomllib
 from pathlib import Path
 
+from smoke_auto_update import smoke_auto_update
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -142,6 +143,8 @@ def main() -> int:
             raise RuntimeError(f"expected one wheel in {args.dist_dir}, found {len(wheels)}")
         wheel = wheels[0]
     smoke_install(wheel.resolve())
+    metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    smoke_auto_update(wheel.resolve(), metadata["project"]["version"])
     return 0
 
 

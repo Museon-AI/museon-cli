@@ -364,6 +364,14 @@ def _load(
             if key in payload:
                 raise ValueError(f"{key} is supplied both as JSON and a flag")
             payload[key] = getattr(args, key)
+            if key.endswith("_ids") and properties[key].get("items", {}).get("type") == "string":
+                # Flags accept CSV and repetition; structured arrays stay literal.
+                # Split before validation so maxItems still counts individual IDs.
+                payload[key] = [
+                    item.strip()
+                    for value in payload[key]
+                    for item in value.split(",")
+                ]
     _validate(payload, obj(properties, required))
     return payload
 

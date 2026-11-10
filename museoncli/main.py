@@ -48,6 +48,7 @@ from museoncli.execution import (
 from museoncli.large_json import render_json
 from museoncli.paging import collect_all_pages, page_info
 from museoncli.setup_agent import SUPPORTED_AGENTS, install_agent_skill
+from museoncli.updates import ensure_latest
 
 
 _API_CONNECT_MAX_ATTEMPTS = 3
@@ -55,10 +56,6 @@ _API_CONNECT_RETRY_BASE_DELAY_SECONDS = 0.25
 _ACTIVE_COMMAND_NAME: ContextVar[str | None] = ContextVar(
     "museoncli_active_command_name", default=None
 )
-DEFAULT_CLI_RELEASE_MANIFEST_URL = (
-    "https://api.github.com/repos/Museon-AI/museon-cli/releases/latest"
-)
-GITHUB_RELEASES_URL = "https://github.com/Museon-AI/museon-cli/releases"
 
 
 class ApiRequestError(RuntimeError):
@@ -130,8 +127,14 @@ class JsonArgumentParser(argparse.ArgumentParser):
 
 def main() -> None:
     _configure_utf8_stdout()
-    parser = build_parser()
     argv = sys.argv[1:]
+    try:
+        update = ensure_latest(argv)
+    except Exception as exc:
+        payload, code = error_envelope(exc, command=None)
+        emit(payload)
+        raise SystemExit(code) from None
+    parser = build_parser()
     try:
         args, extras = parser.parse_known_args([item for item in argv if item != "--json"])
         if extras:
@@ -147,7 +150,7 @@ def main() -> None:
     command = invoked_command_name(args)
     deprecation = deprecation_notice(args)
     try:
-        result = asyncio.run(dispatch_with_notices(args))
+        result = asyncio.run(dispatch(args))
     except KeyboardInterrupt:
         emit(
             {
@@ -164,6 +167,8 @@ def main() -> None:
             payload["warnings"] = [deprecation]
         emit(payload)
         raise SystemExit(code) from None
+    if result is not None and args.command == "version":
+        result["data"]["update"] = update
     if result is not None and deprecation:
         result = {**result, "warnings": [*(result.get("warnings") or []), deprecation]}
     if result is not None:
@@ -281,123 +286,6 @@ async def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
     if getattr(args, "domain_command", None):
         return await dispatch_domain_command(args, cfg)
     raise RuntimeError(f"Unknown command: {args.command}")
-
-
-async def dispatch_with_notices(args: argparse.Namespace) -> dict[str, Any] | None:
-    result = await dispatch(args)
-    if result is None or not command_uses_network(args):
-        return result
-    return await attach_update_notice(result)
-
-
-def command_uses_network(args: argparse.Namespace) -> bool:
-    """Return whether the requested command already performs remote IO.
-
-    Update checks must never turn local-only commands into network operations.
-    Network-backed commands still receive update notices without adding a new
-    privacy or reliability characteristic to the invocation.
-    """
-
-    if args.command in {"health", "whoami"}:
-        return True
-    if args.command == "workspace":
-        return args.workspace_command in {"list", "select"}
-    if args.command == "auth":
-        return args.auth_command in {"login", "start", "finish"}
-    domain_command = getattr(args, "domain_command", None)
-    if domain_command:
-        spec = get_command_spec(domain_command)
-        if spec.transport == "local_process":
-            return False
-        if not getattr(args, "dry_run", False) or spec.dry_run_reads_server:
-            return True
-        return False
-    return False
-
-
-async def attach_update_notice(result: dict[str, Any]) -> dict[str, Any]:
-    try:
-        notice = await check_cli_update_notice(load_config())
-    except Exception:
-        return result
-    if not notice:
-        return result
-    return {**result, "_notice": {"update": notice}}
-
-
-async def check_cli_update_notice(cfg: Config) -> dict[str, Any] | None:
-    if not cli_update_check_enabled():
-        return None
-    manifest_url = cli_update_manifest_url()
-    manifest = await fetch_cli_release_manifest(manifest_url)
-    if not isinstance(manifest, dict):
-        return None
-    latest_version = str(manifest.get("tag_name") or manifest.get("name") or "").strip()
-    latest_version = latest_version.removeprefix("v")
-    if not latest_version or not is_newer_cli_version(latest_version, __version__):
-        return None
-    wheel_url = (
-        "https://github.com/Museon-AI/museon-cli/releases/download/"
-        f"v{latest_version}/museoncli-{latest_version}-py3-none-any.whl"
-    )
-    wheel_upgrade = f'uv tool install "{wheel_url}" --force'
-    return {
-        "current_version": __version__,
-        "latest_version": latest_version,
-        "message": (
-            f"Museon CLI {latest_version} is available. Run `{wheel_upgrade}`. "
-            "Restart the host Agent after upgrading."
-        ),
-        "upgrade_command": wheel_upgrade,
-        "source": "github_release",
-        "manifest_url": manifest_url,
-        "project_url": str(manifest.get("html_url") or GITHUB_RELEASES_URL),
-        "restart_required": True,
-    }
-
-
-def cli_update_check_enabled() -> bool:
-    # Release discovery is explicitly opt-in. Normal CLI commands must not add
-    # GitHub (or any other third-party) traffic to Museon's API request path.
-    value = os.environ.get("MUSEONCLI_UPDATE_CHECK", "0").strip().lower()
-    return value in {"1", "true", "yes", "on"}
-
-
-def cli_update_manifest_url() -> str:
-    return os.environ.get("MUSEONCLI_UPDATE_MANIFEST_URL", DEFAULT_CLI_RELEASE_MANIFEST_URL).strip()
-
-
-async def fetch_cli_release_manifest(manifest_url: str) -> dict[str, Any] | None:
-    if not manifest_url:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=2.0, follow_redirects=True) as client:
-            response = await client.get(manifest_url, headers={"Accept": "application/json"})
-        if response.status_code >= 400:
-            return None
-        payload = response.json()
-    except Exception:
-        return None
-    return payload if isinstance(payload, dict) else None
-
-
-def is_newer_cli_version(latest_version: str, current_version: str) -> bool:
-    latest = cli_version_tuple(latest_version)
-    current = cli_version_tuple(current_version)
-    if latest is None or current is None:
-        return False
-    width = max(len(latest), len(current))
-    return latest + (0,) * (width - len(latest)) > current + (0,) * (width - len(current))
-
-
-def cli_version_tuple(value: str) -> tuple[int, ...] | None:
-    version = value.strip().removeprefix("v").split("-", 1)[0]
-    if not version:
-        return None
-    parts = version.split(".")
-    if any(not part.isdigit() for part in parts):
-        return None
-    return tuple(int(part) for part in parts)
 
 
 async def dispatch_config(args: argparse.Namespace) -> dict[str, Any]:
