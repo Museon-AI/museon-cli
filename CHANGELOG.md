@@ -2,6 +2,12 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.23.0
+
+- 官方 `uv tool` 安装默认在执行命令前检查稳定版并自动升级，校验官方 wheel 的 SHA-256，再用新版继续原命令。普通检查缓存 15 分钟，`version` 强制检查并报告状态；并行命令共享升级锁。源码和托管 runtime 由各自发布流程更新。
+- `MUSEONCLI_UPDATE_CHECK=0` 保留固定版本/离线用法；检查不可用时明确提示，已发现新版但升级失败时停止业务命令。升级不修改登录或 workspace，不会重复执行写操作。
+- 修复 `hireaicreator video +list --publishing-account-ids a,b,c` 静默返回空的问题。共用解析器的 ID 数组 flag 支持 CSV、重复和混合输入，拆分后仍执行原数量/元素校验；JSON 数组保持原语义。
+
 ## 0.22.3
 
 - `social-account +create-connect-link --platform youtube` creates a YouTube self-authorization link. The Museon API already accepts `youtube`; the CLI's platform list did not.

@@ -110,7 +110,7 @@ def _assert_public_wheel_content(entries: list[ArchiveEntry], *, artifact: Path)
         "",
     )
     for command in ("museon", "museoncli"):
-        if f"{command} = museoncli.main:main" not in entry_points:
+        if f"{command} = museoncli.bootstrap:main" not in entry_points:
             raise RuntimeError(f"{artifact.name} is missing the {command!r} console entry point")
 
 

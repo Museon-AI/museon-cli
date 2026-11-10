@@ -265,7 +265,7 @@ def test_offload_failure_is_small_and_main_exits_one(
         payload.pop("ok")
         return payload
 
-    monkeypatch.setattr(main_module, "dispatch_with_notices", fake_dispatch)
+    monkeypatch.setattr(main_module, "dispatch", fake_dispatch)
     monkeypatch.setattr(sys, "argv", ["museoncli", "version"])
 
     with pytest.raises(SystemExit) as exc_info:

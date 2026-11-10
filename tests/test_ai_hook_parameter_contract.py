@@ -212,6 +212,96 @@ def test_test_group_list_needs_no_plan_id_or_write(monkeypatch):
     }
 
 
+@pytest.mark.parametrize("source", ["csv", "repeated", "mixed", "json"])
+def test_video_list_multiple_accounts_returns_single_account_union(monkeypatch, source):
+    accounts = [f"10000000-0000-4000-8000-{i:012d}" for i in range(1, 4)]
+    rows = [
+        {
+            "id": f"{account}-{i}",
+            "publishing_account_id": account,
+            "status": "cancelled" if i < 8 else "scheduled",
+            "scheduled_at": "2026-11-10T10:30:00+08:00",
+        }
+        for account in [*accounts, "unselected-account"]
+        for i in range(10)
+    ]
+    requests = []
+
+    def handler(request):
+        assert request.method == "GET"
+        assert request.url.path == "/api/v2/ai-hook-videos"
+        params = request.url.params
+        assert params["workspace_id"] == BASE_WORKSPACE
+        assert params["scheduled_from"] == "2026-11-09T10:30:00+08:00"
+        # Match the API's repeated-query list contract, without splitting CSV here.
+        ids = params.get_list("publishing_account_ids") or [params["publishing_account_id"]]
+        selected = [row for row in rows if row["publishing_account_id"] in ids]
+        page, size = int(params.get("page", "1")), int(params["page_size"])
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={
+                "items": selected[(page - 1) * size : page * size],
+                "total": len(selected),
+                "page": page,
+                "page_size": size,
+                "has_more": page * size < len(selected),
+            },
+        )
+
+    attach_transport(monkeypatch, handler)
+    argv = [
+        "hireaicreator",
+        "video",
+        "+list",
+        "--scheduled-from",
+        "2026-11-09T10:30:00+08:00",
+        "--page-size",
+        "7",
+        "--all",
+    ]
+    singles = [
+        dispatch([*argv, "--publishing-account-id", account])["data"]["items"]
+        for account in accounts
+    ]
+    assert [len(items) for items in singles] == [10, 10, 10]
+    expected = {row["id"] for items in singles for row in items}
+    if source == "csv":
+        flags = ["--publishing-account-ids", ", ".join(accounts)]
+    elif source == "repeated":
+        flags = [part for account in accounts for part in ("--publishing-account-ids", account)]
+    elif source == "mixed":
+        flags = [
+            "--publishing-account-ids",
+            ",".join(accounts[:2]),
+            "--publishing-account-ids",
+            accounts[2],
+        ]
+    else:
+        flags = ["--args-json", json.dumps({"publishing_account_ids": accounts})]
+    requests.clear()
+    result = dispatch([*argv, *flags])
+    assert {row["id"] for row in result["data"]["items"]} == expected
+    assert len(result["data"]["items"]) == 30
+    assert result["page_info"]["complete"] is True
+    assert len(requests) == 5
+
+
+def test_video_list_csv_account_limit_is_checked_after_splitting(monkeypatch):
+    requests = []
+    attach_transport(
+        monkeypatch,
+        lambda request: requests.append(request) or httpx.Response(200, json={"items": []}),
+    )
+    accounts = [f"10000000-0000-4000-8000-{i:012d}" for i in range(301)]
+    argv = ["hireaicreator", "video", "+list", "--publishing-account-ids"]
+    dispatch([*argv, ",".join(accounts[:300])])
+    assert len(requests[0].url.params.get_list("publishing_account_ids")) == 300
+    with pytest.raises(ValueError, match="publishing_account_ids has an invalid item count"):
+        dispatch([*argv, ",".join(accounts)])
+    assert len(requests) == 1
+
+
 @pytest.mark.parametrize("action", ["assets-get", "actor-set", "persona-set"])
 @pytest.mark.parametrize("override", [None, "50000000-0000-4000-8000-000000000005"])
 def test_account_bindings_resolve_workspace_and_preserve_approval_omission(

@@ -46,7 +46,7 @@ verify `museoncli version`,
 then resume the original task:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.22.3/museoncli-0.22.3-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.23.0/museoncli-0.23.0-py3-none-any.whl"
 ```
 
 Read [operating-model.md](references/operating-model.md) for risk, async work, authentication,
@@ -75,7 +75,8 @@ and Business Skill boundaries. Read only the reference needed for the current ca
 - **DON'T** invent a command, flag, ID, or risk rule; inspect `museoncli schema <domain.shortcut>`.
 - Treat the user's request and existing authorization as sufficient within their stated scope. Ask only when a necessary target or authorization is missing; never supply a server-required confirmation on the user's behalf.
 - **DON'T** expose credentials, callback codes, raw customer payloads, or reconstructed `ref` values.
-- **DON'T** preflight auth/version/workspace before every task; enter recovery after a real failure.
+- The official uv-installed CLI checks for stable updates before commands and upgrades automatically. During onboarding, run `museoncli version` and inspect `data.update`; versions without it need a one-time upgrade to the wheel above with `--force`.
+- **DON'T** add auth/version/workspace preflights before every task; the CLI owns update checks. Enter authentication/workspace recovery after a real failure.
 - **DON'T** load bundled integration Skills through the runtime `skills` domain.
 
 ## Relationships

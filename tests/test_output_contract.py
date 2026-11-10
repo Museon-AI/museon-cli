@@ -24,7 +24,7 @@ def _run_main(monkeypatch, capsys, argv, error: Exception | None = None):
         assert error is not None
         raise error
 
-    monkeypatch.setattr(main_module, "dispatch_with_notices", fake_dispatch)
+    monkeypatch.setattr(main_module, "dispatch", fake_dispatch)
     monkeypatch.setattr(sys, "argv", ["museoncli", *argv])
     with pytest.raises(SystemExit) as exc_info:
         main_module.main()
@@ -173,7 +173,7 @@ def test_an_old_command_name_still_runs_and_warns(monkeypatch, capsys) -> None:
     async def fake_dispatch(args: Any) -> dict[str, Any]:
         return {"command": args.domain_command, "data": {"id": "x"}, "warnings": []}
 
-    monkeypatch.setattr(main_module, "dispatch_with_notices", fake_dispatch)
+    monkeypatch.setattr(main_module, "dispatch", fake_dispatch)
     monkeypatch.setattr(sys, "argv", ["museoncli", "hireaicreator", "video", "+render-get", "--id", "x"])
     main_module.main()
     payload = json.loads(capsys.readouterr().out)
