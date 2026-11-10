@@ -45,6 +45,10 @@ museoncli version
 原业务命令不会执行。升级完成后保留登录和 workspace，并用新版继续原命令，
 不会重放已经执行过的写操作。升级日志写入 stderr，stdout 保持 JSON。
 
+从 0.24.0 起，`museoncli setup` 装过的 Agent Skills 也随 CLI 自动同步；同步后该次命令的 JSON
+带 `_notice.skills.updated`，Agent 应重读正在使用的 Skill。固定版本时（`MUSEONCLI_UPDATE_CHECK=0`）
+不写入，改为每条命令带 `_notice.skills.command` 提示手动运行。
+
 `MUSEONCLI_UPDATE_CHECK=0` 可用于需要固定版本或完全离线的环境。源码开发环境、
 非 `uv tool` 安装及托管 Agent runtime 由其安装/发布流程更新；自动升级不会修改它们。
 自动安装只接受官方 GitHub 稳定版 wheel 及其 SHA-256，不使用自定义 manifest 源。
@@ -55,7 +59,7 @@ If the command is unavailable:
    reviewed wheel from the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.23.0/museoncli-0.23.0-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.24.0/museoncli-0.24.0-py3-none-any.whl"
    ```
 
    Do not clone the repository, install from a mutable branch, or substitute a
@@ -88,11 +92,11 @@ or `current` and includes their destination paths.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install the workflow Skill folders and Hook Analysis Skill:
 
-https://github.com/Museon-AI/museon-cli/tree/v0.23.0/skills/museon-content-workflow-base
-https://github.com/Museon-AI/museon-cli/tree/v0.23.0/skills/museon-research
-https://github.com/Museon-AI/museon-cli/tree/v0.23.0/skills/museon-content-workflow-hireaicreator
-https://github.com/Museon-AI/museon-cli/tree/v0.23.0/skills/museon-content-workflow-ai-slideshow
-https://github.com/Museon-AI/museon-cli/tree/v0.23.0/skills/museon-content-workflow-campaign-monitor
+https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-content-workflow-base
+https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-research
+https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-content-workflow-hireaicreator
+https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-content-workflow-ai-slideshow
+https://github.com/Museon-AI/museon-cli/tree/v0.24.0/skills/museon-content-workflow-campaign-monitor
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and

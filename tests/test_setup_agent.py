@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+import shutil
 
 import pytest
 
-from museoncli.setup_agent import MANAGED_SKILLS, _resolve_agents, install_agent_skill
+from museoncli.setup_agent import (
+    MANAGED_SKILLS,
+    _resolve_agents,
+    install_agent_skill,
+    stale_skill_agents,
+)
 
 
 def test_setup_agent_installs_and_verifies_codex_skill(
@@ -133,3 +139,42 @@ def test_setup_agent_preflights_all_skill_destinations_before_writing(
         install_agent_skill("codex")
 
     assert not (codex_home / "skills" / "museon-research").exists()
+
+
+def test_stale_skill_agents_flags_only_agents_whose_installed_skills_drifted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for name, variable in (("codex", "CODEX_HOME"), ("claude", "CLAUDE_CONFIG_DIR"), ("cursor", "CURSOR_HOME")):
+        monkeypatch.setenv(variable, str(tmp_path / name))
+    install_agent_skill("codex")
+    install_agent_skill("claude-code")
+    assert stale_skill_agents() == []  # cursor never ran setup: no reminder
+
+    skill = tmp_path / "codex" / "skills" / "museon-research" / "SKILL.md"
+    skill.write_text(skill.read_text() + "\nolder release\n")
+    shutil.rmtree(tmp_path / "claude" / "skills" / "museon-content-workflow-base")
+    assert stale_skill_agents() == ["codex", "claude-code"]
+
+    install_agent_skill("all")
+    assert stale_skill_agents() == []
+
+
+def test_cli_syncs_stale_skills_unless_updates_are_pinned(tmp_path: Path) -> None:
+    import argparse
+    import os
+
+    from museoncli.main import with_notice
+
+    install_agent_skill("codex")
+    skill = Path(os.environ["CODEX_HOME"]) / "skills" / "museon-research" / "SKILL.md"
+    skill.write_text(skill.read_text() + "\nolder release\n")
+    args = argparse.Namespace(command="version")
+
+    pinned = with_notice({"ok": True}, args, {"status": "disabled"})
+    assert pinned["_notice"]["skills"]["command"] == "museoncli setup --agent codex"
+    assert stale_skill_agents() == ["codex"]
+
+    synced = with_notice({"ok": True}, args, {"status": "current"})
+    assert synced["_notice"]["skills"]["updated"] == ["codex"]
+    assert stale_skill_agents() == []
+    assert with_notice({"ok": True}, args, {"status": "current"}) == {"ok": True}

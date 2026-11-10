@@ -149,6 +149,8 @@ def _manifest(
             raw_result["path"], command_family=command_family, profile=profile
         ),
     }
+    if "_notice" in payload:
+        manifest["_notice"] = payload["_notice"]
     if command_family == "asset.list" and isinstance(data, dict):
         asset_type = data.get("type")
         if isinstance(asset_type, str) and len(asset_type) <= 64:

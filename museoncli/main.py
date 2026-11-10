@@ -47,7 +47,7 @@ from museoncli.execution import (
 )
 from museoncli.large_json import render_json
 from museoncli.paging import collect_all_pages, page_info
-from museoncli.setup_agent import SUPPORTED_AGENTS, install_agent_skill
+from museoncli.setup_agent import SUPPORTED_AGENTS, install_agent_skill, stale_skill_agents
 
 
 _API_CONNECT_MAX_ATTEMPTS = 3
@@ -158,7 +158,7 @@ def main(*, update: dict[str, Any] | None = None) -> None:
         payload, code = error_envelope(exc, command=command)
         if deprecation:
             payload["warnings"] = [deprecation]
-        emit(payload)
+        emit(with_notice(payload, args, update))
         raise SystemExit(code) from None
     if result is not None and args.command == "version":
         result["data"]["update"] = update or {"status": "managed_externally"}
@@ -166,10 +166,60 @@ def main(*, update: dict[str, Any] | None = None) -> None:
         result = {**result, "warnings": [*(result.get("warnings") or []), deprecation]}
     if result is not None:
         if not emit(
-            {"ok": True, **result},
+            with_notice({"ok": True, **result}, args, update),
             command_hint=getattr(args, "domain_command", None),
         ):
             raise SystemExit(1)
+
+
+def with_notice(
+    payload: dict[str, Any], args: argparse.Namespace, update: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Keep the Agent's installed Skills on this CLI's version and tell it so via `_notice`.
+
+    Skills that `setup` installed are synced automatically, like the CLI itself; the
+    Agent still holds the old text in its conversation, so it is told to re-read it.
+    Pinned installs (MUSEONCLI_UPDATE_CHECK=0) are only reminded, on every command.
+    """
+    status = (update or {}).get("status", "managed_externally")
+    # Host-managed runtimes and source checkouts ship their Skills themselves.
+    if args.command == "setup" or status == "managed_externally":
+        return payload
+    try:
+        stale = stale_skill_agents()
+    except (OSError, RuntimeError):
+        return payload  # Skill maintenance must never break the user's command.
+    if not stale:
+        return payload
+    updated = []
+    if status != "disabled":
+        for agent in stale:
+            try:
+                install_agent_skill(agent)
+            except (OSError, RuntimeError):
+                continue
+            updated.append(agent)
+            print(f"Museon CLI: updated Agent Skills for {agent}.", file=sys.stderr)
+    stale = [agent for agent in stale if agent not in updated]
+    notice: dict[str, Any] = {"cli_version": __version__}
+    messages = []
+    if updated:
+        notice["updated"] = updated
+        messages.append(
+            f"Museon Agent Skills were updated to match Museon CLI {__version__}. "
+            "Re-read the Museon Skill you are using before relying on it "
+            "(some hosts need a restart to reload it)."
+        )
+    if stale:
+        command = " && ".join(f"museoncli setup --agent {agent}" for agent in stale)
+        notice["stale"] = stale
+        notice["command"] = command
+        messages.append(
+            f"Installed Museon Agent Skills do not match Museon CLI {__version__}. "
+            f"After the current task, run: {command}; then re-read the updated Skill."
+        )
+    notice["message"] = " ".join(messages)
+    return {**payload, "_notice": {"skills": notice}}
 
 
 def _configure_utf8_stdout() -> None:

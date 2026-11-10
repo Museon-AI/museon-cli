@@ -46,7 +46,7 @@ verify `museoncli version`,
 then resume the original task:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.23.0/museoncli-0.23.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.24.0/museoncli-0.24.0-py3-none-any.whl"
 ```
 
 Read [operating-model.md](references/operating-model.md) for risk, async work, authentication,
@@ -77,6 +77,7 @@ and Business Skill boundaries. Read only the reference needed for the current ca
 - **DON'T** expose credentials, callback codes, raw customer payloads, or reconstructed `ref` values.
 - The official uv-installed CLI checks for stable updates before commands and upgrades automatically. During onboarding, run `museoncli version` and inspect `data.update`; versions without it need a one-time upgrade to the wheel above with `--force`.
 - **DON'T** add auth/version/workspace preflights before every task; the CLI owns update checks. Enter authentication/workspace recovery after a real failure.
+- When output carries `_notice.skills`, the Museon Skills installed for this Agent changed under you or are out of date. Finish the current request first. If it lists `updated`, re-read the Museon Skill you are using; if it lists `command`, run it once, then re-read. Tell the user when the host needs a restart. Don't paste `_notice` into answers or let it interrupt the task.
 - **DON'T** load bundled integration Skills through the runtime `skills` domain.
 
 ## Relationships

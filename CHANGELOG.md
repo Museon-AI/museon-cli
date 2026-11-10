@@ -2,6 +2,10 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 0.24.0
+
+- 自动升级同样覆盖 `setup` 装过的 Agent Skills：发现本机为 Codex / Claude Code / Cursor 安装的 Museon Skills 与当前 CLI 自带版本不一致（含 CLI 自动升级后）时自动同步，并在该次命令的 JSON（成功、失败和大结果清单）里带 `_notice.skills.updated`，提醒 Agent 重读 Skill。同步失败或 `MUSEONCLI_UPDATE_CHECK=0` 时不写入，改为每条命令带 `_notice.skills.command` 提示手动运行 `museoncli setup`。没跑过 setup 的 Agent 不处理；托管 runtime 和源码环境不检查。
+
 ## 0.23.0
 
 - 官方 `uv tool` 安装默认在执行命令前检查稳定版并自动升级，校验官方 wheel 的 SHA-256，再用新版继续原命令。普通检查缓存 15 分钟，`version` 强制检查并报告状态；并行命令共享升级锁。源码和托管 runtime 由各自发布流程更新。
