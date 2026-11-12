@@ -81,17 +81,18 @@ class Config:
     organization: OrganizationState = field(default_factory=OrganizationState)
     pending_auth: PendingAuthState = field(default_factory=PendingAuthState)
     extra: dict[str, Any] = field(default_factory=dict)
-    """Top-level keys this version does not own, written back unchanged.
-
-    It holds the ``workspace`` block written by museoncli 0.22 and earlier: it
-    is kept so an older CLI can still read the file, and never used to address
-    a request.
-    """
+    """Top-level keys this version does not own, written back unchanged."""
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> "Config":
         cfg = cls()
-        cfg.extra = {key: item for key, item in value.items() if key not in _OWNED_KEYS}
+        # A pre-0.25 ``workspace`` block only migrates to its organization (below);
+        # it is never kept, so the next save drops it from the file.
+        cfg.extra = {
+            key: item
+            for key, item in value.items()
+            if key not in _OWNED_KEYS and key != _LEGACY_WORKSPACE_KEY
+        }
         for key in (
             "api_base_url",
             "site_url",
@@ -110,7 +111,7 @@ class Config:
                 **{k: value["organization"].get(k) for k in OrganizationState.__dataclass_fields__}
             )
         else:
-            cfg.organization = organization_from_legacy_workspace(value.get("workspace"))
+            cfg.organization = organization_from_legacy_workspace(value.get(_LEGACY_WORKSPACE_KEY))
         if isinstance(value.get("pending_auth"), dict):
             cfg.pending_auth = PendingAuthState(
                 **{k: value["pending_auth"].get(k) for k in PendingAuthState.__dataclass_fields__}
@@ -118,13 +119,6 @@ class Config:
         if isinstance(value.get("runtime_context"), dict):
             cfg.runtime_context = dict(value["runtime_context"])
         return cfg
-
-    @property
-    def legacy_workspace_id(self) -> str | None:
-        """The workspace a 0.22-era config selected; only used to find its organization."""
-        legacy = self.extra.get("workspace")
-        value = legacy.get("id") if isinstance(legacy, dict) else None
-        return value if isinstance(value, str) and value else None
 
     def document(self) -> dict[str, Any]:
         """The config file content: owned fields over the preserved unknown keys."""
@@ -167,10 +161,12 @@ class Config:
 _OWNED_KEYS = frozenset(
     {"api_base_url", "site_url", "runtime_context", "auth", "organization", "pending_auth"}
 )
+# Written by museoncli 0.24 and earlier; read once to find its organization.
+_LEGACY_WORKSPACE_KEY = "workspace"
 
 
 def organization_from_legacy_workspace(value: Any) -> OrganizationState:
-    """Read the organization out of a 0.22-era ``workspace`` block."""
+    """Read the organization out of a pre-0.25 ``workspace`` block (config migration only)."""
     if not isinstance(value, dict) or not value.get("organization_id"):
         return OrganizationState()
     return OrganizationState(

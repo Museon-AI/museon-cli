@@ -141,7 +141,7 @@ def _envelope(
     ctx: CommandContext, data: Any, warnings: list[str], next_steps: list[str]
 ) -> dict[str, Any]:
     envelope = direct_api_envelope(
-        ctx.spec.schema_name, ctx.workspace_id, data, site_url=ctx.cfg.site_url
+        ctx.spec.schema_name, data, site_url=ctx.cfg.site_url
     )
     envelope["warnings"] = [*envelope["warnings"], *warnings]
     envelope["next_steps"] = [*envelope["next_steps"], *next_steps]
@@ -305,20 +305,6 @@ def brief_progress(
 async def _execute_campaign_list(ctx: CommandContext) -> Any:
     args = ctx.arguments
     status = args.get("status")
-    if ctx.workspace_id:
-        # Deprecated --workspace-id: the workspace route, as before.
-        return await _get(
-            ctx,
-            f"/workspaces/{ctx.workspace_id}/campaigns",
-            compact_params(
-                {
-                    "campaign_type": "ugc",
-                    "status": status,
-                    "cursor": args.get("cursor"),
-                    "limit": args.get("page_size"),
-                }
-            ),
-        )
     if not ctx.organization_id:
         raise RuntimeError(
             "missing_organization: select one with `museoncli org select` or pass --organization-id"
@@ -800,7 +786,6 @@ def _page_size(args: argparse.Namespace) -> int:
 
 
 def _add_campaign_list_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--status", choices=CAMPAIGN_STATUSES)
     _add_cursor_paging(parser)
 
@@ -808,7 +793,6 @@ def _add_campaign_list_arguments(parser: argparse.ArgumentParser) -> None:
 def _build_campaign_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return compact_params(
         {
-            "workspace_id": args.workspace_id,
             "status": args.status,
             "cursor": args.cursor,
             "page_size": _page_size(args),
@@ -1147,9 +1131,6 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="ugc_campaign_list",
             input_schema=_schema(
                 {
-                    "workspace_id": _uuid_property(
-                        "Deprecated: list one workspace's campaigns through the workspace route."
-                    ),
                     "status": {
                         "type": ["string", "null"],
                         "enum": [*CAMPAIGN_STATUSES, None],

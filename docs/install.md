@@ -59,7 +59,7 @@ If the command is unavailable:
    reviewed wheel from the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.25.0/museoncli-0.25.0-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.0/museoncli-1.0.0-py3-none-any.whl"
    ```
 
    Do not clone the repository, install from a mutable branch, or substitute a
@@ -92,11 +92,11 @@ or `current` and includes their destination paths.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install the workflow Skill folders and Hook Analysis Skill:
 
-https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-content-workflow-base
-https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-research
-https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-content-workflow-hireaicreator
-https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-content-workflow-ai-slideshow
-https://github.com/Museon-AI/museon-cli/tree/v0.25.0/skills/museon-content-workflow-campaign-monitor
+https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-content-workflow-base
+https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-research
+https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-content-workflow-hireaicreator
+https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-content-workflow-ai-slideshow
+https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-content-workflow-campaign-monitor
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and
@@ -174,18 +174,17 @@ museoncli org select --id <organization-id>
 
 Use the exact organization ID returned by the CLI (`--name <exact name>` also works).
 To address another organization for a single call, pass `--organization-id <uuid>` to that
-domain command. Agents never need a workspace ID.
+domain command.
 
-### 从工作区迁移（0.25.0）
+### 只有组织（1.0.0）
 
-MuseOn 不再有工作区概念，访问权限由组织角色加 Campaign 范围决定。
+MuseOn 只有组织，访问权限由组织角色加 Campaign 范围决定。
 
 - `workspace list` -> `org list`；`workspace current` -> `org current`；
-  `workspace select --id <ws>` -> `org select --id <organization-id>`。
-- 业务命令上的 `--workspace-id <ws>` 直接去掉；需要单次指定其他组织时用 `--organization-id <org>`。
-- 输出信封读 `.organization`（`{id, name}` 或 `null`），不再读 `.workspace`。
-- `workspace ...` 与 `--workspace-id` 作为弃用别名保留到 1.0，会在 stderr 打印弃用提示。
-- `whoami` 新增 `organizations[]`、`default_organization_id`、`default_organization_name`。
+  `workspace select --id <ws>` -> `org select --id <organization-id>`。1.0.0 起 `workspace` 命令组已删除。
+- 业务命令不再接受 `--workspace-id`，结构化输入里的 `workspace_id` 也会被拒绝；需要单次指定其他组织时用 `--organization-id <org>`。
+- 输出信封读 `.organization`（`{id, name}` 或 `null`），没有 `.workspace`。
+- `agentic-campaign` 与 `hireaicreator` 暂时保持 0.25 的行为（弃用的 `--workspace-id` 与 `workspace` 键）。
 
 ## 5. Verify Museon is ready
 

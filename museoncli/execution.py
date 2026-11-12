@@ -32,7 +32,6 @@ class CommandContext:
     spec: CommandSpec
     args: argparse.Namespace | None
     arguments: dict[str, Any]
-    workspace_id: str | None
     api_data: Callable[..., Awaitable[Any]]
     api_data_v2: Callable[..., Awaitable[Any]]
     upload_media_file: Callable[..., Awaitable[Any]]
@@ -46,16 +45,10 @@ Executor = Callable[[CommandContext], Awaitable[dict[str, Any]]]
 RawCommand = Callable[[CommandContext], Awaitable[Any]]
 
 
-def direct_enveloped(fn: RawCommand, *, with_workspace: bool = True) -> Executor:
+def direct_enveloped(fn: RawCommand) -> Executor:
     async def run(ctx: CommandContext) -> dict[str, Any]:
         raw = await fn(ctx)
-        workspace_id = ctx.workspace_id if with_workspace else None
-        return direct_api_envelope(
-            ctx.spec.schema_name,
-            workspace_id,
-            raw,
-            site_url=ctx.cfg.site_url,
-        )
+        return direct_api_envelope(ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url)
 
     return run
 
@@ -81,7 +74,6 @@ def deep_redact_operation_ids(value: Any, *, _in_op_units: bool = False) -> Any:
 def redacted_direct_enveloped(
     fn: RawCommand,
     *,
-    with_workspace: bool = True,
     redact_api_errors: bool = False,
 ) -> Executor:
     async def redacted(ctx: CommandContext) -> Any:
@@ -99,7 +91,7 @@ def redacted_direct_enveloped(
                     ) from exc
             raise
 
-    return direct_enveloped(redacted, with_workspace=with_workspace)
+    return direct_enveloped(redacted)
 
 
 def routines_enveloped(fn: RawCommand) -> Executor:
@@ -107,12 +99,7 @@ def routines_enveloped(fn: RawCommand) -> Executor:
         raw = await fn(ctx)
         if ctx.spec.schema_name in {"routines.list", "routines.get"}:
             raw = add_routine_refs(raw, site_url=ctx.cfg.site_url)
-        return direct_api_envelope(
-            ctx.spec.schema_name,
-            ctx.workspace_id,
-            raw,
-            site_url=ctx.cfg.site_url,
-        )
+        return direct_api_envelope(ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url)
 
     return run
 
@@ -120,7 +107,6 @@ def routines_enveloped(fn: RawCommand) -> Executor:
 async def adapter_call(ctx: CommandContext) -> Any:
     payload = {
         "arguments": ctx.arguments,
-        "workspace_id": ctx.workspace_id,
         "runtime_context": None,
         "wait": False,
         "wait_timeout_seconds": 0,

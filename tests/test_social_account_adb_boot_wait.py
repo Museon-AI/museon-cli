@@ -63,7 +63,7 @@ def _api(answers: list[Any], clock: _Clock, seconds_per_request: float = 35.0) -
 def _request(api_data: Any) -> Any:
     return asyncio.run(
         social_account._request_adb_credentials(
-            api_data, None, "/adb", params={"workspace_id": "w"}
+            api_data, None, "/adb", json_body={"handle": "h", "platform": "tiktok"}
         )
     )
 
@@ -183,7 +183,7 @@ def test_connect_adb_retries_for_both_ways_of_naming_the_account(
     ctx = SimpleNamespace(
         cfg=None,
         arguments=arguments,
-        workspace_id="workspace-1",
+        organization_id="org-1",
         spec=SimpleNamespace(schema_name="social-account.connect-adb"),
         api_data=api_data,
     )

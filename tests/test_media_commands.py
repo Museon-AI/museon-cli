@@ -1,4 +1,4 @@
-"""Protect file ingestion across argv, workspace selection and HTTP transport.
+"""Protect file ingestion across argv, organization addressing and HTTP transport.
 
 The expected API payloads are handwritten from the existing endpoint contract,
 not derived from the command builder. No real uploads or network calls are made.
@@ -19,8 +19,7 @@ from museoncli.config import AuthState, Config, OrganizationState
 from museoncli.domains import get_command_spec, schema_payload
 import museoncli.main as cli
 
-WORKSPACE = "10000000-0000-4000-8000-000000000001"
-OVERRIDE = "20000000-0000-4000-8000-000000000002"
+OTHER_ORG = "20000000-0000-4000-8000-000000000002"
 MEDIA = "30000000-0000-4000-8000-000000000003"
 RETIRED = (
     "asset",
@@ -38,23 +37,23 @@ RETIRED = (
         (
             "upload",
             {"file", "file_id", "media_type", "title", "description"},
-            {"workspace_id", "dry_run"},
+            {"dry_run"},
         ),
         (
             "generate",
             {"type", "prompt", "model", "duration_seconds", "aspect_ratio", "idempotency_key"},
-            {"workspace_id", "dry_run"},
+            {"dry_run"},
         ),
-        ("status", {"task_id"}, {"workspace_id"}),
-        ("import", {"url", "source_page_url"}, {"workspace_id", "dry_run"}),
-        ("get", {"id", "kind"}, {"workspace_id"}),
+        ("status", {"task_id"}, set()),
+        ("import", {"url", "source_page_url"}, {"dry_run"}),
+        ("get", {"id", "kind"}, set()),
     ],
 )
 def test_declared_media_inputs_match_the_transport_cases(command, request_fields, local_fields):
     """New declarations require extending the independent HTTP cases below.
 
     Request fields are asserted by the upload/readback and import tests;
-    workspace overrides and dry-run behavior have separate assertions there.
+    organization addressing and dry-run behavior have separate assertions there.
     """
     spec = get_command_spec(f"media.{command}")
     parser = argparse.ArgumentParser(add_help=False)
@@ -99,7 +98,7 @@ def test_artifact_upload_uses_artifact_endpoint_and_public_form_contract(monkeyp
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/api/v1/agent-cli/artifacts/upload"
         parts = multipart(request)
-        assert parts["workspace_id"] == WORKSPACE.encode()
+        assert "workspace_id" not in parts
         assert parts["artifact_type"] == b"file"
         assert parts["public"] == b"true"
         assert parts["title"] == b"Release acceptance"
@@ -111,7 +110,6 @@ def test_artifact_upload_uses_artifact_endpoint_and_public_form_contract(monkeyp
     result = asyncio.run(
         cli.upload_artifact_file(
             cli.load_config(),
-            workspace_id=WORKSPACE,
             arguments={
                 "file": str(report),
                 "artifact_type": "file",
@@ -126,7 +124,7 @@ def test_artifact_upload_uses_artifact_endpoint_and_public_form_contract(monkeyp
 @pytest.mark.parametrize(
     "media_type,suffix", [("video", "mp4"), ("audio", "mp3"), ("image", "png")]
 )
-def test_upload_and_readback_preserve_file_type_metadata_and_workspace(
+def test_upload_and_readback_preserve_file_type_metadata_and_organization(
     monkeypatch,
     tmp_path,
     media_type,
@@ -164,8 +162,8 @@ def test_upload_and_readback_preserve_file_type_metadata_and_workspace(
         [
             "media",
             "+upload",
-            "--workspace-id",
-            OVERRIDE,
+            "--organization-id",
+            OTHER_ORG,
             "--file",
             str(file),
             "--media-type",
@@ -177,7 +175,7 @@ def test_upload_and_readback_preserve_file_type_metadata_and_workspace(
         ]
     )
     readback = run(
-        ["media", "+get", "--workspace-id", OVERRIDE, "--id", receipt["data"]["asset"]["media_id"]]
+        ["media", "+get", "--organization-id", OTHER_ORG, "--id", receipt["data"]["asset"]["media_id"]]
     )
     assert readback["data"]["asset"] == {
         "id": MEDIA,
@@ -190,8 +188,8 @@ def test_upload_and_readback_preserve_file_type_metadata_and_workspace(
     assert upload.method == "POST"
     assert upload.url.path == "/api/v1/agent-cli/assets/media/upload"
     assert upload.headers["X-Museon-CLI-Command"] == "media.upload"
+    assert upload.headers["X-Organization-Id"] == OTHER_ORG
     assert multipart(upload) == {
-        "workspace_id": OVERRIDE.encode(),
         "media_type": media_type.encode(),
         "title": b"0",
         "description": b"",
@@ -199,7 +197,8 @@ def test_upload_and_readback_preserve_file_type_metadata_and_workspace(
     }
     assert read.method == "GET"
     assert read.url.path == f"/api/v1/agent-cli/assets/media/{MEDIA}"
-    assert dict(read.url.params) == {"workspace_id": OVERRIDE}
+    assert dict(read.url.params) == {}
+    assert read.headers["X-Organization-Id"] == OTHER_ORG
     assert read.headers["X-Museon-CLI-Command"] == "media.get"
 
 
@@ -214,7 +213,7 @@ def test_image_import_forwards_only_supported_fields(monkeypatch, source_page):
     transport_fixture(monkeypatch, handler)
     argv = ["media", "+import", "--url", "https://example.test/image.jpg?a=0&b=false"]
     if source_page is not None:
-        argv += ["--source-page-url", source_page, "--workspace-id", OVERRIDE]
+        argv += ["--source-page-url", source_page]
     run(argv)
     assert len(requests) == 1
     request = requests[0]
@@ -224,7 +223,6 @@ def test_image_import_forwards_only_supported_fields(monkeypatch, source_page):
     if source_page is not None:
         expected["source_page_url"] = source_page
     assert json.loads(request.content) == {
-        **({"workspace_id": OVERRIDE} if source_page is not None else {}),
         "type": "media",
         "payload": expected,
     }
@@ -373,7 +371,6 @@ def test_generation_argv_reaches_request_and_status(monkeypatch, kind, extra, ex
             json={
                 "task_id": MEDIA,
                 "media_id": MEDIA,
-                "workspace_id": OVERRIDE,
                 "status": "pending",
                 "phase": "queued",
                 "media_ready": False,
@@ -385,8 +382,6 @@ def test_generation_argv_reaches_request_and_status(monkeypatch, kind, extra, ex
         [
             "media",
             "+generate",
-            "--workspace-id",
-            OVERRIDE,
             "--type",
             kind,
             "--prompt",
@@ -397,17 +392,16 @@ def test_generation_argv_reaches_request_and_status(monkeypatch, kind, extra, ex
         ]
     )
     assert receipt["data"]["media_ready"] is False
-    run(["media", "+get-generation", "--workspace-id", OVERRIDE, "--task-id", MEDIA])
+    run(["media", "+get-generation", "--task-id", MEDIA])
     assert requests[0].url.path == "/api/v1/media/generations"
     assert requests[0].headers["Idempotency-Key"] == "caller-same-key"
     assert json.loads(requests[0].content) == {
-        "workspace_id": OVERRIDE,
         "type": kind,
         "prompt": "Literal 0 false $HOME",
         **expected,
     }
     assert requests[1].url.path == f"/api/v1/media/generations/{MEDIA}"
-    assert dict(requests[1].url.params) == {"workspace_id": OVERRIDE}
+    assert dict(requests[1].url.params) == {}
 
 
 @pytest.mark.parametrize(
@@ -449,7 +443,6 @@ def test_private_file_multipart_and_explicit_file_readback(monkeypatch, tmp_path
                 json={
                     "kind": "file",
                     "artifact_id": MEDIA,
-                    "workspace_id": OVERRIDE,
                     "is_public": False,
                     "download_url": "https://signed.test/temporary",
                 },
@@ -458,7 +451,6 @@ def test_private_file_multipart_and_explicit_file_readback(monkeypatch, tmp_path
             200,
             json={
                 "id": MEDIA,
-                "workspace_id": OVERRIDE,
                 "render_kind": "download",
                 "download_url": "https://signed.test/renewed",
             },
@@ -469,8 +461,6 @@ def test_private_file_multipart_and_explicit_file_readback(monkeypatch, tmp_path
         [
             "media",
             "+upload",
-            "--workspace-id",
-            OVERRIDE,
             "--media-type",
             "file",
             "--file",
@@ -482,16 +472,15 @@ def test_private_file_multipart_and_explicit_file_readback(monkeypatch, tmp_path
         ]
     )
     assert receipt["data"]["kind"] == "file"
-    run(["media", "+get", "--workspace-id", OVERRIDE, "--kind", "file", "--id", MEDIA])
+    run(["media", "+get", "--kind", "file", "--id", MEDIA])
     assert requests[0].url.path == "/api/v1/media/files"
     assert multipart(requests[0]) == {
-        "workspace_id": OVERRIDE.encode(),
         "file_id": MEDIA.encode(),
         "title": b"0",
         "file": b"# Private document",
     }
     assert requests[1].url.path == f"/api/v1/agent-artifacts/{MEDIA}"
-    assert dict(requests[1].url.params) == {"workspace_id": OVERRIDE}
+    assert dict(requests[1].url.params) == {}
 
 
 def test_file_timeout_preserves_recovery_id_without_second_upload(monkeypatch, tmp_path):
@@ -509,47 +498,40 @@ def test_file_timeout_preserves_recovery_id_without_second_upload(monkeypatch, t
     assert len(requests) == 1
 
 
-@pytest.mark.parametrize("field,value", [("workspace_id", WORKSPACE), ("task_id", "bad"), ("media_id", None)])
+@pytest.mark.parametrize("field,value", [("task_id", "bad"), ("media_id", None)])
 def test_generation_bad_write_receipt_is_not_success(monkeypatch, field, value):
-    payload = {"workspace_id": OVERRIDE, "task_id": MEDIA, "media_id": MEDIA}
+    payload = {"task_id": MEDIA, "media_id": MEDIA}
     payload[field] = value
     transport_fixture(monkeypatch, lambda request: httpx.Response(202, json=payload))
     with pytest.raises(RuntimeError, match="media_generation_unverified"):
-        run(["media", "+generate", "--workspace-id", OVERRIDE, "--type", "image",
+        run(["media", "+generate", "--type", "image",
              "--prompt", "test", "--idempotency-key", "keep-this-key"])
 
 
-@pytest.mark.parametrize("field,value", [("workspace_id", WORKSPACE), ("kind", "media"), ("is_public", True)])
-def test_private_file_receipt_must_prove_scope_and_privacy(monkeypatch, tmp_path, field, value):
+@pytest.mark.parametrize("field,value", [("artifact_id", OTHER_ORG), ("kind", "media"), ("is_public", True)])
+def test_private_file_receipt_must_prove_identity_and_privacy(monkeypatch, tmp_path, field, value):
     file = tmp_path / "private.txt"
     file.write_text("private")
-    payload = {"workspace_id": OVERRIDE, "artifact_id": MEDIA, "kind": "file", "is_public": False}
+    payload = {"artifact_id": MEDIA, "kind": "file", "is_public": False}
     payload[field] = value
     transport_fixture(monkeypatch, lambda request: httpx.Response(201, json=payload))
     with pytest.raises(RuntimeError, match="file_upload_unverified"):
-        run(["media", "+upload", "--workspace-id", OVERRIDE, "--media-type", "file",
+        run(["media", "+upload", "--media-type", "file",
              "--file", str(file), "--file-id", MEDIA])
 
 
-def test_generation_without_workspace_accepts_the_servers_workspace(monkeypatch):
-    """No --workspace-id: the server picks the workspace; the receipt must still name one."""
+def test_generation_addresses_the_organization_and_needs_no_workspace_in_the_receipt(monkeypatch):
+    """The organization comes from the header; a receipt is proven by its task and media ids."""
     requests = []
-    receipts = [
-        {"workspace_id": OVERRIDE, "task_id": MEDIA, "media_id": MEDIA},
-        {"task_id": MEDIA, "media_id": MEDIA},
-    ]
 
     def handler(request):
         requests.append(request)
-        return httpx.Response(202, json=receipts[len(requests) - 1])
+        return httpx.Response(202, json={"task_id": MEDIA, "media_id": MEDIA})
 
     transport_fixture(monkeypatch, handler)
-    argv = ["media", "+generate", "--type", "image", "--prompt", "test",
-            "--idempotency-key", "keep-this-key"]
-    receipt = run(argv)
+    receipt = run(["media", "+generate", "--type", "image", "--prompt", "test",
+                   "--idempotency-key", "keep-this-key"])
 
     assert receipt["data"]["task_id"] == MEDIA
     assert "workspace_id" not in json.loads(requests[0].content)
     assert requests[0].headers["X-Organization-Id"] == "org-1"
-    with pytest.raises(RuntimeError, match="media_generation_unverified"):
-        run(argv)

@@ -10,7 +10,7 @@ never rely on memory or older transcripts for the command list.
 - `setup --agent [auto|codex|claude-code|cursor|all]`
 - `config get` / `config set`
 - `auth start` / `auth finish` / `auth login` / `auth status` / `auth logout`
-- `org list` / `org current` / `org select` (`workspace list` / `workspace current` / `workspace select` remain as deprecated aliases until 1.0)
+- `org list` / `org current` / `org select`
 - `schema [<domain>[.<shortcut>]]`
 
 ## Business commands
@@ -263,7 +263,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `cloud-phone supplier +update` | write | yes | — | direct | Update an IP supplier preset; omitted password keeps its existing value. |
 | `cloud-phone supplier +delete` | destructive | yes | `--yes` | direct | Delete a saved IP supplier preset. |
 | `cloud-phone attention +list` | read | — | — | direct | List down, repeatedly failing or overloaded IPs, failed changes, reclaimable phones and unused IPs. |
-| `cloud-phone recovery +preview` | read | — | — | direct | Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it to the selected organization. Returns blockers and Museon device IDs; no resources are released. |
+| `cloud-phone recovery +preview` | read | — | — | direct | Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope organization narrows it to the selected organization. Returns blockers and Museon device IDs; no resources are released. |
 | `cloud-phone recovery-job +create` | destructive | yes | `--yes` | direct | Reclaim explicitly selected devices from a fresh recovery preview. Retry uncertain submission with the same key; accepted is not completed. |
 | `cloud-phone recovery-job +list` | read | — | — | direct | List resource-recovery jobs, including failed and partial outcomes. |
 | `cloud-phone recovery-job +get` | read | — | — | direct | Get a recovery job and every device's outcome and blockers. |
@@ -452,10 +452,10 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 - Requests act in the organization chosen with `museoncli org select`
   (`X-Organization-Id`); pass `--organization-id <uuid>` on a domain command to address
   another organization for one call. Catalog entries mark this with `organization_bound`
-  (with a deprecated `workspace_bound` mirror) and roles `organization_member` /
-  `organization_admin_or_staff`. `--workspace-id` is a deprecated alias until 1.0;
-  agents never need a workspace id.
-- Envelopes carry an `organization` key (`{id, name}` or `null`); the deprecated
-  `workspace` key is only set when `--workspace-id` was given.
+  and roles `organization_member` / `organization_admin_or_staff`. Since 1.0 no command
+  takes a workspace; only `agentic-campaign` and `hireaicreator` keep their 0.25
+  `--workspace-id` and `workspace_bound` mirror until they move to organizations.
+- Envelopes carry an `organization` key (`{id, name}` or `null`) and no `workspace` key
+  (the two groups above excepted).
 - Surface rules (ids, pagination, enum casing, `--dry-run` / `--yes`) live in
   [cli-surface-conventions.md](cli-surface-conventions.md).

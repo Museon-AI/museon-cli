@@ -1626,7 +1626,7 @@ async def _execute_research(ctx: CommandContext) -> Any:
             ctx.cfg,
             "POST",
             _RESEARCH_PATHS[ctx.spec.schema_name],
-            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+            json_body={"payload": ctx.arguments},
         )
     )
 
@@ -1637,7 +1637,7 @@ async def _execute_creative_search_ads(ctx: CommandContext) -> Any:
             ctx.cfg,
             "POST",
             "/agent-cli/research/creative-search-ads",
-            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+            json_body={"payload": ctx.arguments},
         )
     )
 
@@ -1648,7 +1648,7 @@ async def _execute_social_hook_analyze(ctx: CommandContext) -> Any:
             ctx.cfg,
             "POST",
             "/agent-cli/research/social-media-hook-analyze",
-            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+            json_body={"payload": ctx.arguments},
         )
     )
 
@@ -1659,7 +1659,7 @@ async def _execute_social_hook_source(ctx: CommandContext) -> Any:
             ctx.cfg,
             "POST",
             "/agent-cli/research/social-media-hook-source",
-            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+            json_body={"payload": ctx.arguments},
         )
     )
 
@@ -1670,7 +1670,7 @@ async def _execute_social_hook_analyze_seen(ctx: CommandContext) -> Any:
             ctx.cfg,
             "POST",
             "/agent-cli/research/social-media-hook-analyze-seen",
-            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+            json_body={"payload": ctx.arguments},
         )
     )
 
@@ -1682,7 +1682,6 @@ async def _execute_social_hook_get(ctx: CommandContext) -> Any:
             ctx.cfg,
             "GET",
             f"/agent-cli/research/social-media-hook-analyze/{analysis_id}",
-            params={"workspace_id": ctx.workspace_id},
         )
     )
 
@@ -1693,7 +1692,7 @@ async def _execute_social_hook_poll(ctx: CommandContext) -> Any:
             ctx.cfg,
             "POST",
             "/agent-cli/research/social-media-hook-analyze-poll",
-            json_body={"workspace_id": ctx.workspace_id, "payload": ctx.arguments},
+            json_body={"payload": ctx.arguments},
         )
     )
 
@@ -1701,7 +1700,6 @@ async def _execute_social_hook_poll(ctx: CommandContext) -> Any:
 async def _execute_social_hook_results(ctx: CommandContext) -> Any:
     analysis_id = ctx.arguments["analysis_id"]
     params = {
-        "workspace_id": ctx.workspace_id,
         **{key: value for key, value in ctx.arguments.items() if key != "analysis_id"},
     }
     return agent_domain_result(
@@ -1731,7 +1729,7 @@ async def _execute_social_hook_media_get(ctx: CommandContext) -> Any:
                 "/agent-cli/research/social-media-hook-analyze/"
                 f"{ctx.arguments['analysis_id']}/items/{ctx.arguments['item_id']}/media"
             ),
-            params={"workspace_id": ctx.workspace_id},
+            params={},
             destination=temporary,
             max_bytes=30 * 1024 * 1024,
         )
@@ -1756,7 +1754,6 @@ async def _execute_creative_search_ads_get(ctx: CommandContext) -> Any:
             ctx.cfg,
             "GET",
             f"/agent-cli/research/creative-search-ads/{task_id}",
-            params={"workspace_id": ctx.workspace_id},
         )
     )
 
@@ -1764,7 +1761,6 @@ async def _execute_creative_search_ads_get(ctx: CommandContext) -> Any:
 async def _execute_creative_search_ads_results(ctx: CommandContext) -> Any:
     task_id = ctx.arguments["task_id"]
     params = {
-        "workspace_id": ctx.workspace_id,
         **{key: value for key, value in ctx.arguments.items() if key != "task_id"},
     }
     return agent_domain_result(

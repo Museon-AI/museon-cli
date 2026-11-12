@@ -2,7 +2,7 @@
 
 ## Mental model
 
-`media`提供文件输入、prompt 生成和事实回读。所有命令使用所选组织；跨组织操作显式传`--organization-id`，不要传已弃用的`--workspace-id`。图片/视频/音频上传仍使用原媒体接口；普通文件使用已有 artifact 账本，不是 media 表。业务视频版本、发布和交付仍由 HireAICreator 回读。
+`media`提供文件输入、prompt 生成和事实回读。所有命令使用所选组织；跨组织操作显式传`--organization-id`。图片/视频/音频上传仍使用原媒体接口；普通文件使用已有 artifact 账本，不是 media 表。业务视频版本、发布和交付仍由 HireAICreator 回读。
 
 新`+generate`、`+get-generation`和普通文件上传是本地未发布候选：后端尚未部署，新模型 credits 尚未配置；旧服务器可能返回404，生成可能返回`MEDIA_GENERATION_PRICING_UNAVAILABLE`。不能把本地测试视为真实模型完成。
 

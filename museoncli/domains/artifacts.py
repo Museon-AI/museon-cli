@@ -307,9 +307,7 @@ def specs() -> list[CommandSpec]:
 
 
 async def _execute_upload(ctx: CommandContext) -> Any:
-    return await ctx.upload_artifact_file(
-        ctx.cfg, workspace_id=ctx.workspace_id, arguments=ctx.arguments
-    )
+    return await ctx.upload_artifact_file(ctx.cfg, arguments=ctx.arguments)
 
 
 async def _execute_validate(ctx: CommandContext) -> Any:
@@ -322,7 +320,6 @@ async def _execute_share(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         f"/agent-cli/artifacts/{artifact_id}/share/enable",
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
@@ -332,12 +329,11 @@ async def _execute_unshare(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         f"/agent-cli/artifacts/{artifact_id}/share/disable",
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
 EXECUTORS = {
-    "artifacts.validate": direct_enveloped(_execute_validate, with_workspace=False),
+    "artifacts.validate": direct_enveloped(_execute_validate),
     "artifacts.upload": direct_enveloped(_execute_upload),
     "artifacts.share": direct_enveloped(_execute_share),
     "artifacts.unshare": direct_enveloped(_execute_unshare),

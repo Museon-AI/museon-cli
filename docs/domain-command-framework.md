@@ -35,19 +35,18 @@ any more: organizations are the only unit of access.
   `X-Organization-Id` for the organization chosen with `museoncli org select`
   (`org list` shows each organization's role, `campaign_scope` and `is_default`), and
   every organization-bound domain command also accepts `--organization-id <uuid>`
-  to address another organization for that one call. The server resolves the
-  workspace internally; Agents never pass a workspace id.
-- `museoncli schema` catalog entries expose `organization_bound` (plus a deprecated
-  `workspace_bound` mirror for 0.22-era readers), the allowed roles
+  to address another organization for that one call. Agents never pass a workspace id.
+- `museoncli schema` catalog entries expose `organization_bound`, the allowed roles
   (`organization_member`, `organization_admin_or_staff`) and
   `resource_policy: server_evaluated_organization_and_resource_access`: the server
   evaluates organization role, Campaign scope and target-resource access on every request.
-- `--workspace-id` and `museoncli workspace list|current|select` are deprecated
-  aliases until 1.0. They print a notice on stderr and a `warnings` entry. Giving a
-  `--workspace-id` that belongs to a different organization than `--organization-id`
-  fails with HTTP 409 `organization_workspace_mismatch` (reason `conflict`, exit 5).
-- Envelopes carry `organization` (`{id, name}` or `null`); the deprecated `workspace`
-  key is set only when `--workspace-id` was given.
+- 1.0 removed `museoncli workspace list|current|select`, every `--workspace-id` and
+  every `workspace_id` input. `agentic-campaign` and `hireaicreator` are the exception
+  and keep their 0.25 behaviour until they move to organizations; all of it lives in
+  `museoncli/domains/_legacy_workspace.py` (their deprecated `workspace_id` input, the
+  `workspace_bound` mirror, the envelope `workspace` key and the stderr notice). Any
+  other command given `workspace_id` in structured input fails before a request.
+- Envelopes carry `organization` (`{id, name}` or `null`) and no `workspace` key.
 
 ## Current commands
 
@@ -300,7 +299,7 @@ The tables below are generated — edit code, then run
 | `cloud-phone supplier +update` | write | yes | — | direct | Update an IP supplier preset; omitted password keeps its existing value. |
 | `cloud-phone supplier +delete` | destructive | yes | `--yes` | direct | Delete a saved IP supplier preset. |
 | `cloud-phone attention +list` | read | — | — | direct | List down, repeatedly failing or overloaded IPs, failed changes, reclaimable phones and unused IPs. |
-| `cloud-phone recovery +preview` | read | — | — | direct | Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it to the selected organization. Returns blockers and Museon device IDs; no resources are released. |
+| `cloud-phone recovery +preview` | read | — | — | direct | Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope organization narrows it to the selected organization. Returns blockers and Museon device IDs; no resources are released. |
 | `cloud-phone recovery-job +create` | destructive | yes | `--yes` | direct | Reclaim explicitly selected devices from a fresh recovery preview. Retry uncertain submission with the same key; accepted is not completed. |
 | `cloud-phone recovery-job +list` | read | — | — | direct | List resource-recovery jobs, including failed and partial outcomes. |
 | `cloud-phone recovery-job +get` | read | — | — | direct | Get a recovery job and every device's outcome and blockers. |

@@ -53,8 +53,6 @@ def test_routines_list_parser_uses_standard_pagination() -> None:
         [
             "routines",
             "+list",
-            "--workspace-id",
-            "70000000-0000-4000-8000-000000000001",
             "--mode",
             "ad-hoc",
             "--status",
@@ -71,7 +69,7 @@ def test_routines_list_parser_uses_standard_pagination() -> None:
     assert args.command == "routines"
     assert args.domain_command == "routines.list"
     assert args.shortcut == "+list"
-    assert args.workspace_id == "70000000-0000-4000-8000-000000000001"
+    assert not hasattr(args, "workspace_id")
     assert args.mode == "ad-hoc"
     assert args.status == "active"
     assert args.search == "daily"
@@ -312,12 +310,6 @@ def test_auth_status_reports_expired_credential_without_authenticating(
         "expires_at": 1000,
         "user": {"id": "user-1", "email": "user@example.com"},
         "organization": None,
-        "workspace": {
-            "id": None,
-            "name": None,
-            "organization_id": None,
-            "organization_name": None,
-        },
         "pending_web_approval": {
             "active": False,
             "expires_at": None,
@@ -368,83 +360,29 @@ def test_auth_finish_wait_defaults_to_five_minutes() -> None:
     assert args.timeout == 300
 
 
-def test_workspace_commands_remain_available() -> None:
-    current = parse(["workspace", "current"])
-    list_args = parse(["workspace", "list"])
-    selected = parse(["workspace", "select", "--id", "workspace-1"])
-
-    assert current.command == "workspace"
-    assert current.workspace_command == "current"
-    assert list_args.workspace_command == "list"
-    assert selected.workspace_command == "select"
-    assert selected.id == "workspace-1"
-
-
-def test_workspace_select_alias_selects_the_workspaces_organization(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["workspace", "list"],
+        ["workspace", "current"],
+        ["workspace", "select", "--id", "70000000-0000-4000-8000-000000000001"],
+    ],
+)
+def test_workspace_command_group_is_gone(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], argv: list[str]
 ) -> None:
-    cfg = Config(auth=AuthState(api_key="key"))
-    saved: list[OrganizationState] = []
+    monkeypatch.setattr(sys, "argv", ["museoncli", *argv])
 
-    async def fake_api_data(cfg_arg: Config, method: str, path: str, **_: object) -> object:
-        assert (method, path) == ("GET", "/agent-cli/whoami")
-        return {
-            "workspaces": [
-                {
-                    "id": "workspace-1",
-                    "name": "MuseOn Official",
-                    "organization_id": "org-1",
-                    "organization_name": "MuseOn",
-                }
-            ]
-        }
+    with pytest.raises(SystemExit) as exited:
+        main_module.main()
 
-    monkeypatch.setattr(main_module, "api_data", fake_api_data)
-    monkeypatch.setattr(
-        main_module, "save_config", lambda value: saved.append(value.organization)
-    )
-
-    result = asyncio.run(
-        main_module.dispatch_workspace(parse(["workspace", "select", "--id", "workspace-1"]), cfg)
-    )
-
-    assert result["workspace"]["id"] == "workspace-1"
-    assert result["organization"] == {"id": "org-1", "name": "MuseOn"}
-    assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
-    assert saved[-1] == OrganizationState(id="org-1", name="MuseOn")
-    # Only the organization is recorded and addressed; no workspace travels.
-    assert "workspace" not in cfg.document()
-    assert main_module.auth_headers(cfg)["X-Organization-Id"] == "org-1"
-    assert not any("workspace" in name.lower() for name in main_module.auth_headers(cfg))
+    payload = json.loads(capsys.readouterr().out)
+    assert exited.value.code == main_module.EXIT_USAGE
+    assert payload["reason"] == "usage_error"
+    assert "invalid choice: 'workspace'" in payload["error"]["message"]
 
 
-def test_workspace_alias_warns_on_stderr_and_in_the_envelope(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    cfg = Config(organization=OrganizationState(id="org-1", name="MuseOn"))
-    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
-    monkeypatch.setattr(sys, "argv", ["museoncli", "workspace", "current"])
-
-    main_module.main()
-
-    captured = capsys.readouterr()
-    payload = json.loads(captured.out)
-    assert payload["ok"] is True
-    assert payload["organization"] == {"id": "org-1", "name": "MuseOn"}
-    assert payload["workspace"] == {
-        "id": None,
-        "name": None,
-        "organization_id": "org-1",
-        "organization_name": "MuseOn",
-    }
-    assert payload["warnings"] == [
-        "`museoncli workspace current` is deprecated; use `museoncli org current`. "
-        "MuseOn has organizations only; a workspace selects its organization."
-    ]
-    assert captured.err.strip() == f"museoncli: {payload['warnings'][0]}"
-
-
-def test_whoami_on_an_old_server_derives_organizations_and_refreshes_the_name(
+def test_whoami_lists_organizations_and_not_the_servers_workspace_list(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = Config()
@@ -453,15 +391,25 @@ def test_whoami_on_an_old_server_derives_organizations_and_refreshes_the_name(
 
     async def fake_api_data(cfg_arg: Config, method: str, path: str, **_: object) -> object:
         assert (method, path) == ("GET", "/agent-cli/whoami")
-        # 0.22-era server: workspaces only, no organizations.
+        # The server still lists workspaces for CLIs older than 0.23.
         return {
             "user": {"id": "user-1"},
-            "workspaces": [
-                {"id": "ws-a", "name": "A", "organization_id": "org-1", "organization_name": "MuseOn"},
-                {"id": "ws-b", "name": "B", "organization_id": "org-1", "organization_name": "MuseOn"},
-                {"id": "ws-c", "name": "C", "organization_id": "org-2", "organization_name": "Brand"},
+            "organizations": [
+                {
+                    "id": "org-1",
+                    "name": "MuseOn",
+                    "role": "owner",
+                    "campaign_scope": "all",
+                    "is_default": True,
+                    "default_workspace_id": "ws-b",
+                },
+                {"id": "org-2", "name": "Brand", "role": "member", "default_workspace_id": "ws-c"},
             ],
+            "default_organization_id": "org-1",
+            "default_organization_name": "MuseOn",
+            "workspaces": [{"id": "ws-b", "name": "B", "organization_id": "org-1"}],
             "default_workspace_id": "ws-b",
+            "default_workspace_name": "B",
         }
 
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
@@ -472,49 +420,24 @@ def test_whoami_on_an_old_server_derives_organizations_and_refreshes_the_name(
 
     result = asyncio.run(main_module.dispatch(parse(["whoami"])))
 
-    data = result["data"]
-    assert [row["id"] for row in data["workspaces"]] == ["ws-a", "ws-b", "ws-c"]
-    assert data["organizations"] == [
-        {
-            "id": "org-1",
-            "name": "MuseOn",
-            "slug": None,
-            "role": None,
-            "campaign_scope": None,
-            "is_default": True,
-            "default_workspace_id": "ws-b",
-        },
-        {
-            "id": "org-2",
-            "name": "Brand",
-            "slug": None,
-            "role": None,
-            "campaign_scope": None,
-            "is_default": False,
-            "default_workspace_id": "ws-c",
-        },
-    ]
-    assert data["default_organization_id"] == "org-1"
-    assert data["default_organization_name"] == "MuseOn"
+    assert result["data"] == {
+        "user": {"id": "user-1"},
+        "organizations": [
+            {
+                "id": "org-1",
+                "name": "MuseOn",
+                "role": "owner",
+                "campaign_scope": "all",
+                "is_default": True,
+                "default_workspace_id": "ws-b",
+            },
+            {"id": "org-2", "name": "Brand", "role": "member", "default_workspace_id": "ws-c"},
+        ],
+        "default_organization_id": "org-1",
+        "default_organization_name": "MuseOn",
+    }
     assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
     assert saved[-1] == OrganizationState(id="org-1", name="MuseOn")
-
-
-def test_whoami_adopts_the_organization_of_a_022_selected_workspace(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    cfg = Config.from_dict({"workspace": {"id": "ws-c", "name": "C"}})
-    assert cfg.organization.id is None
-    whoami = {
-        "workspaces": [{"id": "ws-c", "name": "C", "organization_id": "org-2"}],
-        "organizations": [{"id": "org-2", "name": "Brand", "role": "admin"}],
-        "default_organization_id": "org-2",
-    }
-    monkeypatch.setattr(main_module, "save_config", lambda value: None)
-
-    assert main_module.sync_current_organization_from_whoami(cfg, whoami) is True
-    assert cfg.organization == OrganizationState(id="org-2", name="Brand")
-    assert cfg.extra["workspace"] == {"id": "ws-c", "name": "C"}
 
 
 @pytest.mark.parametrize(
@@ -1134,7 +1057,7 @@ def test_dispatch_campaign_monitor_dimensions_reads_the_campaign_menu(
         {
             "method": "GET",
             "path": f"/agent-cli/campaign-monitors/{_DIMENSIONS_CAMPAIGN_ID}/dimensions",
-            "params": {"workspace_id": None},
+            "params": None,
         }
     ]
 
@@ -1328,8 +1251,6 @@ def test_skills_create_parser_reads_inline_content() -> None:
             "social-persona-account-analysis",
             "--content",
             "# Skill",
-            "--workspace-id",
-            "workspace-1",
             "--reference-json",
             '{"docs":["https://example.com"]}',
             "--is-public",
@@ -1340,7 +1261,6 @@ def test_skills_create_parser_reads_inline_content() -> None:
     assert args.shortcut == "+create"
     assert args.domain_command == "skills.create"
     assert args.name == "social-persona-account-analysis"
-    assert args.workspace_id == "workspace-1"
     assert args.content == "# Skill"
     assert args.reference_json == '{"docs":["https://example.com"]}'
     assert args.is_active is True
@@ -1562,7 +1482,7 @@ def test_schema_returns_long_skill_description_limit() -> None:
 
     assert result["data"]["input_schema"]["properties"]["description"]["maxLength"] == 20000
     assert "reference" in result["data"]["input_schema"]["properties"]
-    assert "workspace_id" in result["data"]["input_schema"]["properties"]
+    assert "workspace_id" not in result["data"]["input_schema"]["properties"]
     assert result["data"]["input_schema"]["properties"]["is_active"] == {
         "type": "boolean",
         "default": True,
@@ -1682,8 +1602,6 @@ def test_dispatch_routines_list_uses_standard_pagination(
         [
             "routines",
             "+list",
-            "--workspace-id",
-            "70000000-0000-4000-8000-000000000001",
             "--mode",
             "ad-hoc",
             "--status",
@@ -1700,7 +1618,6 @@ def test_dispatch_routines_list_uses_standard_pagination(
 
     assert result == {
         "command": "routines.list",
-        "workspace": {"id": "70000000-0000-4000-8000-000000000001"},
         "organization": None,
         "data": {
             "items": [],
@@ -1726,7 +1643,6 @@ def test_dispatch_routines_list_uses_standard_pagination(
             "method": "GET",
             "path": "/agent-cli/routines",
             "params": {
-                "workspace_id": "70000000-0000-4000-8000-000000000001",
                 "mode": "ad_hoc",
                 "status": "active",
                 "search": "daily",
@@ -1917,66 +1833,6 @@ def test_dispatch_routines_leave_the_workspace_to_the_server_when_omitted(
     assert result["command"].startswith("routines.")
     target = calls[0][workspace_location]
     assert not (target or {}).get("workspace_id")
-
-
-def test_dispatch_routines_workspace_id_arg_overrides_selected_workspace(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    cfg = Config()
-    cfg.organization = OrganizationState(id="org-1", name="MuseOn")
-    calls: list[dict[str, object]] = []
-
-    async def fake_api_data(
-        cfg_arg: Config,
-        method: str,
-        path: str,
-        *,
-        json_body: dict[str, object] | None = None,
-        params: dict[str, object] | None = None,
-    ) -> dict[str, object]:
-        del cfg_arg, method, path, params
-        calls.append({"json_body": json_body})
-        return {"ok": True}
-
-    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
-    monkeypatch.setattr(main_module, "api_data", fake_api_data)
-
-    asyncio.run(
-        main_module.dispatch(
-            parse(
-                [
-                    "routines",
-                    "+create-ad-hoc",
-                    "--workspace-id",
-                    "70000000-0000-4000-8000-000000000099",
-                    "--name",
-                    "Daily check",
-                    "--instruction",
-                    "Check daily.",
-                    "--trigger-config-json",
-                    '{"schema_version":1,"kind":"recurring","timezone":"UTC","cron":"0 9 * * *"}',
-                ]
-            )
-        )
-    )
-
-    assert calls == [
-        {
-            "json_body": {
-                "workspace_id": "70000000-0000-4000-8000-000000000099",
-                "name": "Daily check",
-                "instruction": "Check daily.",
-                "trigger_config": {
-                    "schema_version": 1,
-                    "kind": "recurring",
-                    "timezone": "UTC",
-                    "cron": "0 9 * * *",
-                },
-                "idempotency_key": None,
-                "turn_context": {},
-            }
-        }
-    ]
 
 
 def test_dispatch_routines_create_ad_hoc_adds_other_scope_to_turn_context(
@@ -2195,8 +2051,6 @@ def test_dispatch_routines_accept_draft_calls_api(
                     "+accept-draft",
                     "--id",
                     "routine-1",
-                    "--workspace-id",
-                    "70000000-0000-4000-8000-000000000001",
                 ]
             )
         )
@@ -2209,7 +2063,7 @@ def test_dispatch_routines_accept_draft_calls_api(
             "method": "POST",
             "path": "/agent-cli/routines/routine-1/accept-draft",
             "json_body": {},
-            "params": {"workspace_id": "70000000-0000-4000-8000-000000000001"},
+            "params": None,
         }
     ]
 
@@ -2246,8 +2100,6 @@ def test_dispatch_routines_pause_resume_calls_api(
                     f"+{command}",
                     "--id",
                     "routine-1",
-                    "--workspace-id",
-                    "70000000-0000-4000-8000-000000000001",
                 ]
             )
         )
@@ -2259,7 +2111,7 @@ def test_dispatch_routines_pause_resume_calls_api(
         {
             "method": "POST",
             "path": f"/agent-cli/routines/routine-1/{command}",
-            "params": {"workspace_id": "70000000-0000-4000-8000-000000000001"},
+            "params": None,
         }
     ]
 
@@ -2362,7 +2214,7 @@ def test_dispatch_skills_create_uses_agent_api(
     result = asyncio.run(main_module.dispatch(args))
 
     assert result["command"] == "skills.create"
-    assert result["workspace"] is None
+    assert "workspace" not in result
     assert calls == [
         {
             "method": "POST",
@@ -2474,7 +2326,6 @@ def test_dispatch_research_web_research_uses_agent_api(
             "method": "POST",
             "path": "/agent-cli/research/web-research",
             "json_body": {
-                "workspace_id": None,
                 "payload": {
                     "query": "Museon AI",
                     "include": ["search_results"],
@@ -2541,7 +2392,6 @@ def test_dispatch_research_social_media_search_uses_agent_api(
             "method": "POST",
             "path": "/agent-cli/research/social-media-search",
             "json_body": {
-                "workspace_id": None,
                 "payload": {
                     "platform": "tiktok",
                     "intent": "keyword_search",
@@ -2615,7 +2465,6 @@ def test_dispatch_research_community_search_uses_agent_api(
             "method": "POST",
             "path": "/agent-cli/research/community-search",
             "json_body": {
-                "workspace_id": None,
                 "payload": {
                     "platform": "x",
                     "intent": "keyword_search",
@@ -2746,7 +2595,6 @@ def test_dispatch_content_analysis_run_uses_agent_api(
             "method": "POST",
             "path": "/agent-cli/content-analysis/runs",
             "json_body": {
-                "workspace_id": None,
                 "payload": {
                     "type": "content-analysis",
                     "media_id": "3ed10000-0000-4000-8000-000000000001",
@@ -2772,11 +2620,10 @@ def test_dispatch_content_analysis_file_uploads_media_first(
     async def fake_upload_media_file(
         cfg_arg: Config,
         *,
-        workspace_id: str,
         arguments: dict[str, object],
     ) -> dict[str, object]:
         del cfg_arg
-        upload_calls.append({"workspace_id": workspace_id, "arguments": arguments})
+        upload_calls.append({"arguments": arguments})
         return {
             "success": True,
             "data": {
@@ -2834,12 +2681,10 @@ def test_dispatch_content_analysis_file_uploads_media_first(
     ]
     assert upload_calls == [
         {
-            "workspace_id": None,
             "arguments": {"file": "./creative.mp4", "media_type": "video", "title": "Creative"},
         }
     ]
     assert api_calls[0]["json_body"] == {
-        "workspace_id": None,
         "payload": {
             "type": "reverse-ai-prompt",
             "force_reanalysis": False,
@@ -2881,8 +2726,6 @@ def test_dispatch_content_analysis_get_and_list_use_agent_api(
         [
             "content-analysis",
             "+get",
-            "--workspace-id",
-            "workspace-override",
             "--id",
             "11111111-1111-4111-8111-111111111111",
         ]
@@ -2906,13 +2749,12 @@ def test_dispatch_content_analysis_get_and_list_use_agent_api(
         {
             "method": "GET",
             "path": "/agent-cli/content-analysis/runs/11111111-1111-4111-8111-111111111111",
-            "params": {"workspace_id": "workspace-override"},
+            "params": None,
         },
         {
             "method": "GET",
             "path": "/agent-cli/content-analysis/runs",
             "params": {
-                "workspace_id": None,
                 "type": "content-analysis",
                 "source_type": "upload",
                 "page": 1,
@@ -2966,7 +2808,6 @@ def test_dispatch_campaign_monitor_post_resolve_uses_agent_api(
             "method": "GET",
             "path": "/agent-cli/social-media/posts/resolve",
             "params": {
-                "workspace_id": None,
                 "schedule_item_id": "5c000000-0000-4000-8000-000000000001",
             },
         }
@@ -3245,9 +3086,9 @@ def test_requests_address_the_selected_or_named_organization(
     assert request.headers["X-Museon-Organization-Id"] == "usage-org"
     assert "X-Museon-Workspace-Id" not in request.headers
     assert "workspace_id" not in request.url.params
-    # The envelope keeps `workspace` and names the addressed organization next to it.
-    assert list(result)[:3] == ["command", "workspace", "organization"]
-    assert result["workspace"] is None
+    # The envelope names the addressed organization; it has no workspace key.
+    assert list(result)[:2] == ["command", "organization"]
+    assert "workspace" not in result
     if flag:
         assert result["organization"] == {"id": flag, "name": None}
     elif selected:
@@ -3256,25 +3097,3 @@ def test_requests_address_the_selected_or_named_organization(
         assert result["organization"] is None
 
 
-def test_workspace_id_flag_is_still_sent_and_warns(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    calls: list[dict[str, object]] = []
-
-    async def fake_api_data(cfg_arg: Config, method: str, path: str, **kwargs: object) -> object:
-        calls.append(kwargs)
-        return {"items": []}
-
-    workspace = "70000000-0000-4000-8000-000000000001"
-    monkeypatch.setattr(main_module, "load_config", lambda: Config())
-    monkeypatch.setattr(main_module, "api_data", fake_api_data)
-    monkeypatch.setattr(sys, "argv", ["museoncli", "routines", "+list", "--workspace-id", workspace])
-
-    main_module.main()
-
-    captured = capsys.readouterr()
-    payload = json.loads(captured.out)
-    assert calls[0]["params"]["workspace_id"] == workspace
-    assert payload["workspace"] == {"id": workspace}
-    assert payload["warnings"][-1].startswith("--workspace-id is deprecated")
-    assert "--workspace-id is deprecated" in captured.err

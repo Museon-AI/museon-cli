@@ -46,7 +46,7 @@ verify `museoncli version`,
 then resume the original task:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.25.0/museoncli-0.25.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.0/museoncli-1.0.0-py3-none-any.whl"
 ```
 
 Read [operating-model.md](references/operating-model.md) for risk, async work, authentication,
@@ -70,21 +70,15 @@ and Business Skill boundaries. Read only the reference needed for the current ca
 | Need every page of a read | add `--all`, then check `page_info.complete` |
 | A command failed | branch on `error.code`, `error.server_code` and `error.retryable`; a usage error's `error.hint` names the help to read |
 
-## Migration from workspaces (0.25.0)
+## Organizations only
 
-MuseOn has no workspace concept any more: access is an organization role plus Campaign scope.
-Agents never need a workspace id; the server resolves it from the organization.
-
-| Old | New |
-| --- | --- |
-| `workspace list` / `workspace current` | `org list` / `org current` |
-| `workspace select --id <ws>` | `org select --id <organization-id>` (or `--name <exact name>`) |
-| `--workspace-id <ws>` on a command | drop it, or `--organization-id <org>` for one call |
-| envelope `.workspace` | envelope `.organization` (`{id, name}` or `null`) |
-
-`workspace ...` and `--workspace-id` remain deprecated aliases until 1.0 (stderr notice plus a
-`warnings` entry); mixing `--workspace-id` and `--organization-id` from different organizations
-returns `organization_workspace_mismatch` (`conflict`, exit 5). `whoami` lists `organizations[]`.
+MuseOn has organizations only: access is an organization role plus Campaign scope. Commands act
+in the selected organization (`org current`; choose with `org list` / `org select --id
+<organization-id>`); pass `--organization-id <org>` to address another organization for one call.
+Envelopes name it in `.organization` (`{id, name}` or `null`). Since 1.0.0 there is no
+`workspace` command, no `--workspace-id` flag and no `workspace_id` input: any of them is a usage
+or input error. Only `agentic-campaign` and `hireaicreator` still document their own
+`--workspace-id`; follow their Skill.
 
 ## DON'T
 

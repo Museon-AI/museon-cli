@@ -119,12 +119,7 @@ def test_web_approval_login_stores_api_key(monkeypatch) -> None:
             "key_prefix": "museon_test",
             "credential_expires_at": "2026-10-01T00:00:00+00:00",
             "user": {"id": "user-1", "email": "staff@museon.ai"},
-            "workspace": {
-                "id": "workspace-1",
-                "name": "MuseOn Official",
-                "organization_id": "org-1",
-                "organization_name": "MuseOn",
-            },
+            "organization": {"id": "org-1", "name": "MuseOn"},
         }
 
     monkeypatch.setattr(auth_module, "api_post_public", fake_post_public)
@@ -137,10 +132,9 @@ def test_web_approval_login_stores_api_key(monkeypatch) -> None:
     assert result["auth_method"] == "api_key"
     assert cfg.auth.api_key == "raw-api-key"
     assert cfg.auth.expires_at == 1790812800
-    # An older server names only the workspace; its organization is stored.
     assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
     assert result["organization"] == {"id": "org-1", "name": "MuseOn"}
-    assert result["workspace"]["id"] == "workspace-1"
+    assert "workspace" not in result
     assert saved[-1].api_key == "raw-api-key"
 
 
@@ -223,12 +217,7 @@ def test_web_approval_finish_stores_api_key_and_clears_pending(monkeypatch) -> N
             "api_key": "raw-api-key",
             "key_prefix": "museon_test",
             "user": {"id": "user-1", "email": "staff@museon.ai"},
-            "workspace": {
-                "id": "workspace-1",
-                "name": "MuseOn Official",
-                "organization_id": "org-1",
-                "organization_name": "MuseOn",
-            },
+            "organization": {"id": "org-1", "name": "MuseOn"},
         }
 
     monkeypatch.setattr(auth_module, "api_get_public", fake_get_public)
@@ -500,3 +489,4 @@ def test_approval_prefers_the_organization_a_new_server_returns(monkeypatch) -> 
 
     assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
     assert result["organization"] == {"id": "org-1", "name": "MuseOn"}
+    assert "workspace" not in result

@@ -29,7 +29,7 @@ from museoncli.domains import discoverable_command_specs, schema_payload  # noqa
 
 def build_contract() -> dict[str, Any]:
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "package": "museoncli",
         "contract_revision": __version__,
         "catalog": schema_payload(),

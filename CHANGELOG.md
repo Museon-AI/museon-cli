@@ -2,6 +2,44 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 1.0.0
+
+Organizations only. MuseOn addresses organizations; workspaces are internal storage and are gone from the CLI. This release removes the workspace aliases that 0.25 kept and makes every request outside `agentic-campaign` and `hireaicreator` address the organization alone. It has no backward compatibility with the workspace surface.
+
+### Breaking changes
+
+| Before (0.25 and earlier) | Now (1.0.0) |
+| --- | --- |
+| `museoncli workspace list` | `museoncli org list` |
+| `museoncli workspace current` | `museoncli org current` |
+| `museoncli workspace select --id <workspace-id>` | `museoncli org select --id <organization-id>` (or `--name <exact name>`) |
+| `--workspace-id <workspace-id>` on a command | drop it; `--organization-id <organization-id>` addresses another organization for one call |
+| `workspace_id` in `--args-json` / `--args-file` | drop it |
+| envelope `.workspace` | envelope `.organization` (`{id, name}` or `null`) |
+| `auth status` / `auth login` / `auth finish` `.workspace` | `.organization` |
+| `whoami` `.workspaces`, `.default_workspace_id`, `.default_workspace_name` | `.organizations`, `.default_organization_id`, `.default_organization_name` |
+| `ai-slideshow asset +list --scope workspace` | `--scope organization` |
+| `cloud-phone recovery +preview` / `recovery-job +create` `--scope workspace` | `--scope organization` |
+| contract `authorization.workspace_bound` | `authorization.organization_bound` |
+| contract `schema_version: 2` | `schema_version: 3` |
+
+- `museoncli workspace ...` and `--workspace-id` are unknown: a usage error (exit 2). A `workspace_id` key in structured input is refused before any request (`invalid_input`).
+- No request from these commands carries `workspace_id` (query, JSON body or upload form) or a workspace header; each carries `X-Organization-Id` for the selected organization or `--organization-id`. This covers every domain except the two below: `ai-slideshow`, `artifacts`, `campaign-monitor` (including the payments reads), `cloud-phone`, `content-analysis`, `media`, `publish`, `research`, `routines`, `skills`, `social-account`, `staff-ops` and `ugc`.
+- `ugc campaign +list` always reads the organization's UGC campaigns; the `/ugc/workspaces/{id}/campaigns` route is no longer used.
+- `media +upload --media-type file` and `media +generate` no longer require a `workspace_id` in the server's receipt; a receipt is proven by its artifact, task and media ids.
+- `social-account +connect-adb`: the ADB relay renews the phone lease in the organization the command addressed (`--organization-id` when given), not in a workspace.
+- Config: a pre-0.25 `workspace` block still migrates to its organization when it names one, and is then dropped from `~/.museoncli/config.json`; the CLI no longer writes it. A 0.22-era block without an organization selects nothing: run `museoncli org select`.
+- Command contract: no input schema outside the two groups declares `workspace_id`, no output schema declares `workspace`, and `workspace_bound` is gone from their `authorization`.
+
+### Unchanged: agentic-campaign and hireaicreator
+
+These two groups keep their 0.25 behaviour until they move to organizations. hireaicreator commands still take the deprecated `--workspace-id` (and `workspace_id` input), send it when given and print the stderr notice; both groups' envelopes keep the `workspace` key; their contract entries are byte-for-byte the 0.25 ones. `org list` rows keep the server's `default_workspace_id`, which `hireaicreator actor +preview-assign --target-workspace-id` reads. All of it lives in `museoncli/domains/_legacy_workspace.py`.
+
+### Server compatibility
+
+- Requires the Museon API whose Agent CLI routes are organization-only and ignore `workspace_id` (Museon-AI/museon). Commands that still need a workspace on the server side are listed in the release PR.
+- Once that API is live it rejects CLIs older than 1.0.0 with HTTP 426 `cli_outdated` and the upgrade command; upgrade with `uv tool upgrade museoncli`.
+
 ## 0.25.0
 
 MuseOn has organizations only: your organization role and Campaign scope decide what you can see and change. The CLI now addresses an organization instead of a workspace.

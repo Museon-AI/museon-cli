@@ -335,7 +335,6 @@ def test_dispatch_creative_search_ads_returns_async_run(
             "method": "POST",
             "path": "/agent-cli/research/creative-search-ads",
             "json_body": {
-                "workspace_id": None,
                 "payload": {
                     "idempotency_key": "ads-search-dispatch-1",
                     "keywords": ["eco soap"],
@@ -389,7 +388,7 @@ def test_dispatch_creative_search_ads_get_stops_polling_when_terminal(
         {
             "method": "GET",
             "path": f"/agent-cli/research/creative-search-ads/{TASK_ID}",
-            "params": {"workspace_id": None},
+            "params": None,
         }
     ]
 
@@ -453,7 +452,6 @@ def test_dispatch_creative_search_ads_results_uses_pagination_query(
             "method": "GET",
             "path": f"/agent-cli/research/creative-search-ads/{TASK_ID}/results",
             "params": {
-                "workspace_id": None,
                 "platform": "tiktok_ads",
                 "time_range": "30d",
                 "page": 2,

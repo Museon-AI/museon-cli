@@ -49,7 +49,7 @@ def parse(argv: list[str]) -> Any:
     return build_parser().parse_args(argv)
 
 
-def _config_with_workspace() -> Config:
+def _config_with_organization() -> Config:
     cfg = Config()
     cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     return cfg
@@ -89,7 +89,7 @@ def test_campaign_monitor_content_remove_dry_run_does_not_call_api(
     argv: list[str],
     command: str,
 ) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
 
     async def explode(*args: Any, **kwargs: Any) -> Any:
         del args, kwargs
@@ -107,7 +107,7 @@ def test_campaign_monitor_content_remove_dry_run_does_not_call_api(
 def test_campaign_monitor_content_remove_without_yes_requires_confirmation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
 
     async def explode(*args: Any, **kwargs: Any) -> Any:
         del args, kwargs
@@ -136,7 +136,7 @@ def test_campaign_monitor_content_remove_without_yes_requires_confirmation(
 def test_campaign_monitor_content_remove_with_yes_posts_single_id(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data", capture)
@@ -163,7 +163,6 @@ def test_campaign_monitor_content_remove_with_yes_posts_single_id(
             "method": "POST",
             "path": f"/agent-cli/campaign-monitors/{CAMPAIGN_ID}/content/batch-remove",
             "json_body": {
-                "workspace_id": None,
                 "payload": {"collection_content_ids": [CC_ID_1]},
             },
             "params": None,
@@ -174,7 +173,7 @@ def test_campaign_monitor_content_remove_with_yes_posts_single_id(
 def test_campaign_monitor_content_batch_remove_parses_and_dedupes_ids(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data", capture)

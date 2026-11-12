@@ -25,7 +25,7 @@ from museoncli.domains.hireaicreator import D, TZ, U, _load, _wire, arr, enum, o
 from museoncli.envelopes import direct_api_envelope
 from museoncli.execution import CommandContext
 
-Target = Literal["collection", "campaign", "agency", "workspace"]
+Target = Literal["collection", "campaign", "agency", "organization"]
 Paging = Literal["offset", "cursor"] | None
 
 S = {"type": "string", "minLength": 1, "maxLength": 300}
@@ -105,12 +105,6 @@ def _read(
     def add_arguments(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--args-json")
         parser.add_argument("--args-file")
-        if target == "workspace":
-            parser.add_argument(
-                "--workspace-id",
-                dest="workspace_id",
-                help="DEPRECATED: one workspace whose payments to read; otherwise the organization's.",
-            )
         for key, field in props.items():
             kind = field["type"]
             base = next(x for x in kind if x != "null") if isinstance(kind, list) else kind
@@ -154,7 +148,7 @@ def _read(
             planned.path.format(**ids, **query),
             params={key: value for key, value in wire.items() if value is not None},
         )
-        return direct_api_envelope(name, ctx.workspace_id, raw, site_url=ctx.cfg.site_url)
+        return direct_api_envelope(name, raw, site_url=ctx.cfg.site_url)
 
     EXECUTORS[name] = execute
     return CommandSpec(
@@ -192,8 +186,8 @@ async def _resolve(
         if not isinstance(view, dict) or not view.get("enabled") or not view.get("organization_id"):
             raise RuntimeError("forbidden: this login is not on an Agency team")
         return {"agency_id": view["organization_id"]}
-    # The payments routes read X-Organization-Id; --workspace-id is the deprecated alias.
-    return {"workspace_id": ctx.workspace_id} if ctx.workspace_id else {}
+    # The payments routes read the organization from X-Organization-Id alone.
+    return {}
 
 
 def _approved(arguments: dict[str, Any]) -> str | None:
@@ -493,7 +487,7 @@ def specs() -> list[CommandSpec]:
         _read(
             "payment",
             "list",
-            "workspace",
+            "organization",
             {
                 "bucket": enum("pending-approval", "owed", "overdue", "sending", "paid"),
                 "date_from": DATE_FROM,
@@ -503,7 +497,6 @@ def specs() -> list[CommandSpec]:
             lambda a: Route(
                 "/ugc/payments",
                 {
-                    "workspace_id": a.get("workspace_id"),
                     "bucket": a.get("bucket"),
                     "date_from": a.get("date_from"),
                     "date_to": a.get("date_to"),
@@ -520,12 +513,11 @@ def specs() -> list[CommandSpec]:
         _read(
             "payment-summary",
             "get",
-            "workspace",
+            "organization",
             {"date_from": DATE_FROM, "date_to": DATE_TO},
             lambda a: Route(
                 "/ugc/payments/summary",
                 {
-                    "workspace_id": a.get("workspace_id"),
                     "date_from": a.get("date_from"),
                     "date_to": a.get("date_to"),
                 },

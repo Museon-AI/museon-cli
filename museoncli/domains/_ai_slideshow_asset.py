@@ -168,7 +168,7 @@ def _add_asset_list_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--status")
     parser.add_argument("--tag")
     parser.add_argument("--topic-direction-id")
-    parser.add_argument("--scope", choices=["all", "workspace", "public"])
+    parser.add_argument("--scope", choices=["all", "organization", "public"])
     parser.add_argument("--media-type", choices=["image", "video", "audio"])
     parser.add_argument("--source-type")
     parser.add_argument("--no-task-info", action="store_true")
@@ -963,8 +963,8 @@ def _asset_list_input_schema() -> dict[str, Any]:
             "product_id": {"type": ["string", "null"]},
             "scope": {
                 "type": "string",
-                "enum": ["all", "workspace", "public"],
-                "description": "workspace = the selected organization's own library; public = shared library.",
+                "enum": ["all", "organization", "public"],
+                "description": "organization = the selected organization's own library; public = shared library.",
             },
             "search": {
                 "type": ["string", "null"],
@@ -1204,7 +1204,7 @@ def specs() -> list[CommandSpec]:
                     "--search-term nature --search-term landscape"
                 ),
                 "museoncli ai-slideshow asset +list --type topic --status active --page-size 20",
-                "museoncli ai-slideshow asset +list --type format --scope workspace --page-size 20",
+                "museoncli ai-slideshow asset +list --type format --scope organization --page-size 20",
                 "museoncli ai-slideshow asset +list --type media --media-type image --search logo",
             ],
             add_arguments=_add_asset_list_arguments,
@@ -1366,10 +1366,12 @@ def specs() -> list[CommandSpec]:
 
 
 # ---- executors ----
+_ORGANIZATION_SCOPE_ON_WIRE = {"organization": "workspace"}
+
+
 async def _execute_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     resource_type = str(arguments.get("type") or "")
     filters = arguments.get("filters") if isinstance(arguments.get("filters"), dict) else {}
@@ -1383,14 +1385,14 @@ async def _execute_list(ctx: CommandContext) -> Any:
         params=compact_params(
             {
                 "type": public_asset_type(resource_type),
-                "workspace_id": workspace_id,
                 "search": filters.get("search"),
                 "search_terms": filters.get("search_terms"),
                 "keyword": filters.get("keyword"),
                 "tag": filters.get("tag"),
                 "topic_direction_id": filters.get("topic_direction_id"),
                 "status": filters.get("status"),
-                "scope": filters.get("scope"),
+                # The assets API still names the organization's own library "workspace".
+                "scope": _ORGANIZATION_SCOPE_ON_WIRE.get(filters.get("scope"), filters.get("scope")),
                 "media_type": filters.get("media_type"),
                 "source_type": filters.get("source_type"),
                 "page": page_number,
@@ -1403,7 +1405,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
 async def _execute_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     resource_type = str(arguments.get("type") or "")
     resource_id = str(arguments.get("id") or "")
@@ -1411,14 +1412,12 @@ async def _execute_get(ctx: CommandContext) -> Any:
         cfg,
         "GET",
         f"/agent-cli/assets/{public_asset_type(resource_type)}/{resource_id}",
-        params={"workspace_id": workspace_id},
     )
 
 
 async def _execute_get_batch(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     return await api_data(
         cfg,
@@ -1426,7 +1425,6 @@ async def _execute_get_batch(ctx: CommandContext) -> Any:
         "/agent-cli/assets/format:batch-get",
         json_body={
             "type": "format",
-            "workspace_id": workspace_id,
             "ids": arguments.get("format_ids") or [],
         },
     )
@@ -1450,7 +1448,6 @@ async def _execute_options(ctx: CommandContext) -> Any:
 async def _execute_write(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     upload_media_file = ctx.upload_media_file
@@ -1459,45 +1456,38 @@ async def _execute_write(ctx: CommandContext) -> Any:
     public_type = public_asset_type(resource_type)
     if command_name == "ai-slideshow.asset-create":
         if resource_type == "brand_product":
-            payload = product_api_payload(payload, workspace_id=workspace_id, create=True)
-            payload.pop("workspace_id", None)
+            payload = product_api_payload(payload, create=True)
             if getattr(ctx.args, "dry_run", False):
                 return await api_data(
                     cfg,
                     "POST",
                     "/agent-cli/assets:validate",
-                    json_body={
-                        "type": public_type,
-                        "workspace_id": workspace_id,
-                        "payload": payload,
-                    },
+                    json_body={"type": public_type, "payload": payload},
                 )
         elif resource_type == "persona":
-            payload = persona_api_payload(payload, workspace_id=workspace_id, create=True)
-            payload.pop("workspace_id", None)
+            payload = persona_api_payload(payload, create=True)
         if resource_type == "media":
             if payload.get("file"):
-                return await upload_media_file(cfg, workspace_id=workspace_id, arguments=payload)
-            payload = {key: value for key, value in payload.items() if key != "workspace_id"}
+                return await upload_media_file(cfg, arguments=payload)
         return await api_data(
             cfg,
             "POST",
             "/agent-cli/assets",
-            json_body={"type": public_type, "workspace_id": workspace_id, "payload": payload},
+            json_body={"type": public_type, "payload": payload},
         )
     if command_name == "ai-slideshow.asset-update":
         resource_id = str(arguments.get("id") or "")
         if not resource_id:
             raise RuntimeError(f"ai-slideshow.asset-update {public_type} requires id")
         if resource_type == "brand_product":
-            payload = product_api_payload(payload, workspace_id=workspace_id, create=False)
+            payload = product_api_payload(payload, create=False)
         elif resource_type == "persona":
-            payload = persona_api_payload(payload, workspace_id=workspace_id, create=False)
+            payload = persona_api_payload(payload, create=False)
         return await api_data(
             cfg,
             "PATCH",
             f"/agent-cli/assets/{public_type}/{resource_id}",
-            json_body={"type": public_type, "workspace_id": workspace_id, "payload": payload},
+            json_body={"type": public_type, "payload": payload},
         )
     raise RuntimeError(f"Unsupported asset write command: {command_name}")
 
@@ -1505,7 +1495,6 @@ async def _execute_write(ctx: CommandContext) -> Any:
 async def _execute_delete(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     resource_type = str(arguments.get("type") or "")
     resource_id = str(arguments.get("id") or "")
@@ -1515,7 +1504,6 @@ async def _execute_delete(ctx: CommandContext) -> Any:
         cfg,
         "DELETE",
         f"/agent-cli/assets/{public_asset_type(resource_type)}/{resource_id}",
-        params={"workspace_id": workspace_id},
     )
 
 
@@ -1534,7 +1522,7 @@ async def _run_read(ctx: CommandContext) -> dict[str, Any]:
     raw = add_asset_refs(
         raw, asset_type=getattr(ctx.args, "asset_type", None), site_url=ctx.cfg.site_url
     )
-    return direct_api_envelope(ctx.spec.schema_name, ctx.workspace_id, raw)
+    return direct_api_envelope(ctx.spec.schema_name, raw)
 
 
 async def _run_write(ctx: CommandContext) -> dict[str, Any]:
@@ -1545,7 +1533,6 @@ async def _run_write(ctx: CommandContext) -> dict[str, Any]:
     ):
         return format_create_envelope(
             ctx.spec.schema_name,
-            ctx.workspace_id,
             raw.get("asset", raw) if isinstance(raw, dict) else raw,
         )
     # Create/update responses name the resource the reply will surface — attach
@@ -1557,7 +1544,7 @@ async def _run_write(ctx: CommandContext) -> dict[str, Any]:
         raw.get("asset") if isinstance(raw, dict) and isinstance(raw.get("asset"), dict) else raw
     )
     add_asset_refs(target, asset_type=public_type, site_url=ctx.cfg.site_url)
-    return direct_api_envelope(ctx.spec.schema_name, ctx.workspace_id, raw)
+    return direct_api_envelope(ctx.spec.schema_name, raw)
 
 
 EXECUTORS = {
@@ -1590,7 +1577,6 @@ def public_asset_type(resource_type: str) -> str:
 def product_api_payload(
     payload: dict[str, Any],
     *,
-    workspace_id: str | None,
     create: bool,
 ) -> dict[str, Any]:
     allowed = {"name", "category", "description", "website_url", "tags", "assets"}
@@ -1599,7 +1585,6 @@ def product_api_payload(
         require_fields(result, fields=("name", "category", "description"), resource="product")
         if "assets" in result:
             validate_assets(result.get("assets"), resource="product", require_nonempty=False)
-        result["workspace_id"] = workspace_id
     elif "assets" in result:
         validate_assets(result.get("assets"), resource="product", require_nonempty=False)
     return result
@@ -1608,14 +1593,10 @@ def product_api_payload(
 def persona_api_payload(
     payload: dict[str, Any],
     *,
-    workspace_id: str | None,
     create: bool,
 ) -> dict[str, Any]:
     allowed = {"name", "description", "tags", "assets"}
-    result = strict_payload(payload, allowed=allowed, resource="persona")
-    if create:
-        result["workspace_id"] = workspace_id
-    return result
+    return strict_payload(payload, allowed=allowed, resource="persona")
 
 
 def require_fields(payload: dict[str, Any], *, fields: tuple[str, ...], resource: str) -> None:
@@ -1663,7 +1644,6 @@ def strict_payload(
 
 def validate_asset_write_arguments(
     *,
-    workspace_id: str | None,
     arguments: dict[str, Any],
     command_name: str,
 ) -> None:
@@ -1672,13 +1652,11 @@ def validate_asset_write_arguments(
     if resource_type == "brand_product":
         product_api_payload(
             payload,
-            workspace_id=workspace_id,
             create=command_name == "ai-slideshow.asset-create",
         )
     elif resource_type == "persona":
         persona_api_payload(
             payload,
-            workspace_id=workspace_id,
             create=command_name == "ai-slideshow.asset-create",
         )
     elif resource_type == "slideshow_soul_skin_format":

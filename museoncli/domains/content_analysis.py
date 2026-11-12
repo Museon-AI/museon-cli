@@ -291,7 +291,6 @@ def specs() -> list[CommandSpec]:
 async def _execute_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     run_id = str(arguments.get("run_id") or "")
     if not run_id:
@@ -301,7 +300,6 @@ async def _execute_get(ctx: CommandContext) -> Any:
             cfg,
             "GET",
             f"/agent-cli/content-analysis/runs/{run_id}",
-            params={"workspace_id": workspace_id},
         )
     )
 
@@ -309,14 +307,13 @@ async def _execute_get(ctx: CommandContext) -> Any:
 async def _execute_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     return agent_domain_result(
         await api_data(
             cfg,
             "GET",
             "/agent-cli/content-analysis/runs",
-            params={"workspace_id": workspace_id, **arguments},
+            params=arguments,
         )
     )
 
@@ -324,7 +321,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
 async def _execute_run(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     upload_media_file = ctx.upload_media_file
     payload = dict(arguments)
@@ -332,7 +328,6 @@ async def _execute_run(ctx: CommandContext) -> Any:
     if file_path:
         upload_response = await upload_media_file(
             cfg,
-            workspace_id=workspace_id,
             arguments={
                 key: value
                 for key, value in {
@@ -350,7 +345,7 @@ async def _execute_run(ctx: CommandContext) -> Any:
             cfg,
             "POST",
             "/agent-cli/content-analysis/runs",
-            json_body={"workspace_id": workspace_id, "payload": payload},
+            json_body={"payload": payload},
         )
     )
 

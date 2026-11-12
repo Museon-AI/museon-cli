@@ -1023,7 +1023,6 @@ async def _list(ctx: CommandContext, *, page: int, page_size: int) -> Any:
         "/agentic-creative-campaigns",
         params=compact_params(
             {
-                "workspace_id": ctx.workspace_id,
                 "search": ctx.arguments.get("search"),
                 "status": ctx.arguments.get("status"),
                 "page": page,
@@ -1038,7 +1037,6 @@ async def _detail(ctx: CommandContext, campaign_id: str) -> Any:
         ctx.cfg,
         "GET",
         f"/agentic-creative-campaigns/{campaign_id}",
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
@@ -1114,7 +1112,6 @@ async def _execute_plan_get(ctx: CommandContext) -> Any:
         ctx.cfg,
         "GET",
         f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}",
-        params={"workspace_id": ctx.workspace_id},
     )
     return {**_payload_data(response), "accounts": _plan_members(detail, str(plan["id"]))}
 
@@ -1165,7 +1162,6 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
             f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
             f"revision-proposals/{proposal_id}"
         ),
-        params={"workspace_id": ctx.workspace_id},
     )
     proposal = _payload_data(response)
     if not isinstance(proposal, dict):
@@ -1181,7 +1177,6 @@ async def _execute_proposal_get(ctx: CommandContext) -> Any:
             f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/"
             f"revision-proposals/{proposal_id}/feedback"
         ),
-        params={"workspace_id": ctx.workspace_id},
     )
     feedback_payload = _payload_data(feedback_response)
     feedback_items = feedback_payload.get("items") if isinstance(feedback_payload, dict) else None
@@ -1234,7 +1229,6 @@ async def _execute_proposal_list(ctx: CommandContext) -> Any:
         "GET",
         path,
         params={
-            "workspace_id": ctx.workspace_id,
             "page": ctx.arguments["page"],
             "page_size": ctx.arguments["page_size"],
             "include_draft_stage": ctx.arguments["include_draft_stage"],
@@ -1254,7 +1248,6 @@ async def _execute_schedule_rollout_preflight(ctx: CommandContext) -> Any:
             f"revision-proposals/{proposal_id}:schedule-rollout-preflight"
         ),
         json_body={
-            "workspace_id": ctx.workspace_id,
             "coverage": ctx.arguments.get("coverage"),
             "testing_plan": ctx.arguments.get("testing_plan"),
         },
@@ -1272,7 +1265,6 @@ async def _execute_confirm_schedule_rollout(ctx: CommandContext) -> Any:
             f"revision-proposals/{proposal_id}:confirm-schedule-rollout"
         ),
         json_body={
-            "workspace_id": ctx.workspace_id,
             "coverage": ctx.arguments.get("coverage"),
             "testing_plan": ctx.arguments.get("testing_plan"),
             "idempotency_key": ctx.arguments.get("idempotency_key"),
@@ -1294,7 +1286,6 @@ async def _execute_schedule_rollout_get(ctx: CommandContext) -> Any:
         ctx.cfg,
         "GET",
         f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/{path}",
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
@@ -1322,7 +1313,6 @@ async def _execute_plan_members_reconcile(ctx: CommandContext) -> Any:
         "POST",
         (f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}:reconcile-members"),
         json_body={
-            "workspace_id": ctx.workspace_id,
             "expected_campaign_version": campaign["version"],
             "expected_plan_version": plan["version"],
             "account_budget": len(account_ids),
@@ -1345,7 +1335,7 @@ async def _execute_proposal_withdraw(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         path,
-        json_body={"workspace_id": ctx.workspace_id},
+        json_body={},
     )
 
 
@@ -1356,7 +1346,6 @@ async def _execute_campaign_create(ctx: CommandContext) -> Any:
         "/agentic-creative-campaigns",
         json_body=compact_params(
             {
-                "workspace_id": ctx.workspace_id,
                 "name": ctx.arguments.get("name"),
                 "total_account_budget": ctx.arguments.get("total_account_budget"),
                 "planned_persona_count": ctx.arguments.get("planned_persona_count"),
@@ -1384,7 +1373,6 @@ async def _execute_campaign_update(ctx: CommandContext) -> Any:
     campaign_id = str(ctx.arguments.get("campaign_id") or "")
     expected_version = await _current_campaign_version(ctx, campaign_id)
     body = {
-        "workspace_id": ctx.workspace_id,
         "expected_version": expected_version,
     }
     body.update(
@@ -1419,7 +1407,6 @@ async def _execute_plan_update(ctx: CommandContext) -> Any:
     if plan.get("version") is None:
         raise RuntimeError("agentic persona plan did not include its current version")
     body = {
-        "workspace_id": ctx.workspace_id,
         "expected_version": plan["version"],
     }
     body.update(
@@ -1450,7 +1437,6 @@ async def _execute_plan_create(ctx: CommandContext) -> Any:
         "POST",
         f"/agentic-creative-campaigns/{campaign_id}/agentic-persona-plans",
         json_body={
-            "workspace_id": ctx.workspace_id,
             "name": ctx.arguments.get("name"),
             "persona_id": ctx.arguments.get("persona_id"),
             "account_budget": ctx.arguments.get("account_budget"),
@@ -1474,7 +1460,6 @@ async def _execute_campaign_lifecycle(ctx: CommandContext, *, action: str) -> An
         "POST",
         f"/agentic-creative-campaigns/{campaign_id}/{action}",
         json_body={
-            "workspace_id": ctx.workspace_id,
             "expected_version": expected_version,
         },
     )
@@ -1498,7 +1483,7 @@ async def _plan_get_route(ctx: CommandContext, suffix: str, params: dict[str, An
         ctx.cfg,
         "GET",
         f"/agentic-creative-campaigns/{campaign_id}/persona-plans/{plan['id']}/{suffix}",
-        params={"workspace_id": ctx.workspace_id, **params},
+        params=params,
     )
 
 
@@ -1607,7 +1592,6 @@ async def _execute_supply(ctx: CommandContext) -> Any:
             ctx.cfg,
             "GET",
             f"/agentic-creative-campaigns/{campaign_id}/policy",
-            params={"workspace_id": ctx.workspace_id},
         )
     )
     if policy.get("max_auto_element_ops") != 0:
@@ -1615,7 +1599,6 @@ async def _execute_supply(ctx: CommandContext) -> Any:
             "This Campaign allows automatic strategy changes. Set its policy to manual review before importing paired references."
         )
     body = {
-        "workspace_id": ctx.workspace_id,
         "expected_version": ctx.arguments["expected_version"],
         "persona_id": ctx.arguments["persona_id"],
         "combinations": ctx.arguments["combinations"],
@@ -1723,7 +1706,6 @@ async def _execute_account_control(ctx: CommandContext) -> Any:
             "PUT",
             f"/account-operations/{member['id']}/native-schedule-execution",
             json_body={
-                "workspace_id": ctx.workspace_id,
                 "expected_version": ctx.arguments["expected_version"],
                 "enabled": action == "enable",
             },
@@ -1732,7 +1714,6 @@ async def _execute_account_control(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         f"/account-operations/{member['id']}/{action}",
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
@@ -1796,7 +1777,6 @@ async def _execute_posts(ctx: CommandContext) -> Any:
         f"/agentic-creative-campaigns/{ctx.arguments['campaign_id']}/persona-plans/{ctx.arguments['plan_id']}/posts",
         params=compact_params(
             {
-                "workspace_id": ctx.workspace_id,
                 **{
                     key: value
                     for key, value in ctx.arguments.items()
@@ -1813,7 +1793,6 @@ async def _execute_review_only(ctx: CommandContext) -> Any:
         "PUT",
         f"/agentic-creative-campaigns/{ctx.arguments['campaign_id']}/policy",
         json_body={
-            "workspace_id": ctx.workspace_id,
             "version": 1,
             "veto_window_minutes": 0,
             "max_auto_element_ops": 0,
@@ -1881,7 +1860,7 @@ def _managed_enveloped(fn, *, redact_api_errors: bool = True):
         )
         plan_id = ctx.arguments.get("plan_id")
         # The admin page still takes a workspace: the one the server answered with.
-        page_workspace_id = ctx.workspace_id or (
+        page_workspace_id = (
             returned_campaign.get("workspace_id") if isinstance(returned_campaign, dict) else None
         )
         if campaign_id and plan_id:

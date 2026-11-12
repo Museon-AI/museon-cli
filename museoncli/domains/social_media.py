@@ -302,7 +302,6 @@ def specs() -> list[CommandSpec]:
 async def _execute_creator_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     creator_id = str(arguments.get("creator_id") or "")
     return agent_domain_result(
@@ -310,7 +309,6 @@ async def _execute_creator_get(ctx: CommandContext) -> Any:
             cfg,
             "GET",
             f"/agent-cli/social-media/creators/{creator_id}",
-            params={"workspace_id": workspace_id},
         )
     )
 
@@ -318,7 +316,6 @@ async def _execute_creator_get(ctx: CommandContext) -> Any:
 async def _execute_creator_performance_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     creator_id = str(arguments.get("creator_id") or "")
     return agent_domain_result(
@@ -328,7 +325,6 @@ async def _execute_creator_performance_get(ctx: CommandContext) -> Any:
             f"/agent-cli/social-media/creators/{creator_id}/performance",
             params=compact_params(
                 {
-                    "workspace_id": workspace_id,
                     "date_from": arguments.get("date_from"),
                     "date_to": arguments.get("date_to"),
                     "limit": arguments.get("limit", 100),
@@ -341,7 +337,6 @@ async def _execute_creator_performance_get(ctx: CommandContext) -> Any:
 async def _execute_post_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     content_id = str(arguments.get("content_id") or "")
     return agent_domain_result(
@@ -349,7 +344,6 @@ async def _execute_post_get(ctx: CommandContext) -> Any:
             cfg,
             "GET",
             f"/agent-cli/social-media/posts/{content_id}",
-            params={"workspace_id": workspace_id},
         )
     )
 
@@ -357,7 +351,6 @@ async def _execute_post_get(ctx: CommandContext) -> Any:
 async def _execute_post_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     creator_id = str(arguments.get("creator_id") or "")
     return agent_domain_result(
@@ -367,7 +360,6 @@ async def _execute_post_list(ctx: CommandContext) -> Any:
             f"/agent-cli/social-media/creators/{creator_id}/posts",
             params=compact_params(
                 {
-                    "workspace_id": workspace_id,
                     "page": arguments.get("page", 1),
                     "page_size": arguments.get("page_size", 20),
                 }
@@ -379,7 +371,6 @@ async def _execute_post_list(ctx: CommandContext) -> Any:
 async def _execute_post_performance_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     content_id = str(arguments.get("content_id") or "")
     return agent_domain_result(
@@ -389,7 +380,6 @@ async def _execute_post_performance_get(ctx: CommandContext) -> Any:
             f"/agent-cli/social-media/posts/{content_id}/performance",
             params=compact_params(
                 {
-                    "workspace_id": workspace_id,
                     "date_from": arguments.get("date_from"),
                     "date_to": arguments.get("date_to"),
                     "limit": arguments.get("limit", 30),
@@ -402,7 +392,6 @@ async def _execute_post_performance_get(ctx: CommandContext) -> Any:
 async def _execute_post_resolve(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     schedule_item_id = str(arguments.get("schedule_item_id") or "")
     return agent_domain_result(
@@ -410,7 +399,7 @@ async def _execute_post_resolve(ctx: CommandContext) -> Any:
             cfg,
             "GET",
             "/agent-cli/social-media/posts/resolve",
-            params={"workspace_id": workspace_id, "schedule_item_id": schedule_item_id},
+            params={"schedule_item_id": schedule_item_id},
         )
     )
 

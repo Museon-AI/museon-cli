@@ -11,6 +11,7 @@ from typing import Any
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from museoncli.domains._legacy_workspace import keeps_workspace
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import _direct_output_schema
 from museoncli.envelopes import direct_api_envelope
@@ -486,7 +487,10 @@ def _command(
             key, {"type": "string", "minLength": 6, "maxLength": 100} if key == "token" else U
         )
         required = (key, *required)
-    if workspace != "resource":
+    # Only hireaicreator keeps a workspace input (see _legacy_workspace); every other
+    # domain built here (publish, cloud-phone) addresses the organization alone.
+    takes_workspace = workspace != "resource" and keeps_workspace(domain)
+    if takes_workspace:
         props["workspace_id"] = U
     if idempotent:
         props["idempotency_key"] = {"type": "string", "minLength": 8, "maxLength": 200}
@@ -589,11 +593,8 @@ def _command(
         for field in path_keys:
             arguments.pop(field)
         key = arguments.pop("idempotency_key", None)
-        scope = None
-        if workspace != "resource":
-            scope = arguments.pop("workspace_id", None) or ctx.workspace_id
-            if scope:
-                arguments["workspace_id"] = scope
+        if takes_workspace and not arguments.get("workspace_id"):
+            arguments.pop("workspace_id", None)
         wire = _wire(arguments, schema)
         if resource == "account" and action == "list" and "tags" in wire:
             # The API takes workspace tags as one comma-separated value (any match).
@@ -603,7 +604,10 @@ def _command(
         if method == "GET":
             kwargs["params"] = wire
         else:
-            query_keys = (*query_fields, *(("workspace_id",) if workspace == "query" else ()))
+            query_keys = (
+                *query_fields,
+                *(("workspace_id",) if takes_workspace and workspace == "query" else ()),
+            )
             params = {field: wire.pop(field) for field in query_keys if field in wire}
             if params:
                 kwargs["params"] = params
@@ -612,7 +616,7 @@ def _command(
         if key is not None:
             kwargs["idempotency_key"] = key
         raw = await call(ctx.cfg, method, actual_path, **kwargs)
-        result = direct_api_envelope(name, scope, raw, site_url=ctx.cfg.site_url)
+        result = direct_api_envelope(name, raw, site_url=ctx.cfg.site_url)
         if write:
             result["warnings"].append(
                 "Receipt only; verify persisted state before dependent writes."
