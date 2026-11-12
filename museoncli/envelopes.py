@@ -16,12 +16,10 @@ SOCIAL_HOOK_ANALYSIS_RECOMMENDED_WAKEUP_DELAY_SECONDS = 5
 
 def domain_command_dry_run_envelope(
     command_name: str,
-    workspace_id: str | None,
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
     return {
         "command": command_name,
-        "workspace": {"id": workspace_id} if workspace_id else None,
         "data": {
             "dry_run": True,
             "arguments": arguments,
@@ -55,7 +53,6 @@ def domain_command_envelope(
         run = _generation_run_from_data(data)
     return {
         "command": command_name,
-        "workspace": response.get("workspace"),
         "data": without_provider_metadata(data) if not isinstance(job, dict) else None,
         "run": run,
         "warnings": [],
@@ -65,7 +62,6 @@ def domain_command_envelope(
 
 def direct_api_envelope(
     command_name: str,
-    workspace_id: str | None,
     data: Any,
     *,
     site_url: str = DEFAULT_SITE_URL,
@@ -103,7 +99,6 @@ def direct_api_envelope(
     warnings = _direct_api_warnings(command_name)
     return {
         "command": command_name,
-        "workspace": {"id": workspace_id} if workspace_id else None,
         "data": without_provider_metadata(data),
         "run": run,
         "warnings": warnings,
@@ -750,14 +745,12 @@ def _performance_page_next_steps(data: dict[str, Any]) -> list[str]:
 
 def format_create_envelope(
     command_name: str,
-    workspace_id: str | None,
     api_response: Any,
 ) -> dict[str, Any]:
     response = api_response if isinstance(api_response, dict) else {}
     format_id = response.get("format_id")
     return {
         "command": command_name,
-        "workspace": {"id": workspace_id} if workspace_id else None,
         "data": response,
         "run": {
             "id": format_id,
@@ -793,7 +786,6 @@ def run_status_envelope(command_name: str, adapter_response: Any) -> dict[str, A
     }
     return {
         "command": command_name,
-        "workspace": None,
         "data": data,
         "run": {
             "id": run_id,

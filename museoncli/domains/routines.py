@@ -117,12 +117,7 @@ def _routine_build_arguments(schema_name: str) -> Callable[[argparse.Namespace],
     }[schema_name]
 
 
-def _add_workspace_id_argument(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
-
-
 def _add_routine_list_arguments(parser: argparse.ArgumentParser) -> None:
-    _add_workspace_id_argument(parser)
     parser.add_argument("--mode", choices=["ad-hoc"])
     parser.add_argument("--status", choices=["draft", "active", "disabled", "archived"])
     parser.add_argument("--search")
@@ -132,11 +127,9 @@ def _add_routine_list_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _add_routine_id_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--id", dest="routine_id", required=True)
-    _add_workspace_id_argument(parser)
 
 
 def _add_routine_write_arguments(parser: argparse.ArgumentParser) -> None:
-    _add_workspace_id_argument(parser)
     parser.add_argument("--name", required=True)
     parser.add_argument("--instruction")
     parser.add_argument("--instruction-file")
@@ -192,7 +185,6 @@ def _add_routine_rebuild_arguments(parser: argparse.ArgumentParser) -> None:
 def _add_routine_record_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("kind", choices=["output", "memory"])
     parser.add_argument("--id", dest="routine_id", required=True)
-    _add_workspace_id_argument(parser)
     parser.add_argument("--content")
     parser.add_argument("--content-file")
     parser.add_argument("--payload-json")
@@ -202,7 +194,6 @@ def _add_routine_record_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _build_routine_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {
-        "workspace_id": args.workspace_id,
         "mode": dekebab(args.mode),
         "status": args.status,
         "search": args.search,
@@ -214,13 +205,11 @@ def _build_routine_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
 def _build_routine_id_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "routine_id": args.routine_id,
-        "workspace_id": args.workspace_id,
     }
 
 
 def _build_routine_write_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {
-        "workspace_id": args.workspace_id,
         "name": args.name,
         "instruction": args.instruction,
         "instruction_file": args.instruction_file,
@@ -257,7 +246,6 @@ def _build_routine_record_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "kind": args.kind,
         "routine_id": args.routine_id,
-        "workspace_id": args.workspace_id,
         "content": args.content,
         "content_file": args.content_file,
         "payload_json": args.payload_json,
@@ -305,7 +293,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                     "mode": {"type": "string", "enum": ["ad-hoc"]},
                     "status": {
                         "type": "string",
@@ -339,7 +326,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "routine_id": _uuid_id_schema("Routine UUID returned by routines list."),
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                 },
                 "required": ["routine_id"],
             },
@@ -359,7 +345,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                     "name": {
                         "type": "string",
                         "minLength": 1,
@@ -435,7 +420,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                     "name": {
                         "type": "string",
                         "minLength": 1,
@@ -500,7 +484,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "routine_id": _uuid_id_schema("Draft routine UUID returned by routines list."),
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                 },
                 "required": ["routine_id"],
             },
@@ -523,7 +506,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "routine_id": _uuid_id_schema("Ad-hoc routine UUID returned by routines list."),
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                     "name": {
                         "type": "string",
                         "minLength": 1,
@@ -609,7 +591,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "routine_id": _uuid_id_schema("Routine UUID returned by routines list."),
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                 },
                 "required": ["routine_id"],
             },
@@ -627,7 +608,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "routine_id": _uuid_id_schema("Routine UUID returned by routines list."),
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                 },
                 "required": ["routine_id"],
             },
@@ -647,7 +627,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "routine_id": _uuid_id_schema("Routine UUID returned by routines list."),
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                 },
                 "required": ["routine_id"],
             },
@@ -668,7 +647,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "routine_id": _uuid_id_schema("Routine UUID returned by routines list/get."),
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                 },
                 "required": ["routine_id"],
             },
@@ -691,7 +669,6 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
                 "properties": {
                     "kind": {"type": "string", "enum": ["output", "memory"]},
                     "routine_id": _uuid_id_schema("Routine UUID returned by routines list/get."),
-                    "workspace_id": _uuid_id_schema("Optional workspace UUID override."),
                     "content": {
                         "type": "string",
                         "minLength": 1,
@@ -781,7 +758,6 @@ def specs() -> list[CommandSpec]:
 async def _execute_accept_draft(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     routine_id = str(arguments.get("routine_id") or "")
     data = await api_data(
@@ -789,7 +765,6 @@ async def _execute_accept_draft(ctx: CommandContext) -> Any:
         "POST",
         f"/agent-cli/routines/{routine_id}/accept-draft",
         json_body=routine_turn_context(cfg),
-        params=compact_params({"workspace_id": workspace_id}),
     )
     return data
 
@@ -797,14 +772,12 @@ async def _execute_accept_draft(ctx: CommandContext) -> Any:
 async def _execute_cancel(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     routine_id = str(arguments.get("routine_id") or "")
     data = await api_data(
         cfg,
         "POST",
         f"/agent-cli/routines/{routine_id}/cancel",
-        params=compact_params({"workspace_id": workspace_id}),
     )
     return data
 
@@ -812,10 +785,8 @@ async def _execute_cancel(ctx: CommandContext) -> Any:
 async def _execute_create_ad_hoc(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     payload = {
-        "workspace_id": workspace_id,
         "name": arguments.get("name"),
         "instruction": read_text_option(
             value=arguments.get("instruction"),
@@ -836,10 +807,8 @@ async def _execute_create_ad_hoc(ctx: CommandContext) -> Any:
 async def _execute_create_draft(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     payload = {
-        "workspace_id": workspace_id,
         "name": arguments.get("name"),
         "instruction": read_text_option(
             value=arguments.get("instruction"),
@@ -860,14 +829,12 @@ async def _execute_create_draft(ctx: CommandContext) -> Any:
 async def _execute_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     routine_id = str(arguments.get("routine_id") or "")
     data = await api_data(
         cfg,
         "GET",
         f"/agent-cli/routines/{routine_id}",
-        params=compact_params({"workspace_id": workspace_id}),
     )
     return data
 
@@ -875,7 +842,6 @@ async def _execute_get(ctx: CommandContext) -> Any:
 async def _execute_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     data = await api_data(
         cfg,
@@ -883,7 +849,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
         "/agent-cli/routines",
         params=compact_params(
             {
-                "workspace_id": workspace_id,
                 "mode": arguments.get("mode"),
                 "status": arguments.get("status"),
                 "search": arguments.get("search"),
@@ -898,14 +863,12 @@ async def _execute_list(ctx: CommandContext) -> Any:
 async def _execute_memory_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     routine_id = str(arguments.get("routine_id") or "")
     data = await api_data(
         cfg,
         "GET",
         f"/agent-cli/routines/{routine_id}/memory",
-        params=compact_params({"workspace_id": workspace_id}),
     )
     return data
 
@@ -913,14 +876,12 @@ async def _execute_memory_get(ctx: CommandContext) -> Any:
 async def _execute_pause(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     routine_id = str(arguments.get("routine_id") or "")
     data = await api_data(
         cfg,
         "POST",
         f"/agent-cli/routines/{routine_id}/pause",
-        params=compact_params({"workspace_id": workspace_id}),
     )
     return data
 
@@ -928,7 +889,6 @@ async def _execute_pause(ctx: CommandContext) -> Any:
 async def _execute_rebuild_ad_hoc(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     routine_id = str(arguments.get("routine_id") or "")
     has_replacement_memory = (
@@ -940,7 +900,6 @@ async def _execute_rebuild_ad_hoc(ctx: CommandContext) -> Any:
         "drop" if arguments.get("drop_memory") else "replace" if has_replacement_memory else "copy"
     )
     payload = {
-        "workspace_id": workspace_id,
         "name": arguments.get("name"),
         "instruction": read_text_option(
             value=arguments.get("instruction"),
@@ -985,7 +944,6 @@ async def _execute_rebuild_ad_hoc(ctx: CommandContext) -> Any:
 async def _execute_record(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     routine_id = str(arguments.get("routine_id") or "")
     payload = {
@@ -1009,7 +967,6 @@ async def _execute_record(ctx: CommandContext) -> Any:
         "POST",
         f"/agent-cli/routines/{routine_id}/records",
         json_body=payload,
-        params=compact_params({"workspace_id": workspace_id}),
     )
     return data
 
@@ -1017,14 +974,12 @@ async def _execute_record(ctx: CommandContext) -> Any:
 async def _execute_resume(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     routine_id = str(arguments.get("routine_id") or "")
     data = await api_data(
         cfg,
         "POST",
         f"/agent-cli/routines/{routine_id}/resume",
-        params=compact_params({"workspace_id": workspace_id}),
     )
     return data
 

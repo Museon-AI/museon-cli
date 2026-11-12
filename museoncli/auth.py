@@ -15,7 +15,6 @@ from museoncli.config import (
     Config,
     OrganizationState,
     PendingAuthState,
-    organization_from_legacy_workspace,
     save_config,
 )
 
@@ -176,7 +175,6 @@ def complete_web_approval_poll(
         if not api_key:
             raise RuntimeError("CLI authorization completed without an API key.")
         user = _safe_user(poll.get("user"))
-        workspace = poll.get("workspace") if isinstance(poll.get("workspace"), dict) else None
         credential_expires_at = _timestamp(poll.get("credential_expires_at"))
         config.auth = AuthState(
             api_key=api_key,
@@ -195,7 +193,6 @@ def complete_web_approval_poll(
             "auth_method": "api_key",
             "user": user,
             "organization": asdict(organization) if organization.id else None,
-            "workspace": workspace,
             "key_prefix": poll.get("key_prefix"),
             "credential_expires_at": poll.get("credential_expires_at"),
         }
@@ -246,15 +243,11 @@ async def api_post_public(
 
 
 def approved_organization(poll: dict[str, Any]) -> OrganizationState:
-    """The organization an approved login is for.
-
-    A server with organizations returns ``organization``; an older one only
-    returns the approved ``workspace``, which names its organization.
-    """
+    """The organization an approved login is for."""
     organization = poll.get("organization")
     if isinstance(organization, dict) and organization.get("id"):
         return OrganizationState(id=organization.get("id"), name=organization.get("name"))
-    return organization_from_legacy_workspace(poll.get("workspace"))
+    return OrganizationState()
 
 
 def auth_headers(config: Config) -> dict[str, str]:

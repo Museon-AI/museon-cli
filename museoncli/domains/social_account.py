@@ -203,8 +203,6 @@ def _build_social_account_adb_connect_arguments(args: argparse.Namespace) -> dic
     if not args.platform:
         raise ValueError("social-account +connect-adb requires --platform with --handle.")
     payload.update({"handle": args.handle, "platform": args.platform})
-    if args.workspace_id:
-        payload["workspace_id"] = args.workspace_id
     return payload
 
 
@@ -445,14 +443,6 @@ def _social_account_adb_connect_input_schema() -> dict[str, Any]:
                 "description": (
                     "Exact platform string. Required with handle; accepts the same unrestricted "
                     "platform values as social-account +list."
-                ),
-            },
-            "workspace_id": {
-                "type": ["string", "null"],
-                "format": "uuid",
-                "description": (
-                    "Deprecated: optional explicit workspace for handle resolution. Omitted unless "
-                    "--workspace-id is passed; the selected organization is used otherwise."
                 ),
             },
         },
@@ -1110,7 +1100,6 @@ def specs() -> list[CommandSpec]:
 async def _execute_connect_link_create(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     payload = dict(arguments)
     turn_context = routine_turn_context(cfg)
@@ -1121,7 +1110,7 @@ async def _execute_connect_link_create(ctx: CommandContext) -> Any:
             cfg,
             "POST",
             "/agent-cli/social-auth/connect-links",
-            json_body={"workspace_id": workspace_id, "payload": payload},
+            json_body={"payload": payload},
         )
     )
 
@@ -1129,13 +1118,11 @@ async def _execute_connect_link_create(ctx: CommandContext) -> Any:
 async def _execute_connect_link_status(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     link_id = str(arguments.get("link_id") or "")
     if not link_id:
         raise RuntimeError("social-account.get-connect-link requires link_id")
     return await _poll_connect_link_status(
         cfg,
-        workspace_id=workspace_id,
         link_id=link_id,
         wait=bool(arguments.get("wait")),
         timeout_seconds=int(arguments.get("timeout") or 0),
@@ -1146,7 +1133,6 @@ async def _execute_connect_link_status(ctx: CommandContext) -> Any:
 async def _execute_performance_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1159,7 +1145,6 @@ async def _execute_performance_get(ctx: CommandContext) -> Any:
             f"/agent-cli/social-accounts/{account_id}/performance",
             params=compact_params(
                 {
-                    "workspace_id": workspace_id,
                     "period": arguments.get("period"),
                     "cursor": arguments.get("cursor"),
                     "page_size": arguments.get("page_size", 20),
@@ -1189,7 +1174,6 @@ async def _execute_get(ctx: CommandContext) -> Any:
 async def _execute_adb_connect(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1199,7 +1183,6 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
                 api_data,
                 cfg,
                 f"/agent-cli/social-accounts/{account_id}/adb-credentials",
-                params={"workspace_id": workspace_id},
             )
         )
         resolved_account = None
@@ -1209,9 +1192,6 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
         if not handle or not platform:
             raise RuntimeError(f"{command_name} requires handle and platform")
         body = {"handle": handle, "platform": platform}
-        explicit_workspace_id = arguments.get("workspace_id")
-        if explicit_workspace_id:
-            body["workspace_id"] = explicit_workspace_id
         connection = agent_domain_result(
             await _request_adb_credentials(
                 api_data,
@@ -1224,19 +1204,17 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
     if not isinstance(connection, dict):
         raise RuntimeError("invalid_adb_connection_response")
     relay_account_id = account_id or str(connection.get("account_id") or "")
-    relay_workspace_id = (
-        workspace_id if account_id else str(connection.get("workspace_id") or "") or None
-    )
     if not relay_account_id:
         raise RuntimeError("invalid_adb_connection_response")
+    # The relay renews the lease in the organization this command addressed.
     result = await _connect_adb(
-        connection, account_id=relay_account_id, workspace_id=relay_workspace_id
+        connection, account_id=relay_account_id, organization_id=ctx.organization_id
     )
     if isinstance(resolved_account, dict):
         result.update(
             {
                 key: resolved_account.get(key)
-                for key in ("account_id", "username", "platform", "workspace_id")
+                for key in ("account_id", "username", "platform")
             }
         )
     return result
@@ -1293,7 +1271,6 @@ async def _execute_renew_phone_lease(ctx: CommandContext) -> Any:
             ctx.cfg,
             "POST",
             f"/agent-cli/social-accounts/{account_id}/phone-lease",
-            params={"workspace_id": ctx.workspace_id},
         )
     )
 
@@ -1301,7 +1278,6 @@ async def _execute_renew_phone_lease(ctx: CommandContext) -> Any:
 async def _execute_stream_url(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1312,13 +1288,12 @@ async def _execute_stream_url(ctx: CommandContext) -> Any:
             cfg,
             "POST",
             f"/agent-cli/social-accounts/{account_id}/stream-url",
-            params={"workspace_id": workspace_id},
         )
     )
 
 
 async def _connect_adb(
-    connection: dict[str, Any], *, account_id: str, workspace_id: str | None
+    connection: dict[str, Any], *, account_id: str, organization_id: str | None
 ) -> dict[str, Any]:
     target = str(connection.get("serial") or "").strip()
     password = str(connection.get("password") or "").strip()
@@ -1328,7 +1303,10 @@ async def _connect_adb(
     # Museon stops a phone whose lease nobody renews; the relay renews it while
     # ADB traffic flows, so ADB always goes through the relay's local serial.
     serial, stale_serial = await asyncio.to_thread(
-        adb_relay.ensure_relay, target=target, account_id=account_id, workspace_id=workspace_id
+        adb_relay.ensure_relay,
+        target=target,
+        account_id=account_id,
+        organization_id=organization_id,
     )
     if stale_serial:
         with contextlib.suppress(RuntimeError):
@@ -1378,7 +1356,6 @@ async def _run_adb(operation: str, *arguments: str) -> str:
 async def _execute_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     return agent_domain_result(
         await api_data(
@@ -1387,7 +1364,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
             "/agent-cli/social-accounts",
             params=compact_params(
                 {
-                    "workspace_id": workspace_id,
                     "platform": arguments.get("platform"),
                     "search": arguments.get("search"),
                     "search_terms": arguments.get("search_terms"),
@@ -1415,7 +1391,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
 async def _execute_profile_edit_draft(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1427,7 +1402,6 @@ async def _execute_profile_edit_draft(ctx: CommandContext) -> Any:
             "POST",
             f"/agent-cli/social-accounts/{account_id}/profile-edit/drafts",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": _dict_argument(arguments, "profile_edit"),
             },
         )
@@ -1437,7 +1411,6 @@ async def _execute_profile_edit_draft(ctx: CommandContext) -> Any:
 async def _execute_avatar_generate_batch(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     account_ids = arguments.get("account_ids")
     if not isinstance(account_ids, list) or not account_ids:
@@ -1454,7 +1427,6 @@ async def _execute_avatar_generate_batch(ctx: CommandContext) -> Any:
             "POST",
             "/agent-cli/social-accounts/profile-edit/avatar-drafts",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": payload,
             },
         )
@@ -1508,7 +1480,6 @@ async def _execute_profile_edit_status(ctx: CommandContext) -> Any:
 async def _execute_profile_edit_submit(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1520,7 +1491,6 @@ async def _execute_profile_edit_submit(ctx: CommandContext) -> Any:
             "POST",
             f"/agent-cli/social-accounts/{account_id}/profile-edit/tasks",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": _dict_argument(arguments, "profile_edit"),
             },
         )
@@ -1542,7 +1512,6 @@ async def _execute_profile_edit_submit(ctx: CommandContext) -> Any:
 async def _execute_profile_edit_batch_submit(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     account_updates = arguments.get("account_updates")
     if not isinstance(account_updates, list) or not account_updates:
@@ -1564,7 +1533,6 @@ async def _execute_profile_edit_batch_submit(ctx: CommandContext) -> Any:
             "POST",
             "/agent-cli/social-accounts/profile-edit/tasks",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": payload,
             },
         )
@@ -1604,7 +1572,6 @@ EXECUTORS = {
 async def _poll_connect_link_status(
     cfg: Config,
     *,
-    workspace_id: str | None,
     link_id: str,
     wait: bool,
     timeout_seconds: int,
@@ -1618,7 +1585,6 @@ async def _poll_connect_link_status(
                 cfg,
                 "GET",
                 f"/agent-cli/social-auth/connect-links/{link_id}/status",
-                params={"workspace_id": workspace_id},
             )
         )
         if not wait or not isinstance(result, dict) or result.get("status") in terminal_statuses:

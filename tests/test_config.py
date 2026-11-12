@@ -81,12 +81,11 @@ def test_022_config_with_a_workspace_migrates_to_its_organization(
     cfg = load_config()
 
     assert cfg.organization == OrganizationState(id="org-1", name="MuseOn")
-    assert cfg.legacy_workspace_id == "workspace-1"
     save_config(cfg)
     payload = json.loads(config_file.read_text())
     assert payload["organization"] == {"id": "org-1", "name": "MuseOn"}
-    # 0.22 still reads its own block, untouched; nothing else is lost.
-    assert payload["workspace"] == _LEGACY_WORKSPACE
+    # The workspace block is read once to migrate and never written back.
+    assert "workspace" not in payload
     assert payload["api_base_url"] == "https://api.example.test/api/v1"
     assert payload["runtime_context"] == {"conversation_id": "conv-1"}
     assert payload["auth"]["user"] == {"id": "user-1", "email": "u@example.test"}
@@ -101,8 +100,15 @@ def test_organization_block_wins_over_a_stale_022_workspace() -> None:
     )
 
     assert cfg.organization == OrganizationState(id="org-2", name="Brand")
-    assert cfg.document()["workspace"] == _LEGACY_WORKSPACE
+    assert "workspace" not in cfg.document()
     assert "workspace" not in cfg.safe_dict()
+
+
+def test_a_workspace_block_without_its_organization_selects_nothing() -> None:
+    cfg = Config.from_dict({"workspace": {"id": "ws-022", "name": "Old"}})
+
+    assert cfg.organization == OrganizationState()
+    assert "workspace" not in cfg.document()
 
 
 def test_config_round_trip_keeps_keys_this_version_does_not_own(
@@ -342,7 +348,7 @@ def test_saving_public_state_preserves_legacy_inline_capability(
     payload = json.loads(config_file.read_text())
     assert payload["auth"] == {"api_key": capability}
     assert payload["organization"]["id"] == "org-2"
-    assert payload["workspace"] == {}
+    assert "workspace" not in payload
     assert load_config().auth.api_key == capability
 
 

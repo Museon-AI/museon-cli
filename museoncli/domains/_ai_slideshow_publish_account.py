@@ -1076,7 +1076,6 @@ def _all_specs() -> list[CommandSpec]:
 async def _execute_config_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1087,7 +1086,6 @@ async def _execute_config_get(ctx: CommandContext) -> Any:
             cfg,
             "GET",
             f"/agent-cli/social-accounts/{account_id}/publish-config",
-            params={"workspace_id": workspace_id},
         )
     )
 
@@ -1095,7 +1093,6 @@ async def _execute_config_get(ctx: CommandContext) -> Any:
 async def _execute_config_update(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1116,7 +1113,6 @@ async def _execute_config_update(ctx: CommandContext) -> Any:
             "PATCH",
             f"/agent-cli/social-accounts/{account_id}/publish-config/settings",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": changes,
             },
         )
@@ -1126,7 +1122,6 @@ async def _execute_config_update(ctx: CommandContext) -> Any:
 async def _execute_config_batch_update(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_updates = arguments.get("account_updates")
@@ -1138,7 +1133,6 @@ async def _execute_config_batch_update(ctx: CommandContext) -> Any:
             "POST",
             "/agent-cli/social-accounts/publish-config/settings:batch",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": {"account_updates": account_updates},
             },
         )
@@ -1148,7 +1142,6 @@ async def _execute_config_batch_update(ctx: CommandContext) -> Any:
 async def _execute_schedule_create(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1160,7 +1153,7 @@ async def _execute_schedule_create(ctx: CommandContext) -> Any:
             cfg,
             "POST",
             f"/agent-cli/social-accounts/{account_id}/publish-config/schedule-items",
-            json_body={"workspace_id": workspace_id, "payload": schedule_item},
+            json_body={"payload": schedule_item},
         )
     )
 
@@ -1168,7 +1161,6 @@ async def _execute_schedule_create(ctx: CommandContext) -> Any:
 async def _execute_schedule_delete(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1181,7 +1173,7 @@ async def _execute_schedule_delete(ctx: CommandContext) -> Any:
             cfg,
             "PATCH",
             f"/agent-cli/social-accounts/{account_id}/publish-config/schedule-items/{schedule_item_id}",
-            json_body={"workspace_id": workspace_id, "payload": schedule_item},
+            json_body={"payload": schedule_item},
         )
     )
 
@@ -1189,7 +1181,6 @@ async def _execute_schedule_delete(ctx: CommandContext) -> Any:
 async def _execute_schedule_generate(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1207,7 +1198,7 @@ async def _execute_schedule_generate(ctx: CommandContext) -> Any:
             cfg,
             "POST",
             path,
-            json_body={"workspace_id": workspace_id, "payload": payload},
+            json_body={"payload": payload},
         )
     )
 
@@ -1215,7 +1206,6 @@ async def _execute_schedule_generate(ctx: CommandContext) -> Any:
 async def _execute_schedule_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1227,7 +1217,6 @@ async def _execute_schedule_get(ctx: CommandContext) -> Any:
             cfg,
             "GET",
             f"/agent-cli/social-accounts/{account_id}/publish-config/schedule-items/{schedule_item_id}",
-            params={"workspace_id": workspace_id},
         )
     )
 
@@ -1235,7 +1224,6 @@ async def _execute_schedule_get(ctx: CommandContext) -> Any:
 async def _execute_schedule_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1248,7 +1236,6 @@ async def _execute_schedule_list(ctx: CommandContext) -> Any:
             f"/agent-cli/social-accounts/{account_id}/publish-config/schedule-items",
             params=compact_params(
                 {
-                    "workspace_id": workspace_id,
                     "from": arguments.get("from"),
                     "to": arguments.get("to"),
                     "page": arguments.get("page", 1),
@@ -1262,7 +1249,6 @@ async def _execute_schedule_list(ctx: CommandContext) -> Any:
 async def _execute_schedule_update(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1275,7 +1261,7 @@ async def _execute_schedule_update(ctx: CommandContext) -> Any:
             cfg,
             "PATCH",
             f"/agent-cli/social-accounts/{account_id}/publish-config/schedule-items/{schedule_item_id}",
-            json_body={"workspace_id": workspace_id, "payload": schedule_item},
+            json_body={"payload": schedule_item},
         )
     )
 
@@ -1283,7 +1269,6 @@ async def _execute_schedule_update(ctx: CommandContext) -> Any:
 async def _execute_version_activate(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1296,7 +1281,6 @@ async def _execute_version_activate(ctx: CommandContext) -> Any:
             "POST",
             f"/agent-cli/social-accounts/{account_id}/publish-config/versions/{version_id}/activate",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": compact_params(
                     {
                         "replace_from": arguments.get("replace_from"),
@@ -1316,7 +1300,6 @@ async def _execute_version_activate(ctx: CommandContext) -> Any:
 async def _execute_version_create(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     api_data = ctx.api_data
     account_id = str(arguments.get("account_id") or "")
@@ -1328,7 +1311,6 @@ async def _execute_version_create(ctx: CommandContext) -> Any:
             "POST",
             f"/agent-cli/social-accounts/{account_id}/publish-config/versions",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": {
                     "schedule_rules": arguments.get("schedule_rules", []),
                     **(
@@ -1345,7 +1327,6 @@ async def _execute_version_create(ctx: CommandContext) -> Any:
 async def _execute_version_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
@@ -1353,7 +1334,6 @@ async def _execute_version_get(ctx: CommandContext) -> Any:
     version_id = str(arguments.get("version_id") or "")
     versions = await _social_account_list_versions(
         cfg,
-        workspace_id=workspace_id,
         account_id=account_id,
     )
     for version in versions if isinstance(versions, list) else []:
@@ -1365,14 +1345,12 @@ async def _execute_version_get(ctx: CommandContext) -> Any:
 async def _execute_version_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     command_name = ctx.spec.schema_name
     account_id = str(arguments.get("account_id") or "")
     if not account_id:
         raise RuntimeError(f"{command_name} requires account_id")
     return await _social_account_list_versions(
         cfg,
-        workspace_id=workspace_id,
         account_id=account_id,
     )
 
@@ -1397,7 +1375,6 @@ _ALL_EXECUTORS = {
 async def _social_account_list_versions(
     cfg: Config,
     *,
-    workspace_id: str | None,
     account_id: str,
 ) -> Any:
     return agent_domain_result(
@@ -1405,7 +1382,6 @@ async def _social_account_list_versions(
             cfg,
             "GET",
             f"/agent-cli/social-accounts/{account_id}/publish-config/versions",
-            params={"workspace_id": workspace_id},
         )
     )
 

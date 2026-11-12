@@ -285,10 +285,11 @@ def test_a_campaign_no_ugc_campaign_stands_for_is_not_found(server, monkeypatch)
     assert result["error"]["server_code"] == "campaign_not_found"
 
 
-def test_payments_read_a_named_workspace(server):
-    """A Brand reads the payments of any workspace it belongs to, not only the selected one."""
+def test_payments_read_another_organization_by_header(server):
+    """A Brand reads another organization's payments with --organization-id, by header only."""
     other = "70000000-0000-4000-8000-000000000007"
-    run("payment", "+list", "--workspace-id", other)
+    run("payment", "+list", "--organization-id", other)
 
     (request,) = server["requests"]
-    assert query(request)["workspace_id"] == [other]
+    assert request.headers["X-Organization-Id"] == other
+    assert "workspace_id" not in query(request)

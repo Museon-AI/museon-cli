@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import dataclasses
 from typing import Any
 
 from museoncli.domains._model import (
@@ -17,6 +16,7 @@ from museoncli.domains._model import (
     Transport,
 )
 from museoncli.domains._discovery import command_examples, fill_flag_help
+from museoncli.domains._legacy_workspace import legacy_workspace_spec
 from museoncli.domains._shared import (
     _spec_schema_payload,
     _spec_summary_payload,
@@ -65,51 +65,10 @@ _DOMAIN_MODULES = (
 )
 
 
-_ORGANIZATION_ID_PROPERTY = {
-    "type": "string",
-    "format": "uuid",
-    "description": (
-        "Organization to act in, sent as the X-Organization-Id header (never in the body). "
-        "Defaults to the selected organization."
-    ),
-}
-_WORKSPACE_ID_DEPRECATION = (
-    "DEPRECATED: a workspace inside the organization. Optional; the server resolves the "
-    "workspace from the organization and refuses one from another organization "
-    "(409 organization_workspace_mismatch)."
-)
-
-
-def _organization_addressed(spec: CommandSpec) -> CommandSpec:
-    """Declare organization_id next to the deprecated workspace_id input."""
-    properties = spec.input_schema.get("properties")
-    if (
-        not spec.organization_bound
-        or not isinstance(properties, dict)
-        or "workspace_id" not in properties
-    ):
-        return spec
-    workspace_property = properties["workspace_id"]
-    workspace_property = {
-        **(workspace_property if isinstance(workspace_property, dict) else {}),
-        "deprecated": True,
-        "description": _WORKSPACE_ID_DEPRECATION,
-    }
-    schema = {
-        **spec.input_schema,
-        "properties": {
-            **properties,
-            "workspace_id": workspace_property,
-            "organization_id": dict(_ORGANIZATION_ID_PROPERTY),
-        },
-    }
-    return dataclasses.replace(spec, input_schema=schema)
-
-
 def command_specs() -> list[CommandSpec]:
     specs: list[CommandSpec] = []
     for module in _DOMAIN_MODULES:
-        specs.extend(_organization_addressed(spec) for spec in module.specs())
+        specs.extend(legacy_workspace_spec(spec) for spec in module.specs())
     return specs
 
 

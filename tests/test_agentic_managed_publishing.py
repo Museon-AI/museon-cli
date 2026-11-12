@@ -73,7 +73,6 @@ def test_wrong_plan_membership_never_reaches_account_mutation():
                 "action": "enable",
                 "expected_version": 1,
             },
-            workspace_id=str(UUID(int=4)),
             api_data=api,
             api_data_v2=api,
             upload_media_file=AsyncMock(),

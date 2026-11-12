@@ -88,26 +88,29 @@ readback from the owning domain, not with a request receipt alone.
 See [the migration guide](docs/cli-2-migration.md) before replacing an older CLI.
 The HireAICreator domain is included in this unpublished candidate.
 
-## Migration from workspaces (0.25.0)
+## Organizations only (1.0.0)
 
-MuseOn no longer has a workspace concept: access is an organization role plus
-Campaign scope. The CLI selects an organization instead.
+MuseOn has organizations only: access is an organization role plus Campaign scope.
+Every request addresses the selected organization with `X-Organization-Id`; pass
+`--organization-id <org>` to a command to address another organization for one call.
+1.0.0 removed the workspace aliases that 0.25 kept:
 
-| Before (0.24.x) | Now (0.25.0) |
+| Before (0.25 and earlier) | Now (1.0.0) |
 | --- | --- |
 | `museoncli workspace list` | `museoncli org list` (role, `campaign_scope`, `is_default`) |
 | `museoncli workspace current` | `museoncli org current` |
 | `museoncli workspace select --id <ws>` | `museoncli org select --id <organization-id>` or `--name <exact name>` |
 | `--workspace-id <ws>` on a command | drop it, or `--organization-id <org>` for one call |
+| `workspace_id` in `--args-json` / `--args-file` | drop it |
 | envelope `.workspace` | envelope `.organization` (`{id, name}` or `null`) |
 
-- Every request carries `X-Organization-Id` for the selected organization; the server
-  resolves the workspace internally, so Agents never need a workspace id.
-- `workspace list|current|select` and `--workspace-id` still work as deprecated aliases
-  until 1.0 and print a deprecation notice on stderr. Giving `--workspace-id` and
-  `--organization-id` from different organizations fails with `organization_workspace_mismatch`.
-- `whoami` now returns `organizations[]`, `default_organization_id` and
-  `default_organization_name`.
+- `museoncli workspace ...` and `--workspace-id` are unknown (usage error, exit 2).
+  A `workspace_id` in structured input is refused before any request.
+- `agentic-campaign` and `hireaicreator` are unchanged in 1.0.0: they keep their deprecated
+  `--workspace-id` and the envelope `workspace` key until they move to organizations.
+- The Museon API requires CLI 1.0.0 or newer once its organization-only routes ship;
+  older CLIs get HTTP 426 `cli_outdated` with the upgrade command.
+  See the [changelog](CHANGELOG.md#100) for every change.
 
 ## You stay in control
 
@@ -128,7 +131,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v0.25.0/museoncli-0.25.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.0/museoncli-1.0.0-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:

@@ -13,7 +13,6 @@ from museoncli.execution import CommandContext, direct_enveloped
 
 
 def _upload_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--file", required=True)
     parser.add_argument("--media-type", choices=["image", "video", "audio", "file"], required=True)
     parser.add_argument(
@@ -42,7 +41,6 @@ def _upload_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _import_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--url", required=True, help="Direct image URL; not video or audio.")
     parser.add_argument("--source-page-url")
     parser.add_argument("--dry-run", action="store_true")
@@ -58,7 +56,6 @@ def _import_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _get_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--id", required=True)
     parser.add_argument("--kind", choices=["media", "file"], default="media")
 
@@ -70,15 +67,10 @@ def _get_payload(args: argparse.Namespace) -> dict[str, Any]:
 async def _upload(ctx: CommandContext) -> Any:
     if ctx.arguments["media_type"] == "file":
         try:
-            receipt = await ctx.upload_artifact_file(
-                ctx.cfg, workspace_id=ctx.workspace_id, arguments=ctx.arguments
-            )
+            receipt = await ctx.upload_artifact_file(ctx.cfg, arguments=ctx.arguments)
             if (
                 not isinstance(receipt, dict)
                 or receipt.get("artifact_id") != ctx.arguments["file_id"]
-                # The server picks the workspace unless --workspace-id named one.
-                or (ctx.workspace_id and receipt.get("workspace_id") != ctx.workspace_id)
-                or not receipt.get("workspace_id")
                 or receipt.get("kind") != "file"
                 or receipt.get("is_public") is not False
             ):
@@ -89,9 +81,7 @@ async def _upload(ctx: CommandContext) -> Any:
                 f"file_upload_unverified: artifact_id={ctx.arguments['file_id']}; "
                 f"read media +get --kind file --id with this ID before retrying; cause={exc}"
             ) from exc
-    response = await ctx.upload_media_file(
-        ctx.cfg, workspace_id=ctx.workspace_id, arguments=ctx.arguments
-    )
+    response = await ctx.upload_media_file(ctx.cfg, arguments=ctx.arguments)
     if not isinstance(response, dict) or response.get("success") is not True:
         raise RuntimeError("media_upload_failed")
     return response.get("data")
@@ -103,7 +93,6 @@ async def _import(ctx: CommandContext) -> Any:
         "POST",
         "/agent-cli/assets",
         json_body={
-            "workspace_id": ctx.workspace_id,
             "type": "media",
             "payload": ctx.arguments,
         },
@@ -128,12 +117,10 @@ async def _get(ctx: CommandContext) -> Any:
             if ctx.arguments["kind"] == "file"
             else f"/agent-cli/assets/media/{ctx.arguments['id']}"
         ),
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
 def _generate_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--type", choices=["image", "video"], required=True)
     parser.add_argument("--prompt", required=True)
     parser.add_argument(
@@ -175,7 +162,6 @@ def _generate_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _status_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--task-id", required=True)
 
 
@@ -185,7 +171,6 @@ def _status_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 async def _generate(ctx: CommandContext) -> Any:
     body = {key: value for key, value in ctx.arguments.items() if key != "idempotency_key"}
-    body["workspace_id"] = ctx.workspace_id
     receipt = await ctx.api_data(
         ctx.cfg,
         "POST",
@@ -194,11 +179,8 @@ async def _generate(ctx: CommandContext) -> Any:
         idempotency_key=ctx.arguments["idempotency_key"],
     )
     try:
-        if not isinstance(receipt, dict) or not receipt.get("workspace_id"):
-            raise ValueError("receipt without workspace")
-        # The server picks the workspace unless --workspace-id named one.
-        if ctx.workspace_id and receipt.get("workspace_id") != ctx.workspace_id:
-            raise ValueError("workspace mismatch")
+        if not isinstance(receipt, dict):
+            raise ValueError("receipt is not an object")
         UUID(str(receipt.get("task_id")))
         UUID(str(receipt.get("media_id")))
     except (ValueError, TypeError, AttributeError):
@@ -214,7 +196,6 @@ async def _status(ctx: CommandContext) -> Any:
         ctx.cfg,
         "GET",
         f"/media/generations/{ctx.arguments['task_id']}",
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
@@ -303,7 +284,7 @@ def specs() -> list[CommandSpec]:
                 "additionalProperties": False,
             },
             output_schema=_direct_output_schema(
-                "Media upload returns asset.media_id; private general-file upload returns kind=file and artifact_id, workspace_id, is_public=false, and an expiring download_url."
+                "Media upload returns asset.media_id; private general-file upload returns kind=file and artifact_id, is_public=false, and an expiring download_url."
             ),
             examples=[
                 "museoncli media +upload --file ./clip.mp4 --media-type video --title Reference"

@@ -48,7 +48,6 @@ def _build_skills_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
 
 def _add_skills_create_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--name", required=True)
-    parser.add_argument("--workspace-id")
     parser.add_argument("--description")
     parser.add_argument("--reference-json")
     parser.add_argument("--is-active", action=argparse.BooleanOptionalAction, default=True)
@@ -67,8 +66,6 @@ def _build_skills_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
         "is_active": args.is_active,
         "is_public": args.is_public,
     }
-    if args.workspace_id is not None:
-        payload["workspace_id"] = args.workspace_id
     if args.reference_json is not None:
         payload["reference"] = _json_argument(args.reference_json, field="--reference-json")
     return payload
@@ -139,7 +136,6 @@ def _skills_create_input_schema() -> dict[str, Any]:
         "type": "object",
         "properties": {
             "name": {"type": "string", "minLength": 1, "maxLength": 80},
-            "workspace_id": {"type": "string", "minLength": 1},
             "description": {"type": "string", "maxLength": SKILL_DESCRIPTION_MAX_LENGTH},
             "reference": {"description": "Optional JSON metadata for this skill."},
             "content": {"type": "string", "minLength": 1, "maxLength": SKILL_CONTENT_MAX_LENGTH},
@@ -246,10 +242,7 @@ async def _execute_create(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
     api_data = ctx.api_data
-    payload = dict(arguments)
-    if ctx.workspace_id and "workspace_id" not in payload:
-        payload["workspace_id"] = ctx.workspace_id
-    return await api_data(cfg, "POST", "/agent-cli/skills", json_body=payload)
+    return await api_data(cfg, "POST", "/agent-cli/skills", json_body=dict(arguments))
 
 
 async def _execute_get(ctx: CommandContext) -> Any:
@@ -267,7 +260,6 @@ async def _execute_get(ctx: CommandContext) -> Any:
             {
                 "offset": arguments.get("offset", 0),
                 "limit": arguments.get("limit", 1000),
-                "workspace_id": ctx.workspace_id,
             }
         ),
     )
@@ -280,7 +272,6 @@ async def _execute_list(ctx: CommandContext) -> Any:
         cfg,
         "GET",
         "/agent-cli/skills",
-        params=compact_params({"workspace_id": ctx.workspace_id}),
     )
 
 
@@ -297,7 +288,7 @@ async def _execute_update(ctx: CommandContext) -> Any:
 
 EXECUTORS = {
     "skills.create": direct_enveloped(_execute_create),
-    "skills.get": direct_enveloped(_execute_get, with_workspace=False),
-    "skills.list": direct_enveloped(_execute_list, with_workspace=False),
-    "skills.update": direct_enveloped(_execute_update, with_workspace=False),
+    "skills.get": direct_enveloped(_execute_get),
+    "skills.list": direct_enveloped(_execute_list),
+    "skills.update": direct_enveloped(_execute_update),
 }

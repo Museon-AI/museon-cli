@@ -90,7 +90,7 @@ def test_phone_query_returns_exit_ip_and_accounts_without_n_plus_one(monkeypatch
     assert item["proxy"]["check"]["outbound_ip"] == "198.51.100.7"
     assert item["proxy"]["server"] == "203.0.113.5"
     assert len(calls) == 2
-    assert result["workspace"] is None
+    assert "workspace" not in result
 
 
 def test_file_import_preserves_secrets_on_wire_and_redacts_dry_run(monkeypatch, tmp_path):

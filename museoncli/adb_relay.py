@@ -69,7 +69,7 @@ def _cli_command() -> list[str]:
 
 
 def ensure_relay(
-    *, target: str, account_id: str, workspace_id: str | None
+    *, target: str, account_id: str, organization_id: str | None
 ) -> tuple[str, str | None]:
     """Return the local ADB serial for ``target`` and a stale local serial to drop.
 
@@ -97,7 +97,7 @@ def ensure_relay(
         target,
         "--account-id",
         account_id,
-        *(["--workspace-id", workspace_id] if workspace_id else []),
+        *(["--organization-id", organization_id] if organization_id else []),
         "--cli",
         json.dumps(_cli_command()),
     ]
@@ -194,14 +194,14 @@ async def serve(
             writer.close()
 
 
-def _renewer(cli: list[str], account_id: str, workspace_id: str | None):
+def _renewer(cli: list[str], account_id: str, organization_id: str | None):
     command = [
         *cli,
         "social-account",
         "+renew-phone-lease",
         "--id",
         account_id,
-        *(["--workspace-id", workspace_id] if workspace_id else []),
+        *(["--organization-id", organization_id] if organization_id else []),
     ]
 
     async def renew() -> None:
@@ -222,7 +222,7 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="museoncli.adb_relay")
     parser.add_argument("--target", required=True)
     parser.add_argument("--account-id", required=True)
-    parser.add_argument("--workspace-id")
+    parser.add_argument("--organization-id")
     parser.add_argument("--cli", required=True, help="JSON argv that runs museoncli.")
     args = parser.parse_args(argv)
 
@@ -236,7 +236,7 @@ def main(argv: list[str] | None = None) -> None:
     asyncio.run(
         serve(
             target=args.target,
-            renew=_renewer(json.loads(args.cli), args.account_id, args.workspace_id),
+            renew=_renewer(json.loads(args.cli), args.account_id, args.organization_id),
             on_ready=ready,
         )
     )

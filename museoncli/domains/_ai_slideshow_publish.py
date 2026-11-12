@@ -47,7 +47,6 @@ ASSET_POOL_COLLECTION_FIELDS = ("formats", "topics", "bgm")
 
 
 def _add_asset_pool_account_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument(
         "--account-id",
         dest="account_ids",
@@ -132,7 +131,6 @@ def _add_asset_pools_batch_set_arguments(parser: argparse.ArgumentParser) -> Non
 
 
 def _add_asset_pools_job_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--id", dest="job_id", required=True)
 
 
@@ -335,7 +333,6 @@ def _build_asset_pools_batch_cancel_arguments(args: argparse.Namespace) -> dict[
 
 
 def _add_schedule_plan_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument(
         "--operation",
         choices=SCHEDULE_PLAN_OPERATION_CHOICES,
@@ -391,7 +388,6 @@ def _add_schedule_plan_batch_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_schedule_plan_id_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--id", dest="job_id", required=True)
 
 
@@ -1177,7 +1173,7 @@ async def _execute_asset_pools_batch_get(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         "/account-publish/asset-pools:batch-get",
-        json_body={"workspace_id": ctx.workspace_id, **ctx.arguments},
+        json_body={**ctx.arguments},
     )
 
 
@@ -1186,7 +1182,7 @@ async def _execute_asset_pools_batch_preview(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         "/account-publish/asset-pools:batch-preview",
-        json_body={"workspace_id": ctx.workspace_id, **ctx.arguments},
+        json_body={**ctx.arguments},
     )
 
 
@@ -1195,7 +1191,7 @@ async def _execute_asset_pools_batch_set(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         "/account-publish/asset-pools:batch-set",
-        json_body={"workspace_id": ctx.workspace_id, **ctx.arguments},
+        json_body={**ctx.arguments},
     )
 
 
@@ -1205,7 +1201,6 @@ async def _execute_asset_pools_batch_status(ctx: CommandContext) -> Any:
         ctx.cfg,
         "GET",
         f"/account-publish/asset-pools/jobs/{job_id}",
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
@@ -1216,7 +1211,7 @@ async def _execute_asset_pools_batch_cancel(ctx: CommandContext) -> Any:
         "POST",
         f"/account-publish/asset-pools/jobs/{job_id}:cancel",
         json_body=compact_params(
-            {"workspace_id": ctx.workspace_id, "reason": ctx.arguments.get("reason")}
+            {"reason": ctx.arguments.get("reason")}
         ),
     )
 
@@ -1226,7 +1221,7 @@ async def _execute_schedule_plan_preview(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         "/account-publish/schedule-plans:preview",
-        json_body={"workspace_id": ctx.workspace_id, **ctx.arguments},
+        json_body={**ctx.arguments},
     )
 
 
@@ -1235,7 +1230,7 @@ async def _execute_schedule_plan_batch(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         "/account-publish/schedule-plans:batch",
-        json_body={"workspace_id": ctx.workspace_id, **ctx.arguments},
+        json_body={**ctx.arguments},
     )
 
 
@@ -1245,7 +1240,6 @@ async def _execute_schedule_plan_status(ctx: CommandContext) -> Any:
         ctx.cfg,
         "GET",
         f"/account-publish/schedule-plans/{job_id}",
-        params={"workspace_id": ctx.workspace_id},
     )
 
 
@@ -1256,7 +1250,7 @@ async def _execute_schedule_plan_cancel(ctx: CommandContext) -> Any:
         "POST",
         f"/account-publish/schedule-plans/{job_id}:cancel",
         json_body=compact_params(
-            {"workspace_id": ctx.workspace_id, "reason": ctx.arguments.get("reason")}
+            {"reason": ctx.arguments.get("reason")}
         ),
     )
 

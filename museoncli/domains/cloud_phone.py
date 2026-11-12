@@ -83,6 +83,20 @@ UPGRADE_APPS = {
 APP_FLAGS = {"phone_ids": "--phone-id", "account_ids": "--account-id", "apps": "--app"}
 
 
+# The recovery API still names the organization scope "workspace" on the wire.
+RECOVERY_SCOPE = {
+    **enum("organization", "global"),
+    "default": "global",
+    "description": "global: the staff cloud-phone queue; organization: the selected organization's.",
+}
+
+
+def _scope_on_wire(arguments: dict[str, Any]) -> dict[str, Any]:
+    if arguments.get("scope") == "organization":
+        return {**arguments, "scope": "workspace"}
+    return arguments
+
+
 def redact(value: Any) -> Any:
     if isinstance(value, dict):
         return {
@@ -96,7 +110,7 @@ def redact(value: Any) -> Any:
 
 def _envelope(ctx: CommandContext, raw: Any) -> dict[str, Any]:
     return direct_api_envelope(
-        ctx.spec.schema_name, ctx.workspace_id, raw, site_url=ctx.cfg.site_url
+        ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url
     )
 
 
@@ -380,8 +394,6 @@ async def _recover(ctx: CommandContext) -> dict:
     body = dict(ctx.arguments)
     job_id = body.pop("id", None)
     path = RECOVERY + (f"/jobs/{job_id}/retry" if job_id else "/jobs")
-    if not job_id:
-        body["workspace_id"] = body.get("workspace_id") or ctx.workspace_id
     # Recovery owns body-level idempotency. Do not move this key to the generic
     # HTTP header: an uncertain response must replay the same job, not create another.
     return _envelope(ctx, await ctx.api_data(ctx.cfg, "POST", path, json_body=body))
@@ -465,7 +477,7 @@ def _spec(
     properties: dict,
     *,
     executor=None,
-    workspace=False,
+    organization_scoped=False,
     **kwargs,
 ) -> CommandSpec:
     base = _command(
@@ -475,11 +487,10 @@ def _spec(
         path,
         properties,
         version=1,
-        workspace="body" if workspace else "resource",
         domain=Domain.CLOUD_PHONE,
         **kwargs,
     )
-    if workspace:
+    if organization_scoped:
         original_build = base.build_arguments
 
         def build(args):
@@ -491,6 +502,8 @@ def _spec(
     original = executor or EXECUTORS[base.schema_name]
 
     async def execute(ctx):
+        if organization_scoped:
+            ctx = replace(ctx, arguments=_scope_on_wire(ctx.arguments))
         result = await original(ctx)
         data = result.get("data")
         if isinstance(data, dict):
@@ -513,7 +526,7 @@ def _spec(
     return replace(
         base,
         required_roles=("staff",),
-        organization_bound=workspace,
+        organization_bound=organization_scoped,
         resource_policy="staff_global_cloud_phone_management",
     )
 
@@ -826,11 +839,11 @@ def specs() -> list[CommandSpec]:
             RECOVERY + "/inspect",
             {
                 "account_ids": arr(U, 1, 100),
-                "scope": {**enum("workspace", "global"), "default": "global"},
+                "scope": RECOVERY_SCOPE,
             },
             required=("account_ids",),
-            workspace=True,
-            summary="Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope workspace narrows it to the selected organization. Returns blockers and Museon device IDs; no resources are released.",
+            organization_scoped=True,
+            summary="Live inspection before reclaiming disabled accounts' devices. Defaults to the global staff cloud-phone queue; --scope organization narrows it to the selected organization. Returns blockers and Museon device IDs; no resources are released.",
         ),
         _spec(
             "recovery-job",
@@ -840,11 +853,11 @@ def specs() -> list[CommandSpec]:
             {
                 "account_ids": arr(U, 1, 100),
                 "device_ids": arr(U, 1, 100),
-                "scope": {**enum("workspace", "global"), "default": "global"},
+                "scope": RECOVERY_SCOPE,
                 "idempotency_key": {**S, "maxLength": 128},
             },
             required=("account_ids", "device_ids", "idempotency_key"),
-            workspace=True,
+            organization_scoped=True,
             executor=_recover,
             write=True,
             destructive=True,

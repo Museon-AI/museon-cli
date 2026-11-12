@@ -30,7 +30,9 @@ def _save(path: Path, record: dict[str, Any]) -> None:
 
 async def _publish(ctx: CommandContext) -> dict[str, Any]:
     args = ctx.arguments
-    workspace_id = str(args.get("workspace_id") or ctx.workspace_id or "").strip()
+    workspace_id = str(args.get("workspace_id") or "").strip()
+    # The deprecated workspace travels only when given (see _legacy_workspace).
+    scope = {"workspace_id": workspace_id} if workspace_id else {}
     campaign_id = args["campaign_id"]
     items = args["items"]
     account_ids = sorted({value for item in items for value in item["account_ids"]})
@@ -86,7 +88,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
             ctx.cfg,
             "POST",
             "/pool-accounts/publication-settings:read",
-            json_body={"workspace_id": workspace_id, "account_ids": account_ids},
+            json_body={**scope, "account_ids": account_ids},
             unwrap_success=True,
         )
         blocked = [row["id"] for row in settings["items"] if not row["ready"]]
@@ -99,7 +101,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
             if digest not in record["uploaded"]:
                 upload = await ctx.upload_media_file(
                     ctx.cfg,
-                    workspace_id=workspace_id,
+                    workspace_id=workspace_id or None,
                     arguments={"file": item["file"], "media_type": "video"},
                 )
                 record["uploaded"][digest] = upload["data"]["asset"]["media_id"]
@@ -119,7 +121,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
         for item in payload_items:
             if item["scheduled_at"] == "now":
                 item["scheduled_at"] = record["scheduled_now"]
-        body = {"workspace_id": workspace_id, "items": payload_items}
+        body = {**scope, "items": payload_items}
 
         async def submit(json_body: dict[str, Any]) -> Any:
             return await ctx.api_data_v2(
@@ -149,7 +151,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
         if raw is None:
             raw = await submit({**body, "campaign_id": campaign_id})
         receipt = direct_api_envelope(
-            ctx.spec.schema_name, workspace_id, raw, site_url=ctx.cfg.site_url
+            ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url
         )
         receipt["warnings"].append(
             "Accepted publication tasks, not proof of public posts. Read each video for final delivery state."

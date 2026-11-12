@@ -134,7 +134,6 @@ def _check_items(payload: dict[str, Any]) -> None:
 
 async def _schedule(ctx: CommandContext) -> dict[str, Any]:
     args = ctx.arguments
-    workspace_id = str(args.get("workspace_id") or ctx.workspace_id or "").strip()
     now = bool(args.get("now"))
     items = []
     for item in args["items"]:
@@ -155,7 +154,7 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
         ).encode()
     ).hexdigest()
     identity = json.dumps(
-        [ctx.cfg.api_base_url, workspace_id or ctx.organization_id or "", args["idempotency_key"]]
+        [ctx.cfg.api_base_url, ctx.organization_id or "", args["idempotency_key"]]
     )
     key = hashlib.sha256(identity.encode()).hexdigest()
     receipt_dir = (
@@ -187,9 +186,7 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
         async def uploaded(path: str, digest: str, media_type: str) -> str:
             if digest not in record["uploaded"]:
                 upload = await ctx.upload_media_file(
-                    ctx.cfg,
-                    workspace_id=workspace_id,
-                    arguments={"file": path, "media_type": media_type},
+                    ctx.cfg, arguments={"file": path, "media_type": media_type}
                 )
                 record["uploaded"][digest] = upload["data"]["asset"]["media_id"]
                 _save(receipt_path, record)
@@ -225,7 +222,6 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
                     }
                 )
         body = {
-            "workspace_id": workspace_id,
             "items": wire_items,
             "ai_tag": bool(args.get("ai_tag")),
             "publish_immediately": now,
@@ -241,7 +237,7 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
             unwrap_success=False,
         )
         receipt = direct_api_envelope(
-            ctx.spec.schema_name, workspace_id, raw, site_url=ctx.cfg.site_url
+            ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url
         )
         receipt["warnings"].append(
             "Accepted publish tasks, not proof of public posts. Read each task for its final state."
@@ -268,7 +264,6 @@ def _schedule_spec() -> CommandSpec:
             "ai_tag": {**B, "description": "Mark the posts as AI-generated on the platform."},
         },
         required=("items",),
-        workspace="body",
         write=True,
         idempotent=True,
         domain=Domain.PUBLISH,

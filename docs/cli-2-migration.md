@@ -2,7 +2,7 @@
 
 状态：已随 0.6.0 发布。本文保留为 CLI 2.0 迁移记录，下文的命令数量是当时的快照；当前命令面以 `museoncli schema` 和 `docs/agent-discoverability.md` 为准。
 
-保留 research、campaign-monitor、content-analysis、artifacts、social-account 的 13 个指定入口、routines、skills 和认证、workspace、schema、setup 等基础入口。新增 media 五个原子入口（upload/import/get/generate/status），普通文件通过upload/get的显式file类型分支。新增 hireaicreator 40 个业务命令；ai-slideshow 以素材7条、独立生成3条和旧 slideshow 发布22条承接明确保留能力；仍是未发布候选。
+保留 research、campaign-monitor、content-analysis、artifacts、social-account 的 13 个指定入口、routines、skills 和认证、组织（org）、schema、setup 等基础入口。新增 media 五个原子入口（upload/import/get/generate/status），普通文件通过upload/get的显式file类型分支。新增 hireaicreator 40 个业务命令；ai-slideshow 以素材7条、独立生成3条和旧 slideshow 发布22条承接明确保留能力；仍是未发布候选。
 
 ## 旧入口处理
 
@@ -20,4 +20,4 @@
 4. setup 不会自动删除宿主已安装的退役 skill。升级时先辨别这些目录是否由旧 CLI 安装、是否包含用户修改，再由用户明确执行迁移/移除；不要删除同名个人技能。本次没有操作真实宿主技能目录。
 5. 发布时需同步 monorepo command catalog、安装指引及 runtime prompt/skill 引用，并验证轮子与运行时包。当前版本号未变，不得以现有已发布版本覆盖发布候选产物。
 
-0.25.0 起 MuseOn 不再有工作区概念，CLI 改为选择组织：`workspace list/current/select` 对应 `org list/current/select`，业务命令的 `--workspace-id` 可去掉（单次跨组织用 `--organization-id`），输出信封读 `organization`。旧命令与 `--workspace-id` 作为弃用别名保留到 1.0，详见 [README](../README.zh-CN.md) 的「从工作区迁移（0.25.0）」。
+0.25.0 起 MuseOn 不再有工作区概念，CLI 改为选择组织：`workspace list/current/select` 对应 `org list/current/select`，单次跨组织用 `--organization-id`，输出信封读 `organization`。1.0.0 删除了 `workspace` 命令组、`--workspace-id` 和 `workspace_id` 输入（`agentic-campaign`、`hireaicreator` 暂时除外），详见 [README](../README.zh-CN.md) 的「只有组织（1.0.0）」。

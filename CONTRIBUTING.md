@@ -30,7 +30,7 @@ When adding or changing a command:
 
 1. Keep its definition in the appropriate module under `museoncli/domains/`.
 2. Declare its input and output schema, risk level, execution mode, and examples.
-3. Add focused parser, payload, execution, and workspace-scope tests.
+3. Add focused parser, payload, execution, and organization-scope tests.
 4. Regenerate both generated artifacts:
 
    ```bash

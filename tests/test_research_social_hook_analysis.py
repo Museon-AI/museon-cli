@@ -153,13 +153,10 @@ def test_seen_parser_builds_ordered_url_payload_and_read_schema() -> None:
             "https://www.instagram.com/reel/post-1/",
             "--url",
             "https://www.instagram.com/reel/post-2/",
-            "--workspace-id",
-            "workspace-2",
         ]
     )
 
     assert args.domain_command == "research.check-hooks-analyzed"
-    assert args.workspace_id == "workspace-2"
     assert command_payload(args) == {
         "urls": [
             "https://www.instagram.com/reel/post-1/",
@@ -182,7 +179,7 @@ def test_seen_requires_one_to_forty_urls(count: int) -> None:
         command_payload(_parse(argv))
 
 
-def test_seen_dispatch_posts_workspace_scoped_batch(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_seen_dispatch_posts_the_batch_to_the_organization(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[dict[str, Any]] = []
 
     async def fake_api_data(
@@ -210,8 +207,6 @@ def test_seen_dispatch_posts_workspace_scoped_batch(monkeypatch: pytest.MonkeyPa
                     "+check-hooks-analyzed",
                     "--url",
                     "https://www.instagram.com/reel/post-1/",
-                    "--workspace-id",
-                    "workspace-override",
                 ]
             )
         )
@@ -223,7 +218,6 @@ def test_seen_dispatch_posts_workspace_scoped_batch(monkeypatch: pytest.MonkeyPa
             "method": "POST",
             "path": "/agent-cli/research/social-media-hook-analyze-seen",
             "json_body": {
-                "workspace_id": "workspace-override",
                 "payload": {"urls": ["https://www.instagram.com/reel/post-1/"]},
             },
             "params": None,
@@ -342,7 +336,7 @@ def test_results_uses_stable_pagination_query(monkeypatch: pytest.MonkeyPatch) -
         {
             "method": "GET",
             "path": f"/agent-cli/research/social-media-hook-analyze/{ANALYSIS_ID}/results",
-            "params": {"workspace_id": None, "page": 2, "page_size": 10},
+            "params": {"page": 2, "page_size": 10},
         }
     ]
 
@@ -382,7 +376,7 @@ def test_media_get_atomically_writes_video(monkeypatch: pytest.MonkeyPatch, tmp_
             "path": (
                 f"/agent-cli/research/social-media-hook-analyze/{ANALYSIS_ID}/items/{ITEM_ID}/media"
             ),
-            "params": {"workspace_id": None},
+            "params": {},
             "max_bytes": 30 * 1024 * 1024,
         }
     ]

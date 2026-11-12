@@ -21,8 +21,6 @@ FORMAT_ID = "50000000-0000-4000-8000-000000000001"
 TOPIC_ID = "60000000-0000-4000-8000-000000000001"
 PERSONA_ID = "70000000-0000-4000-8000-000000000001"
 BGM_ID = "80000000-0000-4000-8000-000000000001"
-WORKSPACE_1 = "30000000-0000-4000-8000-000000000001"
-WORKSPACE_2 = "30000000-0000-4000-8000-000000000002"
 
 
 class _Capture:
@@ -51,7 +49,7 @@ def _parse(argv: list[str]) -> Any:
     return build_parser().parse_args(argv)
 
 
-def _config_with_workspace() -> Config:
+def _config_with_organization() -> Config:
     cfg = Config()
     cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     return cfg
@@ -592,25 +590,25 @@ def test_plan_builder_rejects_invalid_time_inputs(replacement: list[str], messag
         get_command_spec("ai-slideshow.publish-preview-schedule-plan").build_arguments(args)
 
 
-def test_preview_is_a_real_server_request_with_workspace_override(
+def test_preview_is_a_real_server_request_in_the_organization(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     capture = _Capture({"would_create": 20, "would_cancel": 4})
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
-    argv = _plan_args("+preview-schedule-plan") + ["--workspace-id", WORKSPACE_2]
+    argv = _plan_args("+preview-schedule-plan")
 
     result = asyncio.run(main_module.dispatch(_parse(argv)))
 
     assert result["data"] == {"would_create": 20, "would_cancel": 4}
     assert capture.calls[0]["method"] == "POST"
     assert capture.calls[0]["path"] == "/account-publish/schedule-plans:preview"
-    assert capture.calls[0]["json_body"]["workspace_id"] == WORKSPACE_2
+    assert "workspace_id" not in capture.calls[0]["json_body"]
     assert capture.calls[0]["json_body"]["operation"] == "plan"
     assert capture.calls[0]["json_body"]["account_ids"] == [ACCOUNT_1, ACCOUNT_2]
 
 
-def test_cancel_only_preview_and_batch_send_api_operation_and_workspace(
+def test_cancel_only_preview_and_batch_send_api_operation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     capture = _Capture(
@@ -622,12 +620,12 @@ def test_cancel_only_preview_and_batch_send_api_operation_and_workspace(
             }
         }
     )
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     asyncio.run(
         main_module.dispatch(
-            _parse(_cancel_only_args("+preview-schedule-plan") + ["--workspace-id", WORKSPACE_2])
+            _parse(_cancel_only_args("+preview-schedule-plan"))
         )
     )
     batch_result = asyncio.run(
@@ -638,7 +636,6 @@ def test_cancel_only_preview_and_batch_send_api_operation_and_workspace(
         "method": "POST",
         "path": "/account-publish/schedule-plans:preview",
         "json_body": {
-            "workspace_id": WORKSPACE_2,
             "operation": "cancel_only",
             "account_ids": [ACCOUNT_1, ACCOUNT_2],
             "cancel_reason": "operator requested schedule removal",
@@ -647,7 +644,6 @@ def test_cancel_only_preview_and_batch_send_api_operation_and_workspace(
     }
     assert capture.calls[1]["path"] == "/account-publish/schedule-plans:batch"
     assert capture.calls[1]["json_body"] == {
-        "workspace_id": None,
         "operation": "cancel_only",
         "account_ids": [ACCOUNT_1, ACCOUNT_2],
         "cancel_reason": "operator requested schedule removal",
@@ -659,7 +655,7 @@ def test_cancel_only_preview_and_batch_send_api_operation_and_workspace(
 
 def test_batch_requires_yes_before_server_call(monkeypatch: pytest.MonkeyPatch) -> None:
     capture = _Capture()
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     with pytest.raises(RuntimeError, match="confirmation_required"):
@@ -672,7 +668,7 @@ def test_batch_dry_run_is_local_and_does_not_call_server(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     capture = _Capture()
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
     argv = _plan_args("+submit-schedule-plan") + ["--dry-run"]
 
@@ -692,7 +688,7 @@ def test_batch_returns_async_run_and_status_next_step(monkeypatch: pytest.Monkey
             }
         }
     )
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     result = asyncio.run(
@@ -715,7 +711,7 @@ def test_batch_returns_async_run_and_status_next_step(monkeypatch: pytest.Monkey
 
 def test_status_and_cancel_use_job_resource_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     capture = _Capture({"id": JOB_ID, "status": "running"})
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     status = asyncio.run(
@@ -746,7 +742,7 @@ def test_status_and_cancel_use_job_resource_paths(monkeypatch: pytest.MonkeyPatc
             "method": "GET",
             "path": f"/account-publish/schedule-plans/{JOB_ID}",
             "json_body": None,
-            "params": {"workspace_id": None},
+            "params": None,
         },
         {
             "method": "POST",
@@ -766,11 +762,11 @@ def test_existing_social_account_single_schedule_commands_remain_registered() ->
         assert get_command_spec(name).schema_name == name
 
 
-def test_asset_pool_batch_get_and_preview_use_workspace_override(
+def test_asset_pool_batch_get_and_preview_address_the_organization(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     capture = _Capture({"summary": {"requested": 2}})
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     get_result = asyncio.run(
@@ -784,15 +780,13 @@ def test_asset_pool_batch_get_and_preview_use_workspace_override(
                     ACCOUNT_1,
                     "--account-id",
                     ACCOUNT_2,
-                    "--workspace-id",
-                    WORKSPACE_2,
                 ]
             )
         )
     )
     preview_result = asyncio.run(
         main_module.dispatch(
-            _parse(_asset_pool_args("+bulk-preview-asset-pools") + ["--workspace-id", WORKSPACE_2])
+            _parse(_asset_pool_args("+bulk-preview-asset-pools"))
         )
     )
 
@@ -802,21 +796,20 @@ def test_asset_pool_batch_get_and_preview_use_workspace_override(
         "method": "POST",
         "path": "/account-publish/asset-pools:batch-get",
         "json_body": {
-            "workspace_id": WORKSPACE_2,
             "account_ids": [ACCOUNT_1, ACCOUNT_2],
             "include_resource_details": True,
         },
         "params": None,
     }
     assert capture.calls[1]["path"] == "/account-publish/asset-pools:batch-preview"
-    assert capture.calls[1]["json_body"]["workspace_id"] == WORKSPACE_2
+    assert "workspace_id" not in capture.calls[1]["json_body"]
 
 
 def test_asset_pool_batch_set_requires_confirmation_and_supports_local_dry_run(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     capture = _Capture()
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     with pytest.raises(RuntimeError, match="confirmation_required"):
@@ -841,7 +834,7 @@ def test_asset_pool_batch_set_returns_async_run_and_status_next_step(
             }
         }
     )
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     result = asyncio.run(
@@ -865,7 +858,7 @@ def test_asset_pool_status_and_cancel_use_job_resource_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     capture = _Capture({"id": JOB_ID, "status": "running"})
-    monkeypatch.setattr(main_module, "load_config", _config_with_workspace)
+    monkeypatch.setattr(main_module, "load_config", _config_with_organization)
     monkeypatch.setattr(main_module, "api_data_v2", capture)
 
     asyncio.run(
@@ -894,7 +887,7 @@ def test_asset_pool_status_and_cancel_use_job_resource_paths(
             "method": "GET",
             "path": f"/account-publish/asset-pools/jobs/{JOB_ID}",
             "json_body": None,
-            "params": {"workspace_id": None},
+            "params": None,
         },
         {
             "method": "POST",

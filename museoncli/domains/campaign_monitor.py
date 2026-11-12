@@ -944,7 +944,6 @@ def specs() -> list[CommandSpec]:
 async def _execute_content_remove(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     campaign_id = str(arguments.get("campaign_id") or "")
     collection_content_id = str(arguments.get("collection_content_id") or "")
@@ -954,7 +953,6 @@ async def _execute_content_remove(ctx: CommandContext) -> Any:
             "POST",
             f"/agent-cli/campaign-monitors/{campaign_id}/content/batch-remove",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": {"collection_content_ids": [collection_content_id]},
             },
         )
@@ -964,7 +962,6 @@ async def _execute_content_remove(ctx: CommandContext) -> Any:
 async def _execute_content_batch_remove(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     campaign_id = str(arguments.get("campaign_id") or "")
     raw_ids = arguments.get("collection_content_ids")
@@ -978,7 +975,6 @@ async def _execute_content_batch_remove(ctx: CommandContext) -> Any:
             "POST",
             f"/agent-cli/campaign-monitors/{campaign_id}/content/batch-remove",
             json_body={
-                "workspace_id": workspace_id,
                 "payload": {"collection_content_ids": collection_content_ids},
             },
         )
@@ -988,9 +984,8 @@ async def _execute_content_batch_remove(ctx: CommandContext) -> Any:
 async def _execute_content_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    base_params = {"workspace_id": workspace_id}
+    base_params: dict[str, Any] = {}
     campaign_id = str(arguments.get("campaign_id") or "")
     date_params = {
         **base_params,
@@ -1034,9 +1029,8 @@ async def _execute_content_list(ctx: CommandContext) -> Any:
 async def _execute_creator_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    base_params = {"workspace_id": workspace_id}
+    base_params: dict[str, Any] = {}
     campaign_id = str(arguments.get("campaign_id") or "")
     date_params = {
         **base_params,
@@ -1066,9 +1060,8 @@ async def _execute_creator_list(ctx: CommandContext) -> Any:
 async def _execute_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    base_params = {"workspace_id": workspace_id}
+    base_params: dict[str, Any] = {}
     campaign_id = str(arguments.get("campaign_id") or "")
     return agent_domain_result(
         await api_data(
@@ -1083,7 +1076,6 @@ async def _execute_get(ctx: CommandContext) -> Any:
 async def _execute_dimensions(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     campaign_id = str(arguments.get("campaign_id") or "")
     return agent_domain_result(
@@ -1091,7 +1083,6 @@ async def _execute_dimensions(ctx: CommandContext) -> Any:
             cfg,
             "GET",
             f"/agent-cli/campaign-monitors/{campaign_id}/dimensions",
-            params={"workspace_id": workspace_id},
         )
     )
 
@@ -1099,7 +1090,6 @@ async def _execute_dimensions(ctx: CommandContext) -> Any:
 async def _execute_breakdown(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     campaign_id = str(arguments.get("campaign_id") or "")
     return agent_domain_result(
@@ -1109,7 +1099,6 @@ async def _execute_breakdown(ctx: CommandContext) -> Any:
             f"/agent-cli/campaign-monitors/{campaign_id}/breakdown",
             params=compact_params(
                 {
-                    "workspace_id": workspace_id,
                     # The API names the dimensions as +list-dimensions returns them.
                     "by": str(arguments["by"]).replace("-", "_") if arguments.get("by") else None,
                     "date_from": arguments.get("date_from"),
@@ -1126,9 +1115,8 @@ async def _execute_breakdown(ctx: CommandContext) -> Any:
 async def _execute_list(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    base_params = {"workspace_id": workspace_id}
+    base_params: dict[str, Any] = {}
     return agent_domain_result(
         await api_data(
             cfg,
@@ -1151,9 +1139,8 @@ async def _execute_list(ctx: CommandContext) -> Any:
 async def _execute_summary(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
-    base_params = {"workspace_id": workspace_id}
+    base_params: dict[str, Any] = {}
     campaign_id = str(arguments.get("campaign_id") or "")
     date_params = {
         **base_params,
@@ -1183,7 +1170,6 @@ async def _execute_summary(ctx: CommandContext) -> Any:
 async def _execute_period_performance(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     campaign_id = str(arguments.get("campaign_id") or "")
     return agent_domain_result(
@@ -1192,7 +1178,6 @@ async def _execute_period_performance(ctx: CommandContext) -> Any:
             "GET",
             f"/agent-cli/campaign-monitors/{campaign_id}/period-performance",
             params={
-                "workspace_id": workspace_id,
                 "current_period_start": arguments["current_period_start"],
                 "current_period_end": arguments["current_period_end"],
                 "timezone": arguments.get("timezone", "UTC"),
@@ -1204,7 +1189,6 @@ async def _execute_period_performance(ctx: CommandContext) -> Any:
 async def _execute_creator_add(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     campaign_id = str(arguments.get("campaign_id") or "")
     payload = compact_params(
@@ -1221,7 +1205,7 @@ async def _execute_creator_add(ctx: CommandContext) -> Any:
             cfg,
             "POST",
             f"/agent-cli/campaign-monitors/{campaign_id}/creators",
-            json_body={"workspace_id": workspace_id, "payload": payload},
+            json_body={"payload": payload},
         )
     )
 
@@ -1229,7 +1213,6 @@ async def _execute_creator_add(ctx: CommandContext) -> Any:
 async def _execute_creator_remove(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     campaign_id = str(arguments.get("campaign_id") or "")
     creator_social_account_id = str(arguments.get("creator_social_account_id") or "")
@@ -1238,7 +1221,7 @@ async def _execute_creator_remove(ctx: CommandContext) -> Any:
             cfg,
             "POST",
             f"/agent-cli/campaign-monitors/{campaign_id}/creators/{creator_social_account_id}/remove",
-            json_body={"workspace_id": workspace_id, "payload": {}},
+            json_body={"payload": {}},
         )
     )
 
@@ -1246,7 +1229,6 @@ async def _execute_creator_remove(ctx: CommandContext) -> Any:
 async def _execute_content_add(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
-    workspace_id = ctx.workspace_id
     api_data = ctx.api_data
     campaign_id = str(arguments.get("campaign_id") or "")
     payload = compact_params(
@@ -1262,7 +1244,7 @@ async def _execute_content_add(ctx: CommandContext) -> Any:
             cfg,
             "POST",
             f"/agent-cli/campaign-monitors/{campaign_id}/content",
-            json_body={"workspace_id": workspace_id, "payload": payload},
+            json_body={"payload": payload},
         )
     )
 

@@ -277,24 +277,3 @@ def test_campaign_list_reads_the_organization_route(
     assert result["data"]["next_cursor"] == "next"
 
 
-def test_campaign_list_workspace_alias_keeps_the_workspace_route(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    workspace = "70000000-0000-4000-8000-000000000007"
-    path = f"/ugc/workspaces/{workspace}/campaigns"
-    workbench = _Workbench({("GET", path): {"items": [], "next_cursor": None}})
-
-    result = _run(
-        monkeypatch,
-        workbench,
-        ["ugc", "campaign", "+list", "--workspace-id", workspace, "--status", "active"],
-    )
-
-    assert workbench.calls == [
-        {
-            "method": "GET",
-            "path": path,
-            "params": {"campaign_type": "ugc", "status": "active", "limit": 50},
-        }
-    ]
-    assert result["workspace"] == {"id": workspace}

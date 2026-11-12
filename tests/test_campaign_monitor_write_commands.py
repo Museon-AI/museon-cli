@@ -46,7 +46,7 @@ def parse(argv: list[str]) -> Any:
     return build_parser().parse_args(argv)
 
 
-def _config_with_workspace() -> Config:
+def _config_with_organization() -> Config:
     cfg = Config()
     cfg.organization = OrganizationState(id="org-1", name="MuseOn")
     return cfg
@@ -97,7 +97,7 @@ def test_content_add_requires_url_or_content_id() -> None:
 
 
 def test_creator_add_posts_urls_ids_and_sync_flag(monkeypatch: pytest.MonkeyPatch) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data", capture)
@@ -127,7 +127,6 @@ def test_creator_add_posts_urls_ids_and_sync_flag(monkeypatch: pytest.MonkeyPatc
             "method": "POST",
             "path": f"/agent-cli/campaign-monitors/{CAMPAIGN_ID}/creators",
             "json_body": {
-                "workspace_id": None,
                 "payload": {
                     "creator_urls": ["https://www.tiktok.com/@a"],
                     "creator_ids": [CREATOR_ID],
@@ -141,7 +140,7 @@ def test_creator_add_posts_urls_ids_and_sync_flag(monkeypatch: pytest.MonkeyPatc
 
 
 def test_content_add_posts_content_id(monkeypatch: pytest.MonkeyPatch) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data", capture)
@@ -165,13 +164,12 @@ def test_content_add_posts_content_id(monkeypatch: pytest.MonkeyPatch) -> None:
     assert call["method"] == "POST"
     assert call["path"] == f"/agent-cli/campaign-monitors/{CAMPAIGN_ID}/content"
     assert call["json_body"] == {
-        "workspace_id": None,
         "payload": {"content_ids": [CONTENT_ID]},
     }
 
 
 def test_creator_remove_without_yes_requires_confirmation(monkeypatch: pytest.MonkeyPatch) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
 
     async def explode(*args: Any, **kwargs: Any) -> Any:
         del args, kwargs
@@ -198,7 +196,7 @@ def test_creator_remove_without_yes_requires_confirmation(monkeypatch: pytest.Mo
 
 
 def test_creator_remove_with_yes_posts_remove_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data", capture)
@@ -224,7 +222,7 @@ def test_creator_remove_with_yes_posts_remove_path(monkeypatch: pytest.MonkeyPat
         {
             "method": "POST",
             "path": (f"/agent-cli/campaign-monitors/{CAMPAIGN_ID}/creators/{CREATOR_ID}/remove"),
-            "json_body": {"workspace_id": None, "payload": {}},
+            "json_body": {"payload": {}},
             "params": None,
         }
     ]
@@ -274,7 +272,7 @@ def test_creator_remove_with_yes_posts_remove_path(monkeypatch: pytest.MonkeyPat
 def test_tracking_write_commands_dry_run_do_not_call_api(
     monkeypatch: pytest.MonkeyPatch, argv: list[str], command: str
 ) -> None:
-    cfg = _config_with_workspace()
+    cfg = _config_with_organization()
 
     async def explode(*args: Any, **kwargs: Any) -> Any:
         del args, kwargs

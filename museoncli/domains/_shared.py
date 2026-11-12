@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+from museoncli.domains._legacy_workspace import keeps_workspace
 from museoncli.domains._model import CommandSpec
 
 
@@ -221,7 +222,6 @@ _ROUTINE_FRONTEND_URL_TEMPLATES = [
 
 
 def _add_common_adapter_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--workspace-id")
     parser.add_argument("--args-json")
     parser.add_argument("--args-file")
 
@@ -306,8 +306,12 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
             "required_scopes": list(spec.required_scopes),
             "required_roles": list(spec.required_roles),
             "organization_bound": spec.organization_bound,
-            # Deprecated mirror of organization_bound for 0.22-era readers.
-            "workspace_bound": spec.organization_bound,
+            # agentic-campaign and hireaicreator keep their 0.25 contract, mirror included.
+            **(
+                {"workspace_bound": spec.organization_bound}
+                if keeps_workspace(spec.domain)
+                else {}
+            ),
             "resource_policy": spec.resource_policy,
             "enforcement": "museon_server" if spec.authentication_required else "local_process",
         },
@@ -373,11 +377,6 @@ def _direct_output_schema(description: str) -> dict[str, Any]:
         "properties": {
             "ok": {"type": "boolean"},
             "command": {"type": "string"},
-            "workspace": {
-                "type": ["object", "null"],
-                "deprecated": True,
-                "description": "Deprecated: the --workspace-id this command was given, if any.",
-            },
             "organization": {
                 "type": ["object", "null"],
                 "description": "The organization this command addressed (id, name).",

@@ -10,13 +10,11 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from museoncli.domains._legacy_workspace import WORKSPACE_FLAG_HELP
 from museoncli.domains._model import CommandSpec
 
 _COMMON_FLAG_HELP = {
-    "--workspace-id": (
-        "DEPRECATED: a workspace in the organization; the server resolves the workspace "
-        "from the organization."
-    ),
+    "--workspace-id": WORKSPACE_FLAG_HELP,
     "--organization-id": (
         "Organization to act in (sent as X-Organization-Id); defaults to the selected "
         "organization (`museoncli org select`)."

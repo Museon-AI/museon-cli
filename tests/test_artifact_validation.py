@@ -185,7 +185,7 @@ def test_artifacts_validate_command_reads_local_file(
     result = asyncio.run(main_module.dispatch(args))
 
     assert result["command"] == "artifacts.validate"
-    assert result["workspace"] is None
+    assert "workspace" not in result
     assert result["data"]["valid"] is True
 
 
