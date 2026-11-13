@@ -10,7 +10,8 @@ personas.
 
 For the Campaign's operations team (owner, admin, or an operator on it); a
 member reads nothing here. Sending, scheduling, withdrawing, discarding and
-retrying take --yes; without it they only preview. Files are added in the
+retrying take --yes; without it they fail with
+confirmation_required and return their dry run as preview. Files are added in the
 browser: the upload is bound to the web page, so the CLI keeps a draft's files
 as they are.
 """
@@ -664,7 +665,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+send",
             summary=(
                 "Send a draft or scheduled broadcast now; the recipients are fixed at this moment. "
-                "Without --yes it only shows the message and who it would reach." + _ROLE
+                "Without --yes it is refused with a preview of the message and who it would reach." + _ROLE
             ),
             adapter_tool_name="ugc_broadcast_send",
             input_schema=schema(_ID_INPUT, ["campaign_id", "id"]),
@@ -682,7 +683,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+schedule",
             summary=(
                 "Schedule a draft broadcast (or move its schedule); it is sent within a minute of "
-                "--at and its content locks until +unschedule. Without --yes it only previews."
+                "--at and its content locks until +unschedule. Without --yes it is refused with a preview."
                 + _ROLE
             ),
             adapter_tool_name="ugc_broadcast_schedule",
@@ -727,7 +728,7 @@ def specs() -> list[CommandSpec]:
             **spec,  # type: ignore[arg-type]
             shortcut="+retry",
             summary=(
-                "Send a dispatched broadcast's failed deliveries again. Without --yes it only shows "
+                "Send a dispatched broadcast's failed deliveries again. Without --yes it is refused with a preview of "
                 "how many can be retried." + _ROLE
             ),
             adapter_tool_name="ugc_broadcast_retry",
@@ -743,7 +744,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+withdraw",
             summary=(
                 "Take a sent broadcast back: its sent messages are deleted from Discord and queued "
-                "ones never go. Cannot be undone. Without --yes it only shows the broadcast."
+                "ones never go. Cannot be undone. Without --yes it is refused with a preview of the broadcast."
                 + _ROLE
             ),
             adapter_tool_name="ugc_broadcast_withdraw",
@@ -761,7 +762,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+discard",
             summary=(
                 "Discard a draft broadcast; it stays in the list as discarded and can no longer be "
-                "sent. Without --yes it only shows the draft." + _ROLE
+                "sent. Without --yes it is refused with a preview of the draft." + _ROLE
             ),
             adapter_tool_name="ugc_broadcast_discard",
             input_schema=schema(_ID_INPUT, ["campaign_id", "id"]),

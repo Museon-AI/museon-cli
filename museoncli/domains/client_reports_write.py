@@ -12,7 +12,8 @@ Writes carry the server's guards: the report's ``revision`` and the settings'
 ``version`` (CAS), and an idempotency key derived from the report, its revision
 and the action, so running the same command again after a lost answer never
 sends twice. Sending to the client's group, asking for review in the internal
-group and a test send all take --yes; without it they only preview.
+group and a test send all take --yes; without it they fail with
+confirmation_required and return their dry run as preview.
 
 Not here: one-off reports for any period (staff, signed-in browser only), the
 internal group's creation and the Feishu task-card switches.
@@ -868,7 +869,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+request-review",
             summary=(
                 "Ask the Campaign's reviewer to review a client report: posts it to the internal "
-                "Feishu group. Without --yes it only shows the report and the group." + _ROLE
+                "Feishu group. Without --yes it is refused with a preview of the report and the group." + _ROLE
             ),
             adapter_tool_name="ugc_client_report_request_review",
             input_schema=schema({**_REPORT_INPUT, "dry_run": DRY_RUN}, ["campaign_id", "id"]),
@@ -927,7 +928,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+send",
             summary=(
                 "Send an approved client report to the client's group, or with --test to your own "
-                "chat with Mel only. Without --yes it only shows the report, where it would go and "
+                "chat with Mel only. Without --yes it is refused with a preview of the report, where it would go and "
                 "anything blocking it. Sending the same revision again does not send twice." + _ROLE
             ),
             adapter_tool_name="ugc_client_report_send",

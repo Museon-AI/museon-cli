@@ -2724,7 +2724,7 @@
           "risk_level": "destructive",
           "shortcut": "+delete",
           "stability": "stable",
-          "summary": "Delete a board (its share link ends with it); the Campaigns and their data stay. Without --yes it only shows the board it would delete. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+          "summary": "Delete a board (its share link ends with it); the Campaigns and their data stay. Without --yes it is refused with a preview of the board it would delete. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -16424,7 +16424,7 @@
           "risk_level": "write",
           "shortcut": "+send",
           "stability": "stable",
-          "summary": "Send a draft or scheduled broadcast now; the recipients are fixed at this moment. Without --yes it only shows the message and who it would reach. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "summary": "Send a draft or scheduled broadcast now; the recipients are fixed at this moment. Without --yes it is refused with a preview of the message and who it would reach. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -16452,7 +16452,7 @@
           "risk_level": "write",
           "shortcut": "+schedule",
           "stability": "stable",
-          "summary": "Schedule a draft broadcast (or move its schedule); it is sent within a minute of --at and its content locks until +unschedule. Without --yes it only previews. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "summary": "Schedule a draft broadcast (or move its schedule); it is sent within a minute of --at and its content locks until +unschedule. Without --yes it is refused with a preview. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -16508,7 +16508,7 @@
           "risk_level": "write",
           "shortcut": "+retry",
           "stability": "stable",
-          "summary": "Send a dispatched broadcast's failed deliveries again. Without --yes it only shows how many can be retried. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "summary": "Send a dispatched broadcast's failed deliveries again. Without --yes it is refused with a preview of how many can be retried. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -16536,7 +16536,7 @@
           "risk_level": "destructive",
           "shortcut": "+withdraw",
           "stability": "stable",
-          "summary": "Take a sent broadcast back: its sent messages are deleted from Discord and queued ones never go. Cannot be undone. Without --yes it only shows the broadcast. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "summary": "Take a sent broadcast back: its sent messages are deleted from Discord and queued ones never go. Cannot be undone. Without --yes it is refused with a preview of the broadcast. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -16564,7 +16564,7 @@
           "risk_level": "destructive",
           "shortcut": "+discard",
           "stability": "stable",
-          "summary": "Discard a draft broadcast; it stays in the list as discarded and can no longer be sent. Without --yes it only shows the draft. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "summary": "Discard a draft broadcast; it stays in the list as discarded and can no longer be sent. Without --yes it is refused with a preview of the draft. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -16647,7 +16647,7 @@
           "risk_level": "write",
           "shortcut": "+test",
           "stability": "stable",
-          "summary": "Send yourself, in your own Feishu chat with Mel, what the group's reminders would say now (at most one a minute); nobody else gets it. Without --yes it only previews. MuseOn staff only, as in the web.",
+          "summary": "Send yourself, in your own Feishu chat with Mel, what the group's reminders would say now (at most one a minute); nobody else gets it. Without --yes it is refused with a preview. MuseOn staff only, as in the web.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -16731,7 +16731,7 @@
           "risk_level": "write",
           "shortcut": "+cancel",
           "stability": "stable",
-          "summary": "End a reminder delegation now; the member gets their own reminders again. Without --yes it only shows the delegation. MuseOn staff only, as in the web.",
+          "summary": "End a reminder delegation now; the member gets their own reminders again. Without --yes it is refused with a preview of the delegation. MuseOn staff only, as in the web.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -16786,7 +16786,7 @@
           "risk_level": "write",
           "shortcut": "+update",
           "stability": "stable",
-          "summary": "Change when creators get an automatic Discord nudge: the checks that trigger it (not set up, quiet, ...), the days, the creator's local send time, the fallback timezone; --off stops it. Values not passed keep theirs; fails if someone saved since your read. Without --yes it only previews. For the Campaign's operations team (owner, admin, or an operator on it).",
+          "summary": "Change when creators get an automatic Discord nudge: the checks that trigger it (not set up, quiet, ...), the days, the creator's local send time, the fallback timezone; --off stops it. Values not passed keep theirs; fails if someone saved since your read. Without --yes it is refused with a preview. For the Campaign's operations team (owner, admin, or an operator on it).",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -16926,7 +16926,7 @@
           "risk_level": "write",
           "shortcut": "+request-review",
           "stability": "stable",
-          "summary": "Ask the Campaign's reviewer to review a client report: posts it to the internal Feishu group. Without --yes it only shows the report and the group. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "summary": "Ask the Campaign's reviewer to review a client report: posts it to the internal Feishu group. Without --yes it is refused with a preview of the report and the group. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -17010,7 +17010,7 @@
           "risk_level": "write",
           "shortcut": "+send",
           "stability": "stable",
-          "summary": "Send an approved client report to the client's group, or with --test to your own chat with Mel only. Without --yes it only shows the report, where it would go and anything blocking it. Sending the same revision again does not send twice. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "summary": "Send an approved client report to the client's group, or with --test to your own chat with Mel only. Without --yes it is refused with a preview of the report, where it would go and anything blocking it. Sending the same revision again does not send twice. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -28743,7 +28743,7 @@
       "risk_level": "destructive",
       "shortcut": "+delete",
       "stability": "stable",
-      "summary": "Delete a board (its share link ends with it); the Campaigns and their data stay. Without --yes it only shows the board it would delete. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+      "summary": "Delete a board (its share link ends with it); the Campaigns and their data stay. Without --yes it is refused with a preview of the board it would delete. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -71030,7 +71030,7 @@
       "risk_level": "write",
       "shortcut": "+update",
       "stability": "stable",
-      "summary": "Change when creators get an automatic Discord nudge: the checks that trigger it (not set up, quiet, ...), the days, the creator's local send time, the fallback timezone; --off stops it. Values not passed keep theirs; fails if someone saved since your read. Without --yes it only previews. For the Campaign's operations team (owner, admin, or an operator on it).",
+      "summary": "Change when creators get an automatic Discord nudge: the checks that trigger it (not set up, quiet, ...), the days, the creator's local send time, the fallback timezone; --off stops it. Values not passed keep theirs; fails if someone saved since your read. Without --yes it is refused with a preview. For the Campaign's operations team (owner, admin, or an operator on it).",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -73187,7 +73187,7 @@
       "risk_level": "destructive",
       "shortcut": "+discard",
       "stability": "stable",
-      "summary": "Discard a draft broadcast; it stays in the list as discarded and can no longer be sent. Without --yes it only shows the draft. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "summary": "Discard a draft broadcast; it stays in the list as discarded and can no longer be sent. Without --yes it is refused with a preview of the draft. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -73532,7 +73532,7 @@
       "risk_level": "write",
       "shortcut": "+retry",
       "stability": "stable",
-      "summary": "Send a dispatched broadcast's failed deliveries again. Without --yes it only shows how many can be retried. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "summary": "Send a dispatched broadcast's failed deliveries again. Without --yes it is refused with a preview of how many can be retried. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -73648,7 +73648,7 @@
       "risk_level": "write",
       "shortcut": "+schedule",
       "stability": "stable",
-      "summary": "Schedule a draft broadcast (or move its schedule); it is sent within a minute of --at and its content locks until +unschedule. Without --yes it only previews. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "summary": "Schedule a draft broadcast (or move its schedule); it is sent within a minute of --at and its content locks until +unschedule. Without --yes it is refused with a preview. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -73759,7 +73759,7 @@
       "risk_level": "write",
       "shortcut": "+send",
       "stability": "stable",
-      "summary": "Send a draft or scheduled broadcast now; the recipients are fixed at this moment. Without --yes it only shows the message and who it would reach. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "summary": "Send a draft or scheduled broadcast now; the recipients are fixed at this moment. Without --yes it is refused with a preview of the message and who it would reach. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -74142,7 +74142,7 @@
       "risk_level": "destructive",
       "shortcut": "+withdraw",
       "stability": "stable",
-      "summary": "Take a sent broadcast back: its sent messages are deleted from Discord and queued ones never go. Cannot be undone. Without --yes it only shows the broadcast. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "summary": "Take a sent broadcast back: its sent messages are deleted from Discord and queued ones never go. Cannot be undone. Without --yes it is refused with a preview of the broadcast. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -76225,7 +76225,7 @@
       "risk_level": "write",
       "shortcut": "+request-review",
       "stability": "stable",
-      "summary": "Ask the Campaign's reviewer to review a client report: posts it to the internal Feishu group. Without --yes it only shows the report and the group. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "summary": "Ask the Campaign's reviewer to review a client report: posts it to the internal Feishu group. Without --yes it is refused with a preview of the report and the group. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -76351,7 +76351,7 @@
       "risk_level": "write",
       "shortcut": "+send",
       "stability": "stable",
-      "summary": "Send an approved client report to the client's group, or with --test to your own chat with Mel only. Without --yes it only shows the report, where it would go and anything blocking it. Sending the same revision again does not send twice. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "summary": "Send an approved client report to the client's group, or with --test to your own chat with Mel only. Without --yes it is refused with a preview of the report, where it would go and anything blocking it. Sending the same revision again does not send twice. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -83191,7 +83191,7 @@
       "risk_level": "write",
       "shortcut": "+cancel",
       "stability": "stable",
-      "summary": "End a reminder delegation now; the member gets their own reminders again. Without --yes it only shows the delegation. MuseOn staff only, as in the web.",
+      "summary": "End a reminder delegation now; the member gets their own reminders again. Without --yes it is refused with a preview of the delegation. MuseOn staff only, as in the web.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -83627,7 +83627,7 @@
       "risk_level": "write",
       "shortcut": "+test",
       "stability": "stable",
-      "summary": "Send yourself, in your own Feishu chat with Mel, what the group's reminders would say now (at most one a minute); nobody else gets it. Without --yes it only previews. MuseOn staff only, as in the web.",
+      "summary": "Send yourself, in your own Feishu chat with Mel, what the group's reminders would say now (at most one a minute); nobody else gets it. Without --yes it is refused with a preview. MuseOn staff only, as in the web.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

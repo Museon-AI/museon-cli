@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from routes_stub import ORG, Server, assert_organization_only, body, query, run
+from routes_stub import ORG, Server, assert_organization_only, body, query, run, refused
 
 CAMPAIGN = "11111111-1111-4111-8111-111111111111"
 REPORT = "77777777-7777-4777-8777-777777777777"
@@ -80,10 +80,10 @@ def _assert_operator_organization(server: Server) -> None:
         assert "agency_workspace_id" not in query(request)
 
 
-def test_send_without_yes_previews_where_it_would_go(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_send_without_yes_is_refused_with_a_preview_of_where_it_would_go(monkeypatch: pytest.MonkeyPatch) -> None:
     server = Server({("GET", BASE): _workspace(customerGroup=CUSTOMER)})
 
-    result = run(monkeypatch, server, ["ugc", "client-report", "+send", "--campaign-id", CAMPAIGN, "--id", REPORT])
+    result = refused(monkeypatch, server, ["ugc", "client-report", "+send", "--campaign-id", CAMPAIGN, "--id", REPORT])
 
     assert server.writes() == []
     assert query(server.requests[0])["report_id"] == REPORT
@@ -131,7 +131,7 @@ def test_blocked_send_is_reported_in_the_preview(monkeypatch: pytest.MonkeyPatch
     blocked = _report(actionCapabilities={"send": {"enabled": False, "blockers": [{"code": "not_approved"}]}})
     server = Server({("GET", BASE): _workspace(blocked)})
 
-    result = run(monkeypatch, server, ["ugc", "client-report", "+send", "--campaign-id", CAMPAIGN, "--id", REPORT])
+    result = refused(monkeypatch, server, ["ugc", "client-report", "+send", "--campaign-id", CAMPAIGN, "--id", REPORT])
 
     assert any("not_approved" in warning for warning in result["warnings"])
 
