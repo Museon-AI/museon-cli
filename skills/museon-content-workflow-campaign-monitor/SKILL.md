@@ -1,6 +1,6 @@
 ---
 name: museon-content-workflow-campaign-monitor
-description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; edit UGC briefs, brief assignments and creative brief links."
+description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; create, launch and set up UGC Campaigns; manage Formats (briefs), personas, brief assignments and creative brief links."
 metadata:
   requires:
     bins: ["museoncli"]
@@ -82,6 +82,8 @@ The `ugc` domain writes the UGC workbench: briefs, brief assignments, and which 
 | Who can be assigned | `museoncli ugc enrollment +list --campaign-id <id> --status participating` |
 
 The workbench never asks for confirmation, so the Agent does. Every write runs with `--dry-run` first. Its result reads the live state and changes nothing. Show the user what it returned (`changes`, `before`/`after`, who gets an assignment), ask them, and run it without `--dry-run` only after they say yes. Before `ugc brief +update`, also ask whether to `--notify` the `live_assignments` creators working on the brief. `+progress` returns raw counts: report them, and do not decide who owes a video.
+
+To create a Campaign, move it through its lifecycle (launch, pause, complete, archive), change its setup (settings, team, targets, contract, payscales, Discord, Comment-to-DM), or manage the Format (脚本) library and UGC personas, read [ugc-campaign-setup.md](references/ugc-campaign-setup.md). Commands marked *yes* there also need `--yes` after the user confirms.
 
 ## DON'T
 
