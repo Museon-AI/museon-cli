@@ -1,6 +1,6 @@
 ---
 name: museon-content-workflow-campaign-monitor
-description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; create, launch and set up UGC Campaigns; manage Formats (briefs), personas, brief assignments and creative brief links; build analytics boards; generate and send client reports; broadcast to creators; set reminders and automatic nudges."
+description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; create, launch and set up UGC Campaigns; manage Formats (briefs), personas, brief assignments and creative brief links; build analytics boards; generate and send client reports; broadcast to creators; set reminders and automatic nudges; run a UGC campaign day to day: tasks, approving and removing creators, messages and nudges, content review and counting, recruitment links and invitations."
 metadata:
   requires:
     bins: ["museoncli"]
@@ -96,6 +96,10 @@ To create a Campaign, move it through its lifecycle (launch, pause, complete, ar
 | Team reminders, automatic creator nudges | `museoncli ugc reminder +update`, `museoncli ugc auto-nudge +update` |
 
 Run every write with `--dry-run` first and show the user the result. Anything that sends (a report, a broadcast, a nudge setting) or cannot be undone also takes `--yes`: without it the command returns the same preview. Ask before adding `--yes`. Read [boards-reports-broadcasts.md](references/boards-reports-broadcasts.md).
+
+## Running a UGC campaign day to day (`ugc`)
+
+Tasks (claim, comment, due date, the task's own buttons), the roster (approve, reject, admit, pause, resume, remove, persona, payscale, trial), creator messages and nudges, content review and counting, recruitment links and invitations: read [ugc-operations.md](references/ugc-operations.md). Anything that reaches the creator or cannot be undone needs `--yes`; without it the command answers `confirmation_required` with a `preview`. Show the user that preview, ask, then rerun with `--yes`.
 
 ## DON'T
 
