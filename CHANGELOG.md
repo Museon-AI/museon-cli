@@ -2,7 +2,9 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
-## Unreleased
+## 1.1.0
+
+The CLI covers what the web reads and does day to day (settlement and money writes excepted): task, enrollment, review, messaging, recruiting, Campaign setup, analytics boards, client reports, broadcasts and reminders, plus organization-addressed account, slideshow review and collection routes. Every command that needs `--yes` follows one confirmation rule.
 
 ### Read what the web shows (coverage batch 1)
 

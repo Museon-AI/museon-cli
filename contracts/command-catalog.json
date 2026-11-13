@@ -17714,7 +17714,7 @@
       "organization"
     ]
   },
-  "contract_revision": "1.0.1",
+  "contract_revision": "1.1.0",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
