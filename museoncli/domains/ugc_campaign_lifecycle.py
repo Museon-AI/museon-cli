@@ -51,26 +51,15 @@ _TRANSITION_NOTES = {
 }
 
 
-# -- organization facts the web's create flow uses --------------------------
+# -- organization fact the web's create flow uses ---------------------------
 
 
-async def _organization_row(ctx: CommandContext) -> dict[str, Any]:
-    """The selected organization as `/agent-cli/whoami` lists it for this login."""
+def _organization(ctx: CommandContext) -> str:
     if not ctx.organization_id:
         raise RuntimeError(
             "missing_organization: select one with `museoncli org select` or pass --organization-id"
         )
-    data = await ctx.api_data(ctx.cfg, "GET", "/agent-cli/whoami")
-    rows = data.get("organizations") if isinstance(data, dict) else None
-    row = next(
-        (item for item in w._dicts(rows) if item.get("id") == ctx.organization_id), None
-    )
-    if row is None:
-        raise RuntimeError(
-            "not_found: organization_not_available: this login does not reach the selected "
-            "organization; run `museoncli org list`."
-        )
-    return row
+    return ctx.organization_id
 
 
 async def _organization_kind(ctx: CommandContext) -> str | None:
@@ -87,14 +76,7 @@ async def _organization_kind(ctx: CommandContext) -> str | None:
 async def _execute_create(ctx: CommandContext) -> Any:
     args = ctx.arguments
     campaign_type = args["campaign_type"]
-    row = await _organization_row(ctx)
-    # The organization's own Campaign home, the one the web's create page writes to.
-    home = row.get("default_workspace_id")
-    if not home:
-        raise RuntimeError(
-            "not_found: organization_has_no_campaign_home: the organization has nowhere to "
-            "create a Campaign yet; create the first one in the web app."
-        )
+    organization_id = _organization(ctx)
     if campaign_type == "ugc" and await _organization_kind(ctx) == "brand":
         raise ValueError(
             "A brand organization creates content tracking Campaigns only (--type tracking); "
@@ -109,12 +91,13 @@ async def _execute_create(ctx: CommandContext) -> Any:
     }
     data: dict[str, Any] = {
         "dry_run": args["dry_run"],
-        "organization": {"id": row.get("id"), "name": row.get("name")},
+        "organization": {"id": organization_id},
         "campaign": {**body, "status": "draft"},
     }
     if args["dry_run"]:
         return data, [], w.ask("the Campaign that would be created")
-    created = await w.call(ctx, "POST", f"/workspaces/{home}/campaigns", body=body)
+    # The server picks where the Campaign lives: the product's home, else the organization's.
+    created = await w.call(ctx, "POST", f"/organizations/{organization_id}/campaigns", body=body)
     data["campaign"] = w.campaign_line(created)
     steps = [
         "The Campaign is a draft. Set it up (ugc campaign-settings +update, ugc payscale, "

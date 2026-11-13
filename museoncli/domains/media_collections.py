@@ -5,8 +5,8 @@ organization's (``/collections/organizations/{organization_id}``). Reading takes
 organization role; changing a collection or its media takes owner, admin or operator
 (asset edit), which the server decides.
 
-New collections are made in the web app: the create route still needs a workspace, which
-the CLI never sends.
+``+create`` makes a collection in the selected organization: the server stores it in the
+caller's own workspace of that organization, so no workspace is named.
 """
 
 from __future__ import annotations
@@ -51,6 +51,10 @@ _EDIT_ROLE = " Needs owner, admin or operator."
 _LIST = dict(PAGE_PROPERTIES)
 _GET = {"id": _COLLECTION_ID}
 _LIST_MEDIA = {"id": _COLLECTION_ID, **PAGE_PROPERTIES}
+_CREATE = {
+    "name": string_property("Collection name.", max_length=200),
+    "dry_run": DRY_RUN_PROPERTY,
+}
 _UPDATE = {
     "id": _COLLECTION_ID,
     "name": string_property("New collection name.", max_length=200),
@@ -84,6 +88,20 @@ async def _execute_get(ctx: CommandContext) -> Any:
 async def _execute_list_media(ctx: CommandContext) -> Any:
     return await ctx.api_data(
         ctx.cfg, "GET", _path(ctx.arguments["id"], "/media"), params=page_query(ctx.arguments)
+    )
+
+
+async def _execute_create(ctx: CommandContext) -> Any:
+    data = await ctx.api_data(
+        ctx.cfg, "POST", "/collections", json_body={"name": ctx.arguments["name"]}
+    )
+    return (
+        data,
+        [
+            "Creating has no idempotency key: after an unknown outcome, run media collection "
+            "+list before trying again, or a second collection of the same name appears."
+        ],
+        ["museoncli media collection +add --id <collection id> --media-id <media id>"],
     )
 
 
@@ -191,6 +209,24 @@ def _build_list_media_arguments(args: argparse.Namespace) -> dict[str, Any]:
     reject_unknown(payload, _LIST_MEDIA)
     require(payload, "id")
     page_query(payload)
+    return payload
+
+
+def _add_create_arguments(parser: argparse.ArgumentParser) -> None:
+    add_structured_arguments(parser)
+    parser.add_argument("--name")
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _build_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = merged_input(args, ("name",))
+    reject_unknown(payload, _CREATE)
+    require(payload, "name")
+    name = str(payload["name"]).strip()
+    if not 1 <= len(name) <= 200:
+        raise ValueError("--name must be 1-200 characters.")
+    payload["name"] = name
+    payload["dry_run"] = bool(getattr(args, "dry_run", False) or payload.get("dry_run"))
     return payload
 
 
@@ -308,6 +344,23 @@ def specs() -> list[CommandSpec]:
         ),
         CommandSpec(
             **base,
+            shortcut="+create",
+            summary=(
+                "Create an empty media collection in the selected organization; fill it with "
+                "+add. No idempotency key: after an unknown outcome, +list before retrying."
+                + _EDIT_ROLE
+            ),
+            risk_level="write",
+            adapter_tool_name="media_collection_create",
+            input_schema=schema(_CREATE, ["name"]),
+            output_schema=output_schema("data: the new collection (id, name, media_count)."),
+            examples=["museoncli media collection +create --name 'Spring launch'"],
+            add_arguments=_add_create_arguments,
+            build_arguments=_build_create_arguments,
+            supports_dry_run=True,
+        ),
+        CommandSpec(
+            **base,
             shortcut="+update",
             summary="Rename a media collection." + _EDIT_ROLE,
             risk_level="write",
@@ -394,6 +447,7 @@ EXECUTORS = {
     "media.collection-list": direct_enveloped(_execute_list),
     "media.collection-get": direct_enveloped(_execute_get),
     "media.collection-list-media": direct_enveloped(_execute_list_media),
+    "media.collection-create": with_notes(_execute_create),
     "media.collection-update": direct_enveloped(_execute_update),
     "media.collection-add": with_notes(_execute_add),
     "media.collection-delete": with_notes(_execute_delete),

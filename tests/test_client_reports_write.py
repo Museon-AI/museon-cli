@@ -76,8 +76,8 @@ def _workspace(report: dict | None = None, **communication) -> dict:
 def _assert_operator_organization(server: Server) -> None:
     assert_organization_only(server)
     for request in server.requests:
-        # The route's name for the operator organization; its value is the organization.
-        assert query(request)["agency_workspace_id"] == ORG
+        assert query(request)["organization_id"] == ORG
+        assert "agency_workspace_id" not in query(request)
 
 
 def test_send_without_yes_is_refused_with_a_preview_of_where_it_would_go(monkeypatch: pytest.MonkeyPatch) -> None:

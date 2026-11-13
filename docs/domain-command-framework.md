@@ -56,7 +56,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-485 commands across 17 domains (source of truth: `museoncli schema`).
+496 commands across 17 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -108,6 +108,7 @@ The tables below are generated — edit code, then run
 | `media collection +list` | read | — | — | direct | List the organization's media collections with media_count and preview media. Any organization role can read. Page with --page/--page-size or --all. |
 | `media collection +get` | read | — | — | direct | Read one media collection with its media_count. Any organization role. |
 | `media collection +list-media` | read | — | — | direct | List the media in one collection, in order, with media_url, media_type and thumbnail_url. Any organization role. Page with --page/--page-size or --all. |
+| `media collection +create` | write | yes | — | direct | Create an empty media collection in the selected organization; fill it with +add. No idempotency key: after an unknown outcome, +list before retrying. Needs owner, admin or operator. |
 | `media collection +update` | write | yes | — | direct | Rename a media collection. Needs owner, admin or operator. |
 | `media collection +delete` | destructive | yes | `--yes` | direct | Delete a media collection; its media stay in the library. --dry-run reads the collection and deletes nothing; show it to the user, then run with --yes. Needs owner, admin or operator. |
 | `media collection +add` | write | yes | — | direct | Add up to 100 media to a collection; media already in it are skipped (data.added, data.skipped), so a rerun is safe. Media must come from the same organization library as the collection. Needs owner, admin or operator. |
@@ -134,6 +135,9 @@ The tables below are generated — edit code, then run
 | `social-account tag +set` | write | yes | — | direct | Replace a social account's tags with exactly the given set (--clear removes all). Tags are the organization's own labels for filtering (social-account +list --tag). --dry-run shows before and after. Needs owner, admin or operator. |
 | `social-account tag +add` | write | yes | — | direct | Add tags to a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator. |
 | `social-account tag +remove` | write | yes | — | direct | Remove tags from a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator. |
+| `social-account +sync` | write | yes | — | direct | Sync one Late profile's accounts from the platform: refresh each account's name, avatar and status and relink it to its creator account. Repeating it is safe. Needs owner, admin or operator. |
+| `social-account +sync-all` | write | yes | — | direct | Sync every bound profile in the caller's own landing workspace of the selected organization (not every workspace in it). Repeating it is safe. Needs owner, admin or operator. |
+| `social-account +unbind` | destructive | yes | `--yes` | direct | Unbind (disconnect) one social account: its platform authorization is revoked and the binding removed; it cannot be undone from the CLI. --account-id is the bound-account row's id, not a pool account ID. --dry-run shows what would go and writes nothing; show it to the user, then run with --yes. Needs owner, admin or operator. |
 
 ### hireaicreator
 
@@ -360,6 +364,13 @@ The tables below are generated — edit code, then run
 | `ai-slideshow cta-target +create` | write | yes | — | direct | Create a CTA target for a product: title, Markdown body, optional ordered images. No idempotency key: after an unknown outcome, list before retrying. Staff only (the server refuses other callers). |
 | `ai-slideshow cta-target +update` | write | yes | — | direct | Change a CTA target's title, body, position, images (--media-id replaces them) or status. Only the given fields change. Staff only (the server refuses other callers). |
 | `ai-slideshow cta-target +retire` | write | yes | `--yes` | direct | Retire a CTA target so new posts stop using it (requires --yes; confirm with the user first). Needs owner, admin or operator. |
+| `ai-slideshow review +approve` | write | yes | — | direct | Mark an AI image post reviewed (approved): it can go on to publish. Needs owner, admin or operator. |
+| `ai-slideshow review +unreview` | write | yes | — | direct | Take back an approval: the post returns to the review queue. Answers data.undone. Needs owner, admin or operator. |
+| `ai-slideshow review +reject` | write | yes | — | direct | Reject an AI image post's publication. Needs owner, admin or operator. |
+| `ai-slideshow review +retry` | write | yes | — | direct | Run an adjustment again: retry the replacement generation after the one the last +adjust asked for failed. --generation-id is that replacement generation. Needs owner, admin or operator. |
+| `ai-slideshow review +adjust` | write | yes | — | direct | Ask for changes to an AI image post: --instruction in words and/or --annotations-json marks on slides (up to 20). The post is regenerated as a new generation to review next. Needs owner, admin or operator. |
+| `ai-slideshow publish +schedule-approve` | write | yes | — | direct | Approve one scheduled item of a pool account's publish plan (an item whose account requires approval before publish), so it can go out at its time. Staff only (the server refuses other callers). |
+| `ai-slideshow publish +retry-failed` | destructive | yes | `--yes` | direct | Retry the failed jobs of one batch publish. Only for failures known to have produced no post: a job that did post would be posted twice. --dry-run shows the retry and writes nothing; show it to the user, then run with --yes, which is the server's duplicate-post confirmation. Needs owner, admin or operator. |
 
 ### campaign-monitor
 

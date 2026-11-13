@@ -31,12 +31,13 @@ Ground truth顺序：保存提交`data.task_id/media_id` → `+get-generation`�
 
 ## 媒体合集（collections）
 
-合集是媒体库里的命名分组，媒体本身不随合集删除。读：任何组织角色；改：owner、admin、operator。新建合集只能在网页里做（该接口仍要 workspace，CLI 不发送）。
+合集是媒体库里的命名分组，媒体本身不随合集删除。读：任何组织角色；改：owner、admin、operator。新建合集建在所选组织里（服务端落在你在该组织的工作区，CLI 不指定）；新建没有幂等键，结果不明时先 `+list` 再重试。
 
 | 目的 | 命令 |
 | --- | --- |
 | 列出合集 | `museoncli media collection +list --search launch`（`--all` 取全部页） |
 | 看合集与其中媒体 | `museoncli media collection +get --id <collection_id>`；`+list-media --id <collection_id>` |
+| 新建空合集 | `museoncli media collection +create --name 'Spring launch'`，再用`+add`放媒体 |
 | 重命名 | `museoncli media collection +update --id <collection_id> --name 'Spring launch'` |
 | 加媒体（最多100，已在其中的跳过，可安全重跑） | `museoncli media collection +add --id <collection_id> --media-id <media_id>` |
 | 移出媒体 | `museoncli media collection +remove --id <collection_id> --media-id <media_id> --yes`，看`data.failed` |

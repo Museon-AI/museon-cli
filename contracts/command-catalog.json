@@ -2423,6 +2423,196 @@
           "summary": "Retire a CTA target so new posts stop using it (requires --yes; confirm with the user first). Needs owner, admin or operator.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.review-approve",
+          "cli": "museoncli ai-slideshow review +approve",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.review-approve",
+          "requires_confirmation": false,
+          "resource": "review",
+          "risk_level": "write",
+          "shortcut": "+approve",
+          "stability": "stable",
+          "summary": "Mark an AI image post reviewed (approved): it can go on to publish. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.review-unreview",
+          "cli": "museoncli ai-slideshow review +unreview",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.review-unreview",
+          "requires_confirmation": false,
+          "resource": "review",
+          "risk_level": "write",
+          "shortcut": "+unreview",
+          "stability": "stable",
+          "summary": "Take back an approval: the post returns to the review queue. Answers data.undone. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.review-reject",
+          "cli": "museoncli ai-slideshow review +reject",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.review-reject",
+          "requires_confirmation": false,
+          "resource": "review",
+          "risk_level": "write",
+          "shortcut": "+reject",
+          "stability": "stable",
+          "summary": "Reject an AI image post's publication. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.review-retry",
+          "cli": "museoncli ai-slideshow review +retry",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.review-retry",
+          "requires_confirmation": false,
+          "resource": "review",
+          "risk_level": "write",
+          "shortcut": "+retry",
+          "stability": "stable",
+          "summary": "Run an adjustment again: retry the replacement generation after the one the last +adjust asked for failed. --generation-id is that replacement generation. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.review-adjust",
+          "cli": "museoncli ai-slideshow review +adjust",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.review-adjust",
+          "requires_confirmation": false,
+          "resource": "review",
+          "risk_level": "write",
+          "shortcut": "+adjust",
+          "stability": "stable",
+          "summary": "Ask for changes to an AI image post: --instruction in words and/or --annotations-json marks on slides (up to 20). The post is regenerated as a new generation to review next. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.publish-schedule-approve",
+          "cli": "museoncli ai-slideshow publish +schedule-approve",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.publish-schedule-approve",
+          "requires_confirmation": false,
+          "resource": "publish",
+          "risk_level": "write",
+          "shortcut": "+schedule-approve",
+          "stability": "stable",
+          "summary": "Approve one scheduled item of a pool account's publish plan (an item whose account requires approval before publish), so it can go out at its time. Staff only (the server refuses other callers).",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.publish-retry-failed",
+          "cli": "museoncli ai-slideshow publish +retry-failed",
+          "domain": "ai-slideshow",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ai-slideshow.publish-retry-failed",
+          "requires_confirmation": true,
+          "resource": "publish",
+          "risk_level": "destructive",
+          "shortcut": "+retry-failed",
+          "stability": "stable",
+          "summary": "Retry the failed jobs of one batch publish. Only for failures known to have produced no post: a job that did post would be posted twice. --dry-run shows the retry and writes nothing; show it to the user, then run with --yes, which is the server's duplicate-post confirmation. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
         }
       ],
       "analytics": [
@@ -10964,6 +11154,33 @@
             ],
             "resource_policy": "server_evaluated_organization_and_resource_access"
           },
+          "capability_key": "media.collection-create",
+          "cli": "museoncli media collection +create",
+          "domain": "media",
+          "execution": "direct",
+          "name": "media.collection-create",
+          "requires_confirmation": false,
+          "resource": "collection",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Create an empty media collection in the selected organization; fill it with +add. No idempotency key: after an unknown outcome, +list before retrying. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
           "capability_key": "media.collection-update",
           "cli": "museoncli media collection +update",
           "domain": "media",
@@ -13389,6 +13606,181 @@
           "shortcut": "+remove",
           "stability": "stable",
           "summary": "Remove tags from a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.sync",
+          "cli": "museoncli social-account +sync",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.sync",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+sync",
+          "stability": "stable",
+          "summary": "Sync one Late profile's accounts from the platform: refresh each account's name, avatar and status and relink it to its creator account. Repeating it is safe. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.sync-all",
+          "cli": "museoncli social-account +sync-all",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.sync-all",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+sync-all",
+          "stability": "stable",
+          "summary": "Sync every bound profile in the caller's own landing workspace of the selected organization (not every workspace in it). Repeating it is safe. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.unbind",
+          "cli": "museoncli social-account +unbind",
+          "domain": "social-account",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.unbind",
+          "requires_confirmation": true,
+          "resource": null,
+          "risk_level": "destructive",
+          "shortcut": "+unbind",
+          "stability": "stable",
+          "summary": "Unbind (disconnect) one social account: its platform authorization is revoked and the binding removed; it cannot be undone from the CLI. --account-id is the bound-account row's id, not a pool account ID. --dry-run shows what would go and writes nothing; show it to the user, then run with --yes. Needs owner, admin or operator.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -27175,6 +27567,220 @@
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
+    "ai-slideshow.publish-retry-failed": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.publish-retry-failed",
+      "cli": "museoncli ai-slideshow publish +retry-failed",
+      "domain": "ai-slideshow",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ai-slideshow publish +retry-failed --task-id 72defd40-39ad-40d3-8105-8f23a9a016da --dry-run",
+        "museoncli ai-slideshow publish +retry-failed --task-id 72defd40-39ad-40d3-8105-8f23a9a016da --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "task_id": {
+            "description": "Parent task ID of the batch publish (the task_id publish post +schedule returned). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.publish-retry-failed",
+      "output_schema": {
+        "description": "data.would_retry_failed_jobs_of (dry run) or the redrive result.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "publish",
+      "risk_level": "destructive",
+      "shortcut": "+retry-failed",
+      "stability": "stable",
+      "summary": "Retry the failed jobs of one batch publish. Only for failures known to have produced no post: a job that did post would be posted twice. --dry-run shows the retry and writes nothing; show it to the user, then run with --yes, which is the server's duplicate-post confirmation. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.publish-schedule-approve": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.publish-schedule-approve",
+      "cli": "museoncli ai-slideshow publish +schedule-approve",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow publish +schedule-approve --account-id 72defd40-39ad-40d3-8105-8f23a9a016da --schedule-item-id 0d9c3b7a-1f2e-4c5d-8e9f-a0b1c2d3e4f5"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "description": "Pool account ID (ai-slideshow publish +list-schedules --id). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "schedule_item_id": {
+            "description": "Schedule item ID (data[].id of ai-slideshow publish +list-schedules). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id",
+          "schedule_item_id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.publish-schedule-approve",
+      "output_schema": {
+        "description": "data: the schedule item after approval.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "publish",
+      "risk_level": "write",
+      "shortcut": "+schedule-approve",
+      "stability": "stable",
+      "summary": "Approve one scheduled item of a pool account's publish plan (an item whose account requires approval before publish), so it can go out at its time. Staff only (the server refuses other callers).",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "ai-slideshow.publish-submit-schedule-plan": {
       "authorization": {
         "authentication_required": true,
@@ -27903,6 +28509,588 @@
       "shortcut": "+update-schedule",
       "stability": "stable",
       "summary": "Update one account publish schedule item.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.review-adjust": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.review-adjust",
+      "cli": "museoncli ai-slideshow review +adjust",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow review +adjust --generation-id 72defd40-39ad-40d3-8105-8f23a9a016da --instruction 'Make the first slide title shorter'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "annotations": {
+            "description": "Marks on slides: a point (x, y) or a region (x, y, width, height) on a 0-1000 grid of the slide, each with a comment. --annotations-json takes the array.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "annotation_type": {
+                  "default": "point",
+                  "enum": [
+                    "point",
+                    "region"
+                  ],
+                  "type": "string"
+                },
+                "comment": {
+                  "maxLength": 500,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "height": {
+                  "maximum": 1000,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "slide_index": {
+                  "maximum": 100,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "slide_media_id": {
+                  "maxLength": 100,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "width": {
+                  "maximum": 1000,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "x": {
+                  "maximum": 1000,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "y": {
+                  "maximum": 1000,
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "slide_media_id",
+                "slide_index",
+                "x",
+                "y",
+                "comment"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "generation_id": {
+            "description": "Slideshow generation ID (ai-slideshow generation +list / +get). For +retry, the replacement generation that the adjustment created. Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "instruction": {
+            "description": "What to change in the post, in words.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "generation_id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.review-adjust",
+      "output_schema": {
+        "description": "data: the review decision (decision adjustment_requested, instruction, replacement_generation_id).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "review",
+      "risk_level": "write",
+      "shortcut": "+adjust",
+      "stability": "stable",
+      "summary": "Ask for changes to an AI image post: --instruction in words and/or --annotations-json marks on slides (up to 20). The post is regenerated as a new generation to review next. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.review-approve": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.review-approve",
+      "cli": "museoncli ai-slideshow review +approve",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow review +approve --generation-id 72defd40-39ad-40d3-8105-8f23a9a016da"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "generation_id": {
+            "description": "Slideshow generation ID (ai-slideshow generation +list / +get). For +retry, the replacement generation that the adjustment created. Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generation_id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.review-approve",
+      "output_schema": {
+        "description": "data: the review decision (decision reviewed, generation_id, reviewed_at).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "review",
+      "risk_level": "write",
+      "shortcut": "+approve",
+      "stability": "stable",
+      "summary": "Mark an AI image post reviewed (approved): it can go on to publish. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.review-reject": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.review-reject",
+      "cli": "museoncli ai-slideshow review +reject",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow review +reject --generation-id 72defd40-39ad-40d3-8105-8f23a9a016da"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "generation_id": {
+            "description": "Slideshow generation ID (ai-slideshow generation +list / +get). For +retry, the replacement generation that the adjustment created. Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generation_id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.review-reject",
+      "output_schema": {
+        "description": "data: the review decision (decision rejected, generation_id, reviewed_at).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "review",
+      "risk_level": "write",
+      "shortcut": "+reject",
+      "stability": "stable",
+      "summary": "Reject an AI image post's publication. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.review-retry": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.review-retry",
+      "cli": "museoncli ai-slideshow review +retry",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow review +retry --generation-id 72defd40-39ad-40d3-8105-8f23a9a016da"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "generation_id": {
+            "description": "Slideshow generation ID (ai-slideshow generation +list / +get). For +retry, the replacement generation that the adjustment created. Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generation_id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.review-retry",
+      "output_schema": {
+        "description": "data: the review decision (generation_id, replacement_generation_id).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "review",
+      "risk_level": "write",
+      "shortcut": "+retry",
+      "stability": "stable",
+      "summary": "Run an adjustment again: retry the replacement generation after the one the last +adjust asked for failed. --generation-id is that replacement generation. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.review-unreview": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.review-unreview",
+      "cli": "museoncli ai-slideshow review +unreview",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow review +unreview --generation-id 72defd40-39ad-40d3-8105-8f23a9a016da"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "generation_id": {
+            "description": "Slideshow generation ID (ai-slideshow generation +list / +get). For +retry, the replacement generation that the adjustment created. Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generation_id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.review-unreview",
+      "output_schema": {
+        "description": "data.undone: whether the approval was taken back.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "review",
+      "risk_level": "write",
+      "shortcut": "+unreview",
+      "stability": "stable",
+      "summary": "Take back an approval: the post returns to the review queue. Answers data.undone. Needs owner, admin or operator.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -60296,6 +61484,110 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "media.collection-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "media.collection-create",
+      "cli": "museoncli media collection +create",
+      "domain": "media",
+      "examples": [
+        "museoncli media collection +create --name 'Spring launch'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Collection name.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "media.collection-create",
+      "output_schema": {
+        "description": "data: the new collection (id, name, media_count).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "collection",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Create an empty media collection in the selected organization; fill it with +add. No idempotency key: after an unknown outcome, +list before retrying. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "media.collection-delete": {
       "authorization": {
         "authentication_required": true,
@@ -68943,6 +70235,267 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "social-account.sync": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.sync",
+      "cli": "museoncli social-account +sync",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account +sync --profile-id 66b2f0c1a9d3e4f5a6b7c8d9"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "profile_id": {
+            "description": "Late profile ID: the late_profile_id of a bound account (social-account +get), not a MuseOn UUID.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_id"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.sync",
+      "output_schema": {
+        "description": "data: the sync result the server returns.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+sync",
+      "stability": "stable",
+      "summary": "Sync one Late profile's accounts from the platform: refresh each account's name, avatar and status and relink it to its creator account. Repeating it is safe. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "social-account.sync-all": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.sync-all",
+      "cli": "museoncli social-account +sync-all",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account +sync-all"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "social-account.sync-all",
+      "output_schema": {
+        "description": "data: the sync result the server returns.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+sync-all",
+      "stability": "stable",
+      "summary": "Sync every bound profile in the caller's own landing workspace of the selected organization (not every workspace in it). Repeating it is safe. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "social-account.tag-add": {
       "authorization": {
         "authentication_required": true,
@@ -69381,6 +70934,142 @@
       "shortcut": "+set",
       "stability": "stable",
       "summary": "Replace a social account's tags with exactly the given set (--clear removes all). Tags are the organization's own labels for filtering (social-account +list --tag). --dry-run shows before and after. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "social-account.unbind": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.unbind",
+      "cli": "museoncli social-account +unbind",
+      "domain": "social-account",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli social-account +unbind --account-id 72defd40-39ad-40d3-8105-8f23a9a016da --dry-run",
+        "museoncli social-account +unbind --account-id 72defd40-39ad-40d3-8105-8f23a9a016da --yes"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "description": "ID of the bound-account row (the late_social_accounts id), not a pool account ID. Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "account_id"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.unbind",
+      "output_schema": {
+        "description": "data.would_unbind (dry run) or data.unbound.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": null,
+      "risk_level": "destructive",
+      "shortcut": "+unbind",
+      "stability": "stable",
+      "summary": "Unbind (disconnect) one social account: its platform authorization is revoked and the binding removed; it cannot be undone from the CLI. --account-id is the bound-account row's id, not a pool account ID. --dry-run shows what would go and writes nothing; show it to the user, then run with --yes. Needs owner, admin or operator.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

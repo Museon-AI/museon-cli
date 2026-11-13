@@ -23,6 +23,9 @@ RETAINED = {
     "tag-set",
     "tag-add",
     "tag-remove",
+    "sync",
+    "sync-all",
+    "unbind",
 }
 
 REMOVED = {

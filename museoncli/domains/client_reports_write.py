@@ -4,8 +4,8 @@ The same routes the web's 客户报告 (``/reports``, a Campaign's report editor
 calls: ``/api/v2/ugc/agency/campaigns/{campaign_id}/client-reports``. They are the
 operations team's: the selected organization must be the operator organization
 running the Campaign (owner, admin or an operator on it), and the server decides.
-The routes still name that organization ``agency_workspace_id`` in the query; the
-value is the organization id (X-Organization-Id), never a workspace.
+Every request names that organization in the ``organization_id`` query (the same one
+X-Organization-Id carries); no workspace is sent.
 
 A report goes draft -> (request review) -> approved -> sent, or is skipped.
 Writes carry the server's guards: the report's ``revision`` and the settings'
@@ -75,8 +75,7 @@ def _base(campaign_id: str) -> str:
 
 
 def _query(ctx: CommandContext, **extra: Any) -> dict[str, Any]:
-    # The route's own name for the operator organization's id.
-    return compact_params({"agency_workspace_id": require_organization(ctx), **extra})
+    return compact_params({"organization_id": require_organization(ctx), **extra})
 
 
 def _unwrap(value: Any) -> Any:
