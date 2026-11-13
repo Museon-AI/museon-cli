@@ -10,7 +10,8 @@ The same routes the web's Campaign settings (提醒 / 自动提醒) call, under
   ``reminder-delegations``: MuseOn staff only, as in the web.
 - ``auto-nudge``: when creators flagged by a creator check (not set up, quiet,
   ...) get an automatic Discord reminder. Changing it changes what creators are
-  sent, so it takes --yes; without it the command only previews.
+  sent, so it takes --yes; without it the command fails with
+  confirmation_required and returns its dry run as preview.
 
 Reading and saving the project's policy is the Campaign's operations team's
 (owner, admin, or an operator on it).
@@ -571,8 +572,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+test",
             summary=(
                 "Send yourself, in your own Feishu chat with Mel, what the group's reminders would "
-                "say now (at most one a minute); nobody else gets it. Without --yes it only "
-                "previews." + _STAFF
+                "say now (at most one a minute); nobody else gets it. Without --yes it is "
+                "refused with a preview." + _STAFF
             ),
             adapter_tool_name="ugc_reminder_test",
             input_schema=schema({"campaign_id": _CAMPAIGN_ID, "dry_run": DRY_RUN}, ["campaign_id"]),
@@ -638,7 +639,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+cancel",
             summary=(
                 "End a reminder delegation now; the member gets their own reminders again. "
-                "Without --yes it only shows the delegation." + _STAFF
+                "Without --yes it is refused with a preview of the delegation." + _STAFF
             ),
             adapter_tool_name="ugc_reminder_delegation_cancel",
             input_schema=schema(
@@ -681,7 +682,7 @@ def specs() -> list[CommandSpec]:
                 "Change when creators get an automatic Discord nudge: the checks that trigger it "
                 "(not set up, quiet, ...), the days, the creator's local send time, the fallback "
                 "timezone; --off stops it. Values not passed keep theirs; fails if someone saved "
-                "since your read. Without --yes it only previews." + _TEAM
+                "since your read. Without --yes it is refused with a preview." + _TEAM
             ),
             adapter_tool_name="ugc_auto_nudge_update",
             input_schema=schema(

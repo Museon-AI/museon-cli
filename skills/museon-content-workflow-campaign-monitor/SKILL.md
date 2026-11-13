@@ -95,7 +95,7 @@ To create a Campaign, move it through its lifecycle (launch, pause, complete, ar
 | Message many creators on Discord | `museoncli ugc broadcast +audience`, then `+create`, `+send` |
 | Team reminders, automatic creator nudges | `museoncli ugc reminder +update`, `museoncli ugc auto-nudge +update` |
 
-Run every write with `--dry-run` first and show the user the result. Anything that sends (a report, a broadcast, a nudge setting) or cannot be undone also takes `--yes`: without it the command returns the same preview. Ask before adding `--yes`. Read [boards-reports-broadcasts.md](references/boards-reports-broadcasts.md).
+Run every write with `--dry-run` first and show the user the result. Anything that sends (a report, a broadcast, a nudge setting) or cannot be undone also takes `--yes`: without it the command fails with `confirmation_required` and carries that preview as `preview`. Ask before adding `--yes`. Read [boards-reports-broadcasts.md](references/boards-reports-broadcasts.md).
 
 ## Running a UGC campaign day to day (`ugc`)
 

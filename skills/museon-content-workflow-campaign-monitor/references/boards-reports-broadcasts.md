@@ -15,8 +15,8 @@ are the same marketing campaign ids.
 Every write takes `--dry-run`: it reads the live state, returns what would change
 (`changes` with `before`/`after`, who a broadcast reaches, where a report goes, anything
 blocking it) and writes nothing. Commands that send something or cannot be undone also take
-`--yes`; without it they return that same preview (`data.dry_run: true`). Show the user the
-preview, ask, and only then run with `--yes`. Never add `--yes` on your own.
+`--yes`; without it they fail (`ok: false`, `reason: confirmation_required`) and carry that
+same dry run as `preview`. Show the user the preview, ask, and only then run with `--yes`. Never add `--yes` on your own.
 
 | Needs `--yes` | Why |
 | --- | --- |

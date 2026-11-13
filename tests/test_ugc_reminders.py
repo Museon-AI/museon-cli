@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from routes_stub import Server, assert_organization_only, body, run
+from routes_stub import Server, assert_organization_only, body, run, refused
 
 CAMPAIGN = "11111111-1111-4111-8111-111111111111"
 BASE = f"/api/v2/ugc/campaigns/{CAMPAIGN}"
@@ -76,7 +76,7 @@ def test_reminder_update_rejects_an_unknown_task_kind(monkeypatch: pytest.Monkey
         run(monkeypatch, Server({}), ["ugc", "reminder", "+update", "--campaign-id", CAMPAIGN, "--task-kind", "x"])
 
 
-def test_auto_nudge_without_yes_previews_then_writes_with_its_version(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_auto_nudge_without_yes_is_refused_with_a_preview_then_writes_with_its_version(monkeypatch: pytest.MonkeyPatch) -> None:
     current = {
         "checks": ["not_set_up"],
         "days": ["mon"],
@@ -89,7 +89,7 @@ def test_auto_nudge_without_yes_previews_then_writes_with_its_version(monkeypatc
     server = Server({("GET", f"{BASE}/auto-nudge"): current, ("PUT", f"{BASE}/auto-nudge"): current})
     argv = ["ugc", "auto-nudge", "+update", "--campaign-id", CAMPAIGN, "--check", "quiet", "--day", "thu", "--day", "mon"]
 
-    preview = run(monkeypatch, server, argv)
+    preview = refused(monkeypatch, server, argv)
     assert server.writes() == []
     assert preview["data"]["dry_run"] is True
 
@@ -151,7 +151,7 @@ def test_reminder_test_needs_yes(monkeypatch: pytest.MonkeyPatch) -> None:
         }
     )
 
-    run(monkeypatch, server, ["ugc", "reminder", "+test", "--campaign-id", CAMPAIGN])
+    refused(monkeypatch, server, ["ugc", "reminder", "+test", "--campaign-id", CAMPAIGN])
     assert server.writes() == []
 
     result = run(monkeypatch, server, ["ugc", "reminder", "+test", "--campaign-id", CAMPAIGN, "--yes"])
