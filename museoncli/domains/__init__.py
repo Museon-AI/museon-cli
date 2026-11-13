@@ -42,6 +42,10 @@ from museoncli.domains import (
     skills,
     staff_ops,
     routines,
+    ugc_broadcasts,
+    ugc_reminders,
+    client_reports_write,
+    boards_write,
 )
 
 
@@ -63,6 +67,10 @@ _DOMAIN_MODULES = (
     skills,
     staff_ops,
     routines,
+    ugc_broadcasts,
+    ugc_reminders,
+    client_reports_write,
+    boards_write,
 )
 
 

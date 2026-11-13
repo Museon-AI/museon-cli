@@ -2,6 +2,16 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+Analytics boards, client reports, broadcasts and reminders: the writes the web makes, through the same routes.
+
+- New `analytics` domain. `analytics board +create` makes a multi-Campaign board in the selected organization (1 to 10 Campaigns of one type, `mixed` for UGC and tracking together, optional opening filters); `+update` renames it or changes its filters (dates, platform, post scope, accounts, thresholds, metrics, chart mode; only the ones passed); `+set-source` replaces its Campaigns; `+delete` deletes it (`--yes`). The public share link stays in the browser: the server opens and closes it for a signed-in person only.
+- `ugc client-report`: `+create` (generate the daily, weekly, monthly or wrap-up report of a date's period), `+update` (title or Markdown, guarded by the report revision), `+regenerate`, `+refresh` (`--dry-run` returns the server's proposed figure changes; `--keep-change` keeps one), `+approve`, `+skip --reason`, and `+request-review` / `+send` (`--test` to your own chat with Mel), which post to Feishu and take `--yes`. Actions carry the report revision, the settings version and an idempotency key per revision, so a rerun never sends twice. `ugc client-report-config +update` changes which reports run, their times, weekly day, timezone, data scope, language, client and internal groups, owner and reviewer (guarded by the settings version). These routes name the operator organization `agency_workspace_id`; the CLI sends the organization id there.
+- `ugc broadcast`: `+audience`, `+list`, `+get`; `+create` and `+update` write a draft (all or some private channels, direct messages, public channels, personas); `+send`, `+schedule`, `+retry`, `+withdraw` and `+discard` take `--yes`; `+unschedule`. Files are attached in the browser.
+- `ugc reminder`: `+get`, `+update` (the Campaign's own reminder policy; `inherit` falls back to the organization's; guarded by `expected_updated_at`), and for MuseOn staff `+test` (`--yes`) and `+subscribe`. `ugc reminder-delegation +create` / `+cancel` (`--yes`, staff). `ugc auto-nudge +get` / `+update` (`--yes`): which creator checks trigger an automatic Discord nudge, on which days and at what time; `--off` stops it.
+- Commands that send something or cannot be undone take `--yes`; without it they return the same preview as `--dry-run` (what would be sent, to whom, and anything blocking it) instead of failing, so the Agent can show the user before asking.
+
 ## 1.0.1
 
 Know which version runs and how to upgrade it.
