@@ -75,12 +75,14 @@ stop on a handover conflict. Never overwrite the old Plan's persona identity.
 | Inspect or change account asset pools | `museoncli ai-slideshow publish +bulk-preview-asset-pools` |
 | Preview or apply schedule plans | `museoncli ai-slideshow publish +preview-schedule-plan` |
 | Inspect account publish configuration | `museoncli ai-slideshow publish +get-config` |
+| Read or change a product's CTA targets | `museoncli ai-slideshow cta-target +list --product-id <id>` |
 
 ## DON'T
 
 - **DON'T** bind generation to an account or schedule.
 - **DON'T** treat generation creation or a batch job receipt as terminal success.
 - **DON'T** add evaluator or CTA inputs, or bind generation itself to an account or schedule.
+- **DON'T** confuse a product's CTA targets (`cta-target`, what its posts point viewers to) with generation inputs. Listing, creating and editing them is staff only; `+retire` takes owner, admin or operator and `--yes` after the user agrees. `+create` has no idempotency key: list before retrying an unknown outcome.
 
 ## Relationships
 
