@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from routes_stub import Server, assert_organization_only, body, query, run
+from routes_stub import Server, assert_organization_only, body, query, run, refused
 
 CAMPAIGN = "11111111-1111-4111-8111-111111111111"
 BROADCAST = "88888888-8888-4888-8888-888888888888"
@@ -100,10 +100,10 @@ def test_update_keeps_the_drafts_files_and_other_fields(monkeypatch: pytest.Monk
     assert sent["attachments"] == [{"upload_id": "44444444-4444-4444-8444-444444444444"}]
 
 
-def test_send_without_yes_only_previews(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_send_without_yes_is_refused_with_a_preview(monkeypatch: pytest.MonkeyPatch) -> None:
     server = Server({("GET", ONE): _detail(), ("GET", f"{BASE}/broadcast-audience"): AUDIENCE})
 
-    result = run(monkeypatch, server, ["ugc", "broadcast", "+send", "--campaign-id", CAMPAIGN, "--id", BROADCAST])
+    result = refused(monkeypatch, server, ["ugc", "broadcast", "+send", "--campaign-id", CAMPAIGN, "--id", BROADCAST])
 
     assert server.writes() == []
     assert result["data"]["dry_run"] is True
@@ -153,6 +153,20 @@ def test_schedule_posts_the_time(monkeypatch: pytest.MonkeyPatch) -> None:
     assert body(server.writes()[0]) == {"scheduled_at": "2026-11-14T10:00:00+08:00"}
 
 
+def test_send_dry_run_is_a_success_shaped_preview(monkeypatch: pytest.MonkeyPatch) -> None:
+    server = Server({("GET", ONE): _detail(), ("GET", f"{BASE}/broadcast-audience"): AUDIENCE})
+
+    result = run(
+        monkeypatch,
+        server,
+        ["ugc", "broadcast", "+send", "--campaign-id", CAMPAIGN, "--id", BROADCAST, "--dry-run"],
+    )
+
+    assert server.writes() == []
+    assert result["data"]["dry_run"] is True
+    assert result["data"]["would_reach_now"]["private_channels"] == 40
+
+
 def test_withdraw_and_discard_need_yes(monkeypatch: pytest.MonkeyPatch) -> None:
     server = Server(
         {
@@ -162,7 +176,7 @@ def test_withdraw_and_discard_need_yes(monkeypatch: pytest.MonkeyPatch) -> None:
         }
     )
 
-    preview = run(monkeypatch, server, ["ugc", "broadcast", "+withdraw", "--campaign-id", CAMPAIGN, "--id", BROADCAST])
+    preview = refused(monkeypatch, server, ["ugc", "broadcast", "+withdraw", "--campaign-id", CAMPAIGN, "--id", BROADCAST])
     assert server.writes() == []
     assert preview["data"]["dry_run"] is True
 

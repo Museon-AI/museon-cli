@@ -3,9 +3,10 @@
 Every write here previews before it writes. ``--dry-run`` reads the live state
 and reports what would happen, writing nothing (``dry_run_reads_server``). A
 command that sends something (to creators, a client or a Feishu group) or
-cannot be undone also takes ``--yes``: without it the command returns the same
-preview instead of failing, so the Agent always has something to show the user
-before asking. Nothing here retries a write.
+cannot be undone also takes ``--yes`` (``requires_confirmation``): without it the
+shared dispatch runs that same dry run and fails with ``confirmation_required``,
+carrying it as ``preview``, so an unconfirmed send never reads as a success.
+Nothing here retries a write.
 """
 
 from __future__ import annotations
@@ -42,15 +43,12 @@ def add_confirm(parser: argparse.ArgumentParser) -> None:
 
 
 def previewing(args: argparse.Namespace) -> bool:
-    """True unless the user confirmed with --yes (and did not ask for --dry-run).
+    """Whether the caller asked for --dry-run.
 
-    Dispatch reads ``args.dry_run`` after building the arguments, so a preview
-    taken for a missing --yes skips its ``confirmation_required`` gate and runs
-    the executor, which reads and writes nothing.
+    A missing --yes is not a preview here: dispatch refuses it with
+    ``confirmation_required`` and attaches the dry run as ``preview``.
     """
-    preview = bool(getattr(args, "dry_run", False)) or not bool(getattr(args, "yes", False))
-    args.dry_run = preview
-    return preview
+    return bool(getattr(args, "dry_run", False))
 
 
 def with_notes(fn: Callable[[CommandContext], Awaitable[Notes]]) -> Executor:
@@ -71,7 +69,7 @@ def ask_first(what: str) -> str:
 
 
 def ask_then_yes(what: str) -> str:
-    return f"Nothing was written. Show the user {what}, ask them, then run it again with --yes."
+    return f"Nothing was written. Show the user {what}, ask them, then run it with --yes."
 
 
 def read_text(value: str | None, file_path: str | None, *, flag: str) -> str | None:

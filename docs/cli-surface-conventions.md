@@ -61,18 +61,19 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
   `dry_run_reads_server` runs its executor instead: it reads the live state,
   reports what would change and writes nothing (`ugc`, whose workbench has no
   confirmation step of its own). Its dry run also skips the `--yes` gate.
-- `destructive` commands set `requires_confirmation` and demand `--yes`;
-  without it the CLI returns `{"ok": false, "reason": "confirmation_required"}`.
-  When the command also sets `dry_run_reads_server`, that refusal carries
-  `preview` (`data` and `warnings` of its dry run), so the Agent can show the user
-  what would happen. Agents must confirm with the user, then retry with `--yes`.
+- One confirmation rule. A command with `requires_confirmation` (every
+  `destructive` command, and any write that sends something) demands `--yes`.
+  Without it the CLI fails: `{"ok": false, "reason": "confirmation_required"}`,
+  exit code 1, nothing written. When the command also sets
+  `dry_run_reads_server`, the refusal carries `preview` (the `data`, `warnings`
+  and `next_steps` of its dry run), so the Agent can show the user what would
+  happen. Only an explicit `--dry-run` returns that preview as a success
+  (`data.dry_run: true`); an unconfirmed outbound action never reads as one.
+  Agents confirm with the user, then retry with `--yes`.
 - A command that reaches someone outside the organization (messages, nudges,
-  invitations, review verdicts a creator reads) or cannot be undone from the CLI
-  is `destructive`, even when the server would accept it without a prompt.
-- The board, client report, broadcast and reminder commands (`analytics`,
-  `ugc client-report`, `ugc broadcast`, `ugc reminder`, `ugc auto-nudge`) instead
-  return that preview as a success (`data.dry_run: true`) when `--yes` is missing;
-  a send or other outbound action there also takes `--yes`.
+  invitations, broadcasts, client reports, review verdicts a creator reads) or
+  cannot be undone from the CLI requires confirmation, even when the server would
+  accept it without a prompt.
 - Provider identity, model selection, credentials, storage buckets, queue names,
   and other service implementation controls are server-owned. They must not
   appear as public flags or schema fields, and structured arguments that try to

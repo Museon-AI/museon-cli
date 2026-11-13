@@ -66,6 +66,18 @@ def run(monkeypatch: pytest.MonkeyPatch, server: Callable[[httpx.Request], httpx
     return asyncio.run(cli.dispatch(cli.build_parser().parse_args(argv)))
 
 
+def refused(
+    monkeypatch: pytest.MonkeyPatch, server: Callable[[httpx.Request], httpx.Response], argv: list[str]
+) -> dict:
+    """Run a command that needs --yes without it: it fails and returns its dry run as preview."""
+    with pytest.raises(cli.ConfirmationRequired) as refusal:
+        run(monkeypatch, server, argv)
+    payload, code = cli.error_envelope(refusal.value, command=None)
+    assert code == cli.EXIT_FAILURE
+    assert payload["ok"] is False and payload["reason"] == "confirmation_required"
+    return payload["preview"]
+
+
 def assert_organization_only(server: Server) -> None:
     """Every request addresses the selected organization and names no workspace."""
     for request in server.requests:
