@@ -4,6 +4,16 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+### Campaign lifecycle, setup, Formats and personas (`ugc`)
+
+Agents can now create and run a Campaign end to end, through the routes the web's new-Campaign page, Campaign header, setup page and /formats page call. Every write reads the live state on `--dry-run` and writes nothing; writes that reach people outside, end or delete something also need `--yes`. Writes carry the route's compare-and-set token (`--expected-status`, `--expected-updated-at`, `--expected-version`), from the caller's earlier read or the read the command makes just before writing.
+
+- Lifecycle: `ugc campaign +create` (UGC in operating-team organizations, or tracking; a draft on TikTok, Instagram, YouTube and Facebook, as the web creates it), `+launch` (`--yes`; the dry run shows `launchability`), `+pause`, `+resume`, `+complete` (`--yes`), `+archive` (`--yes`), `+restore`, `+rename`.
+- Setup: `ugc campaign-settings +update` (approval and join mode, budget cap, post grouping, Format mode, platforms, Discord onboarding, `--settings-json` for languages, countries, stay/warmup/trial rules, content intake and the apply form, `--platform-pay-rules-json`; the whole settings object is written back with only those fields changed), `ugc campaign-staff +set` (PMs and OPs), `ugc delivery-target +create/+update/+delete`, `ugc contract-template +set` (default or custom; the dry run returns the filled preview), `ugc payscale +create/+update/+delete`, `ugc pay-rate +create/+update/+delete` (the dry run prices a video under the rate), `ugc discord-server +set/+initialize/+remove`, `ugc dm-rule +create/+update`.
+- Formats (脚本, `brief`): `ugc brief-library +list/+get/+create/+update/+archive/+copy` for the organization library, and `ugc brief +create/+link/+unlink/+copy` inside a Campaign. Creates send an idempotency key and return it.
+- UGC personas: `ugc persona +list/+create/+update/+delete` (not the `ai-slideshow` personas).
+- The campaign-monitor Skill gains `references/ugc-campaign-setup.md`.
+
 ### Settings and account housekeeping (coverage batch 6)
 
 New commands over the routes the web app already calls. Each addresses the organization only (`X-Organization-Id`); the server decides who may run it.
@@ -26,7 +36,7 @@ Run a UGC campaign day to day: the task center, the roster, creator messages, co
 - Creator messages: `ugc enrollment +nudge`, `+bulk-nudge` (preview counts creators per check), `ugc message +send` (project conversation, or `--creative-id` for a message about a video pushed to Discord), `+resend-card`, `+retry`. Messages carry an idempotency key; the CLI makes one when left out and returns it for a safe retry.
 - Content review and counting: `ugc creative +review`, `+set-counting`, `+merge`; `ugc post +stop-counting` (up to 100), `+split`; `ugc feedback-thread +create`, `+reply`, `+set-status`.
 - Recruiting: `ugc recruit-link +list`, `+create` (invite or `--kind discover`), `+update`, `+revoke`; `ugc invitation +list`, `+create`, `+resend`, `+revoke`.
-- Anything that reaches the creator or cannot be undone from the CLI is `destructive` and needs `--yes`. A command whose dry run reads live state (`dry_run_reads_server`) now answers a missing `--yes` with `confirmation_required` plus `preview` (its dry run's `data` and `warnings`) instead of a bare refusal; `ugc assignment +withdraw` and `media collection +delete` / `+remove` get the same preview.
+- Anything that reaches the creator or cannot be undone from the CLI is `destructive` and needs `--yes`. A command whose dry run reads live state (`dry_run_reads_server`) now answers a missing `--yes` with `confirmation_required` plus `preview` (its dry run's `data` and `warnings`) instead of a bare refusal; `ugc assignment +withdraw`, `media collection +delete` / `+remove` and the `ugc` Campaign setup commands that need `--yes` get the same preview.
 
 ## 1.0.1
 
