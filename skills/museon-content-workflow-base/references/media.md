@@ -29,6 +29,19 @@ Ground truth顺序：保存提交`data.task_id/media_id` → `+get-generation`�
 
 `gs://`地址不是浏览器URL；选用下游明确接受的URL。媒体/文件写入回执丢失都不能据此判断“没有上传”。file可用同ID读回或同ID相同文件重试；相同ID不同内容不允许覆盖。
 
+## 媒体合集（collections）
+
+合集是媒体库里的命名分组，媒体本身不随合集删除。读：任何组织角色；改：owner、admin、operator。新建合集只能在网页里做（该接口仍要 workspace，CLI 不发送）。
+
+| 目的 | 命令 |
+| --- | --- |
+| 列出合集 | `museoncli media collection +list --search launch`（`--all` 取全部页） |
+| 看合集与其中媒体 | `museoncli media collection +get --id <collection_id>`；`+list-media --id <collection_id>` |
+| 重命名 | `museoncli media collection +update --id <collection_id> --name 'Spring launch'` |
+| 加媒体（最多100，已在其中的跳过，可安全重跑） | `museoncli media collection +add --id <collection_id> --media-id <media_id>` |
+| 移出媒体 | `museoncli media collection +remove --id <collection_id> --media-id <media_id> --yes`，看`data.failed` |
+| 删除合集 | 先`+delete --id <collection_id> --dry-run`给用户看，再`--yes` |
+
 示例脚本：`bash skills/museon-content-workflow-base/scripts/generate-media-once.sh [ORGANIZATION_ID] image PROMPT STABLE_KEY NEW_DIRECTORY（ORGANIZATION_ID 可省略，省略即用已选组织）`。需要bash、jq和已配置的CLI；它只查询一次，pending输出不会推进media下游，unknown或矛盾回读会非零退出。目录必须是新的，以保留每次证据。
 
 ## DON'T

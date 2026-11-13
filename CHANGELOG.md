@@ -4,6 +4,21 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+### Settings and account housekeeping (coverage batch 6)
+
+New commands over the routes the web app already calls. Each addresses the organization only (`X-Organization-Id`); the server decides who may run it.
+
+- `artifacts +list` / `artifacts +get`: list the organization's artifacts (page, search, `--all`) and read one (Markdown or download URL). Any organization role.
+- `media collection +list` / `+get` / `+list-media`: the organization's media collections and the media in one. Any organization role.
+- `media collection +update` (rename) and `+add` (up to 100 media; already-present media are skipped): owner, admin or operator.
+- `media collection +delete` and `+remove` (media out of a collection) are destructive: `--dry-run` reads the collection and writes nothing, `--yes` runs. `+remove` reports `data.removed` and `data.failed` per media.
+- `social-account tag +set` / `+add` / `+remove`: change an account's organization tags; `--dry-run` shows before and after. `+add` / `+remove` read and write back the full set (no server version check). Owner, admin or operator.
+- `ai-slideshow cta-target +list` / `+create` / `+update` (staff only on the server) and `+retire` (owner, admin or operator; needs `--yes`): a product's CTA targets.
+
+Not added, because the API refuses an API key or needs a workspace the CLI never sends: organization members (invite, role, Campaign scope, removal), partner organizations, Campaign and account shares, the organization signature (all signed-in session only); social account sync and unbinding, scheduled-item approval, failed-publish retry, AI image post review, and creating a media collection (workspace required). The API has no artifact delete.
+
+### Day-to-day UGC operations (coverage batch 2)
+
 Run a UGC campaign day to day: the task center, the roster, creator messages, content review and counting, recruiting. Every command calls the route the web calls, with its compare-and-set and idempotency inputs. Agent Skill: `museon-content-workflow-campaign-monitor` → `references/ugc-operations.md`.
 
 - Tasks: `ugc task +claim`, `+release`, `+comment`, `+set-due`, `+set-assignees`, `+defer-reminder`, and `+run-action` (any of the task's own actions: approve, reject, attach, skip, resend, send...; fills the attribution card version and application revision like the web; other inputs in `--fields-json`).
@@ -11,7 +26,7 @@ Run a UGC campaign day to day: the task center, the roster, creator messages, co
 - Creator messages: `ugc enrollment +nudge`, `+bulk-nudge` (preview counts creators per check), `ugc message +send` (project conversation, or `--creative-id` for a message about a video pushed to Discord), `+resend-card`, `+retry`. Messages carry an idempotency key; the CLI makes one when left out and returns it for a safe retry.
 - Content review and counting: `ugc creative +review`, `+set-counting`, `+merge`; `ugc post +stop-counting` (up to 100), `+split`; `ugc feedback-thread +create`, `+reply`, `+set-status`.
 - Recruiting: `ugc recruit-link +list`, `+create` (invite or `--kind discover`), `+update`, `+revoke`; `ugc invitation +list`, `+create`, `+resend`, `+revoke`.
-- Anything that reaches the creator or cannot be undone from the CLI is `destructive` and needs `--yes`. A command whose dry run reads live state (`dry_run_reads_server`) now answers a missing `--yes` with `confirmation_required` plus `preview` (its dry run's `data` and `warnings`) instead of a bare refusal; `ugc assignment +withdraw` gets the same preview.
+- Anything that reaches the creator or cannot be undone from the CLI is `destructive` and needs `--yes`. A command whose dry run reads live state (`dry_run_reads_server`) now answers a missing `--yes` with `confirmation_required` plus `preview` (its dry run's `data` and `warnings`) instead of a bare refusal; `ugc assignment +withdraw` and `media collection +delete` / `+remove` get the same preview.
 
 ## 1.0.1
 

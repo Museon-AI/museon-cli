@@ -52,9 +52,9 @@ uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.
 Read [operating-model.md](references/operating-model.md) for risk, async work, authentication,
 and Business Skill boundaries. Read only the reference needed for the current capability:
 
-- [media.md](references/media.md) for media upload, prompt generation, and durable task status.
-- [artifacts.md](references/artifacts.md) for artifact validation, upload, and sharing.
-- [social-accounts.md](references/social-accounts.md) and [social-account-batch-edits.md](references/social-account-batch-edits.md) for retained account reads, connection helpers, profile edits, avatars, and performance.
+- [media.md](references/media.md) for media upload, prompt generation, durable task status, and media collections.
+- [artifacts.md](references/artifacts.md) for artifact validation, upload, sharing, listing and reading.
+- [social-accounts.md](references/social-accounts.md) and [social-account-batch-edits.md](references/social-account-batch-edits.md) for retained account reads, tags, connection helpers, profile edits, avatars, and performance.
 - [routines.md](references/routines.md) for recurring work and memory.
 - [content-analysis.md](references/content-analysis.md) for durable video analysis.
 
