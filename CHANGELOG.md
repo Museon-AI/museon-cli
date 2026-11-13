@@ -2,6 +2,18 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+### Campaign lifecycle, setup, Formats and personas (`ugc`)
+
+Agents can now create and run a Campaign end to end, through the routes the web's new-Campaign page, Campaign header, setup page and /formats page call. Every write reads the live state on `--dry-run` and writes nothing; writes that reach people outside, end or delete something also need `--yes`. Writes carry the route's compare-and-set token (`--expected-status`, `--expected-updated-at`, `--expected-version`), from the caller's earlier read or the read the command makes just before writing.
+
+- Lifecycle: `ugc campaign +create` (UGC in operating-team organizations, or tracking; a draft on TikTok, Instagram, YouTube and Facebook, as the web creates it), `+launch` (`--yes`; the dry run shows `launchability`), `+pause`, `+resume`, `+complete` (`--yes`), `+archive` (`--yes`), `+restore`, `+rename`.
+- Setup: `ugc campaign-settings +update` (approval and join mode, budget cap, post grouping, Format mode, platforms, Discord onboarding, `--settings-json` for languages, countries, stay/warmup/trial rules, content intake and the apply form, `--platform-pay-rules-json`; the whole settings object is written back with only those fields changed), `ugc campaign-staff +set` (PMs and OPs), `ugc delivery-target +create/+update/+delete`, `ugc contract-template +set` (default or custom; the dry run returns the filled preview), `ugc payscale +create/+update/+delete`, `ugc pay-rate +create/+update/+delete` (the dry run prices a video under the rate), `ugc discord-server +set/+initialize/+remove`, `ugc dm-rule +create/+update`.
+- Formats (脚本, `brief`): `ugc brief-library +list/+get/+create/+update/+archive/+copy` for the organization library, and `ugc brief +create/+link/+unlink/+copy` inside a Campaign. Creates send an idempotency key and return it.
+- UGC personas: `ugc persona +list/+create/+update/+delete` (not the `ai-slideshow` personas).
+- The campaign-monitor Skill gains `references/ugc-campaign-setup.md`.
+
 ## 1.0.1
 
 Know which version runs and how to upgrade it.
