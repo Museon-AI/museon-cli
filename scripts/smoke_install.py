@@ -125,6 +125,9 @@ def smoke_install(wheel: Path) -> None:
                 raise RuntimeError(f"installed Skill is missing: {skill}")
 
         version_data = version.get("data", {})
+        # `uv pip install` cannot replace itself: it is told how to upgrade instead.
+        if version_data.get("install_method") != "uv_pip":  # type: ignore[union-attr]
+            raise RuntimeError(f"install method not detected: {version!r}")
         print(
             "clean install smoke passed: "
             f"version={version_data.get('cli_version')} commands={len(actual_names)}"

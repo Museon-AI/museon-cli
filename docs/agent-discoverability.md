@@ -7,6 +7,8 @@ never rely on memory or older transcripts for the command list.
 ## Infrastructure commands
 
 - `version` / `health` / `whoami`
+- `upgrade` (upgrade the CLI itself; `version` and `upgrade` are listed under `catalog.cli`
+  in `museoncli schema`)
 - `setup --agent [auto|codex|claude-code|cursor|all]`
 - `config get` / `config set`
 - `auth start` / `auth finish` / `auth login` / `auth status` / `auth logout`

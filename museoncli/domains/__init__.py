@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
+from museoncli.cli_commands import CLI_COMMANDS, cli_command, cli_command_summary
 from museoncli.domains._model import (
     ROUTINES_DOMAIN,
     AdapterType,
@@ -230,6 +231,9 @@ def schema_payload(schema_name: str | None = None) -> dict[str, Any]:
     if schema_name:
         normalized = schema_name.replace(".+", ".").strip()
         normalized = normalized.removeprefix("museoncli ").strip()
+        cli_entry = cli_command(normalized)
+        if cli_entry is not None:
+            return cli_entry
         domain_specs = specs_by_domain().get(normalized)
         if domain_specs is not None:
             return _domain_schema_payload(normalized, domain_specs)
@@ -242,6 +246,8 @@ def schema_payload(schema_name: str | None = None) -> dict[str, Any]:
     return {
         "domains": fixed_domain_values(),
         "commands": commands,
+        # Commands about the CLI installation itself (no domain, no login).
+        "cli": [cli_command_summary(entry) for entry in CLI_COMMANDS],
     }
 
 

@@ -134,6 +134,13 @@ if importlib.util.find_spec("museoncli"):
             payload = json.loads(result.stdout)
             assert payload["data"]["cli_version"] == latest, payload
             assert payload["data"]["update"]["status"] == expected, payload
+            # The completed upgrade is announced once, by the first command after it.
+            announced = payload.get("_notice", {}).get("updated")
+            if expected == "updated":
+                assert announced and announced["from"] == current, payload
+                assert announced["to"] == latest, payload
+            else:
+                assert announced is None, payload
         assert counter.read_text() == "install\n", "more than one installer ran"
         print(
             f"self-update smoke passed: {current} -> synthetic {latest}; both aliases; one install"

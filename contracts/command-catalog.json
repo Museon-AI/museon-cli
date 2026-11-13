@@ -1,5 +1,21 @@
 {
   "catalog": {
+    "cli": [
+      {
+        "cli": "museoncli version",
+        "name": "version",
+        "requires_confirmation": false,
+        "risk_level": "read",
+        "summary": "Report this CLI's version, the latest stable release, how it was installed and the command that upgrades it. Checks the latest release on every call."
+      },
+      {
+        "cli": "museoncli upgrade",
+        "name": "upgrade",
+        "requires_confirmation": false,
+        "risk_level": "write",
+        "summary": "Upgrade to the latest stable release. An official uv tool install verifies and installs it (even with MUSEONCLI_UPDATE_CHECK=0); other installs get status manual and the command to run. Changes only the local CLI."
+      }
+    ],
     "commands": {
       "agentic-campaign": [
         {
@@ -13064,7 +13080,7 @@
       "routines"
     ]
   },
-  "contract_revision": "1.0.0",
+  "contract_revision": "1.0.1",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -64162,6 +64178,391 @@
       "summary": "List a UGC campaign's roster: enrollment id, status, persona, creator name and accounts, newest first. Use it to find the enrollment ids to assign a brief to; participating is onboarding, active and paused together.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
+    },
+    "upgrade": {
+      "authorization": {
+        "authentication_required": false,
+        "enforcement": "local"
+      },
+      "cli": "museoncli upgrade",
+      "examples": [
+        "museoncli upgrade"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "upgrade",
+      "output_schema": {
+        "properties": {
+          "_notice": {
+            "description": "Present only when there is something to tell. Finish the user's request, then relay `message`; never paste the raw notice.",
+            "properties": {
+              "skills": {
+                "description": "Installed Museon Agent Skills were synced or are out of date.",
+                "type": "object"
+              },
+              "update": {
+                "description": "A newer stable release exists and was not installed. Tell the user and offer `museoncli upgrade`.",
+                "properties": {
+                  "changelog_url": {
+                    "type": "string"
+                  },
+                  "current": {
+                    "type": "string"
+                  },
+                  "install_method": {
+                    "enum": [
+                      "uv_tool",
+                      "pipx",
+                      "uv_pip",
+                      "pip",
+                      "other",
+                      "source",
+                      "managed"
+                    ]
+                  },
+                  "latest": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "upgrade_command": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "current",
+                  "latest",
+                  "install_method",
+                  "upgrade_command",
+                  "changelog_url",
+                  "message"
+                ],
+                "type": "object"
+              },
+              "updated": {
+                "description": "The CLI upgraded itself; reported once.",
+                "properties": {
+                  "changelog_url": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "highlights": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "changelog_url",
+                  "highlights",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "data": {
+            "properties": {
+              "changelog_url": {
+                "type": "string"
+              },
+              "current": {
+                "description": "The running CLI version.",
+                "type": "string"
+              },
+              "install_method": {
+                "description": "uv_tool upgrades itself; pipx, uv_pip, pip and other need upgrade_command; source (a checkout) and managed (a host runtime) are updated by their owner.",
+                "enum": [
+                  "uv_tool",
+                  "pipx",
+                  "uv_pip",
+                  "pip",
+                  "other",
+                  "source",
+                  "managed"
+                ]
+              },
+              "latest": {
+                "description": "Latest stable release; null when it could not be checked.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "message": {
+                "type": "string"
+              },
+              "previous_version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "upgraded",
+                  "current",
+                  "manual",
+                  "managed_externally"
+                ]
+              },
+              "update_status": {
+                "enum": [
+                  "current",
+                  "cached",
+                  "outdated",
+                  "updated",
+                  "check_failed",
+                  "disabled",
+                  "not_checked",
+                  "managed_externally"
+                ]
+              },
+              "upgrade_command": {
+                "description": "The command that upgrades this installation; null when none applies.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "message",
+              "current",
+              "latest",
+              "install_method",
+              "upgrade_command",
+              "changelog_url",
+              "update_status"
+            ],
+            "type": "object"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "data"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "write",
+      "stability": "stable",
+      "summary": "Upgrade to the latest stable release. An official uv tool install verifies and installs it (even with MUSEONCLI_UPDATE_CHECK=0); other installs get status manual and the command to run. Changes only the local CLI.",
+      "supports_dry_run": false,
+      "transport": "local"
+    },
+    "version": {
+      "authorization": {
+        "authentication_required": false,
+        "enforcement": "local"
+      },
+      "cli": "museoncli version",
+      "examples": [
+        "museoncli version"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "version",
+      "output_schema": {
+        "properties": {
+          "_notice": {
+            "description": "Present only when there is something to tell. Finish the user's request, then relay `message`; never paste the raw notice.",
+            "properties": {
+              "skills": {
+                "description": "Installed Museon Agent Skills were synced or are out of date.",
+                "type": "object"
+              },
+              "update": {
+                "description": "A newer stable release exists and was not installed. Tell the user and offer `museoncli upgrade`.",
+                "properties": {
+                  "changelog_url": {
+                    "type": "string"
+                  },
+                  "current": {
+                    "type": "string"
+                  },
+                  "install_method": {
+                    "enum": [
+                      "uv_tool",
+                      "pipx",
+                      "uv_pip",
+                      "pip",
+                      "other",
+                      "source",
+                      "managed"
+                    ]
+                  },
+                  "latest": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "upgrade_command": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "current",
+                  "latest",
+                  "install_method",
+                  "upgrade_command",
+                  "changelog_url",
+                  "message"
+                ],
+                "type": "object"
+              },
+              "updated": {
+                "description": "The CLI upgraded itself; reported once.",
+                "properties": {
+                  "changelog_url": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "highlights": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "changelog_url",
+                  "highlights",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "data": {
+            "properties": {
+              "api_base_url": {
+                "type": "string"
+              },
+              "changelog_url": {
+                "type": "string"
+              },
+              "cli_version": {
+                "type": "string"
+              },
+              "current": {
+                "description": "The running CLI version.",
+                "type": "string"
+              },
+              "install_method": {
+                "description": "uv_tool upgrades itself; pipx, uv_pip, pip and other need upgrade_command; source (a checkout) and managed (a host runtime) are updated by their owner.",
+                "enum": [
+                  "uv_tool",
+                  "pipx",
+                  "uv_pip",
+                  "pip",
+                  "other",
+                  "source",
+                  "managed"
+                ]
+              },
+              "latest": {
+                "description": "Latest stable release; null when it could not be checked.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "update": {
+                "description": "The raw release check (status and its details).",
+                "type": "object"
+              },
+              "update_status": {
+                "enum": [
+                  "current",
+                  "cached",
+                  "outdated",
+                  "updated",
+                  "check_failed",
+                  "disabled",
+                  "not_checked",
+                  "managed_externally"
+                ]
+              },
+              "upgrade_command": {
+                "description": "The command that upgrades this installation; null when none applies.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "cli_version",
+              "current",
+              "latest",
+              "install_method",
+              "upgrade_command",
+              "changelog_url",
+              "update_status",
+              "update"
+            ],
+            "type": "object"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "data"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "stability": "stable",
+      "summary": "Report this CLI's version, the latest stable release, how it was installed and the command that upgrades it. Checks the latest release on every call.",
+      "supports_dry_run": false,
+      "transport": "local"
     }
   }
 }
