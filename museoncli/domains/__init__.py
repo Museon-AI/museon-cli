@@ -55,6 +55,10 @@ from museoncli.domains import (
     media_collections,
     social_account_housekeeping,
     product_cta,
+    ugc_broadcasts,
+    ugc_reminders,
+    client_reports_write,
+    boards_write,
 )
 
 
@@ -89,6 +93,10 @@ _DOMAIN_MODULES = (
     media_collections,
     social_account_housekeeping,
     product_cta,
+    ugc_broadcasts,
+    ugc_reminders,
+    client_reports_write,
+    boards_write,
 )
 
 

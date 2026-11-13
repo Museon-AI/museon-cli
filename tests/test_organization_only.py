@@ -139,8 +139,19 @@ def _arguments(spec: Any, files: Path, *, every_input: bool) -> dict[str, Any]:
     return {**arguments, **_OVERRIDES.get(spec.schema_name, {})}
 
 
+# The client report routes still call the operator organization `agency_workspace_id`;
+# what travels there is the organization itself (X-Organization-Id), never a workspace.
+_ORGANIZATION_UNDER_A_WORKSPACE_NAME = "agency_workspace_id"
+
+
 def _workspace_fields(request: httpx.Request) -> list[str]:
-    found = [f"query {key}" for key, _ in parse_qsl(request.url.query.decode()) if "workspace" in key]
+    organization = request.headers.get("X-Organization-Id")
+    found = [
+        f"query {key}"
+        for key, value in parse_qsl(request.url.query.decode())
+        if "workspace" in key
+        and not (key == _ORGANIZATION_UNDER_A_WORKSPACE_NAME and value == organization)
+    ]
     found += [f"header {name}" for name in request.headers if "workspace" in name.lower()]
     if b"workspace_id" in request.content:
         found.append("body workspace_id")

@@ -2425,6 +2425,120 @@
           "transport": "agent_cli_api"
         }
       ],
+      "analytics": [
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "analytics.board-create",
+          "cli": "museoncli analytics board +create",
+          "domain": "analytics",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "analytics.board-create",
+          "requires_confirmation": false,
+          "resource": "board",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Create a multi-Campaign analytics board in the selected organization: a name, 1 to 10 Campaigns of one type (mixed for UGC and tracking together) and, optionally, the filters it opens with. --dry-run shows the board without creating it. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "analytics.board-update",
+          "cli": "museoncli analytics board +update",
+          "domain": "analytics",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "analytics.board-update",
+          "requires_confirmation": false,
+          "resource": "board",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Rename a board or change the filters it opens with (dates, platform, post scope, accounts, thresholds, metrics, chart mode); filters not passed keep their value. --dry-run returns the changes without writing. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "analytics.board-set-source",
+          "cli": "museoncli analytics board +set-source",
+          "domain": "analytics",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "analytics.board-set-source",
+          "requires_confirmation": false,
+          "resource": "board",
+          "risk_level": "write",
+          "shortcut": "+set-source",
+          "stability": "stable",
+          "summary": "Replace the Campaigns a board reads (its data source) and their type. --dry-run returns the Campaigns added and removed without writing. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "analytics.board-delete",
+          "cli": "museoncli analytics board +delete",
+          "domain": "analytics",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "analytics.board-delete",
+          "requires_confirmation": true,
+          "resource": "board",
+          "risk_level": "destructive",
+          "shortcut": "+delete",
+          "stability": "stable",
+          "summary": "Delete a board (its share link ends with it); the Campaigns and their data stay. Without --yes it only shows the board it would delete. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        }
+      ],
       "artifacts": [
         {
           "authorization": {
@@ -15756,6 +15870,785 @@
           "summary": "Delete a UGC persona nothing names any more (no Campaign, enrollment or Format). --dry-run returns it without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Then pass --yes. Role: owner, admin or operator; the server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-audience",
+          "cli": "museoncli ugc broadcast +audience",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.broadcast-audience",
+          "requires_confirmation": false,
+          "resource": "broadcast",
+          "risk_level": "read",
+          "shortcut": "+audience",
+          "stability": "stable",
+          "summary": "Preview who a broadcast can reach now: how many private channels and direct messages, the server's public channels, each persona's counts, the private channel options and anything blocking a recruitment post. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-list",
+          "cli": "museoncli ugc broadcast +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.broadcast-list",
+          "requires_confirmation": false,
+          "resource": "broadcast",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a Campaign's broadcasts, newest first, with status and delivery progress. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-get",
+          "cli": "museoncli ugc broadcast +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.broadcast-get",
+          "requires_confirmation": false,
+          "resource": "broadcast",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "One broadcast: its content and targets, every delivery's outcome (sent, failed, withdrawn, with a Discord link) and its history. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-create",
+          "cli": "museoncli ugc broadcast +create",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.broadcast-create",
+          "requires_confirmation": false,
+          "resource": "broadcast",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Write a broadcast draft: the message and its targets (all or some private channels, direct messages to all, public channels, narrowed to personas). Nothing is sent until +send or +schedule. --dry-run shows who it would reach now. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-update",
+          "cli": "museoncli ugc broadcast +update",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.broadcast-update",
+          "requires_confirmation": false,
+          "resource": "broadcast",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Change a draft broadcast's message or targets; fields not passed keep their value and its files stay. --dry-run returns the changes and who it would reach. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-send",
+          "cli": "museoncli ugc broadcast +send",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.broadcast-send",
+          "requires_confirmation": true,
+          "resource": "broadcast",
+          "risk_level": "write",
+          "shortcut": "+send",
+          "stability": "stable",
+          "summary": "Send a draft or scheduled broadcast now; the recipients are fixed at this moment. Without --yes it only shows the message and who it would reach. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-schedule",
+          "cli": "museoncli ugc broadcast +schedule",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.broadcast-schedule",
+          "requires_confirmation": true,
+          "resource": "broadcast",
+          "risk_level": "write",
+          "shortcut": "+schedule",
+          "stability": "stable",
+          "summary": "Schedule a draft broadcast (or move its schedule); it is sent within a minute of --at and its content locks until +unschedule. Without --yes it only previews. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-unschedule",
+          "cli": "museoncli ugc broadcast +unschedule",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.broadcast-unschedule",
+          "requires_confirmation": false,
+          "resource": "broadcast",
+          "risk_level": "write",
+          "shortcut": "+unschedule",
+          "stability": "stable",
+          "summary": "Cancel a scheduled broadcast; it is a draft again and can be edited. --dry-run shows it without writing. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-retry",
+          "cli": "museoncli ugc broadcast +retry",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.broadcast-retry",
+          "requires_confirmation": true,
+          "resource": "broadcast",
+          "risk_level": "write",
+          "shortcut": "+retry",
+          "stability": "stable",
+          "summary": "Send a dispatched broadcast's failed deliveries again. Without --yes it only shows how many can be retried. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-withdraw",
+          "cli": "museoncli ugc broadcast +withdraw",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.broadcast-withdraw",
+          "requires_confirmation": true,
+          "resource": "broadcast",
+          "risk_level": "destructive",
+          "shortcut": "+withdraw",
+          "stability": "stable",
+          "summary": "Take a sent broadcast back: its sent messages are deleted from Discord and queued ones never go. Cannot be undone. Without --yes it only shows the broadcast. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.broadcast-discard",
+          "cli": "museoncli ugc broadcast +discard",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.broadcast-discard",
+          "requires_confirmation": true,
+          "resource": "broadcast",
+          "risk_level": "destructive",
+          "shortcut": "+discard",
+          "stability": "stable",
+          "summary": "Discard a draft broadcast; it stays in the list as discarded and can no longer be sent. Without --yes it only shows the draft. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.reminder-get",
+          "cli": "museoncli ugc reminder +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.reminder-get",
+          "requires_confirmation": false,
+          "resource": "reminder",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "A Campaign's team reminders: its own policy layer, the organization's it inherits, the effective policy, the next digests, what would be sent in the next 24 hours, delegations and whether you are subscribed. For the Campaign's operations team (owner, admin, or an operator on it).",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.reminder-update",
+          "cli": "museoncli ugc reminder +update",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.reminder-update",
+          "requires_confirmation": false,
+          "resource": "reminder",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Change a Campaign's own reminder policy: Feishu on/off, workdays, days off, which task kinds are reminded, digest times, overdue escalation, timezone. inherit falls back to the organization's. Fails if someone saved since your read. --dry-run returns the changes without writing. For the Campaign's operations team (owner, admin, or an operator on it).",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.reminder-test",
+          "cli": "museoncli ugc reminder +test",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.reminder-test",
+          "requires_confirmation": true,
+          "resource": "reminder",
+          "risk_level": "write",
+          "shortcut": "+test",
+          "stability": "stable",
+          "summary": "Send yourself, in your own Feishu chat with Mel, what the group's reminders would say now (at most one a minute); nobody else gets it. Without --yes it only previews. MuseOn staff only, as in the web.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.reminder-subscribe",
+          "cli": "museoncli ugc reminder +subscribe",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.reminder-subscribe",
+          "requires_confirmation": false,
+          "resource": "reminder",
+          "risk_level": "write",
+          "shortcut": "+subscribe",
+          "stability": "stable",
+          "summary": "Turn your own direct-message list of this Campaign's tasks at each digest on (--subscribed) or off (--no-subscribed). --dry-run shows the change. MuseOn staff only, as in the web.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.reminder-delegation-create",
+          "cli": "museoncli ugc reminder-delegation +create",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.reminder-delegation-create",
+          "requires_confirmation": false,
+          "resource": "reminder-delegation",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "While a team member is away, send their reminders (in the whole workspace of the Campaign) to a colleague; no access or approval moves. --dry-run shows the delegation and the member's current ones. MuseOn staff only, as in the web.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.reminder-delegation-cancel",
+          "cli": "museoncli ugc reminder-delegation +cancel",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.reminder-delegation-cancel",
+          "requires_confirmation": true,
+          "resource": "reminder-delegation",
+          "risk_level": "write",
+          "shortcut": "+cancel",
+          "stability": "stable",
+          "summary": "End a reminder delegation now; the member gets their own reminders again. Without --yes it only shows the delegation. MuseOn staff only, as in the web.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.auto-nudge-get",
+          "cli": "museoncli ugc auto-nudge +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.auto-nudge-get",
+          "requires_confirmation": false,
+          "resource": "auto-nudge",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "A Campaign's automatic creator nudges: which creator checks trigger one, on which days, at what local time, the next send and the latest sends. For the Campaign's operations team (owner, admin, or an operator on it).",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.auto-nudge-update",
+          "cli": "museoncli ugc auto-nudge +update",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.auto-nudge-update",
+          "requires_confirmation": true,
+          "resource": "auto-nudge",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Change when creators get an automatic Discord nudge: the checks that trigger it (not set up, quiet, ...), the days, the creator's local send time, the fallback timezone; --off stops it. Values not passed keep theirs; fails if someone saved since your read. Without --yes it only previews. For the Campaign's operations team (owner, admin, or an operator on it).",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-create",
+          "cli": "museoncli ugc client-report +create",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-create",
+          "requires_confirmation": false,
+          "resource": "client-report",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Generate a client report now: the daily, weekly, monthly or wrap-up report of the period holding --date, drafted from the Campaign's data (or with your own --title/--markdown). Nothing is sent. Running it again for the same type and date answers with the same report. --dry-run lists the reports that already cover the date. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-update",
+          "cli": "museoncli ugc client-report +update",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-update",
+          "requires_confirmation": false,
+          "resource": "client-report",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Edit a client report's title or Markdown body (a new revision; an approved report needs approving again). --dry-run returns the changes without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-regenerate",
+          "cli": "museoncli ugc client-report +regenerate",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-regenerate",
+          "requires_confirmation": false,
+          "resource": "client-report",
+          "risk_level": "write",
+          "shortcut": "+regenerate",
+          "stability": "stable",
+          "summary": "Redraft a client report from the Campaign's current data, replacing its text. --dry-run shows the report without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-refresh",
+          "cli": "museoncli ugc client-report +refresh",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-refresh",
+          "requires_confirmation": false,
+          "resource": "client-report",
+          "risk_level": "write",
+          "shortcut": "+refresh",
+          "stability": "stable",
+          "summary": "Update the figures in a client report to the latest data, keeping the rest of its text. --dry-run asks the server for the proposed changes (label, before, after) and writes nothing to the report; --keep-change keeps one figure as written. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-request-review",
+          "cli": "museoncli ugc client-report +request-review",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-request-review",
+          "requires_confirmation": true,
+          "resource": "client-report",
+          "risk_level": "write",
+          "shortcut": "+request-review",
+          "stability": "stable",
+          "summary": "Ask the Campaign's reviewer to review a client report: posts it to the internal Feishu group. Without --yes it only shows the report and the group. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-approve",
+          "cli": "museoncli ugc client-report +approve",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-approve",
+          "requires_confirmation": false,
+          "resource": "client-report",
+          "risk_level": "write",
+          "shortcut": "+approve",
+          "stability": "stable",
+          "summary": "Approve a client report's current revision (the Campaign's reviewer). Nothing is sent; +send does that. --dry-run shows the report without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-skip",
+          "cli": "museoncli ugc client-report +skip",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-skip",
+          "requires_confirmation": false,
+          "resource": "client-report",
+          "risk_level": "write",
+          "shortcut": "+skip",
+          "stability": "stable",
+          "summary": "Skip a client report (not sent for this period), with the reason. --dry-run shows the report without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-send",
+          "cli": "museoncli ugc client-report +send",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-send",
+          "requires_confirmation": true,
+          "resource": "client-report",
+          "risk_level": "write",
+          "shortcut": "+send",
+          "stability": "stable",
+          "summary": "Send an approved client report to the client's group, or with --test to your own chat with Mel only. Without --yes it only shows the report, where it would go and anything blocking it. Sending the same revision again does not send twice. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-config-update",
+          "cli": "museoncli ugc client-report-config +update",
+          "domain": "ugc",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "ugc.client-report-config-update",
+          "requires_confirmation": false,
+          "resource": "client-report-config",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Change a Campaign's client report settings: which reports run (--enable/--disable daily, weekly), when they are generated and due, the weekly day, timezone, data scope, language, the client and internal Feishu groups, owner and reviewer. Settings not passed keep their value; the write fails if someone saved since your read. --dry-run returns the changes without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
         }
       ]
     },
@@ -15774,7 +16667,8 @@
       "ugc",
       "skills",
       "staff-ops",
-      "routines"
+      "routines",
+      "analytics"
     ]
   },
   "contract_revision": "1.0.1",
@@ -26358,6 +27252,619 @@
       "shortcut": "+update-schedule",
       "stability": "stable",
       "summary": "Update one account publish schedule item.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "analytics.board-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "analytics.board-create",
+      "cli": "museoncli analytics board +create",
+      "domain": "analytics",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli analytics board +create --name \"Q4 UGC\" --campaign-type ugc --campaign-id 11111111-1111-4111-8111-111111111111 --campaign-id 22222222-2222-4222-8222-222222222222 --post-scope approved --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_ids": {
+            "description": "The Campaigns the board reads (marketing campaign ids, as ugc campaign +list returns them), 1 to 10.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "campaign_type": {
+            "description": "The Campaigns' one type; mixed for UGC and content tracking Campaigns together.",
+            "enum": [
+              "tracking",
+              "ugc",
+              "influencer",
+              "ads",
+              "product-seeding",
+              "pvp",
+              "sound-promotion",
+              "posting-only",
+              "media-sourcing",
+              "mixed"
+            ],
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "filters": {
+            "description": "The filters the board opens with. Only the ones passed change; none clears a date, the accounts, metrics or thresholds, and --platform all clears the platform.",
+            "properties": {
+              "accounts": {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              "chart_mode": {
+                "description": "The trend chart plots each day, or the running total.",
+                "enum": [
+                  "daily",
+                  "total"
+                ],
+                "type": "string"
+              },
+              "date_from": {
+                "format": "date",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "date_to": {
+                "format": "date",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "metrics": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              "platform": {
+                "enum": [
+                  "tiktok",
+                  "instagram",
+                  "youtube",
+                  "facebook",
+                  null
+                ],
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "post_scope": {
+                "description": "approved shows confirmed posts only (UGC and mixed boards).",
+                "enum": [
+                  "all",
+                  "approved"
+                ],
+                "type": "string"
+              },
+              "thresholds": {
+                "description": "METRIC_min / METRIC_max floors and ceilings, e.g. views_min: 1000.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "campaign_ids",
+          "campaign_type"
+        ],
+        "type": "object"
+      },
+      "name": "analytics.board-create",
+      "output_schema": {
+        "description": "The board as saved (id, name, campaigns, filters).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "board",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Create a multi-Campaign analytics board in the selected organization: a name, 1 to 10 Campaigns of one type (mixed for UGC and tracking together) and, optionally, the filters it opens with. --dry-run shows the board without creating it. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "analytics.board-delete": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "analytics.board-delete",
+      "cli": "museoncli analytics board +delete",
+      "domain": "analytics",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli analytics board +delete --id 66666666-6666-4666-8666-666666666666 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Board ID (the id a board read or +create returned).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "analytics.board-delete",
+      "output_schema": {
+        "description": "board, and deleted: true once it is gone.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "board",
+      "risk_level": "destructive",
+      "shortcut": "+delete",
+      "stability": "stable",
+      "summary": "Delete a board (its share link ends with it); the Campaigns and their data stay. Without --yes it only shows the board it would delete. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "analytics.board-set-source": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "analytics.board-set-source",
+      "cli": "museoncli analytics board +set-source",
+      "domain": "analytics",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli analytics board +set-source --id 66666666-6666-4666-8666-666666666666 --campaign-type mixed --campaign-id 11111111-1111-4111-8111-111111111111 --campaign-id 22222222-2222-4222-8222-222222222222 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_ids": {
+            "description": "The Campaigns the board reads (marketing campaign ids, as ugc campaign +list returns them), 1 to 10.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "campaign_type": {
+            "description": "The Campaigns' one type; mixed for UGC and content tracking Campaigns together.",
+            "enum": [
+              "tracking",
+              "ugc",
+              "influencer",
+              "ads",
+              "product-seeding",
+              "pvp",
+              "sound-promotion",
+              "posting-only",
+              "media-sourcing",
+              "mixed"
+            ],
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Board ID (the id a board read or +create returned).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "campaign_ids",
+          "campaign_type"
+        ],
+        "type": "object"
+      },
+      "name": "analytics.board-set-source",
+      "output_schema": {
+        "description": "board, campaign_type before/after, campaigns_added, campaigns_removed.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "board",
+      "risk_level": "write",
+      "shortcut": "+set-source",
+      "stability": "stable",
+      "summary": "Replace the Campaigns a board reads (its data source) and their type. --dry-run returns the Campaigns added and removed without writing. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "analytics.board-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "analytics.board-update",
+      "cli": "museoncli analytics board +update",
+      "domain": "analytics",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli analytics board +update --id 66666666-6666-4666-8666-666666666666 --date-from 2026-11-01 --metric views --metric engagement-rate --threshold views-min=1000 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "filters": {
+            "description": "The filters the board opens with. Only the ones passed change; none clears a date, the accounts, metrics or thresholds, and --platform all clears the platform.",
+            "properties": {
+              "accounts": {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              "chart_mode": {
+                "description": "The trend chart plots each day, or the running total.",
+                "enum": [
+                  "daily",
+                  "total"
+                ],
+                "type": "string"
+              },
+              "date_from": {
+                "format": "date",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "date_to": {
+                "format": "date",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "metrics": {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              "platform": {
+                "enum": [
+                  "tiktok",
+                  "instagram",
+                  "youtube",
+                  "facebook",
+                  null
+                ],
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "post_scope": {
+                "description": "approved shows confirmed posts only (UGC and mixed boards).",
+                "enum": [
+                  "all",
+                  "approved"
+                ],
+                "type": "string"
+              },
+              "thresholds": {
+                "description": "METRIC_min / METRIC_max floors and ceilings, e.g. views_min: 1000.",
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "id": {
+            "description": "Board ID (the id a board read or +create returned).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "analytics.board-update",
+      "output_schema": {
+        "description": "board and changes (field, before, after).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "board",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Rename a board or change the filters it opens with (dates, platform, post scope, accounts, thresholds, metrics, chart mode); filters not passed keep their value. --dry-run returns the changes without writing. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -67631,6 +69138,213 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.auto-nudge-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.auto-nudge-get",
+      "cli": "museoncli ugc auto-nudge +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc auto-nudge +get --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.auto-nudge-get",
+      "output_schema": {
+        "description": "checks, days, send_at, timezone, next_send_at, recent.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "auto-nudge",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "A Campaign's automatic creator nudges: which creator checks trigger one, on which days, at what local time, the next send and the latest sends. For the Campaign's operations team (owner, admin, or an operator on it).",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.auto-nudge-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.auto-nudge-update",
+      "cli": "museoncli ugc auto-nudge +update",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc auto-nudge +update --campaign-id 11111111-1111-4111-8111-111111111111 --check not-set-up --check quiet --day mon --day thu --send-at 10:00"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "edits": {
+            "description": "checks, days (mon..sun; [] is off), send_at (HH:MM), timezone.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "edits"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.auto-nudge-update",
+      "output_schema": {
+        "description": "auto_nudge and changes (field, before, after).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "auto-nudge",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Change when creators get an automatic Discord nudge: the checks that trigger it (not set up, quiet, ...), the days, the creator's local send time, the fallback timezone; --off stops it. Values not passed keep theirs; fails if someone saved since your read. Without --yes it only previews. For the Campaign's operations team (owner, admin, or an operator on it).",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "ugc.brief-copy": {
       "authorization": {
         "authentication_required": true,
@@ -69416,6 +71130,1333 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.broadcast-audience": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-audience",
+      "cli": "museoncli ugc broadcast +audience",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc broadcast +audience --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "notice",
+              "recruitment"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-audience",
+      "output_schema": {
+        "description": "private_channels, direct_messages, direct_message_limit, channels, personas, private_channel_options, recruitment_blockers.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "broadcast",
+      "risk_level": "read",
+      "shortcut": "+audience",
+      "stability": "stable",
+      "summary": "Preview who a broadcast can reach now: how many private channels and direct messages, the server's public channels, each persona's counts, the private channel options and anything blocking a recruitment post. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-create",
+      "cli": "museoncli ugc broadcast +create",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc broadcast +create --campaign-id 11111111-1111-4111-8111-111111111111 --body \"New brief is up, check your channel.\" --to-all-private-channels --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "selection": {
+            "description": "The draft's content and targets; on +update only the fields passed change.",
+            "properties": {
+              "body": {
+                "description": "Markdown; mentions typed in it never ping.",
+                "maxLength": 4000,
+                "type": "string"
+              },
+              "guild_channel_ids": {
+                "description": "Public channels of the Campaign's server (channels of +audience).",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "mention_creators": {
+                "description": "@ each creator in their private channel (default on).",
+                "type": "boolean"
+              },
+              "persona_ids": {
+                "description": "Only creators of these personas (personas of +audience).",
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "private_channel_ids": {
+                "description": "Only these private channels (private_channel_options of +audience).",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "purpose": {
+                "enum": [
+                  "notice",
+                  "recruitment"
+                ],
+                "type": "string"
+              },
+              "to_all_direct_messages": {
+                "description": "A direct message to every participating creator (at most 200).",
+                "type": "boolean"
+              },
+              "to_all_private_channels": {
+                "description": "Every participating creator's private channel.",
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "selection"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-create",
+      "output_schema": {
+        "description": "The draft as saved (id, status draft, targets).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "broadcast",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Write a broadcast draft: the message and its targets (all or some private channels, direct messages to all, public channels, narrowed to personas). Nothing is sent until +send or +schedule. --dry-run shows who it would reach now. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-discard": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-discard",
+      "cli": "museoncli ugc broadcast +discard",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc broadcast +discard --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Broadcast ID (ugc broadcast +list or +create).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-discard",
+      "output_schema": {
+        "description": "action, broadcast (status, progress, allowed_actions).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "broadcast",
+      "risk_level": "destructive",
+      "shortcut": "+discard",
+      "stability": "stable",
+      "summary": "Discard a draft broadcast; it stays in the list as discarded and can no longer be sent. Without --yes it only shows the draft. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-get",
+      "cli": "museoncli ugc broadcast +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc broadcast +get --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "description": "Broadcast ID (ugc broadcast +list or +create).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-get",
+      "output_schema": {
+        "description": "broadcast, deliveries, history, attachment_previews.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "broadcast",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "One broadcast: its content and targets, every delivery's outcome (sent, failed, withdrawn, with a Discord link) and its history. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-list",
+      "cli": "museoncli ugc broadcast +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc broadcast +list --campaign-id 11111111-1111-4111-8111-111111111111 --status draft"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "cursor": {
+            "description": "next_cursor from the previous page.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "purpose": {
+            "enum": [
+              "notice",
+              "recruitment"
+            ],
+            "type": "string"
+          },
+          "statuses": {
+            "items": {
+              "enum": [
+                "draft",
+                "scheduled",
+                "dispatched",
+                "withdrawn",
+                "discarded"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-list",
+      "output_schema": {
+        "description": "items (broadcasts) and next_cursor.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "broadcast",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a Campaign's broadcasts, newest first, with status and delivery progress. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-retry": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-retry",
+      "cli": "museoncli ugc broadcast +retry",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc broadcast +retry --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Broadcast ID (ugc broadcast +list or +create).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-retry",
+      "output_schema": {
+        "description": "action, broadcast (status, progress, allowed_actions).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "broadcast",
+      "risk_level": "write",
+      "shortcut": "+retry",
+      "stability": "stable",
+      "summary": "Send a dispatched broadcast's failed deliveries again. Without --yes it only shows how many can be retried. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-schedule": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-schedule",
+      "cli": "museoncli ugc broadcast +schedule",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc broadcast +schedule --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888 --at 2026-11-14T10:00:00+08:00 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Broadcast ID (ugc broadcast +list or +create).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "scheduled_at": {
+            "description": "When to send, in the future, with a timezone offset.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id",
+          "scheduled_at"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-schedule",
+      "output_schema": {
+        "description": "action, broadcast (status, progress, allowed_actions).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "broadcast",
+      "risk_level": "write",
+      "shortcut": "+schedule",
+      "stability": "stable",
+      "summary": "Schedule a draft broadcast (or move its schedule); it is sent within a minute of --at and its content locks until +unschedule. Without --yes it only previews. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-send": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-send",
+      "cli": "museoncli ugc broadcast +send",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc broadcast +send --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888",
+        "museoncli ugc broadcast +send --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Broadcast ID (ugc broadcast +list or +create).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-send",
+      "output_schema": {
+        "description": "action, broadcast (status, progress, allowed_actions).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "broadcast",
+      "risk_level": "write",
+      "shortcut": "+send",
+      "stability": "stable",
+      "summary": "Send a draft or scheduled broadcast now; the recipients are fixed at this moment. Without --yes it only shows the message and who it would reach. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-unschedule": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-unschedule",
+      "cli": "museoncli ugc broadcast +unschedule",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc broadcast +unschedule --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Broadcast ID (ugc broadcast +list or +create).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-unschedule",
+      "output_schema": {
+        "description": "action, broadcast (status, progress, allowed_actions).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "broadcast",
+      "risk_level": "write",
+      "shortcut": "+unschedule",
+      "stability": "stable",
+      "summary": "Cancel a scheduled broadcast; it is a draft again and can be edited. --dry-run shows it without writing. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-update",
+      "cli": "museoncli ugc broadcast +update",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc broadcast +update --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888 --no-to-all-direct-messages --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Broadcast ID (ugc broadcast +list or +create).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "selection": {
+            "description": "The draft's content and targets; on +update only the fields passed change.",
+            "properties": {
+              "body": {
+                "description": "Markdown; mentions typed in it never ping.",
+                "maxLength": 4000,
+                "type": "string"
+              },
+              "guild_channel_ids": {
+                "description": "Public channels of the Campaign's server (channels of +audience).",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "mention_creators": {
+                "description": "@ each creator in their private channel (default on).",
+                "type": "boolean"
+              },
+              "persona_ids": {
+                "description": "Only creators of these personas (personas of +audience).",
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "private_channel_ids": {
+                "description": "Only these private channels (private_channel_options of +audience).",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "purpose": {
+                "enum": [
+                  "notice",
+                  "recruitment"
+                ],
+                "type": "string"
+              },
+              "to_all_direct_messages": {
+                "description": "A direct message to every participating creator (at most 200).",
+                "type": "boolean"
+              },
+              "to_all_private_channels": {
+                "description": "Every participating creator's private channel.",
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id",
+          "selection"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-update",
+      "output_schema": {
+        "description": "broadcast and changes (field, before, after).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "broadcast",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Change a draft broadcast's message or targets; fields not passed keep their value and its files stay. --dry-run returns the changes and who it would reach. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.broadcast-withdraw": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.broadcast-withdraw",
+      "cli": "museoncli ugc broadcast +withdraw",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc broadcast +withdraw --campaign-id 11111111-1111-4111-8111-111111111111 --id 88888888-8888-4888-8888-888888888888 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Broadcast ID (ugc broadcast +list or +create).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.broadcast-withdraw",
+      "output_schema": {
+        "description": "action, broadcast (status, progress, allowed_actions).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "broadcast",
+      "risk_level": "destructive",
+      "shortcut": "+withdraw",
+      "stability": "stable",
+      "summary": "Take a sent broadcast back: its sent messages are deleted from Discord and queued ones never go. Cannot be undone. Without --yes it only shows the broadcast. For the Campaign's operations team (owner, admin, or an operator on it); others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "ugc.campaign-archive": {
       "authorization": {
         "authentication_required": true,
@@ -70781,6 +73822,1092 @@
       "shortcut": "+set",
       "stability": "stable",
       "summary": "Set a Campaign's team: its PMs (--manager-user-id) and OPs (--operator-user-id), at most 20 each; a role not passed keeps its people, --no-managers / --no-operators empties it. --dry-run returns the team before and after without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-approve": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-approve",
+      "cli": "museoncli ugc client-report +approve",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report +approve --campaign-id 11111111-1111-4111-8111-111111111111 --id 77777777-7777-4777-8777-777777777777 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "description": "The report revision you read; the write fails if the report changed since. Omitted, the revision read just before the write is used.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "id": {
+            "description": "Client report ID (from the Campaign's report list).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-approve",
+      "output_schema": {
+        "description": "report (id, type, status, revision, period) after the write.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report",
+      "risk_level": "write",
+      "shortcut": "+approve",
+      "stability": "stable",
+      "summary": "Approve a client report's current revision (the Campaign's reviewer). Nothing is sent; +send does that. --dry-run shows the report without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-config-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-config-update",
+      "cli": "museoncli ugc client-report-config +update",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report-config +update --campaign-id 11111111-1111-4111-8111-111111111111 --enable daily --daily-generate-time 09:00 --daily-due-time 12:00 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "edits": {
+            "description": "enable/disable (daily, weekly), timezone, daily_generate_time, daily_due_time, weekly_weekday, weekly_generate_time, weekly_due_time (HH:MM), data_scope, language, customer_group_id / internal_group_id (a group the Campaign can use, or none), owner_user_id, reviewer_user_id.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "edits"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-config-update",
+      "output_schema": {
+        "description": "version, settings and changes (field, before, after).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report-config",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Change a Campaign's client report settings: which reports run (--enable/--disable daily, weekly), when they are generated and due, the weekly day, timezone, data scope, language, the client and internal Feishu groups, owner and reviewer. Settings not passed keep their value; the write fails if someone saved since your read. --dry-run returns the changes without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-create",
+      "cli": "museoncli ugc client-report +create",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report +create --campaign-id 11111111-1111-4111-8111-111111111111 --type daily --date 2026-11-12 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "date": {
+            "description": "A day of the report's period.",
+            "format": "date",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "language": {
+            "enum": [
+              "zh",
+              "en"
+            ],
+            "type": "string"
+          },
+          "markdown": {
+            "maxLength": 500000,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "daily",
+              "weekly",
+              "monthly",
+              "wrapup"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "type",
+          "date"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-create",
+      "output_schema": {
+        "description": "The report as generated (id, status, revision, markdown).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Generate a client report now: the daily, weekly, monthly or wrap-up report of the period holding --date, drafted from the Campaign's data (or with your own --title/--markdown). Nothing is sent. Running it again for the same type and date answers with the same report. --dry-run lists the reports that already cover the date. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-refresh": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-refresh",
+      "cli": "museoncli ugc client-report +refresh",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report +refresh --campaign-id 11111111-1111-4111-8111-111111111111 --id 77777777-7777-4777-8777-777777777777 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "description": "The report revision you read; the write fails if the report changed since. Omitted, the revision read just before the write is used.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "id": {
+            "description": "Client report ID (from the Campaign's report list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "keep_change_ids": {
+            "description": "Change ids (from the --dry-run) to leave as written.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-refresh",
+      "output_schema": {
+        "description": "report and changes (id, label, before, after, apply).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report",
+      "risk_level": "write",
+      "shortcut": "+refresh",
+      "stability": "stable",
+      "summary": "Update the figures in a client report to the latest data, keeping the rest of its text. --dry-run asks the server for the proposed changes (label, before, after) and writes nothing to the report; --keep-change keeps one figure as written. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-regenerate": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-regenerate",
+      "cli": "museoncli ugc client-report +regenerate",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report +regenerate --campaign-id 11111111-1111-4111-8111-111111111111 --id 77777777-7777-4777-8777-777777777777 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "description": "The report revision you read; the write fails if the report changed since. Omitted, the revision read just before the write is used.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "id": {
+            "description": "Client report ID (from the Campaign's report list).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-regenerate",
+      "output_schema": {
+        "description": "report (id, type, status, revision, period) after the write.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report",
+      "risk_level": "write",
+      "shortcut": "+regenerate",
+      "stability": "stable",
+      "summary": "Redraft a client report from the Campaign's current data, replacing its text. --dry-run shows the report without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-request-review": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-request-review",
+      "cli": "museoncli ugc client-report +request-review",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report +request-review --campaign-id 11111111-1111-4111-8111-111111111111 --id 77777777-7777-4777-8777-777777777777 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "description": "The report revision you read; the write fails if the report changed since. Omitted, the revision read just before the write is used.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "id": {
+            "description": "Client report ID (from the Campaign's report list).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-request-review",
+      "output_schema": {
+        "description": "report (id, type, status, revision, period) after the write.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "client-report",
+      "risk_level": "write",
+      "shortcut": "+request-review",
+      "stability": "stable",
+      "summary": "Ask the Campaign's reviewer to review a client report: posts it to the internal Feishu group. Without --yes it only shows the report and the group. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-send": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-send",
+      "cli": "museoncli ugc client-report +send",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report +send --campaign-id 11111111-1111-4111-8111-111111111111 --id 77777777-7777-4777-8777-777777777777",
+        "museoncli ugc client-report +send --campaign-id 11111111-1111-4111-8111-111111111111 --id 77777777-7777-4777-8777-777777777777 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "description": "The report revision you read; the write fails if the report changed since. Omitted, the revision read just before the write is used.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "id": {
+            "description": "Client report ID (from the Campaign's report list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "description": "Defaults to one per report revision, action and settings version.",
+            "maxLength": 200,
+            "minLength": 8,
+            "type": "string"
+          },
+          "test": {
+            "description": "Send to your own chat with Mel instead of the client's group.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-send",
+      "output_schema": {
+        "description": "action, destination and the report after sending.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "client-report",
+      "risk_level": "write",
+      "shortcut": "+send",
+      "stability": "stable",
+      "summary": "Send an approved client report to the client's group, or with --test to your own chat with Mel only. Without --yes it only shows the report, where it would go and anything blocking it. Sending the same revision again does not send twice. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-skip": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-skip",
+      "cli": "museoncli ugc client-report +skip",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report +skip --campaign-id 11111111-1111-4111-8111-111111111111 --id 77777777-7777-4777-8777-777777777777 --reason \"Client paused the campaign this week\" --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "description": "The report revision you read; the write fails if the report changed since. Omitted, the revision read just before the write is used.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "id": {
+            "description": "Client report ID (from the Campaign's report list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-skip",
+      "output_schema": {
+        "description": "report (id, type, status, revision, period) after the write.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report",
+      "risk_level": "write",
+      "shortcut": "+skip",
+      "stability": "stable",
+      "summary": "Skip a client report (not sent for this period), with the reason. --dry-run shows the report without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-update",
+      "cli": "museoncli ugc client-report +update",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc client-report +update --campaign-id 11111111-1111-4111-8111-111111111111 --id 77777777-7777-4777-8777-777777777777 --markdown-file report.md --expected-revision 3 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list), the Campaign the reports are about.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "expected_revision": {
+            "description": "The report revision you read; the write fails if the report changed since. Omitted, the revision read just before the write is used.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "id": {
+            "description": "Client report ID (from the Campaign's report list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "markdown": {
+            "maxLength": 500000,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-update",
+      "output_schema": {
+        "description": "report and changes (field, before, after).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Edit a client report's title or Markdown body (a new revision; an approved report needs approving again). --dry-run returns the changes without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -77266,6 +81393,661 @@
       "shortcut": "+update",
       "stability": "stable",
       "summary": "Change a recruitment link's settings; settings not passed keep their value. Compare-and-set on the link's updated_at. Role: owner, admin, or an operator assigned to the Campaign (the operating team); members and Brand viewers cannot.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.reminder-delegation-cancel": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.reminder-delegation-cancel",
+      "cli": "museoncli ugc reminder-delegation +cancel",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc reminder-delegation +cancel --campaign-id 11111111-1111-4111-8111-111111111111 --id 99999999-9999-4999-8999-999999999993 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Delegation ID (delegations of ugc reminder +get).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.reminder-delegation-cancel",
+      "output_schema": {
+        "description": "delegation, and the delegations left.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "reminder-delegation",
+      "risk_level": "write",
+      "shortcut": "+cancel",
+      "stability": "stable",
+      "summary": "End a reminder delegation now; the member gets their own reminders again. Without --yes it only shows the delegation. MuseOn staff only, as in the web.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.reminder-delegation-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.reminder-delegation-create",
+      "cli": "museoncli ugc reminder-delegation +create",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc reminder-delegation +create --campaign-id 11111111-1111-4111-8111-111111111111 --user-id 99999999-9999-4999-8999-999999999991 --delegate-user-id 99999999-9999-4999-8999-999999999992 --starts-at 2026-11-20T00:00:00+08:00 --ends-at 2026-11-27T00:00:00+08:00 --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "delegate_user_id": {
+            "description": "Who gets their reminders meanwhile.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "ends_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "starts_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The member who is away.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "user_id",
+          "delegate_user_id",
+          "starts_at",
+          "ends_at"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.reminder-delegation-create",
+      "output_schema": {
+        "description": "delegations not over yet.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "reminder-delegation",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "While a team member is away, send their reminders (in the whole workspace of the Campaign) to a colleague; no access or approval moves. --dry-run shows the delegation and the member's current ones. MuseOn staff only, as in the web.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.reminder-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.reminder-get",
+      "cli": "museoncli ugc reminder +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc reminder +get --campaign-id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.reminder-get",
+      "output_schema": {
+        "description": "covered, campaign_layer, workspace_layer, effective, next_digests, planned, delegations.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "reminder",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "A Campaign's team reminders: its own policy layer, the organization's it inherits, the effective policy, the next digests, what would be sent in the next 24 hours, delegations and whether you are subscribed. For the Campaign's operations team (owner, admin, or an operator on it).",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.reminder-subscribe": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.reminder-subscribe",
+      "cli": "museoncli ugc reminder +subscribe",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc reminder +subscribe --campaign-id 11111111-1111-4111-8111-111111111111 --subscribed"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "subscribed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "subscribed"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.reminder-subscribe",
+      "output_schema": {
+        "description": "subscribed before and after.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "reminder",
+      "risk_level": "write",
+      "shortcut": "+subscribe",
+      "stability": "stable",
+      "summary": "Turn your own direct-message list of this Campaign's tasks at each digest on (--subscribed) or off (--no-subscribed). --dry-run shows the change. MuseOn staff only, as in the web.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.reminder-test": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.reminder-test",
+      "cli": "museoncli ugc reminder +test",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc reminder +test --campaign-id 11111111-1111-4111-8111-111111111111 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.reminder-test",
+      "output_schema": {
+        "description": "test.outcome: sent, already_sent, no_direct_chat or unavailable.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "reminder",
+      "risk_level": "write",
+      "shortcut": "+test",
+      "stability": "stable",
+      "summary": "Send yourself, in your own Feishu chat with Mel, what the group's reminders would say now (at most one a minute); nobody else gets it. Without --yes it only previews. MuseOn staff only, as in the web.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.reminder-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.reminder-update",
+      "cli": "museoncli ugc reminder +update",
+      "domain": "ugc",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli ugc reminder +update --campaign-id 11111111-1111-4111-8111-111111111111 --feishu on --digest-time 09:30 --digest-time 17:30 --task-kind review-creative --task-kind report-client --dry-run"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign ID (ugc campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "default": false,
+            "description": "Read the current state and show what would happen, without writing anything.",
+            "type": "boolean"
+          },
+          "edits": {
+            "description": "Only the fields passed change; null inherits the organization's value. timezone, workdays (mon..sun), off_days (YYYY-MM-DD), feishu_enabled, overdue_escalation, task_kinds ([] reminds of none), morning_digest / evening_digest (HH:MM), digest_times (HH:MM list; [] stops digests).",
+            "type": "object"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "edits"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.reminder-update",
+      "output_schema": {
+        "description": "campaign_layer, effective and changes (field, before, after).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "reminder",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Change a Campaign's own reminder policy: Feishu on/off, workdays, days off, which task kinds are reminded, digest times, overdue escalation, timezone. inherit falls back to the organization's. Fails if someone saved since your read. --dry-run returns the changes without writing. For the Campaign's operations team (owner, admin, or an operator on it).",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

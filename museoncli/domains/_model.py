@@ -45,6 +45,7 @@ class Domain(str, Enum):
     UGC = "ugc"
     SKILLS = "skills"
     STAFF_OPS = "staff-ops"
+    ANALYTICS = "analytics"
     ROUTINES = ROUTINES_DOMAIN
 
 

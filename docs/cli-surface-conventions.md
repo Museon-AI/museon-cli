@@ -69,6 +69,10 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
 - A command that reaches someone outside the organization (messages, nudges,
   invitations, review verdicts a creator reads) or cannot be undone from the CLI
   is `destructive`, even when the server would accept it without a prompt.
+- The board, client report, broadcast and reminder commands (`analytics`,
+  `ugc client-report`, `ugc broadcast`, `ugc reminder`, `ugc auto-nudge`) instead
+  return that preview as a success (`data.dry_run: true`) when `--yes` is missing;
+  a send or other outbound action there also takes `--yes`.
 - Provider identity, model selection, credentials, storage buckets, queue names,
   and other service implementation controls are server-owned. They must not
   appear as public flags or schema fields, and structured arguments that try to

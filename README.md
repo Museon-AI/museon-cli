@@ -72,7 +72,8 @@ at the last published release until a separate release is approved.
 | Research public content and Hooks | `research` |
 | Plan, inspect, edit and verify HireAICreator content | `hireaicreator` |
 | Track creators, posts and performance | `campaign-monitor` |
-| Edit UGC briefs and assignments; run a UGC campaign: tasks, roster, creator messages, content review, recruiting | `ugc` |
+| Edit UGC briefs, brief assignments and which brief a creative cites; run a UGC campaign day to day (tasks, roster, creator messages, content review, recruiting); broadcast to creators, set team reminders and automatic creator nudges; generate, review and send client reports | `ugc` |
+| Create, edit and delete multi-Campaign analytics boards | `analytics` |
 | Analyze video content | `content-analysis` |
 | Upload files, import image URLs and read media records | `media` |
 | Validate, host and share durable reports | `artifacts` |
