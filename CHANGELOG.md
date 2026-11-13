@@ -35,6 +35,39 @@ New read commands, each calling the route the web page already calls, addressed 
 - The `campaign-monitor` settlement, payout, enrollment and creator-check commands work for a brand organization on a Campaign shared into it at the operator tier, as the web shows them (needs the server change of museon D-114). Their descriptions now name who reads them instead of "Agency team only".
 - Not available to the CLI because the server serves them to a signed-in browser only: the team's work log, the creator directory's insights and a creator's history, partners, Campaign and account shares, and the organization's signature.
 
+### Campaign lifecycle, setup, Formats and personas (`ugc`)
+
+Agents can now create and run a Campaign end to end, through the routes the web's new-Campaign page, Campaign header, setup page and /formats page call. Every write reads the live state on `--dry-run` and writes nothing; writes that reach people outside, end or delete something also need `--yes`. Writes carry the route's compare-and-set token (`--expected-status`, `--expected-updated-at`, `--expected-version`), from the caller's earlier read or the read the command makes just before writing.
+
+- Lifecycle: `ugc campaign +create` (UGC in operating-team organizations, or tracking; a draft on TikTok, Instagram, YouTube and Facebook, as the web creates it), `+launch` (`--yes`; the dry run shows `launchability`), `+pause`, `+resume`, `+complete` (`--yes`), `+archive` (`--yes`), `+restore`, `+rename`.
+- Setup: `ugc campaign-settings +update` (approval and join mode, budget cap, post grouping, Format mode, platforms, Discord onboarding, `--settings-json` for languages, countries, stay/warmup/trial rules, content intake and the apply form, `--platform-pay-rules-json`; the whole settings object is written back with only those fields changed), `ugc campaign-staff +set` (PMs and OPs), `ugc delivery-target +create/+update/+delete`, `ugc contract-template +set` (default or custom; the dry run returns the filled preview), `ugc payscale +create/+update/+delete`, `ugc pay-rate +create/+update/+delete` (the dry run prices a video under the rate), `ugc discord-server +set/+initialize/+remove`, `ugc dm-rule +create/+update`.
+- Formats (脚本, `brief`): `ugc brief-library +list/+get/+create/+update/+archive/+copy` for the organization library, and `ugc brief +create/+link/+unlink/+copy` inside a Campaign. Creates send an idempotency key and return it.
+- UGC personas: `ugc persona +list/+create/+update/+delete` (not the `ai-slideshow` personas).
+- The campaign-monitor Skill gains `references/ugc-campaign-setup.md`.
+
+### Settings and account housekeeping (coverage batch 6)
+
+New commands over the routes the web app already calls. Each addresses the organization only (`X-Organization-Id`); the server decides who may run it.
+
+- `artifacts +list` / `artifacts +get`: list the organization's artifacts (page, search, `--all`) and read one (Markdown or download URL). Any organization role.
+- `media collection +list` / `+get` / `+list-media`: the organization's media collections and the media in one. Any organization role.
+- `media collection +update` (rename) and `+add` (up to 100 media; already-present media are skipped): owner, admin or operator.
+- `media collection +delete` and `+remove` (media out of a collection) are destructive: `--dry-run` reads the collection and writes nothing, `--yes` runs. `+remove` reports `data.removed` and `data.failed` per media.
+- `social-account tag +set` / `+add` / `+remove`: change an account's organization tags; `--dry-run` shows before and after. `+add` / `+remove` read and write back the full set (no server version check). Owner, admin or operator.
+- `ai-slideshow cta-target +list` / `+create` / `+update` (staff only on the server) and `+retire` (owner, admin or operator; needs `--yes`): a product's CTA targets.
+
+Not added, because the API refuses an API key or needs a workspace the CLI never sends: organization members (invite, role, Campaign scope, removal), partner organizations, Campaign and account shares, the organization signature (all signed-in session only); social account sync and unbinding, scheduled-item approval, failed-publish retry, AI image post review, and creating a media collection (workspace required). The API has no artifact delete.
+
+### Boards, client reports, broadcasts and reminders (coverage batch 5)
+
+The writes the web makes, through the same routes.
+
+- New `analytics` domain. `analytics board +create` makes a multi-Campaign board in the selected organization (1 to 10 Campaigns of one type, `mixed` for UGC and tracking together, optional opening filters); `+update` renames it or changes its filters (dates, platform, post scope, accounts, thresholds, metrics, chart mode; only the ones passed); `+set-source` replaces its Campaigns; `+delete` deletes it (`--yes`). The public share link stays in the browser: the server opens and closes it for a signed-in person only.
+- `ugc client-report`: `+create` (generate the daily, weekly, monthly or wrap-up report of a date's period), `+update` (title or Markdown, guarded by the report revision), `+regenerate`, `+refresh` (`--dry-run` returns the server's proposed figure changes; `--keep-change` keeps one), `+approve`, `+skip --reason`, and `+request-review` / `+send` (`--test` to your own chat with Mel), which post to Feishu and take `--yes`. Actions carry the report revision, the settings version and an idempotency key per revision, so a rerun never sends twice. `ugc client-report-config +update` changes which reports run, their times, weekly day, timezone, data scope, language, client and internal groups, owner and reviewer (guarded by the settings version). These routes name the operator organization `agency_workspace_id`; the CLI sends the organization id there.
+- `ugc broadcast`: `+audience`, `+list`, `+get`; `+create` and `+update` write a draft (all or some private channels, direct messages, public channels, personas); `+send`, `+schedule`, `+retry`, `+withdraw` and `+discard` take `--yes`; `+unschedule`. Files are attached in the browser.
+- `ugc reminder`: `+get`, `+update` (the Campaign's own reminder policy; `inherit` falls back to the organization's; guarded by `expected_updated_at`), and for MuseOn staff `+test` (`--yes`) and `+subscribe`. `ugc reminder-delegation +create` / `+cancel` (`--yes`, staff). `ugc auto-nudge +get` / `+update` (`--yes`): which creator checks trigger an automatic Discord nudge, on which days and at what time; `--off` stops it.
+- Commands that send something or cannot be undone take `--yes`; without it they return the same preview as `--dry-run` (what would be sent, to whom, and anything blocking it) instead of failing, so the Agent can show the user before asking.
+
 ## 1.0.1
 
 Know which version runs and how to upgrade it.

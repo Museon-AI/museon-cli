@@ -41,6 +41,10 @@ EXPECTED = {
     "publish-create-schedule",
     "publish-update-schedule",
     "publish-delete-schedule",
+    "cta-target-list",
+    "cta-target-create",
+    "cta-target-update",
+    "cta-target-retire",
 }
 
 

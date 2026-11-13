@@ -20,6 +20,9 @@ RETAINED = {
     "get-profile-edit",
     "bulk-generate-avatars",
     "get-avatar-generation",
+    "tag-set",
+    "tag-add",
+    "tag-remove",
 }
 
 REMOVED = {
@@ -45,7 +48,7 @@ REMOVED = {
 
 def test_social_account_exposes_only_the_retained_product_surface() -> None:
     schema = schema_payload("social-account")
-    shortcuts = {item["shortcut"].removeprefix("+") for item in schema["commands"]}
+    shortcuts = {item["name"].removeprefix("social-account.") for item in schema["commands"]}
     executors = {
         name.removeprefix("social-account.")
         for name in command_executors()

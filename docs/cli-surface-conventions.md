@@ -63,7 +63,12 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
   confirmation step of its own). Its dry run also skips the `--yes` gate.
 - `destructive` commands set `requires_confirmation` and demand `--yes`;
   without it the CLI returns `{"ok": false, "reason": "confirmation_required"}`.
-  Agents must confirm with the user, then retry with `--yes`.
+  Agents must confirm with the user, then retry with `--yes`. The board, client
+  report, broadcast and reminder commands (`analytics`, `ugc client-report`,
+  `ugc broadcast`, `ugc reminder`, `ugc auto-nudge`) read the server for their
+  preview, so without `--yes` they return that preview (`data.dry_run: true`)
+  instead of `confirmation_required`; a send or other outbound action there
+  also takes `--yes`.
 - Provider identity, model selection, credentials, storage buckets, queue names,
   and other service implementation controls are server-owned. They must not
   appear as public flags or schema fields, and structured arguments that try to
