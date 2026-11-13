@@ -1,6 +1,6 @@
 ---
 name: museon-content-workflow-campaign-monitor
-description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; create, launch and set up UGC Campaigns; manage Formats (briefs), personas, brief assignments and creative brief links; build analytics boards; generate and send client reports; broadcast to creators; set reminders and automatic nudges; run a UGC campaign day to day: tasks, approving and removing creators, messages and nudges, content review and counting, recruitment links and invitations."
+description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; create, launch and set up UGC Campaigns; manage Formats (briefs), personas, brief assignments and creative brief links; build analytics boards; generate and send client reports; broadcast to creators; set reminders and automatic nudges; run a UGC campaign day to day: tasks, approving and removing creators, messages and nudges, content review and counting, recruitment links and invitations.; read tasks, Campaign setup, creator conversations, creators, client reports, boards and organization members."
 metadata:
   requires:
     bins: ["museoncli"]
@@ -68,7 +68,19 @@ before the report's local day. Missing observations remain null.
 
 ## Reading what the Dashboard shows
 
-The resource commands (`campaign`, `video`, `roster`, `format`, `report`, `audience`, `settlement`, `enrollment`, `agency-campaign` and the rest) read the same figures as the web Campaign Dashboard, through the same routes, so the login sees exactly what it sees in the browser. A Brand member reads the Brand View; the Agency team also reads settlement, payments, operations, activity and audience. A refusal answers `not_found` (or `forbidden` for Agency-wide reads): report that the login cannot see it, never retry under another identity. Read [dashboard.md](references/dashboard.md) for the command per tab.
+The resource commands (`campaign`, `video`, `roster`, `format`, `report`, `audience`, `settlement`, `enrollment`, `agency-campaign` and the rest) read the same figures as the web Campaign Dashboard, through the same routes, so the login sees exactly what it sees in the browser, in the organization it acts in. Everyone who can see a Campaign reads its figures; the Campaign's team (owner, admin, its operators, or a share's operator tier) also reads settlement, payouts, enrollments and creator checks; the owning organization's team alone reads assignments, the activity log, the period audience, Agency analytics and payments. A refusal answers `not_found`: report that the login cannot see it, never retry under another identity. Read [dashboard.md](references/dashboard.md) for the command per tab.
+
+## Reading the rest of the organization's work (`ugc`, `analytics`, `organization`)
+
+Tasks, a Campaign's setup, creator conversations, the creator directory, client reports, analytics boards and the organization's members and billing each have read commands that call the web page's own route. Read [organization-reads.md](references/organization-reads.md) for the command per page and who may read it.
+
+| Situation | Start with |
+| --- | --- |
+| What needs doing today | `museoncli ugc task-summary +get`, then `museoncli ugc task +list --queue <queue> --actor operator` |
+| How a Campaign is configured (budget, pricing, approval, contract, staff, Discord, DM rules, targets) | `museoncli ugc campaign-setup +get --campaign-id <id>` |
+| The conversation with one creator | `museoncli ugc message +list --enrollment-id <id>` |
+| Analytics boards and their figures | `museoncli analytics board +list`, `analytics board +get-data --id <id>` |
+| Who is in the organization, with which role | `museoncli organization member +list` |
 
 ## Editing UGC briefs and assignments (`ugc`)
 

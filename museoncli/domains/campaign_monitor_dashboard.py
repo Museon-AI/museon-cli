@@ -1,15 +1,18 @@
 """Campaign Dashboard reads: the same API routes the Museon web Dashboard reads.
 
-Each command calls the route the Agency workbench or the Brand View calls for the
-same figures, so what a login may read is decided by the server exactly as it is
-in the browser: a Brand member reads the Brand View's figures, the Agency team
-also reads settlement, activity, operations and audience, and a share-only or
-unrelated caller reads nothing. A refusal is the server's ``not_found``.
+Each command calls the route the web calls for the same figures, so what a login
+may read is decided by the server exactly as it is in the browser, in whichever
+organization the command acts in: the Campaign's own organization by role (owner,
+admin, the Campaign's operators, members read figures only), a Campaign shared in by
+the share's tier (the operator tier also reads settlement, payouts, enrollments and
+creator checks), and an unrelated caller nothing. A refusal is the server's
+``not_found``.
 
 ``--id`` is the campaign as ``campaign-monitor +list`` returns it (its monitor
 collection). Routes keyed by the UGC campaign resolve it first with one read of
-``/ugc/collections/{id}/campaign``; Agency-wide routes read the caller's Agency
-organization from ``/ugc/agency/me``.
+``/ugc/collections/{id}/campaign``; organization-wide routes are addressed by the
+organization the command acts in (``X-Organization-Id``), or without one by the
+caller's operator organization from ``/ugc/agency/me``.
 """
 
 from __future__ import annotations
@@ -182,9 +185,17 @@ async def _resolve(
             raise RuntimeError("not_found: no UGC campaign stands for this campaign id")
         return {"collection_id": arguments["id"], "campaign_id": campaign_id}
     if target == "agency":
+        # The organization the command acts in, as the web addresses its own: the server
+        # decides what the caller reaches there (a brand organization's own Campaigns and
+        # those shared into it, or the operator organization's).
+        if ctx.organization_id:
+            return {"agency_id": ctx.organization_id}
         view = await ctx.api_data_v2(ctx.cfg, "GET", "/ugc/agency/me")
         if not isinstance(view, dict) or not view.get("enabled") or not view.get("organization_id"):
-            raise RuntimeError("forbidden: this login is not on an Agency team")
+            raise RuntimeError(
+                "missing_organization: select one with `museoncli org select` or pass "
+                "--organization-id"
+            )
         return {"agency_id": view["organization_id"]}
     # The payments routes read the organization from X-Organization-Id alone.
     return {}
@@ -504,8 +515,9 @@ def specs() -> list[CommandSpec]:
                 },
             ),
             summary=(
-                "List the organization's creator payments, as the Agency Payments module does. "
-                "Agency team only."
+                "List the organization's creator payments, as the Payments page does. The "
+                "operating organization's team (owner, admin, operators on their Campaigns) "
+                "only, as on the web."
             ),
             example="museoncli campaign-monitor payment +list --bucket owed",
             paging="cursor",
@@ -523,8 +535,8 @@ def specs() -> list[CommandSpec]:
                 },
             ),
             summary=(
-                "Read the organization's payment totals, as the Agency Payments header shows them. "
-                "Agency team only."
+                "Read the organization's payment totals, as the Payments header shows them. The "
+                "operating organization's team only, as on the web."
             ),
             example="museoncli campaign-monitor payment-summary +get",
         ),
@@ -551,7 +563,8 @@ def specs() -> list[CommandSpec]:
             ),
             summary=(
                 "Read a UGC campaign's settlement for a period, as its Settlement tab does: every "
-                "creator's figures, or one creator's lines with --creator-id. Agency team only."
+                "creator's figures, or one creator's lines with --creator-id. The Campaign's "
+                "team: owner, admin and its operators, or a share's operator tier."
             ),
             example=(
                 "museoncli campaign-monitor settlement +get --id <campaign_id> "
@@ -565,7 +578,10 @@ def specs() -> list[CommandSpec]:
             "campaign",
             {"status": enum("pending", "confirmed", "approved", "rejected")},
             lambda a: Route(campaign + "/payouts", {"status": a.get("status")}),
-            summary="List a UGC campaign's settled payouts and their lines. Agency team only.",
+            summary=(
+                "List a UGC campaign's settled payouts and their lines. The Campaign's team: "
+                "owner, admin and its operators, or a share's operator tier."
+            ),
             example="museoncli campaign-monitor payout +list --id <campaign_id> --status confirmed",
         ),
         _read(
@@ -574,7 +590,10 @@ def specs() -> list[CommandSpec]:
             "campaign",
             {"search": {**S, "description": "Only changes to creators whose name contains this."}},
             lambda a: Route(campaign + "/activity", {"q": a.get("search")}),
-            summary="List a UGC campaign's activity log, newest first. Agency team only.",
+            summary=(
+                "List a UGC campaign's activity log, newest first. The owning organization's "
+                "team only (a share does not open it, as on the web)."
+            ),
             example="museoncli campaign-monitor activity +list --id <campaign_id>",
             paging="cursor",
         ),
@@ -607,7 +626,8 @@ def specs() -> list[CommandSpec]:
             ),
             summary=(
                 "List a UGC campaign's enrollments with their stage, accounts, contract and Discord "
-                "state, as the Operations tab does. Agency team only."
+                "state, as the Operations tab does. The Campaign's team: owner, admin and its "
+                "operators, or a share's operator tier."
             ),
             example="museoncli campaign-monitor enrollment +list --id <campaign_id> --status participating",
             paging="cursor",
@@ -618,7 +638,10 @@ def specs() -> list[CommandSpec]:
             "campaign",
             {"status": enum("assigned", "in-progress", "delivered", "withdrawn")},
             lambda a: Route(campaign + "/assignments", {"status": a.get("status")}),
-            summary="List a UGC campaign's brief assignments and what is due. Agency team only.",
+            summary=(
+                "List a UGC campaign's brief assignments and what is due. The owning "
+                "organization's team only (a share does not open it, as on the web)."
+            ),
             example="museoncli campaign-monitor assignment +list --id <campaign_id> --status assigned",
             paging="cursor",
         ),
@@ -630,7 +653,7 @@ def specs() -> list[CommandSpec]:
             lambda a: Route(campaign + "/creator-checks/summary", {}),
             summary=(
                 "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, "
-                "quiet, not healthy. Agency team only."
+                "quiet, not healthy. The Campaign's team, or a share's operator tier."
             ),
             example="museoncli campaign-monitor creator-check +get --id <campaign_id>",
         ),
@@ -640,7 +663,10 @@ def specs() -> list[CommandSpec]:
             "campaign",
             {"kind": enum("cant-track", "not-set-up", "not-in-discord", "quiet", "not-healthy")},
             lambda a: Route(campaign + "/creator-checks", {"kind": a["kind"]}),
-            summary="List the creators one check holds for. Agency team only.",
+            summary=(
+                "List the creators one check holds for. The Campaign's team, or a share's "
+                "operator tier."
+            ),
             example="museoncli campaign-monitor creator-check +list --id <campaign_id> --kind quiet",
             required=("kind",),
             paging="cursor",
@@ -670,8 +696,9 @@ def specs() -> list[CommandSpec]:
                 },
             ),
             summary=(
-                "List every campaign the Agency runs across its Brands, or their delivery progress "
-                "with --with-progress. Agency team only."
+                "List the organization's Campaigns, and those shared into it, or their delivery "
+                "progress with --with-progress, as the Campaigns page does. Every member of the "
+                "organization; an operator limited to chosen Campaigns sees those."
             ),
             example="museoncli campaign-monitor agency-campaign +list --campaign-type ugc",
             paging="cursor",
@@ -693,8 +720,8 @@ def specs() -> list[CommandSpec]:
                 {**_window(a), "date_basis": a.get("date_basis"), "link_status": _approved(a)},
             ),
             summary=(
-                "Read the Agency's analytics over all its UGC campaigns: views, engagement, creators, "
-                "posts and spend. Agency team only."
+                "Read the organization's analytics over all its UGC campaigns: views, engagement, "
+                "creators, posts and spend. The operating organization's team only, as on the web."
             ),
             example="museoncli campaign-monitor agency-analytics +get --date-from 2026-10-01 --date-to 2026-10-28",
         ),

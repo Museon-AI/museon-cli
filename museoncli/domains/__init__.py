@@ -62,6 +62,13 @@ from museoncli.domains import (
     social_account_sync,
     ai_slideshow_review,
     ai_slideshow_publish_actions,
+    ugc_tasks,
+    ugc_campaign_setup,
+    ugc_conversations,
+    ugc_creators,
+    ugc_client_reports,
+    analytics_boards,
+    organization_settings,
 )
 
 
@@ -103,6 +110,13 @@ _DOMAIN_MODULES = (
     social_account_sync,
     ai_slideshow_review,
     ai_slideshow_publish_actions,
+    ugc_tasks,
+    ugc_campaign_setup,
+    ugc_conversations,
+    ugc_creators,
+    ugc_client_reports,
+    analytics_boards,
+    organization_settings,
 )
 
 

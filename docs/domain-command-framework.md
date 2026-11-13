@@ -56,7 +56,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-472 commands across 16 domains (source of truth: `museoncli schema`).
+496 commands across 17 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -404,17 +404,17 @@ The tables below are generated — edit code, then run
 | `campaign-monitor report +get` | read | — | — | direct | Read one Analytics tab widget over a date window: cumulative views, content tiers or creator countries. Period-over-period core metrics are +get-period-performance. |
 | `campaign-monitor creator-tag +list` | read | — | — | direct | List the creator tags set on a campaign's accounts. |
 | `campaign-monitor audience +get` | read | — | — | direct | Read a campaign's audience: by day as the trend tooltip shows it, or over the period. |
-| `campaign-monitor payment +list` | read | — | — | direct | List the organization's creator payments, as the Agency Payments module does. Agency team only. |
-| `campaign-monitor payment-summary +get` | read | — | — | direct | Read the organization's payment totals, as the Agency Payments header shows them. Agency team only. |
-| `campaign-monitor settlement +get` | read | — | — | direct | Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. Agency team only. |
-| `campaign-monitor payout +list` | read | — | — | direct | List a UGC campaign's settled payouts and their lines. Agency team only. |
-| `campaign-monitor activity +list` | read | — | — | direct | List a UGC campaign's activity log, newest first. Agency team only. |
-| `campaign-monitor enrollment +list` | read | — | — | direct | List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. Agency team only. |
-| `campaign-monitor assignment +list` | read | — | — | direct | List a UGC campaign's brief assignments and what is due. Agency team only. |
-| `campaign-monitor creator-check +get` | read | — | — | direct | Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. Agency team only. |
-| `campaign-monitor creator-check +list` | read | — | — | direct | List the creators one check holds for. Agency team only. |
-| `campaign-monitor agency-campaign +list` | read | — | — | direct | List every campaign the Agency runs across its Brands, or their delivery progress with --with-progress. Agency team only. |
-| `campaign-monitor agency-analytics +get` | read | — | — | direct | Read the Agency's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. Agency team only. |
+| `campaign-monitor payment +list` | read | — | — | direct | List the organization's creator payments, as the Payments page does. The operating organization's team (owner, admin, operators on their Campaigns) only, as on the web. |
+| `campaign-monitor payment-summary +get` | read | — | — | direct | Read the organization's payment totals, as the Payments header shows them. The operating organization's team only, as on the web. |
+| `campaign-monitor settlement +get` | read | — | — | direct | Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. The Campaign's team: owner, admin and its operators, or a share's operator tier. |
+| `campaign-monitor payout +list` | read | — | — | direct | List a UGC campaign's settled payouts and their lines. The Campaign's team: owner, admin and its operators, or a share's operator tier. |
+| `campaign-monitor activity +list` | read | — | — | direct | List a UGC campaign's activity log, newest first. The owning organization's team only (a share does not open it, as on the web). |
+| `campaign-monitor enrollment +list` | read | — | — | direct | List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. The Campaign's team: owner, admin and its operators, or a share's operator tier. |
+| `campaign-monitor assignment +list` | read | — | — | direct | List a UGC campaign's brief assignments and what is due. The owning organization's team only (a share does not open it, as on the web). |
+| `campaign-monitor creator-check +get` | read | — | — | direct | Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. The Campaign's team, or a share's operator tier. |
+| `campaign-monitor creator-check +list` | read | — | — | direct | List the creators one check holds for. The Campaign's team, or a share's operator tier. |
+| `campaign-monitor agency-campaign +list` | read | — | — | direct | List the organization's Campaigns, and those shared into it, or their delivery progress with --with-progress, as the Campaigns page does. Every member of the organization; an operator limited to chosen Campaigns sees those. |
+| `campaign-monitor agency-analytics +get` | read | — | — | direct | Read the organization's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. The operating organization's team only, as on the web. |
 
 ### agentic-campaign
 
@@ -566,6 +566,25 @@ The tables below are generated — edit code, then run
 | `ugc client-report +skip` | write | yes | — | direct | Skip a client report (not sent for this period), with the reason. --dry-run shows the report without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused. |
 | `ugc client-report +send` | write | yes | `--yes` | direct | Send an approved client report to the client's group, or with --test to your own chat with Mel only. Without --yes it is refused with a preview of the report, where it would go and anything blocking it. Sending the same revision again does not send twice. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused. |
 | `ugc client-report-config +update` | write | yes | — | direct | Change a Campaign's client report settings: which reports run (--enable/--disable daily, weekly), when they are generated and due, the weekly day, timezone, data scope, language, the client and internal Feishu groups, owner and reviewer. Settings not passed keep their value; the write fails if someone saved since your read. --dry-run returns the changes without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused. |
+| `ugc task +list` | read | — | — | direct | List one queue of the organization's tasks, as the Tasks page shows it: media review, onboarding, creators, posts, viral, invites, client reports, or all. Each row carries its kind, status, Campaign, subject, due time and the actions the caller may take. Owner/admin see every Campaign's tasks, an operator their assigned Campaigns', a member reads only. |
+| `ugc task-summary +get` | read | — | — | direct | Count the organization's open tasks per queue, as the Tasks page's tabs show them, with what waits on you versus a creator or the system. Same visibility as task +list. |
+| `ugc task +get` | read | — | — | direct | Read one task as its drawer shows it: subject, status, assignee, due time, available actions, and its events (comments, claims, actions taken), oldest first. --no-with-events skips the events. |
+| `ugc campaign-settings +get` | read | — | — | direct | Read a Campaign's setup as its setup page does: type, status, settings (approval mode, platforms, budget cap, language), product and promotion context, readiness, confirmed steps and briefs; for the Campaign's team also payscales, pay defaults and the contract template. Anyone who may see the Campaign reads it. |
+| `ugc campaign-staff +list` | read | — | — | direct | List a Campaign's staff (PM / OP) with their roles. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it. |
+| `ugc delivery-target +list` | read | — | — | direct | List a Campaign's delivery targets (posts, videos or views per period) and their progress. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it. |
+| `ugc payscale +list` | read | — | — | direct | List a Campaign's payscales with their rates (base fee, view tiers, bonuses), in the order the setup page shows them. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it. |
+| `ugc contract-template +get` | read | — | — | direct | Read a Campaign's contract template: its text, variables and signing parties. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it. |
+| `ugc discord-server +get` | read | — | — | direct | Read the Discord server a Campaign is linked to and the link's state. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it. |
+| `ugc dm-rule +list` | read | — | — | direct | List a Campaign's DM auto-reply rules (keyword, reply, link). Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it. |
+| `ugc dm-automation +list` | read | — | — | direct | List a Campaign's DM automations and whether each is on. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it. |
+| `ugc campaign-setup +get` | read | — | — | direct | Read everything a Campaign's setup page reads in one call: settings, staff, delivery targets, payscales, contract template, Discord server and DM rules / automations (--section narrows it). A section the caller may not read is listed under data.unavailable with its HTTP status instead of failing the command: members read settings only. |
+| `ugc message +list` | read | — | — | direct | Read the conversation with one enrolled creator, newest first, as the Operations tab's thread shows it: messages both ways, cards and their delivery state. Owner/admin and the Campaign's operators; members cannot read it. |
+| `ugc enrollment +get-contract` | read | — | — | direct | Read one enrollment's contract: its state (draft, sent, signed, terminated), rendered terms and signatures. Owner/admin and the Campaign's operators; members cannot read it. |
+| `ugc creator +list` | read | — | — | direct | List the creators the organization works with across its Campaigns, newest first: name, accounts and Campaigns. Operating organization's owner, admin and operators (an operator sees their assigned Campaigns' creators). |
+| `ugc creator +get` | read | — | — | direct | Read one creator of the organization: profile, accounts and the Campaigns they are in. Same visibility as creator +list. |
+| `ugc client-report +list` | read | — | — | direct | List a Campaign's generated client reports (daily and weekly), newest first: type, title, status (draft, in review, ready, sent, skipped), period, revision and due time. The operating organization's owner, admin and the Campaign's operators; a shared Campaign's partner cannot read them. |
+| `ugc client-report +get` | read | — | — | direct | Read one client report in full: its Markdown, language variants, data scope, history and the actions the caller may take. Same visibility as client-report +list. |
+| `ugc client-report-config +get` | read | — | — | direct | Read a Campaign's client report settings: which reports are on, the client and internal groups they go to, schedule and language, with the settings' version that a settings write needs. Same visibility as client-report +list. |
 
 ### skills
 
@@ -609,6 +628,16 @@ The tables below are generated — edit code, then run
 | `analytics board +update` | write | yes | — | direct | Rename a board or change the filters it opens with (dates, platform, post scope, accounts, thresholds, metrics, chart mode); filters not passed keep their value. --dry-run returns the changes without writing. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused. |
 | `analytics board +set-source` | write | yes | — | direct | Replace the Campaigns a board reads (its data source) and their type. --dry-run returns the Campaigns added and removed without writing. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused. |
 | `analytics board +delete` | destructive | yes | `--yes` | direct | Delete a board (its share link ends with it); the Campaigns and their data stay. Without --yes it is refused with a preview of the board it would delete. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused. |
+| `analytics board +list` | read | — | — | direct | List the organization's analytics boards and those shared into it: name, type (ugc, tracking or mixed), Campaigns and saved filters. Every member reads them. |
+| `analytics board +get` | read | — | — | direct | Read one analytics board: its Campaigns (with each one's collection and whether the caller can still read it) and saved filters (dates, platform, post scope, accounts, thresholds). |
+| `analytics board +get-data` | read | — | — | direct | Read a board's figures over all its Campaigns, as the board page does: daily trends (default), the period's core metrics, the posts, or the creators. Uses the board's saved dates, platform and post scope unless the flags override them. |
+
+### organization
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `organization member +list` | read | — | — | direct | List the organization's members with their role (owner, admin, operator, member) and Campaign scope (all or chosen Campaigns). Owner, admin and operator read it. |
+| `organization billing +get` | read | — | — | direct | Read the organization's billing overview: plan and subscription, AI credit balance and usage. Owner and admin only. |
 
 <!-- END GENERATED COMMANDS -->
 

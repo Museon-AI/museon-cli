@@ -4,6 +4,37 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
+### Read what the web shows (coverage batch 1)
+
+New read commands, each calling the route the web page already calls, addressed by the organization (`X-Organization-Id`); what a login may read is the server's decision, as in the browser. Agent Skill: `museon-content-workflow-campaign-monitor` → `references/organization-reads.md`.
+
+| Command | Route | Who reads it |
+| --- | --- | --- |
+| `ugc task +list` | `GET /api/v2/ugc/agency/{org}/tasks` | owner/admin every Campaign's tasks, operator assigned Campaigns', member reads |
+| `ugc task-summary +get` | `GET /api/v2/ugc/agency/{org}/tasks/summary` | same |
+| `ugc task +get` | `GET /api/v2/ugc/tasks/{id}` and `.../events` | same |
+| `ugc campaign-settings +get` | `GET /api/v2/ugc/campaigns/{id}` | anyone who sees the Campaign (payscales and contract for its team) |
+| `ugc campaign-staff +list` | `GET .../campaigns/{id}/staff` | owner, admin, the Campaign's operators |
+| `ugc delivery-target +list` | `GET .../campaigns/{id}/targets` | same |
+| `ugc payscale +list` | `GET .../campaigns/{id}/payscales` | same |
+| `ugc contract-template +get` | `GET .../campaigns/{id}/contract-template` | same |
+| `ugc discord-server +get` | `GET .../campaigns/{id}/discord/guild-link` | same |
+| `ugc dm-rule +list` / `ugc dm-automation +list` | `GET .../campaigns/{id}/dm-rules`, `/dm-automations` | same |
+| `ugc campaign-setup +get` | all of the above at once; unreadable sections under `unavailable` | per section |
+| `ugc message +list` | `GET /api/v2/ugc/enrollments/{id}/conversation` | owner, admin, the Campaign's operators |
+| `ugc enrollment +get-contract` | `GET /api/v2/ugc/enrollments/{id}/contract` | same |
+| `ugc creator +list` / `+get` | `GET /api/v2/ugc/agency/{org}/creators[/{id}]` | operating organization's owner, admin, operators |
+| `ugc client-report +list` / `+get`, `ugc client-report-config +get` | `GET /api/v2/ugc/agency/campaigns/{id}/client-reports` | operating organization's owner, admin, the Campaign's operators |
+| `analytics board +list` / `+get` | `GET /api/v1/analytics-dashboards[/{id}]` | every member |
+| `analytics board +get-data` | the board's `/monitor-collection-sets/...` reads (trends, core metrics, content, creators) | every member |
+| `organization member +list` | `GET /api/v1/organizations/{org}/members` | owner, admin, operator |
+| `organization billing +get` | `GET /api/v1/billing/organizations/{org}/overview` | owner, admin |
+
+- New domains `analytics` and `organization`.
+- `campaign-monitor agency-campaign +list` and `agency-analytics +get` now read the organization the command acts in instead of always the operator organization: a brand organization lists its own Campaigns and those shared into it, as the web's Campaigns page does. Without a selected organization they still read the caller's operator organization; with neither they fail with `missing_organization` (was `forbidden`).
+- The `campaign-monitor` settlement, payout, enrollment and creator-check commands work for a brand organization on a Campaign shared into it at the operator tier, as the web shows them (needs the server change of museon D-114). Their descriptions now name who reads them instead of "Agency team only".
+- Not available to the CLI because the server serves them to a signed-in browser only: the team's work log, the creator directory's insights and a creator's history, partners, Campaign and account shares, and the organization's signature.
+
 ### Organization-addressed object routes (coverage batch 7)
 
 The server now resolves the workspace from the organization (`X-Organization-Id`) for these routes, so the CLI covers what batch 6 had to leave out. No workspace is sent; bodies that only held it are `{}`.

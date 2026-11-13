@@ -2727,6 +2727,87 @@
           "summary": "Delete a board (its share link ends with it); the Campaigns and their data stay. Without --yes it is refused with a preview of the board it would delete. Needs edit rights on the board (owner or admin; an operator who holds its Campaigns); a member is refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "analytics.board-list",
+          "cli": "museoncli analytics board +list",
+          "domain": "analytics",
+          "execution": "direct",
+          "name": "analytics.board-list",
+          "requires_confirmation": false,
+          "resource": "board",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the organization's analytics boards and those shared into it: name, type (ugc, tracking or mixed), Campaigns and saved filters. Every member reads them.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "analytics.board-get",
+          "cli": "museoncli analytics board +get",
+          "domain": "analytics",
+          "execution": "direct",
+          "name": "analytics.board-get",
+          "requires_confirmation": false,
+          "resource": "board",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one analytics board: its Campaigns (with each one's collection and whether the caller can still read it) and saved filters (dates, platform, post scope, accounts, thresholds).",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "analytics.board-get-data",
+          "cli": "museoncli analytics board +get-data",
+          "domain": "analytics",
+          "execution": "direct",
+          "name": "analytics.board-get-data",
+          "requires_confirmation": false,
+          "resource": "board",
+          "risk_level": "read",
+          "shortcut": "+get-data",
+          "stability": "stable",
+          "summary": "Read a board's figures over all its Campaigns, as the board page does: daily trends (default), the period's core metrics, the posts, or the creators. Uses the board's saved dates, platform and post scope unless the flags override them.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
         }
       ],
       "artifacts": [
@@ -5046,7 +5127,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List the organization's creator payments, as the Agency Payments module does. Agency team only.",
+          "summary": "List the organization's creator payments, as the Payments page does. The operating organization's team (owner, admin, operators on their Campaigns) only, as on the web.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5117,7 +5198,7 @@
           "risk_level": "read",
           "shortcut": "+get",
           "stability": "stable",
-          "summary": "Read the organization's payment totals, as the Agency Payments header shows them. Agency team only.",
+          "summary": "Read the organization's payment totals, as the Payments header shows them. The operating organization's team only, as on the web.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5188,7 +5269,7 @@
           "risk_level": "read",
           "shortcut": "+get",
           "stability": "stable",
-          "summary": "Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. Agency team only.",
+          "summary": "Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. The Campaign's team: owner, admin and its operators, or a share's operator tier.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5259,7 +5340,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List a UGC campaign's settled payouts and their lines. Agency team only.",
+          "summary": "List a UGC campaign's settled payouts and their lines. The Campaign's team: owner, admin and its operators, or a share's operator tier.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5330,7 +5411,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List a UGC campaign's activity log, newest first. Agency team only.",
+          "summary": "List a UGC campaign's activity log, newest first. The owning organization's team only (a share does not open it, as on the web).",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5401,7 +5482,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. Agency team only.",
+          "summary": "List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. The Campaign's team: owner, admin and its operators, or a share's operator tier.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5472,7 +5553,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List a UGC campaign's brief assignments and what is due. Agency team only.",
+          "summary": "List a UGC campaign's brief assignments and what is due. The owning organization's team only (a share does not open it, as on the web).",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5543,7 +5624,7 @@
           "risk_level": "read",
           "shortcut": "+get",
           "stability": "stable",
-          "summary": "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. Agency team only.",
+          "summary": "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. The Campaign's team, or a share's operator tier.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5614,7 +5695,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List the creators one check holds for. Agency team only.",
+          "summary": "List the creators one check holds for. The Campaign's team, or a share's operator tier.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5685,7 +5766,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List every campaign the Agency runs across its Brands, or their delivery progress with --with-progress. Agency team only.",
+          "summary": "List the organization's Campaigns, and those shared into it, or their delivery progress with --with-progress, as the Campaigns page does. Every member of the organization; an operator limited to chosen Campaigns sees those.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5756,7 +5837,7 @@
           "risk_level": "read",
           "shortcut": "+get",
           "stability": "stable",
-          "summary": "Read the Agency's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. Agency team only.",
+          "summary": "Read the organization's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. The operating organization's team only, as on the web.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         }
@@ -11195,6 +11276,62 @@
           "stability": "stable",
           "summary": "Remove up to 100 media from a collection (the media stay in the library). --dry-run reads the collection and removes nothing; then run with --yes. Each media is removed on its own: data.removed and data.failed list the outcome. Needs owner, admin or operator.",
           "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        }
+      ],
+      "organization": [
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "organization.member-list",
+          "cli": "museoncli organization member +list",
+          "domain": "organization",
+          "execution": "direct",
+          "name": "organization.member-list",
+          "requires_confirmation": false,
+          "resource": "member",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the organization's members with their role (owner, admin, operator, member) and Campaign scope (all or chosen Campaigns). Owner, admin and operator read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "organization.billing-get",
+          "cli": "museoncli organization billing +get",
+          "domain": "organization",
+          "execution": "direct",
+          "name": "organization.billing-get",
+          "requires_confirmation": false,
+          "resource": "billing",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read the organization's billing overview: plan and subscription, AI credit balance and usage. Owner and admin only.",
+          "supports_dry_run": false,
           "transport": "agent_cli_api"
         }
       ],
@@ -17041,6 +17178,519 @@
           "summary": "Change a Campaign's client report settings: which reports run (--enable/--disable daily, weekly), when they are generated and due, the weekly day, timezone, data scope, language, the client and internal Feishu groups, owner and reviewer. Settings not passed keep their value; the write fails if someone saved since your read. --dry-run returns the changes without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.task-list",
+          "cli": "museoncli ugc task +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.task-list",
+          "requires_confirmation": false,
+          "resource": "task",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List one queue of the organization's tasks, as the Tasks page shows it: media review, onboarding, creators, posts, viral, invites, client reports, or all. Each row carries its kind, status, Campaign, subject, due time and the actions the caller may take. Owner/admin see every Campaign's tasks, an operator their assigned Campaigns', a member reads only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.task-summary-get",
+          "cli": "museoncli ugc task-summary +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.task-summary-get",
+          "requires_confirmation": false,
+          "resource": "task-summary",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Count the organization's open tasks per queue, as the Tasks page's tabs show them, with what waits on you versus a creator or the system. Same visibility as task +list.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.task-get",
+          "cli": "museoncli ugc task +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.task-get",
+          "requires_confirmation": false,
+          "resource": "task",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one task as its drawer shows it: subject, status, assignee, due time, available actions, and its events (comments, claims, actions taken), oldest first. --no-with-events skips the events.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.campaign-settings-get",
+          "cli": "museoncli ugc campaign-settings +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.campaign-settings-get",
+          "requires_confirmation": false,
+          "resource": "campaign-settings",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read a Campaign's setup as its setup page does: type, status, settings (approval mode, platforms, budget cap, language), product and promotion context, readiness, confirmed steps and briefs; for the Campaign's team also payscales, pay defaults and the contract template. Anyone who may see the Campaign reads it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.campaign-staff-list",
+          "cli": "museoncli ugc campaign-staff +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.campaign-staff-list",
+          "requires_confirmation": false,
+          "resource": "campaign-staff",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a Campaign's staff (PM / OP) with their roles. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.delivery-target-list",
+          "cli": "museoncli ugc delivery-target +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.delivery-target-list",
+          "requires_confirmation": false,
+          "resource": "delivery-target",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a Campaign's delivery targets (posts, videos or views per period) and their progress. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.payscale-list",
+          "cli": "museoncli ugc payscale +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.payscale-list",
+          "requires_confirmation": false,
+          "resource": "payscale",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a Campaign's payscales with their rates (base fee, view tiers, bonuses), in the order the setup page shows them. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.contract-template-get",
+          "cli": "museoncli ugc contract-template +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.contract-template-get",
+          "requires_confirmation": false,
+          "resource": "contract-template",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read a Campaign's contract template: its text, variables and signing parties. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.discord-server-get",
+          "cli": "museoncli ugc discord-server +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.discord-server-get",
+          "requires_confirmation": false,
+          "resource": "discord-server",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read the Discord server a Campaign is linked to and the link's state. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.dm-rule-list",
+          "cli": "museoncli ugc dm-rule +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.dm-rule-list",
+          "requires_confirmation": false,
+          "resource": "dm-rule",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a Campaign's DM auto-reply rules (keyword, reply, link). Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.dm-automation-list",
+          "cli": "museoncli ugc dm-automation +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.dm-automation-list",
+          "requires_confirmation": false,
+          "resource": "dm-automation",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a Campaign's DM automations and whether each is on. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.campaign-setup-get",
+          "cli": "museoncli ugc campaign-setup +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.campaign-setup-get",
+          "requires_confirmation": false,
+          "resource": "campaign-setup",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read everything a Campaign's setup page reads in one call: settings, staff, delivery targets, payscales, contract template, Discord server and DM rules / automations (--section narrows it). A section the caller may not read is listed under data.unavailable with its HTTP status instead of failing the command: members read settings only.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.message-list",
+          "cli": "museoncli ugc message +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.message-list",
+          "requires_confirmation": false,
+          "resource": "message",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "Read the conversation with one enrolled creator, newest first, as the Operations tab's thread shows it: messages both ways, cards and their delivery state. Owner/admin and the Campaign's operators; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.enrollment-get-contract",
+          "cli": "museoncli ugc enrollment +get-contract",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.enrollment-get-contract",
+          "requires_confirmation": false,
+          "resource": "enrollment",
+          "risk_level": "read",
+          "shortcut": "+get-contract",
+          "stability": "stable",
+          "summary": "Read one enrollment's contract: its state (draft, sent, signed, terminated), rendered terms and signatures. Owner/admin and the Campaign's operators; members cannot read it.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.creator-list",
+          "cli": "museoncli ugc creator +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.creator-list",
+          "requires_confirmation": false,
+          "resource": "creator",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the creators the organization works with across its Campaigns, newest first: name, accounts and Campaigns. Operating organization's owner, admin and operators (an operator sees their assigned Campaigns' creators).",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.creator-get",
+          "cli": "museoncli ugc creator +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.creator-get",
+          "requires_confirmation": false,
+          "resource": "creator",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one creator of the organization: profile, accounts and the Campaigns they are in. Same visibility as creator +list.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-list",
+          "cli": "museoncli ugc client-report +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.client-report-list",
+          "requires_confirmation": false,
+          "resource": "client-report",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a Campaign's generated client reports (daily and weekly), newest first: type, title, status (draft, in review, ready, sent, skipped), period, revision and due time. The operating organization's owner, admin and the Campaign's operators; a shared Campaign's partner cannot read them.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-get",
+          "cli": "museoncli ugc client-report +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.client-report-get",
+          "requires_confirmation": false,
+          "resource": "client-report",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one client report in full: its Markdown, language variants, data scope, history and the actions the caller may take. Same visibility as client-report +list.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.client-report-config-get",
+          "cli": "museoncli ugc client-report-config +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.client-report-config-get",
+          "requires_confirmation": false,
+          "resource": "client-report-config",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read a Campaign's client report settings: which reports are on, the client and internal groups they go to, schedule and language, with the settings' version that a settings write needs. Same visibility as client-report +list.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
         }
       ]
     },
@@ -17060,7 +17710,8 @@
       "skills",
       "staff-ops",
       "routines",
-      "analytics"
+      "analytics",
+      "organization"
     ]
   },
   "contract_revision": "1.0.1",
@@ -28747,6 +29398,361 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "analytics.board-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "analytics.board-get",
+      "cli": "museoncli analytics board +get",
+      "domain": "analytics",
+      "examples": [
+        "museoncli analytics board +get --id <board_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Board id from analytics board +list.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "analytics.board-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "board",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one analytics board: its Campaigns (with each one's collection and whether the caller can still read it) and saved filters (dates, platform, post scope, accounts, thresholds).",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "analytics.board-get-data": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "analytics.board-get-data",
+      "cli": "museoncli analytics board +get-data",
+      "domain": "analytics",
+      "examples": [
+        "museoncli analytics board +get-data --id <board_id> --widget core-metrics --date-from 2026-11-01 --date-to 2026-11-12"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "date_from": {
+            "description": "Start day (default: the board's saved one).",
+            "format": "date",
+            "type": "string"
+          },
+          "date_to": {
+            "description": "End day (default: the board's saved one).",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "description": "Board id from analytics board +list.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "description": "Page number, starting at 1.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "description": "Records per page (1-100, default 50).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "platform": {
+            "description": "Only this platform.",
+            "enum": [
+              "tiktok",
+              "instagram",
+              "youtube",
+              "facebook"
+            ],
+            "type": "string"
+          },
+          "scope": {
+            "description": "approved: confirmed posts only; all: also those awaiting review (default: the board's saved scope).",
+            "enum": [
+              "approved",
+              "all"
+            ],
+            "type": "string"
+          },
+          "search": {
+            "description": "content / creators: title, handle or name contains this.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "sort": {
+            "description": "content / creators: a sort the board page offers, e.g. views_desc.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone the days are read in.",
+            "format": "timezone",
+            "type": "string"
+          },
+          "widget": {
+            "description": "What to read (default trends).",
+            "enum": [
+              "trends",
+              "core-metrics",
+              "content",
+              "creators"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "analytics.board-get-data",
+      "output_schema": {
+        "description": "data.board, data.widget, data.collection_ids and data.data (the figures).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "board",
+      "risk_level": "read",
+      "shortcut": "+get-data",
+      "stability": "stable",
+      "summary": "Read a board's figures over all its Campaigns, as the board page does: daily trends (default), the period's core metrics, the posts, or the creators. Uses the board's saved dates, platform and post scope unless the flags override them.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "analytics.board-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "analytics.board-list",
+      "cli": "museoncli analytics board +list",
+      "domain": "analytics",
+      "examples": [
+        "museoncli analytics board +list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "analytics.board-list",
+      "output_schema": {
+        "description": "The boards (a list).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "board",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the organization's analytics boards and those shared into it: name, type (ugc, tracking or mixed), Campaigns and saved filters. Every member reads them.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "analytics.board-set-source": {
       "authorization": {
         "authentication_required": true,
@@ -29992,7 +30998,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List a UGC campaign's activity log, newest first. Agency team only.",
+      "summary": "List a UGC campaign's activity log, newest first. The owning organization's team only (a share does not open it, as on the web).",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -30523,7 +31529,7 @@
       "risk_level": "read",
       "shortcut": "+get",
       "stability": "stable",
-      "summary": "Read the Agency's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. Agency team only.",
+      "summary": "Read the organization's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. The operating organization's team only, as on the web.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -30688,7 +31694,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List every campaign the Agency runs across its Brands, or their delivery progress with --with-progress. Agency team only.",
+      "summary": "List the organization's Campaigns, and those shared into it, or their delivery progress with --with-progress, as the Campaigns page does. Every member of the organization; an operator limited to chosen Campaigns sees those.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -30850,7 +31856,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List a UGC campaign's brief assignments and what is due. Agency team only.",
+      "summary": "List a UGC campaign's brief assignments and what is due. The owning organization's team only (a share does not open it, as on the web).",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -31474,7 +32480,7 @@
       "risk_level": "read",
       "shortcut": "+get",
       "stability": "stable",
-      "summary": "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. Agency team only.",
+      "summary": "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. The Campaign's team, or a share's operator tier.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -31638,7 +32644,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List the creators one check holds for. Agency team only.",
+      "summary": "List the creators one check holds for. The Campaign's team, or a share's operator tier.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -31959,7 +32965,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. Agency team only.",
+      "summary": "List a UGC campaign's enrollments with their stage, accounts, contract and Discord state, as the Operations tab does. The Campaign's team: owner, admin and its operators, or a share's operator tier.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -34640,7 +35646,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List the organization's creator payments, as the Agency Payments module does. Agency team only.",
+      "summary": "List the organization's creator payments, as the Payments page does. The operating organization's team (owner, admin, operators on their Campaigns) only, as on the web.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -34786,7 +35792,7 @@
       "risk_level": "read",
       "shortcut": "+get",
       "stability": "stable",
-      "summary": "Read the organization's payment totals, as the Agency Payments header shows them. Agency team only.",
+      "summary": "Read the organization's payment totals, as the Payments header shows them. The operating organization's team only, as on the web.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -34938,7 +35944,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List a UGC campaign's settled payouts and their lines. Agency team only.",
+      "summary": "List a UGC campaign's settled payouts and their lines. The Campaign's team: owner, admin and its operators, or a share's operator tier.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -35947,7 +36953,7 @@
       "risk_level": "read",
       "shortcut": "+get",
       "stability": "stable",
-      "summary": "Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. Agency team only.",
+      "summary": "Read a UGC campaign's settlement for a period, as its Settlement tab does: every creator's figures, or one creator's lines with --creator-id. The Campaign's team: owner, admin and its operators, or a share's operator tier.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -61798,6 +62804,188 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "organization.billing-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "organization.billing-get",
+      "cli": "museoncli organization billing +get",
+      "domain": "organization",
+      "examples": [
+        "museoncli organization billing +get"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "organization.billing-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "billing",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read the organization's billing overview: plan and subscription, AI credit balance and usage. Owner and admin only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "organization.member-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "organization.member-list",
+      "cli": "museoncli organization member +list",
+      "domain": "organization",
+      "examples": [
+        "museoncli organization member +list"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "organization.member-list",
+      "output_schema": {
+        "description": "The members.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "member",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the organization's members with their role (owner, admin, operator, member) and Campaign scope (all or chosen Campaigns). Owner, admin and operator read it.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "publish.account-list": {
       "authorization": {
         "authentication_required": true,
@@ -75184,6 +76372,105 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.campaign-settings-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.campaign-settings-get",
+      "cli": "museoncli ugc campaign-settings +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc campaign-settings +get --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.campaign-settings-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "campaign-settings",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read a Campaign's setup as its setup page does: type, status, settings (approval mode, platforms, budget cap, language), product and promotion context, readiness, confirmed steps and briefs; for the Campaign's team also payscales, pay defaults and the contract template. Anyone who may see the Campaign reads it.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "ugc.campaign-settings-update": {
       "authorization": {
         "authentication_required": true,
@@ -75378,6 +76665,223 @@
       "stability": "stable",
       "summary": "Change a UGC Campaign's settings as its setup page saves them: the whole settings object is written back with only the passed fields changed (approval and join mode, budget cap, post grouping, Format mode, platforms, Discord onboarding, and via --settings-json languages, countries, stay/warmup/trial rules, content intake and the apply form), plus the publishing-platform pay rule. --dry-run returns the changes and the current settings without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; a brand editor may change only the non-team settings. The server decides.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.campaign-setup-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.campaign-setup-get",
+      "cli": "museoncli ugc campaign-setup +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc campaign-setup +get --campaign-id <campaign_id> --section settings --section payscales"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "section": {
+            "description": "Only these sections (repeat the flag); default all.",
+            "items": {
+              "description": "A section to read.",
+              "enum": [
+                "settings",
+                "staff",
+                "targets",
+                "payscales",
+                "contract-template",
+                "discord",
+                "dm-rules",
+                "dm-automations"
+              ],
+              "type": "string"
+            },
+            "maxItems": 8,
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.campaign-setup-get",
+      "output_schema": {
+        "description": "data.sections (by name), data.unavailable (name -> http_status, code).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "campaign-setup",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read everything a Campaign's setup page reads in one call: settings, staff, delivery targets, payscales, contract template, Discord server and DM rules / automations (--section narrows it). A section the caller may not read is listed under data.unavailable with its HTTP status instead of failing the command: members read settings only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.campaign-staff-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.campaign-staff-list",
+      "cli": "museoncli ugc campaign-staff +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc campaign-staff +list --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.campaign-staff-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "campaign-staff",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a Campaign's staff (PM / OP) with their roles. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "ugc.campaign-staff-set": {
@@ -75629,6 +77133,105 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.client-report-config-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-config-get",
+      "cli": "museoncli ugc client-report-config +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc client-report-config +get --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "Campaign id (ugc campaign +list, or agency-campaign +list's id).",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-config-get",
+      "output_schema": {
+        "description": "data.communication (the settings and their version) and data.capabilities.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report-config",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read a Campaign's client report settings: which reports are on, the client and internal groups they go to, schedule and language, with the settings' version that a settings write needs. Same visibility as client-report +list.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "ugc.client-report-config-update": {
       "authorization": {
         "authentication_required": true,
@@ -75875,6 +77478,221 @@
       "stability": "stable",
       "summary": "Generate a client report now: the daily, weekly, monthly or wrap-up report of the period holding --date, drafted from the Campaign's data (or with your own --title/--markdown). Nothing is sent. Running it again for the same type and date answers with the same report. --dry-run lists the reports that already cover the date. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-get",
+      "cli": "museoncli ugc client-report +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc client-report +get --campaign-id <campaign_id> --report-id <report_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "Campaign id (ugc campaign +list, or agency-campaign +list's id).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "report_id": {
+            "description": "Report id from client-report +list.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "report_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one client report in full: its Markdown, language variants, data scope, history and the actions the caller may take. Same visibility as client-report +list.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.client-report-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.client-report-list",
+      "cli": "museoncli ugc client-report +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc client-report +list --campaign-id <campaign_id> --status ready"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "Campaign id (ugc campaign +list, or agency-campaign +list's id).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only reports in this status.",
+            "enum": [
+              "draft",
+              "in-review",
+              "ready",
+              "sent",
+              "skipped"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.client-report-list",
+      "output_schema": {
+        "description": "Report summaries (items).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "client-report",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a Campaign's generated client reports (daily and weekly), newest first: type, title, status (draft, in review, ready, sent, skipped), period, revision and due time. The operating organization's owner, admin and the Campaign's operators; a shared Campaign's partner cannot read them.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "ugc.client-report-refresh": {
@@ -76598,6 +78416,105 @@
       "stability": "stable",
       "summary": "Edit a client report's title or Markdown body (a new revision; an approved report needs approving again). --dry-run returns the changes without writing. For the operations team of the Campaign (owner, admin, or an operator on it) in the operator organization; others are refused.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.contract-template-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.contract-template-get",
+      "cli": "museoncli ugc contract-template +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc contract-template +get --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.contract-template-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "contract-template",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read a Campaign's contract template: its text, variables and signing parties. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "ugc.contract-template-set": {
@@ -77437,6 +79354,215 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.creator-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.creator-get",
+      "cli": "museoncli ugc creator +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc creator +get --id <creator_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "UGC creator id from creator +list.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.creator-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "creator",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one creator of the organization: profile, accounts and the Campaigns they are in. Same visibility as creator +list.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.creator-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.creator-list",
+      "cli": "museoncli ugc creator +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc creator +list --search maya"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "description": "next_cursor from the previous page.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "page_size": {
+            "description": "Records per page (1-100, default 50).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "description": "Name or listed handle contains this.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "ugc.creator-list",
+      "output_schema": {
+        "description": "A page of creators (items) and next_cursor.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "creator",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the creators the organization works with across its Campaigns, newest first: name, accounts and Campaigns. Operating organization's owner, admin and operators (an operator sees their assigned Campaigns' creators).",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "ugc.delivery-target-create": {
       "authorization": {
         "authentication_required": true,
@@ -77686,6 +79812,105 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.delivery-target-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.delivery-target-list",
+      "cli": "museoncli ugc delivery-target +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc delivery-target +list --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.delivery-target-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "delivery-target",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a Campaign's delivery targets (posts, videos or views per period) and their progress. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "ugc.delivery-target-update": {
       "authorization": {
         "authentication_required": true,
@@ -77837,6 +80062,105 @@
       "stability": "stable",
       "summary": "Change a Campaign's delivery target; figures and dates not passed keep their value, 'none' clears one. --dry-run returns the changes without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.discord-server-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.discord-server-get",
+      "cli": "museoncli ugc discord-server +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc discord-server +get --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.discord-server-get",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "discord-server",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read the Discord server a Campaign is linked to and the link's state. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "ugc.discord-server-initialize": {
@@ -78191,6 +80515,105 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.dm-automation-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.dm-automation-list",
+      "cli": "museoncli ugc dm-automation +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc dm-automation +list --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.dm-automation-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "dm-automation",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a Campaign's DM automations and whether each is on. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "ugc.dm-rule-create": {
       "authorization": {
         "authentication_required": true,
@@ -78386,6 +80809,105 @@
       "stability": "stable",
       "summary": "Create a Campaign's Comment-to-DM rule (one open rule per Campaign): when a comment on a Campaign post matches --keyword (or --any-comment), every eligible Instagram/Facebook account DMs the commenter --dm-message with a --button-title button to --destination-url (https), and may reply publicly. Active by default. --dry-run returns the rule without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Then pass --yes. Role: owner, admin, or an operator on the Campaign; the server decides.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.dm-rule-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.dm-rule-list",
+      "cli": "museoncli ugc dm-rule +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc dm-rule +list --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.dm-rule-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "dm-rule",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a Campaign's DM auto-reply rules (keyword, reply, link). Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "ugc.dm-rule-update": {
@@ -78948,6 +81470,105 @@
       "stability": "stable",
       "summary": "Remind every creator of a UGC campaign a check holds for (every check when --check is left out), skipping those already nudged today. The preview counts the creators per check. Run it with --dry-run (or without --yes, which answers with the same preview), show the user, and rerun with --yes once they agree. Role: owner, admin, or an operator assigned to the Campaign; members cannot message creators.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.enrollment-get-contract": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.enrollment-get-contract",
+      "cli": "museoncli ugc enrollment +get-contract",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc enrollment +get-contract --enrollment-id <enrollment_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "enrollment_id": {
+            "description": "Enrollment id from ugc enrollment +list.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enrollment_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.enrollment-get-contract",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "enrollment",
+      "risk_level": "read",
+      "shortcut": "+get-contract",
+      "stability": "stable",
+      "summary": "Read one enrollment's contract: its state (draft, sent, signed, terminated), rendered terms and signatures. Owner/admin and the Campaign's operators; members cannot read it.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "ugc.enrollment-graduate-trial": {
@@ -80869,6 +83490,117 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.message-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.message-list",
+      "cli": "museoncli ugc message +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc message +list --enrollment-id <enrollment_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "cursor": {
+            "description": "next_cursor from the previous page.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "enrollment_id": {
+            "description": "Enrollment id from ugc enrollment +list.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page_size": {
+            "description": "Records per page (1-100, default 50).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enrollment_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.message-list",
+      "output_schema": {
+        "description": "A page of the conversation (items) and next_cursor.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "message",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "Read the conversation with one enrolled creator, newest first, as the Operations tab's thread shows it: messages both ways, cards and their delivery state. Owner/admin and the Campaign's operators; members cannot read it.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "ugc.message-resend-card": {
       "authorization": {
         "authentication_required": true,
@@ -81807,6 +84539,105 @@
       "stability": "stable",
       "summary": "Delete a custom payscale nobody is on. --dry-run returns it without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Then pass --yes. Role: owner, admin, or an operator on the Campaign; the server decides.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.payscale-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.payscale-list",
+      "cli": "museoncli ugc payscale +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc payscale +list --campaign-id <campaign_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a campaign-monitor collection id.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.payscale-list",
+      "output_schema": {
+        "description": "Unmodified Museon API read model.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "payscale",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a Campaign's payscales with their rates (base fee, view tiers, bonuses), in the order the setup page shows them. Owner/admin and the Campaign's operators of the organization that owns it; members cannot read it.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "ugc.payscale-update": {
@@ -84067,6 +86898,312 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ugc.task-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.task-get",
+      "cli": "museoncli ugc task +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc task +get --id 11111111-1111-4111-8111-111111111111"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Task id from task +list.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "with_events": {
+            "description": "Also read its events (default true).",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.task-get",
+      "output_schema": {
+        "description": "data.task (the task) and data.events (its history, comments included).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "task",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one task as its drawer shows it: subject, status, assignee, due time, available actions, and its events (comments, claims, actions taken), oldest first. --no-with-events skips the events.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.task-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.task-list",
+      "cli": "museoncli ugc task +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc task +list --queue media --actor operator"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "description": "operator: tasks whose next step is yours; others: waiting on a creator or the system.",
+            "enum": [
+              "operator",
+              "others"
+            ],
+            "type": "string"
+          },
+          "campaign_id": {
+            "description": "Only this Campaign's tasks (id from ugc campaign +list or agency-campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "country": {
+            "description": "Only creators in these ISO countries (repeat the flag).",
+            "items": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            },
+            "maxItems": 256,
+            "type": "array"
+          },
+          "creative_id": {
+            "description": "Only tasks about this creative.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "creator_id": {
+            "description": "Only tasks about this UGC creator.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "cursor": {
+            "description": "next_cursor from the previous page.",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "min_followers": {
+            "description": "Only post tasks whose account has at least this many followers.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "description": "Records per page (1-100, default 50).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "platform": {
+            "description": "Only post tasks on this platform.",
+            "enum": [
+              "tiktok",
+              "instagram",
+              "youtube",
+              "facebook",
+              "x"
+            ],
+            "type": "string"
+          },
+          "posted_from": {
+            "description": "Post tasks published on or after this day.",
+            "format": "date",
+            "type": "string"
+          },
+          "posted_to": {
+            "description": "Post tasks published on or before this day.",
+            "format": "date",
+            "type": "string"
+          },
+          "queue": {
+            "description": "Which queue (default media).",
+            "enum": [
+              "media",
+              "onboarding",
+              "creators",
+              "posts",
+              "viral",
+              "invites",
+              "client-reports",
+              "all"
+            ],
+            "type": "string"
+          },
+          "scope": {
+            "description": "my-campaigns: only the Campaigns you are staff of or tasks assigned to you; all: every Campaign you may see (the default for owners and admins).",
+            "enum": [
+              "my-campaigns",
+              "all"
+            ],
+            "type": "string"
+          },
+          "search": {
+            "description": "Creator, Campaign or task title contains this.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "sort": {
+            "description": "oldest (default) or newest first.",
+            "enum": [
+              "oldest",
+              "newest"
+            ],
+            "type": "string"
+          },
+          "timezone": {
+            "description": "IANA timezone of --posted-from/--posted-to.",
+            "format": "timezone",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "ugc.task-list",
+      "output_schema": {
+        "description": "A page of task rows (items) and next_cursor.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "task",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List one queue of the organization's tasks, as the Tasks page shows it: media review, onboarding, creators, posts, viral, invites, client reports, or all. Each row carries its kind, status, Campaign, subject, due time and the actions the caller may take. Owner/admin see every Campaign's tasks, an operator their assigned Campaigns', a member reads only.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
     "ugc.task-release": {
       "authorization": {
         "authentication_required": true,
@@ -84533,6 +87670,111 @@
       "stability": "stable",
       "summary": "Set or clear (--due-at none) a UGC task's due time, compare-and-set on the task's updated_at. --dry-run shows the due time before and after. Role: owner or admin; an operator on Campaigns they are assigned to (PM/OP); members only read.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.task-summary-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ugc.task-summary-get",
+      "cli": "museoncli ugc task-summary +get",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc task-summary +get --scope my-campaigns"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "description": "Only this Campaign's tasks (id from ugc campaign +list or agency-campaign +list).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "scope": {
+            "description": "my-campaigns: only the Campaigns you are staff of or tasks assigned to you; all: every Campaign you may see (the default for owners and admins).",
+            "enum": [
+              "my-campaigns",
+              "all"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "ugc.task-summary-get",
+      "output_schema": {
+        "description": "Per-queue counts.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "task-summary",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Count the organization's open tasks per queue, as the Tasks page's tabs show them, with what waits on you versus a creator or the system. Same visibility as task +list.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "upgrade": {
