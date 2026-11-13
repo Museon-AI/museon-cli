@@ -131,7 +131,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.0/museoncli-1.0.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.1/museoncli-1.0.1-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:
@@ -151,6 +151,16 @@ the Agent after installing the Skill. After authentication, `skills +list`
 shows the Business Skills available in the current organization. `auth finish --wait` waits for approval
 for up to five minutes by default; use `--timeout` to change that limit. The
 shorter `museon` command is an alias for `museoncli`.
+
+### Version and upgrades
+
+`museoncli version` shows the running version, the latest stable release, how the CLI
+was installed and the command that upgrades it. The official `uv tool` install upgrades
+itself before a command runs; `museoncli upgrade` does it on demand. Installed another
+way (pip, pipx), the CLI cannot replace itself: every command's JSON then carries
+`_notice.update` with the upgrade command for your Agent to pass on, a terminal gets one
+line a day, and `museoncli upgrade` prints the command. Set `MUSEONCLI_UPDATE_CHECK=0`
+to pin a version; source checkouts and host runtimes are updated by their owner.
 
 <details>
 <summary><strong>Develop Museon CLI</strong></summary>

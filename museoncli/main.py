@@ -15,7 +15,7 @@ from uuid import UUID
 
 import httpx
 
-from museoncli import __version__
+from museoncli import __version__, updates
 from museoncli.auth import (
     ORGANIZATION_HEADER,
     auth_headers,
@@ -63,6 +63,10 @@ _API_CONNECT_RETRY_BASE_DELAY_SECONDS = 0.25
 _ACTIVE_COMMAND_NAME: ContextVar[str | None] = ContextVar(
     "museoncli_active_command_name", default=None
 )
+# What bootstrap learned about releases before dispatch (None: a host imported main).
+_ACTIVE_UPDATE: ContextVar[dict[str, Any] | None] = ContextVar(
+    "museoncli_active_update", default=None
+)
 # --organization-id of the running command; overrides the selected organization.
 _ACTIVE_ORGANIZATION_ID: ContextVar[str | None] = ContextVar(
     "museoncli_active_organization_id", default=None
@@ -100,7 +104,8 @@ def cli_outdated_error(response: httpx.Response) -> CliOutdatedError:
     minimum = body.get("minimum_version")
     received = body.get("received_version") or __version__
     install_hint = body.get("install_hint") or (
-        "Update Museon CLI with `uv tool upgrade museoncli` (or your package manager), then retry."
+        "Run `museoncli upgrade` (it prints the command when your installer must run it), "
+        "then retry."
     )
     required = f" (minimum supported: {minimum})" if minimum else ""
     return CliOutdatedError(
@@ -196,6 +201,7 @@ def main(*, update: dict[str, Any] | None = None) -> None:
     deprecations = deprecation_notices(args)
     for notice in deprecations:
         print(f"museoncli: {notice}", file=sys.stderr, flush=True)
+    _ACTIVE_UPDATE.set(update)
     try:
         result = asyncio.run(dispatch(args))
     except KeyboardInterrupt:
@@ -214,8 +220,6 @@ def main(*, update: dict[str, Any] | None = None) -> None:
             payload["warnings"] = deprecations
         emit(with_notice(payload, args, update))
         raise SystemExit(code) from None
-    if result is not None and args.command == "version":
-        result["data"]["update"] = update or {"status": "managed_externally"}
     if result is not None and deprecations:
         result = {**result, "warnings": [*(result.get("warnings") or []), *deprecations]}
     if result is not None:
@@ -229,7 +233,22 @@ def main(*, update: dict[str, Any] | None = None) -> None:
 def with_notice(
     payload: dict[str, Any], args: argparse.Namespace, update: dict[str, Any] | None
 ) -> dict[str, Any]:
-    """Keep the Agent's installed Skills on this CLI's version and tell it so via `_notice`.
+    """Tell the Agent, via `_notice`, what changed about the CLI and its Skills.
+
+    `update`: a newer release exists that this installation did not install.
+    `updated`: the CLI upgraded itself (once). `skills`: see `skills_notice`.
+    """
+    notice = updates.release_notices(update)
+    skills = skills_notice(args, update)
+    if skills:
+        notice["skills"] = skills
+    return {**payload, "_notice": notice} if notice else payload
+
+
+def skills_notice(
+    args: argparse.Namespace, update: dict[str, Any] | None
+) -> dict[str, Any] | None:
+    """Keep the Agent's installed Skills on this CLI's version.
 
     Skills that `setup` installed are synced automatically, like the CLI itself; the
     Agent still holds the old text in its conversation, so it is told to re-read it.
@@ -238,13 +257,13 @@ def with_notice(
     status = (update or {}).get("status", "managed_externally")
     # Host-managed runtimes and source checkouts ship their Skills themselves.
     if args.command == "setup" or status == "managed_externally":
-        return payload
+        return None
     try:
         stale = stale_skill_agents()
     except (OSError, RuntimeError):
-        return payload  # Skill maintenance must never break the user's command.
+        return None  # Skill maintenance must never break the user's command.
     if not stale:
-        return payload
+        return None
     updated = []
     if status != "disabled":
         for agent in stale:
@@ -273,7 +292,7 @@ def with_notice(
             f"After the current task, run: {command}; then re-read the updated Skill."
         )
     notice["message"] = " ".join(messages)
-    return {**payload, "_notice": {"skills": notice}}
+    return notice
 
 
 def _configure_utf8_stdout() -> None:
@@ -296,7 +315,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("version")
+    sub.add_parser(
+        "version",
+        help="This CLI's version, the latest release, and how to upgrade.",
+    )
+    sub.add_parser(
+        "upgrade",
+        help="Upgrade to the latest stable release, or print the command your installer needs.",
+    )
     sub.add_parser("whoami")
     sub.add_parser("health")
     schema = sub.add_parser(
@@ -365,7 +391,18 @@ def build_parser() -> argparse.ArgumentParser:
 async def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
     cfg = load_config()
     if args.command == "version":
-        return {"data": {"cli_version": __version__, "api_base_url": cfg.api_base_url}}
+        update = _ACTIVE_UPDATE.get()
+        return {
+            "data": {
+                "cli_version": __version__,
+                "api_base_url": cfg.api_base_url,
+                **updates.describe(update),
+                "update": update or {"status": "managed_externally"},
+            }
+        }
+    if args.command == "upgrade":
+        # Bootstrap already installed a uv tool release before dispatch; report it.
+        return {"data": updates.upgrade_result(_ACTIVE_UPDATE.get())}
     if args.command == "config":
         return await dispatch_config(args)
     if args.command == "setup":
@@ -1027,7 +1064,7 @@ def reason_from_exception(exc: Exception) -> str:
     if isinstance(exc, (httpx.ConnectError, httpx.ConnectTimeout)):
         return "network_error"
     text = str(exc)
-    for prefixed_reason in ("not_found", "conflict", "missing_organization"):
+    for prefixed_reason in ("not_found", "conflict", "missing_organization", "network_error"):
         if text == prefixed_reason or text.startswith(f"{prefixed_reason}:"):
             return prefixed_reason
     if text in {

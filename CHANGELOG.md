@@ -2,6 +2,20 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 1.0.1
+
+Know which version runs and how to upgrade it.
+
+- Every command's JSON carries `_notice.update` while a newer stable release exists that this installation did not install: `{current, latest, install_method, upgrade_command, changelog_url, message}`. `message` is one sentence for the Agent to pass on, e.g. "Museon CLI 1.0.1 is outdated (latest 1.1.0). Tell the user to run: …". An interactive terminal also gets one stderr line, at most once a day: `Museon CLI 1.0.1 → 1.1.0 available. Upgrade: <command>  Changes: <url>`. Pipes, CI and `MUSEONCLI_UPDATE_CHECK=0` get no line; the JSON notice stays unless checks are disabled.
+- After the CLI upgrades itself, the next output carries `_notice.updated {from, to, changelog_url, highlights}` once, and a terminal gets `Museon CLI upgraded 1.0.0 → 1.0.1. Changes: <url>` once.
+- The CLI names how it was installed (`install_method`): `uv_tool` (official; upgrades itself), `pipx`, `uv_pip`, `pip` or `other` (notice with the matching upgrade command), `source` and `managed` (a source checkout or a host runtime such as Mel's sandbox: no notices, their owner updates them).
+- Installs that cannot upgrade themselves now learn the latest release too, without ever making a command wait: commands read a cache, and when it is older than 15 minutes a detached background process refreshes it, so the notice appears from the next command on. `version` and `upgrade` ask GitHub directly. A failed check never fails a command. The uv tool check is unchanged.
+- pip, pipx and other non-uv installs used to count as host-managed. They no longer do, so Agent Skills that `museoncli setup` installed for them are now kept in sync like the uv tool's (`_notice.skills`).
+- `museoncli version` adds `current`, `latest`, `install_method`, `upgrade_command`, `changelog_url` and `update_status` (`data.update` is unchanged).
+- New `museoncli upgrade`: an official uv tool install verifies and installs the latest release (also when `MUSEONCLI_UPDATE_CHECK=0`) and reports `status: upgraded`; other installs get `status: manual` with the command to run; `current` and `managed_externally` say so. A release check that cannot reach GitHub is `network_error` (retryable).
+- Command contract 1.0.1: `catalog.cli` lists `version` and `upgrade`, and `schemas` has their entries (`museoncli schema version`), including the `_notice` shape. Domain commands are unchanged.
+- The base Skill tells Agents to relay `_notice.update` once after the task and offer `museoncli upgrade`. The `cli_outdated` (HTTP 426) fallback hint points at `museoncli upgrade`.
+
 ## 1.0.0
 
 Organizations only. MuseOn addresses organizations; workspaces are internal storage and are gone from the CLI. This release removes the workspace aliases that 0.25 kept and makes every request outside `agentic-campaign` and `hireaicreator` address the organization alone. It has no backward compatibility with the workspace surface.

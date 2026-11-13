@@ -24,6 +24,7 @@ DEFAULT_OUTPUT = ROOT / "contracts" / "command-catalog.json"
 sys.path.insert(0, str(ROOT))
 
 from museoncli import __version__  # noqa: E402
+from museoncli.cli_commands import CLI_COMMANDS  # noqa: E402
 from museoncli.domains import discoverable_command_specs, schema_payload  # noqa: E402
 
 
@@ -34,8 +35,11 @@ def build_contract() -> dict[str, Any]:
         "contract_revision": __version__,
         "catalog": schema_payload(),
         "schemas": {
-            spec.schema_name: schema_payload(spec.schema_name)
-            for spec in discoverable_command_specs()
+            **{entry["name"]: entry for entry in CLI_COMMANDS},
+            **{
+                spec.schema_name: schema_payload(spec.schema_name)
+                for spec in discoverable_command_specs()
+            },
         },
     }
 

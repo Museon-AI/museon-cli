@@ -106,7 +106,7 @@ MuseOn 只有组织：访问权限由组织角色加 Campaign 范围决定。每
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.0/museoncli-1.0.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.1/museoncli-1.0.1-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：
@@ -125,6 +125,14 @@ Claude Code 和 Cursor 分别使用 `--agent claude-code`、`--agent cursor`；
 `--agent all`。安装 Skills 后需要重启 Agent。完成授权后，`skills +list` 会列出当前组织可用的业务 Skill。`auth finish --wait` 默认等待授权最多
 五分钟，可以通过 `--timeout` 调整。CLI 可以使用 `museoncli`，也可以使用更短的
 别名 `museon`。
+
+### 版本与升级
+
+`museoncli version` 显示当前版本、最新稳定版、安装方式和升级命令。官方 `uv tool`
+安装会在命令执行前自动升级，也可以用 `museoncli upgrade` 立即升级。用 pip、pipx
+等其他方式安装时 CLI 无法替换自己：每条命令的 JSON 都会带 `_notice.update`（含升级命令，
+由 Agent 转告你），终端每天提示一行，`museoncli upgrade` 会给出要运行的命令。需要固定
+版本时设置 `MUSEONCLI_UPDATE_CHECK=0`；源码环境和托管 runtime 由其维护方更新。
 
 <details>
 <summary><strong>参与 Museon CLI 开发</strong></summary>

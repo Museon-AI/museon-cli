@@ -87,6 +87,13 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
 - No command declares `workspace_id` or accepts `--workspace-id` outside those two
   groups (`museoncli/domains/_legacy_workspace.py`); `tests/test_organization_only.py`
   sends every other command through the HTTP layer and fails on any workspace field.
+- `_notice` appears only when the CLI has something to tell the Agent:
+  `update` (a newer stable release exists that this installation did not install:
+  `current`, `latest`, `install_method`, `upgrade_command`, `changelog_url`, `message`;
+  on every command while outdated), `updated` (the CLI upgraded itself: `from`, `to`,
+  `changelog_url`, `highlights`, `message`; once) and `skills` (installed Agent Skills).
+  Interactive terminals also get one stderr line for `update` (at most once a day) and
+  for `updated`; pipes, CI and `MUSEONCLI_UPDATE_CHECK=0` get none.
 - Exit codes: `0` success, `1` failure, `2` usage error, `3` not found,
   `4` authentication required, `5` conflict, `130` interrupted. The envelope
   remains the source of truth.

@@ -34,8 +34,19 @@ museoncli version
 ```
 
 从 0.23.0 起，官方 `uv tool` 安装会在命令执行前自动检查稳定版并升级。
-`version` 每次强制检查，并在 `data.update.status` 报告 `current`、`updated`、
-`check_failed`、`disabled` 或 `managed_externally`。普通命令使用 15 分钟检查缓存。
+`version` 每次强制检查。从 1.0.1 起它直接报告 `current`、`latest`、
+`install_method`（`uv_tool`、`pipx`、`uv_pip`、`pip`、`other`、`source`、`managed`）、
+`upgrade_command`、`changelog_url` 和 `update_status`（`current`、`outdated`、`updated`、
+`check_failed`、`disabled` 或 `managed_externally`）；`data.update` 保留原始检查结果。
+普通命令使用 15 分钟检查缓存。
+
+用 pip、pipx 等无法自动升级的方式安装时，发现新版后每条命令的 JSON 都带
+`_notice.update`（含 `upgrade_command` 和 `message`），Agent 应在完成当前任务后告诉用户，
+并提出运行 `museoncli upgrade`：官方 `uv tool` 安装会校验并安装新版，其他安装方式返回
+`status: manual` 和要运行的命令。CLI 自动升级后，下一次输出带一次 `_notice.updated`
+（`from`、`to`、`changelog_url`、`highlights`）。交互式终端另在 stderr 打印一行提示
+（新版提示每天最多一次）；管道、CI 和 `MUSEONCLI_UPDATE_CHECK=0` 不打印。这类安装的普通命令
+不等待网络：缓存超过 15 分钟时由后台进程刷新，提示从下一条命令开始出现。
 
 如果已有 CLI 的输出没有 `data.update`，说明它尚未包含自动升级能力：先用下面的
 官方 wheel 安装命令加 `--force` 升级一次，再运行 `museoncli version` 验证。
@@ -59,7 +70,7 @@ If the command is unavailable:
    reviewed wheel from the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.0/museoncli-1.0.0-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.0.1/museoncli-1.0.1-py3-none-any.whl"
    ```
 
    Do not clone the repository, install from a mutable branch, or substitute a
@@ -92,11 +103,11 @@ or `current` and includes their destination paths.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install the workflow Skill folders and Hook Analysis Skill:
 
-https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-content-workflow-base
-https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-research
-https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-content-workflow-hireaicreator
-https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-content-workflow-ai-slideshow
-https://github.com/Museon-AI/museon-cli/tree/v1.0.0/skills/museon-content-workflow-campaign-monitor
+https://github.com/Museon-AI/museon-cli/tree/v1.0.1/skills/museon-content-workflow-base
+https://github.com/Museon-AI/museon-cli/tree/v1.0.1/skills/museon-research
+https://github.com/Museon-AI/museon-cli/tree/v1.0.1/skills/museon-content-workflow-hireaicreator
+https://github.com/Museon-AI/museon-cli/tree/v1.0.1/skills/museon-content-workflow-ai-slideshow
+https://github.com/Museon-AI/museon-cli/tree/v1.0.1/skills/museon-content-workflow-campaign-monitor
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and
