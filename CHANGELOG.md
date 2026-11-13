@@ -2,6 +2,17 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+Run a UGC campaign day to day: the task center, the roster, creator messages, content review and counting, recruiting. Every command calls the route the web calls, with its compare-and-set and idempotency inputs. Agent Skill: `museon-content-workflow-campaign-monitor` → `references/ugc-operations.md`.
+
+- Tasks: `ugc task +claim`, `+release`, `+comment`, `+set-due`, `+set-assignees`, `+defer-reminder`, and `+run-action` (any of the task's own actions: approve, reject, attach, skip, resend, send...; fills the attribution card version and application revision like the web; other inputs in `--fields-json`).
+- Roster: `ugc enrollment +approve`, `+reject` (`--note` goes to the creator, `--ban`), `+admit` (`--warmup-not-ready`), `+pause`, `+resume`, `+remove` (up to 1000), `+set-persona` (up to 200), `+set-payscale`, `+graduate-trial`. Each reads the roster row first and compare-and-sets on its status / `updated_at`; the web's remove, admission and graduation blockers refuse before any write.
+- Creator messages: `ugc enrollment +nudge`, `+bulk-nudge` (preview counts creators per check), `ugc message +send` (project conversation, or `--creative-id` for a message about a video pushed to Discord), `+resend-card`, `+retry`. Messages carry an idempotency key; the CLI makes one when left out and returns it for a safe retry.
+- Content review and counting: `ugc creative +review`, `+set-counting`, `+merge`; `ugc post +stop-counting` (up to 100), `+split`; `ugc feedback-thread +create`, `+reply`, `+set-status`.
+- Recruiting: `ugc recruit-link +list`, `+create` (invite or `--kind discover`), `+update`, `+revoke`; `ugc invitation +list`, `+create`, `+resend`, `+revoke`.
+- Anything that reaches the creator or cannot be undone from the CLI is `destructive` and needs `--yes`. A command whose dry run reads live state (`dry_run_reads_server`) now answers a missing `--yes` with `confirmation_required` plus `preview` (its dry run's `data` and `warnings`) instead of a bare refusal; `ugc assignment +withdraw` gets the same preview.
+
 ## 1.0.1
 
 Know which version runs and how to upgrade it.

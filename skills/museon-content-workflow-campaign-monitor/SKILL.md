@@ -1,6 +1,6 @@
 ---
 name: museon-content-workflow-campaign-monitor
-description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; edit UGC briefs, brief assignments and creative brief links."
+description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; edit UGC briefs, brief assignments and creative brief links; run a UGC campaign day to day: tasks, approving and removing creators, messages and nudges, content review and counting, recruitment links and invitations."
 metadata:
   requires:
     bins: ["museoncli"]
@@ -82,6 +82,10 @@ The `ugc` domain writes the UGC workbench: briefs, brief assignments, and which 
 | Who can be assigned | `museoncli ugc enrollment +list --campaign-id <id> --status participating` |
 
 The workbench never asks for confirmation, so the Agent does. Every write runs with `--dry-run` first. Its result reads the live state and changes nothing. Show the user what it returned (`changes`, `before`/`after`, who gets an assignment), ask them, and run it without `--dry-run` only after they say yes. Before `ugc brief +update`, also ask whether to `--notify` the `live_assignments` creators working on the brief. `+progress` returns raw counts: report them, and do not decide who owes a video.
+
+## Running a UGC campaign day to day (`ugc`)
+
+Tasks (claim, comment, due date, the task's own buttons), the roster (approve, reject, admit, pause, resume, remove, persona, payscale, trial), creator messages and nudges, content review and counting, recruitment links and invitations: read [ugc-operations.md](references/ugc-operations.md). Anything that reaches the creator or cannot be undone needs `--yes`; without it the command answers `confirmation_required` with a `preview`. Show the user that preview, ask, then rerun with `--yes`.
 
 ## DON'T
 

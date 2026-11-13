@@ -63,7 +63,12 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
   confirmation step of its own). Its dry run also skips the `--yes` gate.
 - `destructive` commands set `requires_confirmation` and demand `--yes`;
   without it the CLI returns `{"ok": false, "reason": "confirmation_required"}`.
-  Agents must confirm with the user, then retry with `--yes`.
+  When the command also sets `dry_run_reads_server`, that refusal carries
+  `preview` (`data` and `warnings` of its dry run), so the Agent can show the user
+  what would happen. Agents must confirm with the user, then retry with `--yes`.
+- A command that reaches someone outside the organization (messages, nudges,
+  invitations, review verdicts a creator reads) or cannot be undone from the CLI
+  is `destructive`, even when the server would accept it without a prompt.
 - Provider identity, model selection, credentials, storage buckets, queue names,
   and other service implementation controls are server-owned. They must not
   appear as public flags or schema fields, and structured arguments that try to
