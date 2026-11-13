@@ -12,3 +12,19 @@ Performance responses carry provenance. Relay whether data came from official/ma
 public fallback, and do not turn a missing page into a claim that the account has no history.
 
 HireAICreator account assignment, plan capacity, generation, scheduling, and delivery are owned by `hireaicreator`.
+
+## Tags
+
+Tags are the organization's own labels on an account; `social-account +list --tag <tag>` filters by
+one. Owner, admin or operator can change them:
+
+```bash
+museoncli social-account tag +add --id <account_id> --tag warmup --dry-run   # before/after, no write
+museoncli social-account tag +add --id <account_id> --tag warmup
+museoncli social-account tag +remove --id <account_id> --tag warmup
+museoncli social-account tag +set --id <account_id> --tag us --tag beauty     # exact set; --clear empties
+```
+
+`+add` and `+remove` read the current tags and write the whole set back; there is no version check,
+so a change someone makes in between is overwritten. Account sync, unbinding and staff pool
+allocation stay in the web app.

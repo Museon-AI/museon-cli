@@ -14,6 +14,19 @@ Agents can now create and run a Campaign end to end, through the routes the web'
 - UGC personas: `ugc persona +list/+create/+update/+delete` (not the `ai-slideshow` personas).
 - The campaign-monitor Skill gains `references/ugc-campaign-setup.md`.
 
+### Settings and account housekeeping (coverage batch 6)
+
+New commands over the routes the web app already calls. Each addresses the organization only (`X-Organization-Id`); the server decides who may run it.
+
+- `artifacts +list` / `artifacts +get`: list the organization's artifacts (page, search, `--all`) and read one (Markdown or download URL). Any organization role.
+- `media collection +list` / `+get` / `+list-media`: the organization's media collections and the media in one. Any organization role.
+- `media collection +update` (rename) and `+add` (up to 100 media; already-present media are skipped): owner, admin or operator.
+- `media collection +delete` and `+remove` (media out of a collection) are destructive: `--dry-run` reads the collection and writes nothing, `--yes` runs. `+remove` reports `data.removed` and `data.failed` per media.
+- `social-account tag +set` / `+add` / `+remove`: change an account's organization tags; `--dry-run` shows before and after. `+add` / `+remove` read and write back the full set (no server version check). Owner, admin or operator.
+- `ai-slideshow cta-target +list` / `+create` / `+update` (staff only on the server) and `+retire` (owner, admin or operator; needs `--yes`): a product's CTA targets.
+
+Not added, because the API refuses an API key or needs a workspace the CLI never sends: organization members (invite, role, Campaign scope, removal), partner organizations, Campaign and account shares, the organization signature (all signed-in session only); social account sync and unbinding, scheduled-item approval, failed-publish retry, AI image post review, and creating a media collection (workspace required). The API has no artifact delete.
+
 ## 1.0.1
 
 Know which version runs and how to upgrade it.

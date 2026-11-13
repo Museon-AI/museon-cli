@@ -56,7 +56,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-376 commands across 15 domains (source of truth: `museoncli schema`).
+392 commands across 15 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -93,6 +93,8 @@ The tables below are generated — edit code, then run
 | `artifacts +upload` | write | yes | — | direct | Upload or replace one local agent file artifact through multipart form-data. Markdown uploads are public by default. After upload, give BOTH links when both exist: data.public_url (public share link, anyone with the link) and data.url (organization/private link, logged-in organization members). Use --no-public only when the user explicitly wants a private artifact (then only data.url). To embed resources inside markdown, paste ready-made refs returned by retained domains such as routines verbatim. Do not hand-write resource links, file names, local paths, or storage paths as links. You can also paste a raw TikTok, Instagram, or YouTube URL on its own line to embed a player. |
 | `artifacts +share` | write | yes | — | direct | Re-enable public internet access for one markdown artifact (for example after +unshare). Prefer +upload defaults for new reports. |
 | `artifacts +unshare` | write | yes | — | direct | Revoke the public internet link for one artifact. Use only when the user explicitly wants to revoke public access. |
+| `artifacts +list` | read | — | — | direct | List the organization's artifacts (reports and files uploaded with artifacts +upload), newest first, with title, type, is_public and public_url. Any organization role can read. Page with --page/--page-size or --all. |
+| `artifacts +get` | read | — | — | direct | Read one artifact: Markdown body (or download_url for a file), title, version, is_public and public_url. Any organization role can read. |
 
 ### media
 
@@ -103,6 +105,13 @@ The tables below are generated — edit code, then run
 | `media +upload` | write | yes | — | direct | Upload local image/video/audio or a private general file. General files return artifact_id, with expiring download URL; read with --kind file. Read the returned media ID with media +get; upload success does not prove business generation or delivery completion. |
 | `media +import` | write | yes | — | direct | Import an image from a direct HTTP(S) URL. This API supports images only; upload local video/audio files with media +upload. |
 | `media +get` | read | — | — | direct | Read one media record in the selected organization. Business output completion must be verified through its owning domain. |
+| `media collection +list` | read | — | — | direct | List the organization's media collections with media_count and preview media. Any organization role can read. Page with --page/--page-size or --all. |
+| `media collection +get` | read | — | — | direct | Read one media collection with its media_count. Any organization role. |
+| `media collection +list-media` | read | — | — | direct | List the media in one collection, in order, with media_url, media_type and thumbnail_url. Any organization role. Page with --page/--page-size or --all. |
+| `media collection +update` | write | yes | — | direct | Rename a media collection. Needs owner, admin or operator. |
+| `media collection +delete` | destructive | yes | `--yes` | direct | Delete a media collection; its media stay in the library. --dry-run reads the collection and deletes nothing; show it to the user, then run with --yes. Needs owner, admin or operator. |
+| `media collection +add` | write | yes | — | direct | Add up to 100 media to a collection; media already in it are skipped (data.added, data.skipped), so a rerun is safe. Media must come from the same organization library as the collection. Needs owner, admin or operator. |
+| `media collection +remove` | destructive | yes | `--yes` | direct | Remove up to 100 media from a collection (the media stay in the library). --dry-run reads the collection and removes nothing; then run with --yes. Each media is removed on its own: data.removed and data.failed list the outcome. Needs owner, admin or operator. |
 
 ### social-account
 
@@ -122,6 +131,9 @@ The tables below are generated — edit code, then run
 | `social-account +get-profile-edit` | read | — | — | direct | Read execution status for a profile edit task. |
 | `social-account +bulk-generate-avatars` | read | — | — | async_run | Generate TikTok profile avatar drafts for multiple accounts as one async task. Poll +get-avatar-generation for per-account avatar URLs, then feed the succeeded ones into +bulk-submit-profile-edit. |
 | `social-account +get-avatar-generation` | read | — | — | direct | Read per-account status and avatar URLs for an avatar-generation task. |
+| `social-account tag +set` | write | yes | — | direct | Replace a social account's tags with exactly the given set (--clear removes all). Tags are the organization's own labels for filtering (social-account +list --tag). --dry-run shows before and after. Needs owner, admin or operator. |
+| `social-account tag +add` | write | yes | — | direct | Add tags to a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator. |
+| `social-account tag +remove` | write | yes | — | direct | Remove tags from a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator. |
 
 ### hireaicreator
 
@@ -344,6 +356,10 @@ The tables below are generated — edit code, then run
 | `ai-slideshow publish +create-schedule` | write | yes | — | direct | Create one manual account publish schedule item. |
 | `ai-slideshow publish +update-schedule` | write | yes | — | direct | Update one account publish schedule item. |
 | `ai-slideshow publish +delete-schedule` | write | yes | — | direct | Cancel one account publish schedule item. |
+| `ai-slideshow cta-target +list` | read | — | — | direct | List a product's CTA targets (what its posts point viewers to): title, Markdown body, images and status. Staff only (the server refuses other callers). |
+| `ai-slideshow cta-target +create` | write | yes | — | direct | Create a CTA target for a product: title, Markdown body, optional ordered images. No idempotency key: after an unknown outcome, list before retrying. Staff only (the server refuses other callers). |
+| `ai-slideshow cta-target +update` | write | yes | — | direct | Change a CTA target's title, body, position, images (--media-id replaces them) or status. Only the given fields change. Staff only (the server refuses other callers). |
+| `ai-slideshow cta-target +retire` | write | yes | `--yes` | direct | Retire a CTA target so new posts stop using it (requires --yes; confirm with the user first). Needs owner, admin or operator. |
 
 ### campaign-monitor
 
