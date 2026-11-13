@@ -153,7 +153,7 @@ class ConfirmationRequired(RuntimeError):
     """A command that needs --yes ran without it.
 
     A command whose dry run reads the live state (``dry_run_reads_server``) ran that
-    dry run first: ``preview`` holds what it would do, so the Agent can show the user
+    dry run first: ``preview`` holds what it would do (its data, warnings and next steps), so the Agent can show the user
     and ask before retrying with --yes.
     """
 
@@ -1301,7 +1301,7 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
             # Without --yes a command that reads live state answers with its dry run.
             preview = await run({**arguments, "dry_run": True})
             raise ConfirmationRequired(
-                {key: preview.get(key) for key in ("data", "warnings")}
+                {key: preview.get(key) for key in ("data", "warnings", "next_steps")}
                 if isinstance(preview, dict)
                 else None
             )

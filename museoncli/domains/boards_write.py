@@ -517,7 +517,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+delete",
             summary=(
                 "Delete a board (its share link ends with it); the Campaigns and their data stay. "
-                "Without --yes it only shows the board it would delete." + _ROLE
+                "Without --yes it is refused with a preview of the board it would delete." + _ROLE
             ),
             adapter_tool_name="analytics_board_delete",
             input_schema=schema({"id": _BOARD_ID, "dry_run": DRY_RUN}, ["id"]),

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from routes_stub import ORG, Server, assert_organization_only, body, run
+from routes_stub import ORG, Server, assert_organization_only, body, run, refused
 
 BOARD = "66666666-6666-4666-8666-666666666666"
 CAMPAIGN = "11111111-1111-4111-8111-111111111111"
@@ -123,10 +123,10 @@ def test_set_source_replaces_the_campaigns(monkeypatch: pytest.MonkeyPatch) -> N
     assert result["data"]["campaigns_removed"] == [CAMPAIGN]
 
 
-def test_delete_without_yes_only_previews(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_delete_without_yes_is_refused_with_a_preview(monkeypatch: pytest.MonkeyPatch) -> None:
     server = Server({("GET", PATH): _board(), ("DELETE", PATH): None})
 
-    preview = run(monkeypatch, server, ["analytics", "board", "+delete", "--id", BOARD])
+    preview = refused(monkeypatch, server, ["analytics", "board", "+delete", "--id", BOARD])
 
     assert server.writes() == []
     assert preview["data"]["dry_run"] is True

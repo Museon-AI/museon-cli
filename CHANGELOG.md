@@ -27,6 +27,10 @@ New commands over the routes the web app already calls. Each addresses the organ
 
 Not added, because the API refuses an API key or needs a workspace the CLI never sends: organization members (invite, role, Campaign scope, removal), partner organizations, Campaign and account shares, the organization signature (all signed-in session only); social account sync and unbinding, scheduled-item approval, failed-publish retry, AI image post review, and creating a media collection (workspace required). The API has no artifact delete.
 
+### One confirmation rule
+
+- Every command that needs `--yes` follows the same rule: without `--yes` it fails (`ok: false`, `reason: confirmation_required`, exit 1) and writes nothing; a command whose dry run reads live state carries that dry run as `preview` (`data`, `warnings`, `next_steps`). Only an explicit `--dry-run` returns the preview as a success. The board, client report, broadcast, reminder and auto-nudge commands used to return the preview as a success when `--yes` was missing; they now refuse like every other command, so an Agent never reads an unconfirmed send as done.
+
 ### Boards, client reports, broadcasts and reminders (coverage batch 5)
 
 The writes the web makes, through the same routes.
@@ -35,7 +39,7 @@ The writes the web makes, through the same routes.
 - `ugc client-report`: `+create` (generate the daily, weekly, monthly or wrap-up report of a date's period), `+update` (title or Markdown, guarded by the report revision), `+regenerate`, `+refresh` (`--dry-run` returns the server's proposed figure changes; `--keep-change` keeps one), `+approve`, `+skip --reason`, and `+request-review` / `+send` (`--test` to your own chat with Mel), which post to Feishu and take `--yes`. Actions carry the report revision, the settings version and an idempotency key per revision, so a rerun never sends twice. `ugc client-report-config +update` changes which reports run, their times, weekly day, timezone, data scope, language, client and internal groups, owner and reviewer (guarded by the settings version). These routes name the operator organization `agency_workspace_id`; the CLI sends the organization id there.
 - `ugc broadcast`: `+audience`, `+list`, `+get`; `+create` and `+update` write a draft (all or some private channels, direct messages, public channels, personas); `+send`, `+schedule`, `+retry`, `+withdraw` and `+discard` take `--yes`; `+unschedule`. Files are attached in the browser.
 - `ugc reminder`: `+get`, `+update` (the Campaign's own reminder policy; `inherit` falls back to the organization's; guarded by `expected_updated_at`), and for MuseOn staff `+test` (`--yes`) and `+subscribe`. `ugc reminder-delegation +create` / `+cancel` (`--yes`, staff). `ugc auto-nudge +get` / `+update` (`--yes`): which creator checks trigger an automatic Discord nudge, on which days and at what time; `--off` stops it.
-- Commands that send something or cannot be undone take `--yes`; without it they return the same preview as `--dry-run` (what would be sent, to whom, and anything blocking it) instead of failing, so the Agent can show the user before asking.
+- Commands that send something or cannot be undone take `--yes`; without it they fail with `confirmation_required` and carry their dry run (what would be sent, to whom, and anything blocking it) as `preview`, so the Agent can show the user before asking. `--dry-run` returns the same preview as a success.
 
 ### Day-to-day UGC operations (coverage batch 2)
 
@@ -46,7 +50,7 @@ Run a UGC campaign day to day: the task center, the roster, creator messages, co
 - Creator messages: `ugc enrollment +nudge`, `+bulk-nudge` (preview counts creators per check), `ugc message +send` (project conversation, or `--creative-id` for a message about a video pushed to Discord), `+resend-card`, `+retry`. Messages carry an idempotency key; the CLI makes one when left out and returns it for a safe retry.
 - Content review and counting: `ugc creative +review`, `+set-counting`, `+merge`; `ugc post +stop-counting` (up to 100), `+split`; `ugc feedback-thread +create`, `+reply`, `+set-status`.
 - Recruiting: `ugc recruit-link +list`, `+create` (invite or `--kind discover`), `+update`, `+revoke`; `ugc invitation +list`, `+create`, `+resend`, `+revoke`.
-- Anything that reaches the creator or cannot be undone from the CLI is `destructive` and needs `--yes`. A command whose dry run reads live state (`dry_run_reads_server`) now answers a missing `--yes` with `confirmation_required` plus `preview` (its dry run's `data` and `warnings`) instead of a bare refusal; `ugc assignment +withdraw`, `media collection +delete` / `+remove` and the `ugc` Campaign setup commands that need `--yes` get the same preview.
+- Anything that reaches the creator or cannot be undone from the CLI is `destructive` and needs `--yes`. A command whose dry run reads live state (`dry_run_reads_server`) now answers a missing `--yes` with `confirmation_required` plus `preview` (its dry run's `data`, `warnings` and `next_steps`) instead of a bare refusal; `ugc assignment +withdraw`, `media collection +delete` / `+remove` and the `ugc` Campaign setup commands that need `--yes` get the same preview.
 
 ## 1.0.1
 
