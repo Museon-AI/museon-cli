@@ -59,6 +59,9 @@ from museoncli.domains import (
     ugc_reminders,
     client_reports_write,
     boards_write,
+    social_account_sync,
+    ai_slideshow_review,
+    ai_slideshow_publish_actions,
 )
 
 
@@ -97,6 +100,9 @@ _DOMAIN_MODULES = (
     ugc_reminders,
     client_reports_write,
     boards_write,
+    social_account_sync,
+    ai_slideshow_review,
+    ai_slideshow_publish_actions,
 )
 
 

@@ -174,37 +174,27 @@ def _view(status: str = "draft", *, ok: bool = True, **settings: Any) -> dict[st
     }
 
 
-def _whoami(kind: str | None = None) -> dict[str, Any]:
-    return {
-        "success": True,
-        "data": {
-            "organizations": [
-                {"id": ORG, "name": "MuseOn", "role": "admin", "default_workspace_id": HOME}
-            ]
-        },
-    }
-
-
 def _access(kind: str) -> dict[str, Any]:
     return {"organizations": {"items": [{"id": ORG, "kind": kind}]}}
 
 
 def _create_routes(kind: str = "operator") -> dict[tuple[str, str], Any]:
     return {
-        ("GET", "/api/v1/agent-cli/whoami"): _whoami(),
         ("GET", "/api/v1/users/me/access"): _access(kind),
-        ("POST", f"{UGC}/workspaces/{HOME}/campaigns"): (201, _summary()),
+        ("POST", f"{UGC}/organizations/{ORG}/campaigns"): (201, _summary()),
     }
 
 
-def test_campaign_create_ugc_posts_the_web_flows_draft_in_the_organizations_home(cli_run) -> None:
+def test_campaign_create_ugc_posts_the_web_flows_draft_to_the_organization_route(cli_run) -> None:
     server = Server(_create_routes())
 
     code, result = cli_run(server, "ugc", "campaign", "+create", "--name", " Spring ")
 
     assert code == 0, result
     sent = server.only_write()
-    assert sent.url.path == f"{UGC}/workspaces/{HOME}/campaigns"
+    # The organization route: the server picks the workspace the Campaign lands in.
+    assert sent.url.path == f"{UGC}/organizations/{ORG}/campaigns"
+    assert not any(r.url.path.endswith("/whoami") for r in server.requests)
     assert body(sent) == {
         "name": "Spring",
         "campaign_type": "ugc",
