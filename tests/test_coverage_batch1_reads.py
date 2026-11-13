@@ -108,11 +108,7 @@ def assert_organization_only(request: httpx.Request) -> None:
     assert request.method == "GET"
     assert request.headers["X-Organization-Id"] == ORG
     assert not [name for name in request.headers if "workspace" in name.lower()]
-    assert not [
-        key
-        for key, value in request.url.params.multi_items()
-        if "workspace" in key and not (key == "agency_workspace_id" and value == ORG)
-    ]
+    assert not [key for key in request.url.params if "workspace" in key]
 
 
 @pytest.mark.parametrize(
@@ -343,7 +339,7 @@ def test_client_reports_name_the_organization_and_list_summaries(server):
 
     (request,) = server["requests"]
     assert request.url.path == f"/api/v2/ugc/agency/campaigns/{CAMPAIGN}/client-reports"
-    assert query(request) == {"agency_workspace_id": [ORG]}
+    assert query(request) == {"organization_id": [ORG]}
     assert_organization_only(request)
     assert [item["id"] for item in result["data"]["items"]] == [REPORT]
     assert "markdown" not in result["data"]["items"][0]
@@ -353,7 +349,7 @@ def test_a_client_report_is_read_in_full(server):
     result = run("ugc", "client-report", "+get", "--campaign-id", CAMPAIGN, "--report-id", REPORT)
 
     (request,) = server["requests"]
-    assert query(request) == {"agency_workspace_id": [ORG], "report_id": [REPORT]}
+    assert query(request) == {"organization_id": [ORG], "report_id": [REPORT]}
     assert result["data"]["markdown"] == "# hi"
 
 

@@ -5,9 +5,9 @@ The route the web's report editor reads, ``/api/v2/ugc/agency/campaigns/{campaig
 reports go), its generated reports and what the caller may do with each. Client
 reports are the operating organization's: its owner, admin and the Campaign's
 operators read them, and a Campaign shared to another organization does not open
-them. The route still names that organization ``agency_workspace_id`` in its query;
-the value is the organization the command acts in (X-Organization-Id), never a
-workspace. Generating, editing and sending are their own commands.
+them. Every request names the organization the command acts in in the
+``organization_id`` query, as the write commands do. Generating, editing and sending
+are their own commands.
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ async def _workspace(
 ) -> dict[str, Any]:
     route = Route(
         "/ugc/agency/campaigns/{campaign_id}/client-reports",
-        {"agency_workspace_id": require_organization(ctx), "report_id": report_id},
+        {"organization_id": require_organization(ctx), "report_id": report_id},
     )
     found = await get(ctx, route, {"campaign_id": campaign_id})
     return found if isinstance(found, dict) else {}
