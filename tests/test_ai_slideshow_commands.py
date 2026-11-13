@@ -45,6 +45,13 @@ EXPECTED = {
     "cta-target-create",
     "cta-target-update",
     "cta-target-retire",
+    "publish-schedule-approve",
+    "publish-retry-failed",
+    "review-approve",
+    "review-unreview",
+    "review-reject",
+    "review-retry",
+    "review-adjust",
 }
 
 

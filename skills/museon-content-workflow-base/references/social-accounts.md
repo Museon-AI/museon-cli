@@ -26,5 +26,21 @@ museoncli social-account tag +set --id <account_id> --tag us --tag beauty     # 
 ```
 
 `+add` and `+remove` read the current tags and write the whole set back; there is no version check,
-so a change someone makes in between is overwritten. Account sync, unbinding and staff pool
-allocation stay in the web app.
+so a change someone makes in between is overwritten. Staff pool allocation stays in the web app.
+
+## Sync and unbind
+
+Owner, admin or operator. Both work with the selected organization alone:
+
+```bash
+museoncli social-account +sync --profile-id <late_profile_id>   # one profile's accounts, safe to repeat
+museoncli social-account +sync-all                               # your landing workspace in this organization only
+museoncli social-account +unbind --account-id <id> --dry-run     # show the user, then --yes
+museoncli social-account +unbind --account-id <id> --yes
+```
+
+`--profile-id` is the Late profile id of a bound account, not a MuseOn UUID. `+sync-all` syncs only your
+landing workspace in the organization; use `+sync` for a profile held elsewhere. `+unbind --account-id`
+is the bound-account row's id (`late_social_accounts`), not a pool account id; it disconnects the account
+from the platform and cannot be undone from the CLI (connect it again with `+create-connect-link`).
+Without `--yes` it returns `confirmation_required` with a preview.
