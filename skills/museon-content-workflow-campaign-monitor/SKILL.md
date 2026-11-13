@@ -1,6 +1,6 @@
 ---
 name: museon-content-workflow-campaign-monitor
-description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; create, launch and set up UGC Campaigns; manage Formats (briefs), personas, brief assignments and creative brief links."
+description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; create, launch and set up UGC Campaigns; manage Formats (briefs), personas, brief assignments and creative brief links; build analytics boards; generate and send client reports; broadcast to creators; set reminders and automatic nudges."
 metadata:
   requires:
     bins: ["museoncli"]
@@ -85,11 +85,24 @@ The workbench never asks for confirmation, so the Agent does. Every write runs w
 
 To create a Campaign, move it through its lifecycle (launch, pause, complete, archive), change its setup (settings, team, targets, contract, payscales, Discord, Comment-to-DM), or manage the Format (脚本) library and UGC personas, read [ugc-campaign-setup.md](references/ugc-campaign-setup.md). Commands marked *yes* there also need `--yes` after the user confirms.
 
+## Boards, client reports, broadcasts and reminders
+
+| Situation | Start with |
+| --- | --- |
+| Build or change a multi-Campaign board | `museoncli analytics board +create` / `+update` / `+set-source` |
+| Generate, review and send a client report | `museoncli ugc client-report +create` → `+approve` → `+send` |
+| Change which reports run and when | `museoncli ugc client-report-config +update` |
+| Message many creators on Discord | `museoncli ugc broadcast +audience`, then `+create`, `+send` |
+| Team reminders, automatic creator nudges | `museoncli ugc reminder +update`, `museoncli ugc auto-nudge +update` |
+
+Run every write with `--dry-run` first and show the user the result. Anything that sends (a report, a broadcast, a nudge setting) or cannot be undone also takes `--yes`: without it the command returns the same preview. Ask before adding `--yes`. Read [boards-reports-broadcasts.md](references/boards-reports-broadcasts.md).
+
 ## DON'T
 
 - **DON'T** treat synchronized history as a live platform fetch.
 - **DON'T** treat removing a monitor record as deleting the source account or post.
 - **DON'T** report import acceptance as verified membership before list readback.
+- **DON'T** pass `--yes` to a send, broadcast or delete the user has not confirmed after seeing its preview.
 
 ## Relationships
 
