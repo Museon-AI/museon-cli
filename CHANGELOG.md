@@ -4,7 +4,22 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## Unreleased
 
-Analytics boards, client reports, broadcasts and reminders: the writes the web makes, through the same routes.
+### Settings and account housekeeping (coverage batch 6)
+
+New commands over the routes the web app already calls. Each addresses the organization only (`X-Organization-Id`); the server decides who may run it.
+
+- `artifacts +list` / `artifacts +get`: list the organization's artifacts (page, search, `--all`) and read one (Markdown or download URL). Any organization role.
+- `media collection +list` / `+get` / `+list-media`: the organization's media collections and the media in one. Any organization role.
+- `media collection +update` (rename) and `+add` (up to 100 media; already-present media are skipped): owner, admin or operator.
+- `media collection +delete` and `+remove` (media out of a collection) are destructive: `--dry-run` reads the collection and writes nothing, `--yes` runs. `+remove` reports `data.removed` and `data.failed` per media.
+- `social-account tag +set` / `+add` / `+remove`: change an account's organization tags; `--dry-run` shows before and after. `+add` / `+remove` read and write back the full set (no server version check). Owner, admin or operator.
+- `ai-slideshow cta-target +list` / `+create` / `+update` (staff only on the server) and `+retire` (owner, admin or operator; needs `--yes`): a product's CTA targets.
+
+Not added, because the API refuses an API key or needs a workspace the CLI never sends: organization members (invite, role, Campaign scope, removal), partner organizations, Campaign and account shares, the organization signature (all signed-in session only); social account sync and unbinding, scheduled-item approval, failed-publish retry, AI image post review, and creating a media collection (workspace required). The API has no artifact delete.
+
+### Boards, client reports, broadcasts and reminders (coverage batch 5)
+
+The writes the web makes, through the same routes.
 
 - New `analytics` domain. `analytics board +create` makes a multi-Campaign board in the selected organization (1 to 10 Campaigns of one type, `mixed` for UGC and tracking together, optional opening filters); `+update` renames it or changes its filters (dates, platform, post scope, accounts, thresholds, metrics, chart mode; only the ones passed); `+set-source` replaces its Campaigns; `+delete` deletes it (`--yes`). The public share link stays in the browser: the server opens and closes it for a signed-in person only.
 - `ugc client-report`: `+create` (generate the daily, weekly, monthly or wrap-up report of a date's period), `+update` (title or Markdown, guarded by the report revision), `+regenerate`, `+refresh` (`--dry-run` returns the server's proposed figure changes; `--keep-change` keeps one), `+approve`, `+skip --reason`, and `+request-review` / `+send` (`--test` to your own chat with Mel), which post to Feishu and take `--yes`. Actions carry the report revision, the settings version and an idempotency key per revision, so a rerun never sends twice. `ugc client-report-config +update` changes which reports run, their times, weekly day, timezone, data scope, language, client and internal groups, owner and reviewer (guarded by the settings version). These routes name the operator organization `agency_workspace_id`; the CLI sends the organization id there.
