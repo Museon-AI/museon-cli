@@ -250,14 +250,16 @@ def test_campaign_create_dry_run_writes_nothing(cli_run) -> None:
     assert result["next_steps"]
 
 
-def test_launch_without_yes_is_refused_before_any_request(cli_run) -> None:
+def test_launch_without_yes_is_refused_with_its_preview(cli_run) -> None:
     server = Server({("GET", f"{UGC}/campaigns/{CAMPAIGN}"): _view()})
 
     code, result = cli_run(server, "ugc", "campaign", "+launch", "--id", CAMPAIGN)
 
     assert code == cli.EXIT_FAILURE
     assert result["reason"] == "confirmation_required"
-    assert server.requests == []
+    # Without --yes it answers with its dry run and writes nothing.
+    assert result["preview"]["data"]["after"] == "active"
+    assert server.writes() == []
 
 
 def test_launch_dry_run_reports_launchability_without_writing(cli_run) -> None:
@@ -616,7 +618,12 @@ def test_dm_rule_create_checks_like_the_page_and_needs_yes(cli_run) -> None:
 
     _, result = cli_run(server, *_dm_argv("--destination-url", "http://brand.example", "--yes"))
     assert result["reason"] == "invalid_input"
+    # Without --yes the preview runs the page's checks too: a missing utm_campaign is refused.
     _, result = cli_run(server, *_dm_argv("--destination-url", "https://brand.example"))
+    assert result["reason"] == "invalid_input"
+    _, result = cli_run(
+        server, *_dm_argv("--destination-url", "https://brand.example", "--utm-campaign", "spring")
+    )
     assert result["reason"] == "confirmation_required"
 
     code, _ = cli_run(server, *_dm_argv("--destination-url", "https://brand.example", "--utm-campaign", "spring", "--yes"))

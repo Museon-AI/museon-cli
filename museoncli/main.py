@@ -149,6 +149,19 @@ _RETRYABLE_REASONS = frozenset(
 )
 
 
+class ConfirmationRequired(RuntimeError):
+    """A command that needs --yes ran without it.
+
+    A command whose dry run reads the live state (``dry_run_reads_server``) ran that
+    dry run first: ``preview`` holds what it would do, so the Agent can show the user
+    and ask before retrying with --yes.
+    """
+
+    def __init__(self, preview: dict[str, Any] | None = None) -> None:
+        super().__init__("confirmation_required")
+        self.preview = preview
+
+
 class UsageError(SystemExit):
     """Invalid command line; reported through the JSON error contract.
 
@@ -1127,6 +1140,10 @@ def error_envelope(exc: Exception, *, command: str | None) -> tuple[dict[str, An
         if exc.usage:
             payload["usage"] = exc.usage
         error["hint"] = _usage_hint(command)
+    if isinstance(exc, ConfirmationRequired):
+        error["hint"] = "Show the user what this does, ask, then rerun the same command with --yes."
+        if exc.preview is not None:
+            payload["preview"] = exc.preview
     return payload, _EXIT_CODE_BY_REASON.get(reason, EXIT_FAILURE)
 
 
@@ -1257,8 +1274,9 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
 
             arguments = redact(arguments)
         return envelope(domain_command_dry_run_envelope(spec.schema_name, arguments))
-    if spec.requires_confirmation and not dry_run and not getattr(args, "yes", False):
-        raise RuntimeError("confirmation_required")
+    confirmed = not spec.requires_confirmation or dry_run or bool(getattr(args, "yes", False))
+    if not confirmed and not spec.dry_run_reads_server:
+        raise ConfirmationRequired()
     executor = command_executor(spec.schema_name)
 
     async def run(page_arguments: dict[str, Any]) -> dict[str, Any]:
@@ -1279,6 +1297,14 @@ async def dispatch_domain_command(args: argparse.Namespace, cfg: Config) -> dict
     command_token = _ACTIVE_COMMAND_NAME.set(spec.schema_name)
     organization_token = _ACTIVE_ORGANIZATION_ID.set(organization_id)
     try:
+        if not confirmed:
+            # Without --yes a command that reads live state answers with its dry run.
+            preview = await run({**arguments, "dry_run": True})
+            raise ConfirmationRequired(
+                {key: preview.get(key) for key in ("data", "warnings")}
+                if isinstance(preview, dict)
+                else None
+            )
         if getattr(args, "all", False):
             return envelope(await collect_all_pages(run, arguments))
         result = await run(arguments)

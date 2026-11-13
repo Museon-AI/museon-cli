@@ -224,10 +224,14 @@ def test_collection_add_dry_run_sends_nothing(monkeypatch):
 
 
 def test_collection_delete_needs_yes(monkeypatch):
-    server = Server({})
-    with pytest.raises(RuntimeError, match="confirmation_required"):
+    server = Server(
+        {("GET", f"/api/v1/collections/{COLLECTION}"): {"id": COLLECTION, "media_count": 7}}
+    )
+    with pytest.raises(cli.ConfirmationRequired) as refused:
         run(monkeypatch, server, ["media", "collection", "+delete", "--id", COLLECTION])
-    assert server.requests == []
+    # Without --yes it answers with its dry run as the preview and deletes nothing.
+    assert server.sent() == [("GET", f"/api/v1/collections/{COLLECTION}")]
+    assert refused.value.preview["data"]["would_delete"]["media_count"] == 7
 
 
 def test_collection_delete_dry_run_reads_the_collection_and_deletes_nothing(monkeypatch):
@@ -281,7 +285,7 @@ def test_collection_remove_needs_yes_and_reports_each_media(monkeypatch):
     ]
     with pytest.raises(RuntimeError, match="confirmation_required"):
         run(monkeypatch, server, argv)
-    assert server.requests == []
+    assert [method for method, _ in server.sent()] == ["GET"]
 
     result = run(monkeypatch, server, [*argv, "--yes"])
 
