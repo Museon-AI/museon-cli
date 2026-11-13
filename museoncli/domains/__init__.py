@@ -42,6 +42,13 @@ from museoncli.domains import (
     skills,
     staff_ops,
     routines,
+    ugc_tasks,
+    ugc_campaign_setup,
+    ugc_conversations,
+    ugc_creators,
+    ugc_client_reports,
+    analytics_boards,
+    organization_settings,
 )
 
 
@@ -63,6 +70,13 @@ _DOMAIN_MODULES = (
     skills,
     staff_ops,
     routines,
+    ugc_tasks,
+    ugc_campaign_setup,
+    ugc_conversations,
+    ugc_creators,
+    ugc_client_reports,
+    analytics_boards,
+    organization_settings,
 )
 
 

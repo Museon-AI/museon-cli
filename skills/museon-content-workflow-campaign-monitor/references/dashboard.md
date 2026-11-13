@@ -7,7 +7,7 @@ the selected organization is only the default for `payment` reads. The flat comm
 organization's campaigns: for another organization's campaign pass `--organization-id` with the
 organization that owns it (from `museoncli org list`, `campaign +get` or `agency-campaign +list`).
 
-## Both views (Brand View and Agency workbench)
+## Everyone who can see the Campaign (members and shares included)
 
 | Dashboard place | Command |
 | --- | --- |
@@ -23,19 +23,33 @@ organization that owns it (from `museoncli org list`, `campaign +get` or `agency
 | Creator tags | `campaign-monitor creator-tag +list --id <id>` |
 | Performance by Format | `campaign-monitor format +list --id <id>`, then `format-post +list --brief-id <brief_id>` |
 | Daily audience (trend tooltip) | `campaign-monitor audience +get --id <id> --date-from D --date-to D` |
+| The organization's Campaigns (its own and those shared in), delivery progress | `campaign-monitor agency-campaign +list [--with-progress]` |
 
-## Agency team only
+## The Campaign's team: owner, admin, its operators, or a share's operator tier
+
+A brand organization reads these on a Campaign shared into it at the operator tier exactly as
+the web shows them; a `member` of the organization and a read-only share do not.
 
 | Dashboard place | Command |
 | --- | --- |
-| All campaigns across Brands, delivery progress | `campaign-monitor agency-campaign +list [--with-progress]` |
-| Agency analytics over every UGC campaign | `campaign-monitor agency-analytics +get` |
-| Audience map and profile over a period | `campaign-monitor audience +get --id <id> --by period --date-from D --date-to D` |
 | Settlement tab | `campaign-monitor settlement +get --id <id> --date-from D --date-to D [--creator-id <ugc_creator_id>]` |
 | Settled payouts | `campaign-monitor payout +list --id <id>` |
-| Operations: enrollments, assignments, creator checks | `campaign-monitor enrollment +list`, `assignment +list`, `creator-check +get` / `+list --kind <kind>` |
+| Operations: enrollments, creator checks | `campaign-monitor enrollment +list`, `creator-check +get` / `+list --kind <kind>` |
+
+## The owning organization's team only (a share does not open them, as on the web)
+
+| Dashboard place | Command |
+| --- | --- |
+| Operations: brief assignments | `campaign-monitor assignment +list --id <id>` |
 | Activity tab | `campaign-monitor activity +list --id <id>` |
-| Creator payments of an organization | `campaign-monitor payment +list [--organization-id <id>]`, `campaign-monitor payment-summary +get` |
+| Audience map and profile over a period | `campaign-monitor audience +get --id <id> --by period --date-from D --date-to D` |
+| Analytics over every UGC campaign (operating organization) | `campaign-monitor agency-analytics +get` |
+| Creator payments (operating organization) | `campaign-monitor payment +list`, `campaign-monitor payment-summary +get` |
+
+`agency-campaign`, `agency-analytics` and `payment` read the organization the command acts in
+(`museoncli org select`, or `--organization-id`). A brand organization gets its own Campaigns
+and those shared into it from `agency-campaign +list`; `agency-analytics` and `payment` answer
+`not_found` outside the operating organization, as the web does.
 
 ## Scope and windows
 

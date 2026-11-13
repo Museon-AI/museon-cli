@@ -240,20 +240,56 @@ def test_report_widgets_read_the_collection_on_v1_with_each_widgets_window(
     assert query(request) == {**expected, "link_status": ["linked"]}
 
 
-def test_agency_reads_are_addressed_by_the_callers_agency(server):
+def test_organization_reads_are_addressed_by_the_selected_organization(server):
+    """A brand organization reads its own Campaigns and those shared into it as the web does:
+    the path names the organization the command acts in, never only the operator one."""
     run("agency-campaign", "+list", "--campaign-type", "ugc", "--with-progress")
+
+    (read,) = server["requests"]
+    assert read.url.path == "/api/v2/ugc/agency/org-1/campaigns/progress"
+    assert read.headers["X-Organization-Id"] == "org-1"
+
+
+@pytest.mark.parametrize(
+    ("argv", "tail"),
+    [
+        (["agency-campaign", "+list"], "campaigns"),
+        (["agency-analytics", "+get", "--all-time"], "analytics"),
+    ],
+)
+def test_without_a_selected_organization_the_operator_organization_is_read(
+    server, monkeypatch, argv, tail
+):
+    monkeypatch.setattr(
+        cli,
+        "load_config",
+        lambda: Config(
+            api_base_url="https://api.example.test/api/v1",
+            auth=AuthState(api_key="test-key"),
+        ),
+    )
+    run(*argv)
 
     me, read = server["requests"]
     assert me.url.path == "/api/v2/ugc/agency/me"
-    assert read.url.path == f"/api/v2/ugc/agency/{AGENCY}/campaigns/progress"
+    assert read.url.path == f"/api/v2/ugc/agency/{AGENCY}/{tail}"
 
 
-def test_a_login_off_the_agency_team_is_refused_before_any_agency_read(server):
+def test_no_organization_at_all_is_refused_before_any_read(server, monkeypatch):
+    monkeypatch.setattr(
+        cli,
+        "load_config",
+        lambda: Config(
+            api_base_url="https://api.example.test/api/v1",
+            auth=AuthState(api_key="test-key"),
+        ),
+    )
     server["agency"] = {"enabled": False, "organization_id": None}
 
     result = fail("agency-analytics", "+get", "--all-time")
 
-    assert result["ok"] is False and result["reason"] == "forbidden"
+    assert result["ok"] is False
+    assert result["reason"] == "missing_organization", result
     assert [r.url.path for r in server["requests"]] == ["/api/v2/ugc/agency/me"]
 
 

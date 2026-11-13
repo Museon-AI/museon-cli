@@ -100,5 +100,6 @@ or input error. Only `agentic-campaign` and `hireaicreator` still document their
 | External evidence and research synthesis | `museon-research` |
 | Monitored creator/content history | `museon-content-workflow-campaign-monitor` |
 | UGC briefs, brief assignments and creative brief links (`ugc`) | `museon-content-workflow-campaign-monitor` |
+| Tasks, Campaign setup, creator conversations, creators, client reports (`ugc`), analytics boards (`analytics`), organization members and billing (`organization`) | `museon-content-workflow-campaign-monitor` |
 | Reusable slideshow assets, generation and publish | `museon-content-workflow-ai-slideshow` |
 | HireAICreator content planning, editing and delivery | `museon-content-workflow-hireaicreator` |
