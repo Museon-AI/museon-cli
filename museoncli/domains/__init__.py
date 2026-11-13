@@ -42,6 +42,10 @@ from museoncli.domains import (
     skills,
     staff_ops,
     routines,
+    artifacts_manage,
+    media_collections,
+    social_account_housekeeping,
+    product_cta,
 )
 
 
@@ -63,6 +67,10 @@ _DOMAIN_MODULES = (
     skills,
     staff_ops,
     routines,
+    artifacts_manage,
+    media_collections,
+    social_account_housekeeping,
+    product_cta,
 )
 
 

@@ -2315,6 +2315,114 @@
           "summary": "Cancel one account publish schedule item.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.cta-target-list",
+          "cli": "museoncli ai-slideshow cta-target +list",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.cta-target-list",
+          "requires_confirmation": false,
+          "resource": "cta-target",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a product's CTA targets (what its posts point viewers to): title, Markdown body, images and status. Staff only (the server refuses other callers).",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.cta-target-create",
+          "cli": "museoncli ai-slideshow cta-target +create",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.cta-target-create",
+          "requires_confirmation": false,
+          "resource": "cta-target",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Create a CTA target for a product: title, Markdown body, optional ordered images. No idempotency key: after an unknown outcome, list before retrying. Staff only (the server refuses other callers).",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.cta-target-update",
+          "cli": "museoncli ai-slideshow cta-target +update",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.cta-target-update",
+          "requires_confirmation": false,
+          "resource": "cta-target",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Change a CTA target's title, body, position, images (--media-id replaces them) or status. Only the given fields change. Staff only (the server refuses other callers).",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ai-slideshow.cta-target-retire",
+          "cli": "museoncli ai-slideshow cta-target +retire",
+          "domain": "ai-slideshow",
+          "execution": "direct",
+          "name": "ai-slideshow.cta-target-retire",
+          "requires_confirmation": true,
+          "resource": "cta-target",
+          "risk_level": "write",
+          "shortcut": "+retire",
+          "stability": "stable",
+          "summary": "Retire a CTA target so new posts stop using it (requires --yes; confirm with the user first). Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
         }
       ],
       "artifacts": [
@@ -2508,6 +2616,104 @@
           "stability": "stable",
           "summary": "Revoke the public internet link for one artifact. Use only when the user explicitly wants to revoke public access.",
           "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "artifacts.list",
+          "cli": "museoncli artifacts +list",
+          "domain": "artifacts",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the artifact library.",
+              "label": "Artifacts",
+              "path_template": "/artifacts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/artifacts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one uploaded artifact after the response returns artifact_id.",
+              "label": "Artifact detail",
+              "path_template": "/artifacts/{artifact_id}",
+              "required_fields": [
+                "artifact_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/artifacts/{artifact_id}"
+            }
+          ],
+          "name": "artifacts.list",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the organization's artifacts (reports and files uploaded with artifacts +upload), newest first, with title, type, is_public and public_url. Any organization role can read. Page with --page/--page-size or --all.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "artifacts.get",
+          "cli": "museoncli artifacts +get",
+          "domain": "artifacts",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the artifact library.",
+              "label": "Artifacts",
+              "path_template": "/artifacts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/artifacts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one uploaded artifact after the response returns artifact_id.",
+              "label": "Artifact detail",
+              "path_template": "/artifacts/{artifact_id}",
+              "required_fields": [
+                "artifact_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/artifacts/{artifact_id}"
+            }
+          ],
+          "name": "artifacts.get",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one artifact: Markdown body (or download_url for a file), title, version, is_public and public_url. Any organization role can read.",
+          "supports_dry_run": false,
           "transport": "agent_cli_api"
         }
       ],
@@ -10468,6 +10674,197 @@
           "summary": "Read one media record in the selected organization. Business output completion must be verified through its owning domain.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "media.collection-list",
+          "cli": "museoncli media collection +list",
+          "domain": "media",
+          "execution": "direct",
+          "name": "media.collection-list",
+          "requires_confirmation": false,
+          "resource": "collection",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the organization's media collections with media_count and preview media. Any organization role can read. Page with --page/--page-size or --all.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "media.collection-get",
+          "cli": "museoncli media collection +get",
+          "domain": "media",
+          "execution": "direct",
+          "name": "media.collection-get",
+          "requires_confirmation": false,
+          "resource": "collection",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read one media collection with its media_count. Any organization role.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "media.collection-list-media",
+          "cli": "museoncli media collection +list-media",
+          "domain": "media",
+          "execution": "direct",
+          "name": "media.collection-list-media",
+          "requires_confirmation": false,
+          "resource": "collection",
+          "risk_level": "read",
+          "shortcut": "+list-media",
+          "stability": "stable",
+          "summary": "List the media in one collection, in order, with media_url, media_type and thumbnail_url. Any organization role. Page with --page/--page-size or --all.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "media.collection-update",
+          "cli": "museoncli media collection +update",
+          "domain": "media",
+          "execution": "direct",
+          "name": "media.collection-update",
+          "requires_confirmation": false,
+          "resource": "collection",
+          "risk_level": "write",
+          "shortcut": "+update",
+          "stability": "stable",
+          "summary": "Rename a media collection. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "media.collection-delete",
+          "cli": "museoncli media collection +delete",
+          "domain": "media",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "media.collection-delete",
+          "requires_confirmation": true,
+          "resource": "collection",
+          "risk_level": "destructive",
+          "shortcut": "+delete",
+          "stability": "stable",
+          "summary": "Delete a media collection; its media stay in the library. --dry-run reads the collection and deletes nothing; show it to the user, then run with --yes. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "media.collection-add",
+          "cli": "museoncli media collection +add",
+          "domain": "media",
+          "execution": "direct",
+          "name": "media.collection-add",
+          "requires_confirmation": false,
+          "resource": "collection",
+          "risk_level": "write",
+          "shortcut": "+add",
+          "stability": "stable",
+          "summary": "Add up to 100 media to a collection; media already in it are skipped (data.added, data.skipped), so a rerun is safe. Media must come from the same organization library as the collection. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "media.collection-remove",
+          "cli": "museoncli media collection +remove",
+          "domain": "media",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "name": "media.collection-remove",
+          "requires_confirmation": true,
+          "resource": "collection",
+          "risk_level": "destructive",
+          "shortcut": "+remove",
+          "stability": "stable",
+          "summary": "Remove up to 100 media from a collection (the media stay in the library). --dry-run reads the collection and removes nothing; then run with --yes. Each media is removed on its own: data.removed and data.failed list the outcome. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
         }
       ],
       "publish": [
@@ -12565,6 +12962,183 @@
           "stability": "stable",
           "summary": "Read per-account status and avatar URLs for an avatar-generation task.",
           "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.tag-set",
+          "cli": "museoncli social-account tag +set",
+          "domain": "social-account",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.tag-set",
+          "requires_confirmation": false,
+          "resource": "tag",
+          "risk_level": "write",
+          "shortcut": "+set",
+          "stability": "stable",
+          "summary": "Replace a social account's tags with exactly the given set (--clear removes all). Tags are the organization's own labels for filtering (social-account +list --tag). --dry-run shows before and after. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.tag-add",
+          "cli": "museoncli social-account tag +add",
+          "domain": "social-account",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.tag-add",
+          "requires_confirmation": false,
+          "resource": "tag",
+          "risk_level": "write",
+          "shortcut": "+add",
+          "stability": "stable",
+          "summary": "Add tags to a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.tag-remove",
+          "cli": "museoncli social-account tag +remove",
+          "domain": "social-account",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.tag-remove",
+          "requires_confirmation": false,
+          "resource": "tag",
+          "risk_level": "write",
+          "shortcut": "+remove",
+          "stability": "stable",
+          "summary": "Remove tags from a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator.",
+          "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
       ],
@@ -18149,6 +18723,476 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "ai-slideshow.cta-target-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.cta-target-create",
+      "cli": "museoncli ai-slideshow cta-target +create",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow cta-target +create --product-id 72defd40-39ad-40d3-8105-8f23a9a016da --title 'Try it free' --content-markdown 'Download at example.com'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "content_markdown": {
+            "description": "Target body in Markdown.",
+            "maxLength": 10000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "media_ids": {
+            "description": "Images shown with the target, in order (media +upload / media +import). Repeat --media-id; on +update the list replaces the current images.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "product_id": {
+            "description": "Product ID (ai-slideshow asset +list --type product). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "sort_order": {
+            "description": "Position among targets.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": {
+            "description": "Target title.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "title",
+          "content_markdown"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.cta-target-create",
+      "output_schema": {
+        "description": "data: the created CTA target.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "cta-target",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Create a CTA target for a product: title, Markdown body, optional ordered images. No idempotency key: after an unknown outcome, list before retrying. Staff only (the server refuses other callers).",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.cta-target-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.cta-target-list",
+      "cli": "museoncli ai-slideshow cta-target +list",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow cta-target +list --product-id 72defd40-39ad-40d3-8105-8f23a9a016da"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "product_id": {
+            "description": "Product ID (ai-slideshow asset +list --type product). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.cta-target-list",
+      "output_schema": {
+        "description": "data: the product's CTA targets.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "cta-target",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List a product's CTA targets (what its posts point viewers to): title, Markdown body, images and status. Staff only (the server refuses other callers).",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.cta-target-retire": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.cta-target-retire",
+      "cli": "museoncli ai-slideshow cta-target +retire",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow cta-target +retire --product-id 72defd40-39ad-40d3-8105-8f23a9a016da --id 0d9c3b7a-1f2e-4c5d-8e9f-a0b1c2d3e4f5 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "CTA target ID (data[].id of ai-slideshow cta-target +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "product_id": {
+            "description": "Product ID (ai-slideshow asset +list --type product). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.cta-target-retire",
+      "output_schema": {
+        "description": "data: the retired CTA target.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "cta-target",
+      "risk_level": "write",
+      "shortcut": "+retire",
+      "stability": "stable",
+      "summary": "Retire a CTA target so new posts stop using it (requires --yes; confirm with the user first). Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ai-slideshow.cta-target-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "ai-slideshow.cta-target-update",
+      "cli": "museoncli ai-slideshow cta-target +update",
+      "domain": "ai-slideshow",
+      "examples": [
+        "museoncli ai-slideshow cta-target +update --product-id 72defd40-39ad-40d3-8105-8f23a9a016da --id 0d9c3b7a-1f2e-4c5d-8e9f-a0b1c2d3e4f5 --title 'Start free today'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "content_markdown": {
+            "description": "Target body in Markdown.",
+            "maxLength": 10000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "description": "CTA target ID (data[].id of ai-slideshow cta-target +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "media_ids": {
+            "description": "Images shown with the target, in order (media +upload / media +import). Repeat --media-id; on +update the list replaces the current images.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "product_id": {
+            "description": "Product ID (ai-slideshow asset +list --type product). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "sort_order": {
+            "description": "Position among targets.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "status": {
+            "description": "active or retired.",
+            "enum": [
+              "active",
+              "retired"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "description": "Target title.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ai-slideshow.cta-target-update",
+      "output_schema": {
+        "description": "data: the CTA target after the change.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "cta-target",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Change a CTA target's title, body, position, images (--media-id replaces them) or status. Only the given fields change. Staff only (the server refuses other callers).",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "ai-slideshow.generation-create": {
       "authorization": {
         "authentication_required": true,
@@ -23192,6 +24236,259 @@
       "stability": "stable",
       "summary": "Update one account publish schedule item.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "artifacts.get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "artifacts.get",
+      "cli": "museoncli artifacts +get",
+      "domain": "artifacts",
+      "examples": [
+        "museoncli artifacts +get --id 72defd40-39ad-40d3-8105-8f23a9a016da"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the artifact library.",
+          "label": "Artifacts",
+          "path_template": "/artifacts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/artifacts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one uploaded artifact after the response returns artifact_id.",
+          "label": "Artifact detail",
+          "path_template": "/artifacts/{artifact_id}",
+          "required_fields": [
+            "artifact_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/artifacts/{artifact_id}"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Artifact ID (data.items[].id of artifacts +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "artifacts.get",
+      "output_schema": {
+        "description": "data: id, title, artifact_type, render_kind, markdown or download_url, version, is_public, public_url.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one artifact: Markdown body (or download_url for a file), title, version, is_public and public_url. Any organization role can read.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "artifacts.list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "artifacts.list",
+      "cli": "museoncli artifacts +list",
+      "domain": "artifacts",
+      "examples": [
+        "museoncli artifacts +list --page-size 20",
+        "museoncli artifacts +list --search weekly --all"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the artifact library.",
+          "label": "Artifacts",
+          "path_template": "/artifacts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/artifacts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one uploaded artifact after the response returns artifact_id.",
+          "label": "Artifact detail",
+          "path_template": "/artifacts/{artifact_id}",
+          "required_fields": [
+            "artifact_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/artifacts/{artifact_id}"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "description": "Page number, starting at 1.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "description": "Records per page (1-100).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "description": "Free-text search on the name or title.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "artifacts.list",
+      "output_schema": {
+        "description": "data.items (id, title, artifact_type, is_public, public_url, created_at, updated_at), data.total, data.page, data.page_size.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the organization's artifacts (reports and files uploaded with artifacts +upload), newest first, with title, type, is_public and public_url. Any organization role can read. Page with --page/--page-size or --all.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "artifacts.share": {
@@ -54253,6 +55550,766 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "media.collection-add": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "media.collection-add",
+      "cli": "museoncli media collection +add",
+      "domain": "media",
+      "examples": [
+        "museoncli media collection +add --id 72defd40-39ad-40d3-8105-8f23a9a016da --media-id 5b0b2f3e-8c1d-4f0a-9d7e-2a6c1e4b9f10"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Collection ID (data.data[].id of media collection +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "media_ids": {
+            "description": "Media IDs (media +get / media +upload). Repeat --media-id for several, up to 100.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "media_ids"
+        ],
+        "type": "object"
+      },
+      "name": "media.collection-add",
+      "output_schema": {
+        "description": "data: added, skipped, message.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "collection",
+      "risk_level": "write",
+      "shortcut": "+add",
+      "stability": "stable",
+      "summary": "Add up to 100 media to a collection; media already in it are skipped (data.added, data.skipped), so a rerun is safe. Media must come from the same organization library as the collection. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "media.collection-delete": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "media.collection-delete",
+      "cli": "museoncli media collection +delete",
+      "domain": "media",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli media collection +delete --id 72defd40-39ad-40d3-8105-8f23a9a016da --dry-run",
+        "museoncli media collection +delete --id 72defd40-39ad-40d3-8105-8f23a9a016da --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Collection ID (data.data[].id of media collection +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "media.collection-delete",
+      "output_schema": {
+        "description": "data.would_delete (dry run) or data.deleted and data.collection.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "collection",
+      "risk_level": "destructive",
+      "shortcut": "+delete",
+      "stability": "stable",
+      "summary": "Delete a media collection; its media stay in the library. --dry-run reads the collection and deletes nothing; show it to the user, then run with --yes. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "media.collection-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "media.collection-get",
+      "cli": "museoncli media collection +get",
+      "domain": "media",
+      "examples": [
+        "museoncli media collection +get --id 72defd40-39ad-40d3-8105-8f23a9a016da"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Collection ID (data.data[].id of media collection +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "media.collection-get",
+      "output_schema": {
+        "description": "data: id, name, media_count, content_count.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "collection",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read one media collection with its media_count. Any organization role.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "media.collection-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "media.collection-list",
+      "cli": "museoncli media collection +list",
+      "domain": "media",
+      "examples": [
+        "museoncli media collection +list --search launch"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "description": "Page number, starting at 1.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "description": "Records per page (1-100).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "description": "Free-text search on the name or title.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "media.collection-list",
+      "output_schema": {
+        "description": "data.data (collections) and data.pagination.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "collection",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List the organization's media collections with media_count and preview media. Any organization role can read. Page with --page/--page-size or --all.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "media.collection-list-media": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "media.collection-list-media",
+      "cli": "museoncli media collection +list-media",
+      "domain": "media",
+      "examples": [
+        "museoncli media collection +list-media --id 72defd40-39ad-40d3-8105-8f23a9a016da --all"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Collection ID (data.data[].id of media collection +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "page": {
+            "description": "Page number, starting at 1.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "description": "Records per page (1-100).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "search": {
+            "description": "Free-text search on the name or title.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "media.collection-list-media",
+      "output_schema": {
+        "description": "data.data (collection media) and data.pagination.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "collection",
+      "risk_level": "read",
+      "shortcut": "+list-media",
+      "stability": "stable",
+      "summary": "List the media in one collection, in order, with media_url, media_type and thumbnail_url. Any organization role. Page with --page/--page-size or --all.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "media.collection-remove": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "media.collection-remove",
+      "cli": "museoncli media collection +remove",
+      "domain": "media",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli media collection +remove --id 72defd40-39ad-40d3-8105-8f23a9a016da --media-id 5b0b2f3e-8c1d-4f0a-9d7e-2a6c1e4b9f10 --yes"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Collection ID (data.data[].id of media collection +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "media_ids": {
+            "description": "Media IDs (media +get / media +upload). Repeat --media-id for several, up to 100.",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "media_ids"
+        ],
+        "type": "object"
+      },
+      "name": "media.collection-remove",
+      "output_schema": {
+        "description": "data: collection_id, removed, failed.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": true,
+      "resource": "collection",
+      "risk_level": "destructive",
+      "shortcut": "+remove",
+      "stability": "stable",
+      "summary": "Remove up to 100 media from a collection (the media stay in the library). --dry-run reads the collection and removes nothing; then run with --yes. Each media is removed on its own: data.removed and data.failed list the outcome. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "media.collection-update": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "media.collection-update",
+      "cli": "museoncli media collection +update",
+      "domain": "media",
+      "examples": [
+        "museoncli media collection +update --id 72defd40-39ad-40d3-8105-8f23a9a016da --name 'Spring launch'"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Collection ID (data.data[].id of media collection +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "New collection name.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "media.collection-update",
+      "output_schema": {
+        "description": "data: the collection after the rename.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "collection",
+      "risk_level": "write",
+      "shortcut": "+update",
+      "stability": "stable",
+      "summary": "Rename a media collection. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "media.generate": {
       "authorization": {
         "authentication_required": true,
@@ -62065,6 +64122,447 @@
       "shortcut": "+submit-profile-edit",
       "stability": "stable",
       "summary": "Submit a TikTok profile edit task for one account. Use +get-profile-edit to confirm completion.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "social-account.tag-add": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.tag-add",
+      "cli": "museoncli social-account tag +add",
+      "domain": "social-account",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli social-account tag +add --id 72defd40-39ad-40d3-8105-8f23a9a016da --tag warmup"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Social account ID (social-account +list / +get). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "tags": {
+            "description": "Tags; repeat --tag for several (an account holds at most 50).",
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "tags"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.tag-add",
+      "output_schema": {
+        "description": "data: account_id, before, after, changed, dry_run.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "tag",
+      "risk_level": "write",
+      "shortcut": "+add",
+      "stability": "stable",
+      "summary": "Add tags to a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "social-account.tag-remove": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.tag-remove",
+      "cli": "museoncli social-account tag +remove",
+      "domain": "social-account",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli social-account tag +remove --id 72defd40-39ad-40d3-8105-8f23a9a016da --tag warmup"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Social account ID (social-account +list / +get). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "tags": {
+            "description": "Tags; repeat --tag for several (an account holds at most 50).",
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "tags"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.tag-remove",
+      "output_schema": {
+        "description": "data: account_id, before, after, changed, dry_run.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "tag",
+      "risk_level": "write",
+      "shortcut": "+remove",
+      "stability": "stable",
+      "summary": "Remove tags from a social account, keeping its other tags. --dry-run shows before and after. No version check: a tag change made between the read and the write is overwritten. Needs owner, admin or operator.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "social-account.tag-set": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.tag-set",
+      "cli": "museoncli social-account tag +set",
+      "domain": "social-account",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli social-account tag +set --id 72defd40-39ad-40d3-8105-8f23a9a016da --tag us --tag beauty",
+        "museoncli social-account tag +set --id 72defd40-39ad-40d3-8105-8f23a9a016da --clear --dry-run"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "id": {
+            "description": "Social account ID (social-account +list / +get). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "tags": {
+            "description": "The full tag set; [] (or --clear) removes every tag.",
+            "items": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "tags"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.tag-set",
+      "output_schema": {
+        "description": "data: account_id, before, after, changed, dry_run.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "tag",
+      "risk_level": "write",
+      "shortcut": "+set",
+      "stability": "stable",
+      "summary": "Replace a social account's tags with exactly the given set (--clear removes all). Tags are the organization's own labels for filtering (social-account +list --tag). --dry-run shows before and after. Needs owner, admin or operator.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
