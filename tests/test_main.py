@@ -1126,6 +1126,15 @@ def test_dispatch_campaign_monitor_breakdown_reads_one_dimension(
     asyncio.run(main_module.dispatch(args))
     assert calls[0]["params"] == {"by": "creator_tag"}
 
+    # A Tracking Campaign also breaks down by source video (the server's `source_video`).
+    calls.clear()
+    args = parse(
+        ["campaign-monitor", "+get-breakdown", "--id", _DIMENSIONS_CAMPAIGN_ID, "--by", "source-video"]
+    )
+    asyncio.run(main_module.dispatch(args))
+    assert calls[0]["path"] == f"/agent-cli/campaign-monitors/{_DIMENSIONS_CAMPAIGN_ID}/breakdown"
+    assert calls[0]["params"] == {"by": "source_video"}
+
 
 def test_campaign_monitor_breakdown_only_takes_known_dimensions() -> None:
     with pytest.raises(SystemExit):

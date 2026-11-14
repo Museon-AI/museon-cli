@@ -12,7 +12,7 @@ Review compares planned, generated, and published work with observed outcomes, s
 | --- | --- |
 | Creator membership | `museoncli campaign-monitor +list-creators` |
 | Content membership | `museoncli campaign-monitor +list-content` |
-| Creator history | `museoncli campaign-monitor +get-creator-performance` |
+| Creator history | `museoncli campaign-monitor +get-creator-performance --id <creator_social_account_id> --date-from D --date-to D` (both dates required, at most 180 days; `--id` is the creator's social account id, not a campaign id) |
 | Post history | `museoncli campaign-monitor +get-post-performance` |
 
 ## DON'T

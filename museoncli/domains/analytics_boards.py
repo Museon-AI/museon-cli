@@ -59,10 +59,14 @@ def _collections(board: dict[str, Any]) -> list[str]:
     )
 
 
-def _link_status(arguments: dict[str, Any], board: dict[str, Any]) -> str:
+def _link_status(arguments: dict[str, Any], board: dict[str, Any]) -> str | None:
+    """The board page's post scope: ``approved`` sends ``linked``; ``all`` sends nothing.
+
+    The collection-set routes accept only ``link_status=linked`` or no value (every post).
+    """
     saved = board.get("filters") if isinstance(board.get("filters"), dict) else {}
     scope = arguments.get("scope") or saved.get("post_scope") or "all"
-    return "linked" if scope == "approved" else "not_excluded"
+    return "linked" if scope == "approved" else None
 
 
 async def _data(ctx: CommandContext, arguments: dict[str, Any]) -> Any:

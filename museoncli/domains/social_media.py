@@ -10,6 +10,7 @@ from museoncli.execution import (
 )
 
 import argparse
+from datetime import date
 from typing import Any
 from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import (
@@ -22,7 +23,12 @@ from museoncli.domains._shared import (
 
 def _add_social_media_creator_get_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
-    parser.add_argument("--id", required=True, dest="creator_id")
+    parser.add_argument(
+        "--id",
+        required=True,
+        dest="creator_id",
+        help="The creator's social account ID (a social_account id), not a campaign ID.",
+    )
 
 
 def _build_social_media_creator_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
@@ -54,8 +60,14 @@ def _add_social_media_creator_performance_get_arguments(
     parser: argparse.ArgumentParser,
 ) -> None:
     _add_social_media_creator_get_arguments(parser)
-    parser.add_argument("--date-from")
-    parser.add_argument("--date-to")
+    parser.add_argument(
+        "--date-from",
+        help="First day of the window, YYYY-MM-DD (required; the window is at most 180 days).",
+    )
+    parser.add_argument(
+        "--date-to",
+        help="Last day of the window, YYYY-MM-DD (required; on or after --date-from).",
+    )
     parser.add_argument("--limit", type=int, default=100)
 
 
@@ -72,7 +84,33 @@ def _build_social_media_creator_performance_get_arguments(
             }
         )
     )
+    _check_creator_performance_window(payload)
     return payload
+
+
+CREATOR_PERFORMANCE_MAX_DAYS = 180
+
+
+def _check_creator_performance_window(payload: dict[str, Any]) -> None:
+    """The server needs both dates (inclusive, at most 180 days); say so before the request."""
+    date_from, date_to = payload.get("date_from"), payload.get("date_to")
+    if not date_from or not date_to:
+        raise ValueError(
+            "campaign-monitor +get-creator-performance needs --date-from and --date-to "
+            "(YYYY-MM-DD, inclusive, at most 180 days apart), e.g. "
+            "--date-from 2026-10-01 --date-to 2026-10-28"
+        )
+    try:
+        start, end = date.fromisoformat(str(date_from)), date.fromisoformat(str(date_to))
+    except ValueError as exc:
+        raise ValueError("--date-from and --date-to must be dates in YYYY-MM-DD format") from exc
+    if end < start:
+        raise ValueError("--date-to must be on or after --date-from")
+    if (end - start).days + 1 > CREATOR_PERFORMANCE_MAX_DAYS:
+        raise ValueError(
+            f"the window may span at most {CREATOR_PERFORMANCE_MAX_DAYS} days (inclusive); "
+            "read a longer history in several windows"
+        )
 
 
 def _add_social_media_post_get_arguments(parser: argparse.ArgumentParser) -> None:
@@ -123,7 +161,11 @@ def _build_social_media_post_resolve_arguments(args: argparse.Namespace) -> dict
 def _social_media_creator_get_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
-        "properties": {"creator_id": {"type": "string", "minLength": 1}},
+        "properties": {"creator_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The creator's social account ID (not a campaign ID).",
+            }},
         "required": ["creator_id"],
     }
 
@@ -132,7 +174,11 @@ def _social_media_post_list_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "creator_id": {"type": "string", "minLength": 1},
+            "creator_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The creator's social account ID (not a campaign ID).",
+            },
             "page": {"type": "integer", "minimum": 1, "default": 1},
             "page_size": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20},
         },
@@ -144,12 +190,24 @@ def _social_media_creator_performance_get_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "creator_id": {"type": "string", "minLength": 1},
-            "date_from": {"type": ["string", "null"]},
-            "date_to": {"type": ["string", "null"]},
+            "creator_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The creator's social account ID (not a campaign ID).",
+            },
+            "date_from": {
+                "type": "string",
+                "format": "date",
+                "description": "First day, YYYY-MM-DD (required; window at most 180 days).",
+            },
+            "date_to": {
+                "type": "string",
+                "format": "date",
+                "description": "Last day, YYYY-MM-DD (required; on or after date_from).",
+            },
             "limit": {"type": "integer", "minimum": 1, "maximum": 500, "default": 100},
         },
-        "required": ["creator_id"],
+        "required": ["creator_id", "date_from", "date_to"],
     }
 
 
@@ -227,7 +285,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+get-creator-performance",
             legacy_shortcuts=("+creator-performance-get",),
             summary=(
-                "Read local synced performance history for one organization-visible social account."
+                "Read local synced performance history for one organization-visible social account. "
+                "Both --date-from and --date-to are required (inclusive, at most 180 days)."
             ),
             risk_level="read",
             execution="direct",
@@ -239,7 +298,7 @@ def specs() -> list[CommandSpec]:
             examples=[
                 (
                     "museoncli campaign-monitor +get-creator-performance "
-                    "--id <creator_social_account_id> --date-from 2026-06-01"
+                    "--id <creator_social_account_id> --date-from 2026-10-01 --date-to 2026-10-28"
                 ),
             ],
             add_arguments=_add_social_media_creator_performance_get_arguments,

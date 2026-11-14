@@ -103,7 +103,7 @@ def read(
     execute: Execute | None = None,
     required: tuple[str, ...] = (),
     paging: Paging = None,
-    flags: dict[str, str] | None = None,
+    flags: dict[str, str | tuple[str, ...]] | None = None,
     check: Callable[[dict[str, Any]], None] | None = None,
     output: str = "Unmodified Museon API read model.",
 ) -> CommandSpec:
@@ -138,7 +138,8 @@ def read(
                 kwargs["choices"] = [value for value in item["enum"] if value is not None]
             if prop.get("description"):
                 kwargs["help"] = prop["description"]
-            parser.add_argument(aliases.get(key, "--" + key.replace("_", "-")), **kwargs)
+            options = aliases.get(key, "--" + key.replace("_", "-"))
+            parser.add_argument(*((options,) if isinstance(options, str) else options), **kwargs)
 
     def build(args: argparse.Namespace) -> dict[str, Any]:
         payload = _load(args, props, required)

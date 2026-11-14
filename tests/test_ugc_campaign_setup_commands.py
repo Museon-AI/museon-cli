@@ -264,6 +264,20 @@ def test_launch_dry_run_reports_launchability_without_writing(cli_run) -> None:
     assert any("not ready to launch" in warning for warning in result["warnings"])
 
 
+def test_restore_dry_run_names_the_status_it_would_return_to_and_campaign_id_is_an_alias(cli_run) -> None:
+    server = Server({("GET", f"{UGC}/campaigns/{CAMPAIGN}"): _view("archived")})
+
+    code, result = cli_run(
+        server, "ugc", "campaign", "+restore", "--campaign-id", CAMPAIGN, "--dry-run"
+    )
+
+    assert code == 0
+    assert server.writes() == []
+    # Only a draft or a complete Campaign can be archived, so it returns to one of them.
+    assert result["data"]["before"] == "archived"
+    assert result["data"]["after"] == "draft or complete"
+
+
 def test_launch_with_yes_sends_the_status_it_read(cli_run) -> None:
     server = Server(
         {
@@ -501,7 +515,20 @@ def test_delivery_target_create_needs_a_figure_and_posts_the_target(cli_run) -> 
     assert code == 0
     assert body(server.only_write()) == {
         "target_views": 1000, "target_posts": None, "target_creators": None,
-        "start_date": None, "due_date": "2026-12-31", "sets_campaign_start": False,
+        "start_date": None, "due_date": "2026-12-31",
+    }
+
+    # The server's CampaignTargetWrite has exactly these five fields: a creators target is
+    # supported and no `sets_campaign_start` goes out (the server dropped it, #7361).
+    server.requests.clear()
+    code, _ = cli_run(
+        server, "ugc", "delivery-target", "+create", "--campaign-id", CAMPAIGN,
+        "--target-creators", "20", "--start-date", "2026-12-01", "--due-date", "2026-12-31",
+    )
+    assert code == 0
+    assert body(server.only_write()) == {
+        "target_views": None, "target_posts": None, "target_creators": 20,
+        "start_date": "2026-12-01", "due_date": "2026-12-31",
     }
 
 
@@ -694,6 +721,36 @@ def test_pay_rate_update_previews_on_dry_run_and_writes_the_rate_whole(cli_run) 
             "--rate-json", '{"base_fee_cents": 6000}')
     sent = body(server.only_write())
     assert sent["base_fee_cents"] == 6000 and sent["name"] == "Per video" and "kind" not in sent
+
+
+def test_video_content_pay_rate_is_checked_in_dry_run_against_the_servers_pairings(cli_run) -> None:
+    server = Server(
+        {
+            ("GET", f"{UGC}/campaigns/{CAMPAIGN}/payscales"): _scales(),
+            ("POST", f"{UGC}/campaigns/{CAMPAIGN}/pay-preview/draft"): {"points": []},
+            ("POST", f"{UGC}/payscales/{SCALE}/rates"): {"id": RATE},
+        }
+    )
+    base = ("ugc", "pay-rate", "+create", "--campaign-id", CAMPAIGN, "--payscale-id", SCALE,
+            "--kind", "video-content")
+
+    # The server answers this with a bare 422 invalid_state: no description (the sentence a
+    # post is judged against), and a base fee without base_rate_mode per_video.
+    code, result = cli_run(
+        server, *base, "--rate-json", '{"name": "x", "base_fee_cents": 1000}', "--dry-run"
+    )
+    assert code == cli.EXIT_FAILURE
+    assert result["reason"] == "invalid_input"
+    assert '"description"' in result["error"]["message"]
+    assert "per_video" in result["error"]["message"]
+    assert server.writes() == []
+
+    # The accepted shape: the description, and the fee paired with its mode.
+    rate = {"name": "x", "description": "Shows the product on screen",
+            "base_rate_mode": "per_video", "base_fee_cents": 1000}
+    code, _ = cli_run(server, *base, "--rate-json", json.dumps(rate))
+    assert code == 0
+    assert body(server.only_write()) == {**rate, "kind": "video_content"}
 
 
 # -- Formats (briefs) ------------------------------------------------------------

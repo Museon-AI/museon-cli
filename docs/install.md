@@ -70,7 +70,7 @@ If the command is unavailable:
    reviewed wheel from the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.1.0/museoncli-1.1.0-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.1.1/museoncli-1.1.1-py3-none-any.whl"
    ```
 
    Do not clone the repository, install from a mutable branch, or substitute a
@@ -103,11 +103,11 @@ or `current` and includes their destination paths.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install the workflow Skill folders and Hook Analysis Skill:
 
-https://github.com/Museon-AI/museon-cli/tree/v1.1.0/skills/museon-content-workflow-base
-https://github.com/Museon-AI/museon-cli/tree/v1.1.0/skills/museon-research
-https://github.com/Museon-AI/museon-cli/tree/v1.1.0/skills/museon-content-workflow-hireaicreator
-https://github.com/Museon-AI/museon-cli/tree/v1.1.0/skills/museon-content-workflow-ai-slideshow
-https://github.com/Museon-AI/museon-cli/tree/v1.1.0/skills/museon-content-workflow-campaign-monitor
+https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-content-workflow-base
+https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-research
+https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-content-workflow-hireaicreator
+https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-content-workflow-ai-slideshow
+https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-content-workflow-campaign-monitor
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and

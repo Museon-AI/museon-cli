@@ -19,7 +19,7 @@ with `conflict` instead of overwriting a change made in between; on `conflict`, 
 | Launch a draft (*yes*; dry run shows `launchability.reasons`) | `ugc campaign +launch --id C` |
 | Pause / resume | `ugc campaign +pause --id C`, `+resume` |
 | End it for good (*yes*) | `ugc campaign +complete --id C` |
-| Put a draft or completed one away (*yes*) / bring it back | `ugc campaign +archive --id C`, `+restore` |
+| Put a draft or completed one away (*yes*) / bring it back | `ugc campaign +archive --id C`, `+restore` (`--campaign-id` works as well as `--id`; a restore dry run reports `after: "draft or complete"`, the status it was archived from) |
 | Rename | `ugc campaign +rename --id C --name N` |
 
 Statuses: draft → active ⇄ paused → complete → archived; a draft can also be archived;
@@ -39,9 +39,9 @@ museoncli ugc campaign +launch --id C --expected-status draft --yes
 | Languages, countries, stay/warmup/trial rules, content intake, apply form | `... +update --settings-json '{"stay_rules": {"inactivity_days": 7}}'` (nested rules change only the keys given) |
 | Pay by number of platforms | `... +update --platform-pay-rules-json '{"single_bps":10000,"rules":[{"count":2,"multiplier_bps":12000}]}'` |
 | PMs and OPs | `ugc campaign-staff +set --campaign-id C --manager-user-id U --operator-user-id U` |
-| Delivery targets | `ugc delivery-target +create/+update/+delete --campaign-id C ...` (*yes* on delete) |
+| Delivery targets | `ugc delivery-target +create/+update/+delete --campaign-id C [--target-views N] [--target-posts N] [--target-creators N] [--start-date D] [--due-date D]` (*yes* on delete). A target's dates are its own window; they never move the Campaign's start day, which is set separately |
 | Contract | `ugc contract-template +set --campaign-id C --source default\|custom [--body-file F] [--terms-json ...]` (dry run returns the filled preview) |
-| Payscales and rates | `ugc payscale +create/+update/+delete`, `ugc pay-rate +create/+update/+delete` (dry run of a rate prices a video under it; *yes* on delete) |
+| Payscales and rates | `ugc payscale +create/+update/+delete`, `ugc pay-rate +create/+update/+delete` (dry run of a rate prices a video under it and refuses a rate the server would 422: a `video-content` rate needs a `description` (the sentence a post is judged against), `lifetime-views` needs `min_creator_views`, `base_fee_cents` goes with `base_rate_mode: per_video`; *yes* on delete) |
 | Discord server | `ugc discord-server +initialize --guild-id G` (*yes*; builds channels and roles), `+set` (existing layout), `+remove` (*yes*) |
 | Comment-to-DM | `ugc dm-rule +create` / `+update` (*yes*: an active rule DMs commenters) |
 

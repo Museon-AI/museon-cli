@@ -126,6 +126,8 @@ def specs() -> list[CommandSpec]:
             },
             required=("campaign_id", "report_id"),
             execute=_get,
+            # Sibling +get commands take the entity as --id; both spellings work here.
+            flags={"report_id": ("--report-id", "--id")},
             example=(
                 "museoncli ugc client-report +get --campaign-id <campaign_id> "
                 "--report-id <report_id>"
