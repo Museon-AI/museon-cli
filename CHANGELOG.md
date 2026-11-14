@@ -2,6 +2,18 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 1.1.1
+
+Fixes for what the production end-to-end run of 1.1.0 found. Each was checked against the server source before it was changed.
+
+- `analytics board +get-data` no longer fails with 422 under the board's default post scope. The `/monitor-collection-sets/...` routes accept `link_status=linked` or no value; the CLI sent `not_excluded` for the `all` scope. It now sends `linked` for `approved` and nothing for `all`, as the board page does. (`campaign-monitor` Dashboard reads use a different server that does accept `not_excluded`; they are unchanged.)
+- `campaign-monitor +get-breakdown --by source-video`: a Tracking Campaign can be broken down by source video as well as by creator tag.
+- `campaign-monitor +get-creator` and `+get-creator-performance`: `--id` is the creator's social account id, and the help now says so (it read "campaign monitor ID"). `+get-creator-performance` needs both `--date-from` and `--date-to` (inclusive, at most 180 days, as the server enforces); without them the CLI now fails with `invalid_input` and says why instead of passing on an unexplained 422.
+- `ugc delivery-target +create` / `+update` no longer send `sets_campaign_start`, and the `--sets-campaign-start` flag is gone: the server removed it when the Campaign start day was decoupled from delivery targets. A target is `--target-views`, `--target-posts`, `--target-creators`, `--start-date`, `--due-date`; its dates never move the Campaign's start day, which is a separate setting. The dry run no longer reports `started_on`.
+- `social-account +unbind --dry-run` no longer claims to read the account. No organization-addressed read returns the bound-account row (the account list takes a workspace), so the dry run only validates and echoes the id, and the description says so. Without `--yes` the command now refuses with `confirmation_required` and no preview.
+- `ugc pay-rate +create` / `+update` check the server's pay-rate pairings before any request, in the dry run too: a `video-content` rate needs a `description`, a `lifetime-views` rate needs `min_creator_views`, `base_fee_cents` goes with `base_rate_mode: per_video`, `retainer_cents` and `retainer_videos_per_month` with `monthly_retainer`, `cpm_cents` with `cpm_enabled`. Before, the dry run accepted a rate the server then refused with a bare 422 `invalid_state`.
+- `ugc campaign +launch` / `+pause` / `+resume` / `+complete` / `+archive` / `+restore` / `+rename` accept `--campaign-id` as well as `--id`. `ugc campaign +restore --dry-run` reports `after: "draft or complete"` (the status the Campaign was archived from) instead of `null`. `ugc client-report +get` accepts `--id` as well as `--report-id`.
+
 ## 1.1.0
 
 The CLI covers what the web reads and does day to day (settlement and money writes excepted): task, enrollment, review, messaging, recruiting, Campaign setup, analytics boards, client reports, broadcasts and reminders, plus organization-addressed account, slideshow review and collection routes. Every command that needs `--yes` follows one confirmation rule.

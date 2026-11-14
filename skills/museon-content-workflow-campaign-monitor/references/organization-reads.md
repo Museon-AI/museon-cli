@@ -51,7 +51,7 @@ Find enrollment ids with `ugc enrollment +list --campaign-id <id>`.
 | Need | Command | Who |
 | --- | --- | --- |
 | A Campaign's reports | `ugc client-report +list --campaign-id <id> [--status ready]` | operating organization's owner/admin/the Campaign's operators; never a share |
-| One report in full | `ugc client-report +get --campaign-id <id> --report-id <id>` | same |
+| One report in full | `ugc client-report +get --campaign-id <id> --report-id <id>` (`--id` is the same flag) | same |
 | Report settings and their version | `ugc client-report-config +get --campaign-id <id>` | same |
 
 ## Analytics boards (分析)
@@ -60,7 +60,7 @@ Find enrollment ids with `ugc enrollment +list --campaign-id <id>`.
 | --- | --- | --- |
 | The organization's boards and those shared into it | `analytics board +list` | every member |
 | One board: Campaigns and saved filters | `analytics board +get --id <id>` | every member |
-| A board's figures | `analytics board +get-data --id <id> [--widget trends\|core-metrics\|content\|creators] [--date-from D --date-to D]` | every member; each Campaign as the board page shows it |
+| A board's figures | `analytics board +get-data --id <id> [--widget trends\|core-metrics\|content\|creators] [--date-from D --date-to D] [--scope approved\|all]` | every member; each Campaign as the board page shows it |
 
 `+get-data` uses the board's saved dates, platform and post scope unless flags override them;
 `core-metrics` needs a period. Say which window and scope every number uses.

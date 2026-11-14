@@ -35,7 +35,7 @@ Owner, admin or operator. Both work with the selected organization alone:
 ```bash
 museoncli social-account +sync --profile-id <late_profile_id>   # one profile's accounts, safe to repeat
 museoncli social-account +sync-all                               # your landing workspace in this organization only
-museoncli social-account +unbind --account-id <id> --dry-run     # show the user, then --yes
+museoncli social-account +unbind --account-id <id> --dry-run     # validates and echoes the id only; look it up in +list first, then --yes
 museoncli social-account +unbind --account-id <id> --yes
 ```
 
@@ -43,4 +43,5 @@ museoncli social-account +unbind --account-id <id> --yes
 landing workspace in the organization; use `+sync` for a profile held elsewhere. `+unbind --account-id`
 is the bound-account row's id (`late_social_accounts`), not a pool account id; it disconnects the account
 from the platform and cannot be undone from the CLI (connect it again with `+create-connect-link`).
-Without `--yes` it returns `confirmation_required` with a preview.
+`--dry-run` reads nothing from the server (it only validates and echoes the id), so confirm which
+account the id is before asking the user. Without `--yes` it returns `confirmation_required`.

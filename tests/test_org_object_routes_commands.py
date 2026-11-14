@@ -93,15 +93,25 @@ def test_sync_dry_run_sends_nothing(cli_run) -> None:
     assert server.requests == []
 
 
-def test_unbind_without_yes_is_refused_with_its_preview_and_sends_nothing(cli_run) -> None:
+def test_unbind_without_yes_is_refused_and_sends_nothing(cli_run) -> None:
     server = Server({})
 
     code, result = cli_run(server, "social-account", "+unbind", "--account-id", ID)
 
     assert code == cli.EXIT_FAILURE
     assert result["reason"] == "confirmation_required"
-    assert result["preview"]["data"]["would_unbind"] == {"account_id": ID}
     assert server.requests == []
+
+
+def test_unbind_dry_run_echoes_the_input_and_claims_no_server_read(cli_run) -> None:
+    server = Server({})
+
+    code, result = cli_run(server, "social-account", "+unbind", "--account-id", ID, "--dry-run")
+
+    assert code == 0, result
+    assert result["data"]["dry_run"] is True
+    assert server.requests == []
+    assert "would_unbind" not in result["data"]
 
 
 def test_unbind_with_yes_deletes_the_bound_account_row(cli_run) -> None:

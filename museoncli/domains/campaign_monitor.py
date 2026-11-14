@@ -72,7 +72,7 @@ def _build_campaign_monitor_date_range_arguments(
 
 def _add_campaign_monitor_breakdown_arguments(parser: argparse.ArgumentParser) -> None:
     _add_campaign_monitor_date_range_arguments(parser)
-    parser.add_argument("--by", choices=["brief", "persona", "tag", "creator-tag"])
+    parser.add_argument("--by", choices=["brief", "persona", "tag", "creator-tag", "source-video"])
     parser.add_argument("--link-status", dest="link_status", choices=["linked"])
     parser.add_argument("--platform")
     parser.add_argument("--timezone")
@@ -99,10 +99,11 @@ def _campaign_monitor_breakdown_input_schema() -> dict[str, Any]:
         {
             "by": {
                 "type": ["string", "null"],
-                "enum": ["brief", "persona", "tag", "creator-tag", None],
+                "enum": ["brief", "persona", "tag", "creator-tag", "source-video", None],
                 "description": (
                     "Dimension. A ugc campaign takes brief (default), persona or tag; any "
-                    "other type takes creator-tag (default). See +list-dimensions."
+                    "other type (tracking) takes creator-tag (default) or source-video. "
+                    "See +list-dimensions."
                 ),
             },
             "link_status": {
@@ -667,7 +668,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+get-breakdown",
             summary=(
                 "Group a campaign's counted posts by one dimension: brief, persona (the "
-                "brief's) or tag for a ugc campaign, creator-tag for any other. Rows are "
+                "brief's) or tag for a ugc campaign, creator-tag or source-video for any other. Rows are "
                 "bucket value (carries it), unassigned (approved, without one) or "
                 "awaiting_review (ugc, not approved yet), each with posts, creators, "
                 "measured_posts, metric sums and median_views. Tags overlap: rows can "
@@ -686,6 +687,7 @@ def specs() -> list[CommandSpec]:
                     "--link-status linked --date-from 2026-10-01 --date-to 2026-10-28"
                 ),
                 "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by creator-tag",
+                "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by source-video",
             ],
             add_arguments=_add_campaign_monitor_breakdown_arguments,
             build_arguments=_build_campaign_monitor_breakdown_arguments,

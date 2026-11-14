@@ -274,23 +274,16 @@ async def _execute_target_create(ctx: CommandContext) -> Any:
     view = await _targets(ctx, campaign_id)
     target = {field: args["target"].get(field) for field in TARGET_FIELDS}
     _validate_target(target)
-    body = {**target, "sets_campaign_start": args["sets_campaign_start"]}
+    body = target
     data: dict[str, Any] = {
         "dry_run": args["dry_run"],
         "target": body,
         "existing_targets": len(w._dicts(view.get("items"))),
-        "started_on": view.get("started_on"),
     }
-    warnings = (
-        ["The Campaign's start day moves to this target's start date; an earlier start owes the "
-         "posts since then (history is backfilled)."]
-        if args["sets_campaign_start"]
-        else []
-    )
     if args["dry_run"]:
-        return data, warnings, w.ask("the new target")
+        return data, [], w.ask("the new target")
     data["target"] = await w.call(ctx, "POST", f"/campaigns/{campaign_id}/targets", body=body)
-    return data, warnings, []
+    return data, [], []
 
 
 async def _execute_target_update(ctx: CommandContext) -> Any:
@@ -303,11 +296,11 @@ async def _execute_target_update(ctx: CommandContext) -> Any:
     _validate_target(after)
     diff = w.changes(before, after, TARGET_FIELDS)
     data: dict[str, Any] = {"dry_run": args["dry_run"], "id": target_id, "changes": diff, "expected_updated_at": token}
-    if not diff and not args["sets_campaign_start"]:
+    if not diff:
         return data, [w.nothing_to_write("the current target")], []
     if args["dry_run"]:
         return data, [], w.ask("the target changes")
-    body = {**after, "sets_campaign_start": args["sets_campaign_start"], "expected_updated_at": token}
+    body = {**after, "expected_updated_at": token}
     data["target"] = await w.call(ctx, "PUT", f"/campaigns/{campaign_id}/targets/{target_id}", body=body)
     return data, [], []
 
@@ -643,6 +636,57 @@ RATE_FIELDS = (
 """`PayRateUpdate`: a rate's editable half, written whole."""
 
 
+def rate_problems(kind: str, rate: dict[str, Any]) -> list[str]:
+    """What the server's pay-rate CHECKs would refuse, said before any request.
+
+    The server answers a rate that breaks one with a bare 422 ``invalid_state``; these are
+    its pairings (``ugc_pay_rates_*_check``): a kind needs its own field, and a mode needs
+    the money columns it reads, and only those.
+    """
+
+    def has(field: str) -> bool:
+        value = rate.get(field)
+        return value is not None and value != ""
+
+    problems: list[str] = []
+    if kind == "video_content" and not has("description"):
+        problems.append(
+            'a video-content rate needs a "description": the sentence a post is judged against'
+        )
+    if kind != "video_content" and has("description"):
+        problems.append('"description" belongs to video-content rates only')
+    if kind == "lifetime_views" and not has("min_creator_views"):
+        problems.append('a lifetime-views rate needs "min_creator_views": the views it starts at')
+    if kind != "lifetime_views" and has("min_creator_views"):
+        problems.append('"min_creator_views" belongs to lifetime-views rates only')
+    mode = rate.get("base_rate_mode") or "off"
+    if mode not in ("off", "per_video", "monthly_retainer"):
+        problems.append('"base_rate_mode" is off, per_video or monthly_retainer')
+    if (mode == "per_video") != has("base_fee_cents"):
+        problems.append(
+            '"base_fee_cents" goes with "base_rate_mode": "per_video" (set both, or neither)'
+        )
+    if (mode == "monthly_retainer") != (has("retainer_cents") and has("retainer_videos_per_month")):
+        problems.append(
+            '"retainer_cents" and "retainer_videos_per_month" go with "base_rate_mode": '
+            '"monthly_retainer" (set both with it, or neither)'
+        )
+    if bool(rate.get("cpm_enabled")) != has("cpm_cents"):
+        problems.append('"cpm_cents" goes with "cpm_enabled": true (set both, or neither)')
+    if rate.get("saves_ladder_enabled") and not rate.get("saves_ladder"):
+        problems.append('"saves_ladder_enabled" needs a non-empty "saves_ladder"')
+    return problems
+
+
+def check_rate(kind: str, rate: dict[str, Any]) -> None:
+    problems = rate_problems(kind, rate)
+    if problems:
+        raise ValueError(
+            f"This {kind.replace('_', '-')} pay rate would be refused by the server "
+            f"(422 invalid_state): {'; '.join(problems)}."
+        )
+
+
 async def _payscales(ctx: CommandContext, campaign_id: str) -> list[dict[str, Any]]:
     return w._dicts(await w.call(ctx, "GET", f"/campaigns/{campaign_id}/payscales"))
 
@@ -743,6 +787,7 @@ async def _execute_rate_create(ctx: CommandContext) -> Any:
     campaign_id = args["campaign_id"]
     scale = _find_payscale(await _payscales(ctx, campaign_id), args["payscale_id"])
     rate = {**args["rate"], "kind": args["kind"]}
+    check_rate(args["kind"], rate)
     data: dict[str, Any] = {"dry_run": args["dry_run"], "payscale": _payscale_line(scale), "rate": rate}
     if args["dry_run"]:
         data["preview"] = await _rate_preview(ctx, campaign_id, rate)
@@ -757,6 +802,7 @@ async def _execute_rate_update(ctx: CommandContext) -> Any:
     scale, stored = _find_rate(await _payscales(ctx, campaign_id), args["id"])
     before = {field: stored.get(field) for field in RATE_FIELDS}
     after = {**before, **args["rate"]}
+    check_rate(str(stored.get("kind")), after)
     diff = w.changes(before, after, RATE_FIELDS)
     data: dict[str, Any] = {
         "dry_run": args["dry_run"],
@@ -918,7 +964,6 @@ def _add_target_arguments(*, create: bool):
         parser.add_argument("--target-creators")
         parser.add_argument("--start-date")
         parser.add_argument("--due-date")
-        parser.add_argument("--sets-campaign-start", action="store_true")
         w.add_dry_run(parser)
 
     return add
@@ -943,9 +988,9 @@ def _build_target_arguments(args: argparse.Namespace) -> dict[str, Any]:
             "due_date": _date(args.due_date, flag="--due-date"),
         }
     )
-    if not target and not args.sets_campaign_start and getattr(args, "id", None):
+    if not target and getattr(args, "id", None):
         raise ValueError("Pass at least one figure or date to change.")
-    return {**_common(args), "target": target, "sets_campaign_start": bool(args.sets_campaign_start)}
+    return {**_common(args), "target": target}
 
 
 def _add_target_delete_arguments(parser: argparse.ArgumentParser) -> None:
@@ -1296,7 +1341,8 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Add a delivery target to a Campaign: views, posts and/or creators to reach "
                 "between --start-date and --due-date (UTC days, inclusive; either side may stay "
-                "open). --sets-campaign-start also moves the Campaign's start day to its start. "
+                "open). A target's dates never move the Campaign's own start day, which is set "
+                "separately (the Campaign's start day setting, not a target). "
                 "--dry-run returns the target without writing." + w.CONFIRM_FIRST + _TEAM_ROLE
             ),
             adapter="ugc_delivery_target_create",
@@ -1307,11 +1353,10 @@ def specs() -> list[CommandSpec]:
                 "target_creators": {"type": "integer", "minimum": 1, "maximum": 100000, "description": "Creators to reach."},
                 "start_date": {"type": "string", "format": "date", "description": "First day counted."},
                 "due_date": {"type": "string", "format": "date", "description": "Last day counted."},
-                "sets_campaign_start": {"type": "boolean", "default": False, "description": "Make the start date the Campaign's start day."},
                 "dry_run": w.DRY_RUN,
             },
             required=["campaign_id"],
-            output_description="dry_run, target, existing_targets, started_on.",
+            output_description="dry_run, target, existing_targets.",
             examples=[f"museoncli ugc delivery-target +create --campaign-id {c} --target-views 1000000 --due-date 2026-12-31 --dry-run"],
             add_arguments=_add_target_arguments(create=True),
             build_arguments=_build_target_arguments,
@@ -1322,7 +1367,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+update",
             summary=(
                 "Change a Campaign's delivery target; figures and dates not passed keep their "
-                "value, 'none' clears one. --dry-run returns the changes without writing."
+                "value, 'none' clears one. The dates are the target's window only; they do not "
+                "move the Campaign's start day. --dry-run returns the changes without writing."
                 + w.CONFIRM_FIRST + _TEAM_ROLE
             ),
             adapter="ugc_delivery_target_update",
@@ -1334,7 +1380,6 @@ def specs() -> list[CommandSpec]:
                 "target_creators": _int_or_none("Creators to reach."),
                 "start_date": {"type": "string", "format": "date", "description": "First day counted; 'none' opens it."},
                 "due_date": {"type": "string", "format": "date", "description": "Last day counted; 'none' opens it."},
-                "sets_campaign_start": {"type": "boolean", "default": False, "description": "Make the start date the Campaign's start day."},
                 **eua,
                 "dry_run": w.DRY_RUN,
             },
@@ -1571,7 +1616,8 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Add a pay rate (pricing block) to a payscale: --kind anything-else (the "
                 "fallback), video-content or lifetime-views, and its fields as --rate-json (name "
-                "required; base fee, CPM, ladder, retainer, caps). --dry-run returns the rate and "
+                "required; base fee, CPM, ladder, retainer, caps; video-content also needs "
+                "description, lifetime-views min_creator_views). --dry-run returns the rate and "
                 "what a video would earn under it, without writing." + w.CONFIRM_FIRST + _TEAM_ROLE
             ),
             adapter="ugc_pay_rate_create",
@@ -1660,6 +1706,10 @@ def _rate_properties(*, create: bool) -> dict[str, Any]:
             "monthly_retainer), base_fee_cents, base_min_views, cap_per_video_cents, cpm_enabled, "
             "cpm_cents, cpm_min_views, cpm_max_views, ladder_enabled, ladder, min_creator_views, "
             "performance_mode, platform_overrides, retainer_cents, retainer_videos_per_month. "
+            "The server pairs them: a video-content rate needs a description (the sentence a "
+            "post is judged against), a lifetime-views rate needs min_creator_views, "
+            "base_fee_cents goes with base_rate_mode per_video, retainer_cents and "
+            "retainer_videos_per_month with monthly_retainer, cpm_cents with cpm_enabled. "
             "Read the payscale's rates for their current values."
         ),
     }

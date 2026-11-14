@@ -3383,7 +3383,7 @@
           "risk_level": "read",
           "shortcut": "+get-breakdown",
           "stability": "stable",
-          "summary": "Group a campaign's counted posts by one dimension: brief, persona (the brief's) or tag for a ugc campaign, creator-tag for any other. Rows are bucket value (carries it), unassigned (approved, without one) or awaiting_review (ugc, not approved yet), each with posts, creators, measured_posts, metric sums and median_views. Tags overlap: rows can outnumber totals, which count each post once.",
+          "summary": "Group a campaign's counted posts by one dimension: brief, persona (the brief's) or tag for a ugc campaign, creator-tag or source-video for any other. Rows are bucket value (carries it), unassigned (approved, without one) or awaiting_review (ugc, not approved yet), each with posts, creators, measured_posts, metric sums and median_views. Tags overlap: rows can outnumber totals, which count each post once.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -4252,7 +4252,7 @@
           "risk_level": "read",
           "shortcut": "+get-creator-performance",
           "stability": "stable",
-          "summary": "Read local synced performance history for one organization-visible social account.",
+          "summary": "Read local synced performance history for one organization-visible social account. Both --date-from and --date-to are required (inclusive, at most 180 days).",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -13741,7 +13741,6 @@
           "capability_key": "social-account.unbind",
           "cli": "museoncli social-account +unbind",
           "domain": "social-account",
-          "dry_run_reads_server": true,
           "execution": "direct",
           "frontend_url_templates": [
             {
@@ -13780,7 +13779,7 @@
           "risk_level": "destructive",
           "shortcut": "+unbind",
           "stability": "stable",
-          "summary": "Unbind (disconnect) one social account: its platform authorization is revoked and the binding removed; it cannot be undone from the CLI. --account-id is the bound-account row's id, not a pool account ID. --dry-run shows what would go and writes nothing; show it to the user, then run with --yes. Needs owner, admin or operator.",
+          "summary": "Unbind (disconnect) one social account: its platform authorization is revoked and the binding removed; it cannot be undone from the CLI. --account-id is the bound-account row's id, not a pool account ID. --dry-run only validates the id and echoes it: it reads nothing from the server, so confirm which account that id is (social-account +list) before asking the user to approve; then run with --yes. The account has to be connected again (social-account +create-connect-link) to publish. Needs owner, admin or operator.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -15615,7 +15614,7 @@
           "risk_level": "write",
           "shortcut": "+create",
           "stability": "stable",
-          "summary": "Add a delivery target to a Campaign: views, posts and/or creators to reach between --start-date and --due-date (UTC days, inclusive; either side may stay open). --sets-campaign-start also moves the Campaign's start day to its start. --dry-run returns the target without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
+          "summary": "Add a delivery target to a Campaign: views, posts and/or creators to reach between --start-date and --due-date (UTC days, inclusive; either side may stay open). A target's dates never move the Campaign's own start day, which is set separately (the Campaign's start day setting, not a target). --dry-run returns the target without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -15643,7 +15642,7 @@
           "risk_level": "write",
           "shortcut": "+update",
           "stability": "stable",
-          "summary": "Change a Campaign's delivery target; figures and dates not passed keep their value, 'none' clears one. --dry-run returns the changes without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
+          "summary": "Change a Campaign's delivery target; figures and dates not passed keep their value, 'none' clears one. The dates are the target's window only; they do not move the Campaign's start day. --dry-run returns the changes without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -15951,7 +15950,7 @@
           "risk_level": "write",
           "shortcut": "+create",
           "stability": "stable",
-          "summary": "Add a pay rate (pricing block) to a payscale: --kind anything-else (the fallback), video-content or lifetime-views, and its fields as --rate-json (name required; base fee, CPM, ladder, retainer, caps). --dry-run returns the rate and what a video would earn under it, without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
+          "summary": "Add a pay rate (pricing block) to a payscale: --kind anything-else (the fallback), video-content or lifetime-views, and its fields as --rate-json (name required; base fee, CPM, ladder, retainer, caps; video-content also needs description, lifetime-views min_creator_views). --dry-run returns the rate and what a video would earn under it, without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -17714,7 +17713,7 @@
       "organization"
     ]
   },
-  "contract_revision": "1.1.0",
+  "contract_revision": "1.1.1",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -33495,7 +33494,8 @@
       "domain": "campaign-monitor",
       "examples": [
         "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by brief --link-status linked --date-from 2026-10-01 --date-to 2026-10-28",
-        "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by creator-tag"
+        "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by creator-tag",
+        "museoncli campaign-monitor +get-breakdown --id <campaign_id> --by source-video"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -33545,12 +33545,13 @@
       "input_schema": {
         "properties": {
           "by": {
-            "description": "Dimension. A ugc campaign takes brief (default), persona or tag; any other type takes creator-tag (default). See +list-dimensions.",
+            "description": "Dimension. A ugc campaign takes brief (default), persona or tag; any other type (tracking) takes creator-tag (default) or source-video. See +list-dimensions.",
             "enum": [
               "brief",
               "persona",
               "tag",
               "creator-tag",
+              "source-video",
               null
             ],
             "type": [
@@ -33665,7 +33666,7 @@
       "risk_level": "read",
       "shortcut": "+get-breakdown",
       "stability": "stable",
-      "summary": "Group a campaign's counted posts by one dimension: brief, persona (the brief's) or tag for a ugc campaign, creator-tag for any other. Rows are bucket value (carries it), unassigned (approved, without one) or awaiting_review (ugc, not approved yet), each with posts, creators, measured_posts, metric sums and median_views. Tags overlap: rows can outnumber totals, which count each post once.",
+      "summary": "Group a campaign's counted posts by one dimension: brief, persona (the brief's) or tag for a ugc campaign, creator-tag or source-video for any other. Rows are bucket value (carries it), unassigned (approved, without one) or awaiting_review (ugc, not approved yet), each with posts, creators, measured_posts, metric sums and median_views. Tags overlap: rows can outnumber totals, which count each post once.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -33709,6 +33710,7 @@
       "input_schema": {
         "properties": {
           "creator_id": {
+            "description": "The creator's social account ID (not a campaign ID).",
             "minLength": 1,
             "type": "string"
           }
@@ -33806,7 +33808,7 @@
       ],
       "domain": "campaign-monitor",
       "examples": [
-        "museoncli campaign-monitor +get-creator-performance --id <creator_social_account_id> --date-from 2026-06-01"
+        "museoncli campaign-monitor +get-creator-performance --id <creator_social_account_id> --date-from 2026-10-01 --date-to 2026-10-28"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -33856,20 +33858,19 @@
       "input_schema": {
         "properties": {
           "creator_id": {
+            "description": "The creator's social account ID (not a campaign ID).",
             "minLength": 1,
             "type": "string"
           },
           "date_from": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "First day, YYYY-MM-DD (required; window at most 180 days).",
+            "format": "date",
+            "type": "string"
           },
           "date_to": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "description": "Last day, YYYY-MM-DD (required; on or after date_from).",
+            "format": "date",
+            "type": "string"
           },
           "limit": {
             "default": 100,
@@ -33879,7 +33880,9 @@
           }
         },
         "required": [
-          "creator_id"
+          "creator_id",
+          "date_from",
+          "date_to"
         ],
         "type": "object"
       },
@@ -33944,7 +33947,7 @@
       "risk_level": "read",
       "shortcut": "+get-creator-performance",
       "stability": "stable",
-      "summary": "Read local synced performance history for one organization-visible social account.",
+      "summary": "Read local synced performance history for one organization-visible social account. Both --date-from and --date-to are required (inclusive, at most 180 days).",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -35394,6 +35397,7 @@
       "input_schema": {
         "properties": {
           "creator_id": {
+            "description": "The creator's social account ID (not a campaign ID).",
             "minLength": 1,
             "type": "string"
           },
@@ -70953,7 +70957,6 @@
       "capability_key": "social-account.unbind",
       "cli": "museoncli social-account +unbind",
       "domain": "social-account",
-      "dry_run_reads_server": true,
       "examples": [
         "museoncli social-account +unbind --account-id 72defd40-39ad-40d3-8105-8f23a9a016da --dry-run",
         "museoncli social-account +unbind --account-id 72defd40-39ad-40d3-8105-8f23a9a016da --yes"
@@ -71010,7 +71013,7 @@
       },
       "name": "social-account.unbind",
       "output_schema": {
-        "description": "data.would_unbind (dry run) or data.unbound.",
+        "description": "data.unbound and data.account_id; a dry run echoes the validated input.",
         "properties": {
           "command": {
             "type": "string"
@@ -71069,7 +71072,7 @@
       "risk_level": "destructive",
       "shortcut": "+unbind",
       "stability": "stable",
-      "summary": "Unbind (disconnect) one social account: its platform authorization is revoked and the binding removed; it cannot be undone from the CLI. --account-id is the bound-account row's id, not a pool account ID. --dry-run shows what would go and writes nothing; show it to the user, then run with --yes. Needs owner, admin or operator.",
+      "summary": "Unbind (disconnect) one social account: its platform authorization is revoked and the binding removed; it cannot be undone from the CLI. --account-id is the bound-account row's id, not a pool account ID. --dry-run only validates the id and echoes it: it reads nothing from the server, so confirm which account that id is (social-account +list) before asking the user to approve; then run with --yes. The account has to be connected again (social-account +create-connect-link) to publish. Needs owner, admin or operator.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -79601,11 +79604,6 @@
             "format": "date",
             "type": "string"
           },
-          "sets_campaign_start": {
-            "default": false,
-            "description": "Make the start date the Campaign's start day.",
-            "type": "boolean"
-          },
           "start_date": {
             "description": "First day counted.",
             "format": "date",
@@ -79635,7 +79633,7 @@
       },
       "name": "ugc.delivery-target-create",
       "output_schema": {
-        "description": "dry_run, target, existing_targets, started_on.",
+        "description": "dry_run, target, existing_targets.",
         "properties": {
           "command": {
             "type": "string"
@@ -79694,7 +79692,7 @@
       "risk_level": "write",
       "shortcut": "+create",
       "stability": "stable",
-      "summary": "Add a delivery target to a Campaign: views, posts and/or creators to reach between --start-date and --due-date (UTC days, inclusive; either side may stay open). --sets-campaign-start also moves the Campaign's start day to its start. --dry-run returns the target without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
+      "summary": "Add a delivery target to a Campaign: views, posts and/or creators to reach between --start-date and --due-date (UTC days, inclusive; either side may stay open). A target's dates never move the Campaign's own start day, which is set separately (the Campaign's start day setting, not a target). --dry-run returns the target without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -79958,11 +79956,6 @@
             "format": "uuid",
             "type": "string"
           },
-          "sets_campaign_start": {
-            "default": false,
-            "description": "Make the start date the Campaign's start day.",
-            "type": "boolean"
-          },
           "start_date": {
             "description": "First day counted; 'none' opens it.",
             "format": "date",
@@ -80060,7 +80053,7 @@
       "risk_level": "write",
       "shortcut": "+update",
       "stability": "stable",
-      "summary": "Change a Campaign's delivery target; figures and dates not passed keep their value, 'none' clears one. --dry-run returns the changes without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
+      "summary": "Change a Campaign's delivery target; figures and dates not passed keep their value, 'none' clears one. The dates are the target's window only; they do not move the Campaign's start day. --dry-run returns the changes without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -84010,7 +84003,7 @@
             "type": "string"
           },
           "rate_json": {
-            "description": "JSON object of the rate's fields: name, description, base_rate_mode (off, per_video, monthly_retainer), base_fee_cents, base_min_views, cap_per_video_cents, cpm_enabled, cpm_cents, cpm_min_views, cpm_max_views, ladder_enabled, ladder, min_creator_views, performance_mode, platform_overrides, retainer_cents, retainer_videos_per_month. Read the payscale's rates for their current values.",
+            "description": "JSON object of the rate's fields: name, description, base_rate_mode (off, per_video, monthly_retainer), base_fee_cents, base_min_views, cap_per_video_cents, cpm_enabled, cpm_cents, cpm_min_views, cpm_max_views, ladder_enabled, ladder, min_creator_views, performance_mode, platform_overrides, retainer_cents, retainer_videos_per_month. The server pairs them: a video-content rate needs a description (the sentence a post is judged against), a lifetime-views rate needs min_creator_views, base_fee_cents goes with base_rate_mode per_video, retainer_cents and retainer_videos_per_month with monthly_retainer, cpm_cents with cpm_enabled. Read the payscale's rates for their current values.",
             "type": "string"
           }
         },
@@ -84083,7 +84076,7 @@
       "risk_level": "write",
       "shortcut": "+create",
       "stability": "stable",
-      "summary": "Add a pay rate (pricing block) to a payscale: --kind anything-else (the fallback), video-content or lifetime-views, and its fields as --rate-json (name required; base fee, CPM, ladder, retainer, caps). --dry-run returns the rate and what a video would earn under it, without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
+      "summary": "Add a pay rate (pricing block) to a payscale: --kind anything-else (the fallback), video-content or lifetime-views, and its fields as --rate-json (name required; base fee, CPM, ladder, retainer, caps; video-content also needs description, lifetime-views min_creator_views). --dry-run returns the rate and what a video would earn under it, without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Role: owner, admin, or an operator on the Campaign; the server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -84236,7 +84229,7 @@
             "type": "string"
           },
           "rate_json": {
-            "description": "JSON object of the rate's fields: name, description, base_rate_mode (off, per_video, monthly_retainer), base_fee_cents, base_min_views, cap_per_video_cents, cpm_enabled, cpm_cents, cpm_min_views, cpm_max_views, ladder_enabled, ladder, min_creator_views, performance_mode, platform_overrides, retainer_cents, retainer_videos_per_month. Read the payscale's rates for their current values.",
+            "description": "JSON object of the rate's fields: name, description, base_rate_mode (off, per_video, monthly_retainer), base_fee_cents, base_min_views, cap_per_video_cents, cpm_enabled, cpm_cents, cpm_min_views, cpm_max_views, ladder_enabled, ladder, min_creator_views, performance_mode, platform_overrides, retainer_cents, retainer_videos_per_month. The server pairs them: a video-content rate needs a description (the sentence a post is judged against), a lifetime-views rate needs min_creator_views, base_fee_cents goes with base_rate_mode per_video, retainer_cents and retainer_videos_per_month with monthly_retainer, cpm_cents with cpm_enabled. Read the payscale's rates for their current values.",
             "type": "string"
           }
         },

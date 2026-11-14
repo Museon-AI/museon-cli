@@ -72,17 +72,10 @@ async def _execute_sync_all(ctx: CommandContext) -> Any:
 
 
 async def _execute_unbind(ctx: CommandContext) -> Any:
+    # --dry-run never reaches here: the generic dry run echoes the validated input (the
+    # account list the Social Accounts page reads takes a workspace, which the CLI does not
+    # address, so there is no organization-addressed read to preview with).
     account_id = ctx.arguments["account_id"]
-    if ctx.arguments.get("dry_run"):
-        return (
-            {"dry_run": True, "would_unbind": {"account_id": account_id}},
-            [
-                "Unbinding disconnects the account from its platform authorization and removes "
-                "its binding; it cannot be undone from the CLI. The account has to be "
-                "connected again (social-account +create-connect-link) to publish."
-            ],
-            ["Show the user which account goes, ask them, then run again with --yes."],
-        )
     await ctx.api_data(ctx.cfg, "DELETE", f"/social-accounts/accounts/{account_id}")
     return {"unbound": True, "account_id": account_id}, [], []
 
@@ -185,14 +178,17 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Unbind (disconnect) one social account: its platform authorization is "
                 "revoked and the binding removed; it cannot be undone from the CLI. --account-id "
-                "is the bound-account row's id, not a pool account ID. --dry-run shows what "
-                "would go and writes nothing; show it to the user, then run with --yes."
+                "is the bound-account row's id, not a pool account ID. --dry-run only validates "
+                "the id and echoes it: it reads nothing from the server, so confirm which "
+                "account that id is (social-account +list) before asking the user to approve; "
+                "then run with --yes. The account has to be connected again "
+                "(social-account +create-connect-link) to publish."
                 + _ROLE
             ),
             risk_level="destructive",
             adapter_tool_name="social_account_unbind",
             input_schema=schema(_UNBIND, ["account_id"]),
-            output_schema=output_schema("data.would_unbind (dry run) or data.unbound."),
+            output_schema=output_schema("data.unbound and data.account_id; a dry run echoes the validated input."),
             examples=[
                 f"museoncli social-account +unbind --account-id {_EXAMPLE_ACCOUNT} --dry-run",
                 f"museoncli social-account +unbind --account-id {_EXAMPLE_ACCOUNT} --yes",
@@ -200,7 +196,6 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_unbind_arguments,
             build_arguments=_build_unbind_arguments,
             supports_dry_run=True,
-            dry_run_reads_server=True,
             requires_confirmation=True,
         ),
     ]

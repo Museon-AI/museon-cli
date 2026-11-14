@@ -125,7 +125,9 @@ async def _execute_transition(ctx: CommandContext, action: str) -> Any:
         "dry_run": args["dry_run"],
         "campaign": w.campaign_line(campaign),
         "before": status,
-        "after": target,
+        # A restore returns to the status the Campaign was archived from, which the read does
+        # not carry: only a draft or a complete Campaign can be archived, so it is one of them.
+        "after": target or " or ".join(TRANSITIONS["archive"][0]),
     }
     warnings = [_TRANSITION_NOTES[action]]
     if action == "launch":
@@ -200,9 +202,20 @@ def _build_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def _add_campaign_id(parser: argparse.ArgumentParser) -> None:
+    """The Campaign is ``--id`` here; ``--campaign-id`` is the name the other ugc commands use."""
+    parser.add_argument(
+        "--id",
+        "--campaign-id",
+        dest="id",
+        required=True,
+        help="ID of the Campaign (--campaign-id is the same flag, as on the other ugc commands).",
+    )
+
+
 def _add_transition_arguments(*, confirm: bool):
     def add(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--id", required=True)
+        _add_campaign_id(parser)
         parser.add_argument("--expected-status", choices=CAMPAIGN_STATUSES)
         w.add_dry_run(parser)
         if confirm:
@@ -220,7 +233,7 @@ def _build_transition_arguments(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _add_rename_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--id", required=True)
+    _add_campaign_id(parser)
     parser.add_argument("--name", required=True)
     w.add_dry_run(parser)
 

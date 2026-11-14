@@ -353,6 +353,13 @@ def test_a_client_report_is_read_in_full(server):
     assert result["data"]["markdown"] == "# hi"
 
 
+def test_a_client_report_get_takes_id_like_its_sibling_gets(server):
+    run("ugc", "client-report", "+get", "--campaign-id", CAMPAIGN, "--id", REPORT)
+
+    (request,) = server["requests"]
+    assert query(request) == {"organization_id": [ORG], "report_id": [REPORT]}
+
+
 def test_a_report_the_campaign_does_not_have_is_not_found(server):
     other = "80000000-0000-4000-8000-0000000000ff"
 
@@ -408,10 +415,20 @@ def test_board_core_metrics_take_the_period_and_flags_override_the_board(server)
     assert query(figures) == {
         "collection_id": [COLLECTION_A, COLLECTION_B],
         "timezone": ["UTC"],
-        "link_status": ["not_excluded"],
         "current_period_start": ["2026-10-01"],
         "current_period_end": ["2026-11-10"],
     }
+    # The collection-set routes accept only link_status=linked or no value: `all` sends none
+    # (never `not_excluded`, which they answer with 422).
+    assert "link_status" not in query(figures)
+
+
+def test_board_all_scope_never_sends_a_link_status_the_set_routes_reject(server):
+    for widget in ("trends", "content", "creators"):
+        server["requests"].clear()
+        run("analytics", "board", "+get-data", "--id", BOARD, "--widget", widget, "--scope", "all")
+        _, figures = server["requests"]
+        assert "link_status" not in query(figures), widget
 
 
 def test_board_posts_page_through_the_set(server):
