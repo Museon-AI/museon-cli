@@ -39,10 +39,19 @@ class _Capture:
             }
         )
         return {
-            "domain": "campaign-monitor",
+            "domain": "campaign",
             "operation": "content-batch-remove",
             "result": {"removed_count": len(json_body["payload"]["collection_content_ids"])},
         }
+
+
+def _campaign_of_type(campaign_type: str) -> Any:
+    async def header(cfg: Config, method: str, path: str, **_: Any) -> dict[str, Any]:
+        del cfg
+        assert (method, path) == ("GET", f"/ugc/collections/{CAMPAIGN_ID}/campaign")
+        return {"id": CAMPAIGN_ID, "campaign_type": campaign_type}
+
+    return header
 
 
 def parse(argv: list[str]) -> Any:
@@ -60,31 +69,33 @@ def _config_with_organization() -> Config:
     [
         (
             [
-                "campaign-monitor",
-                "+remove-content",
-                "--id",
+                "campaign",
+                "content",
+                "+remove",
+                "--campaign-id",
                 CAMPAIGN_ID,
                 "--collection-content-id",
                 CC_ID_1,
                 "--dry-run",
             ],
-            "campaign-monitor.remove-content",
+            "campaign.content-remove",
         ),
         (
             [
-                "campaign-monitor",
-                "+bulk-remove-content",
-                "--id",
+                "campaign",
+                "content",
+                "+bulk-remove",
+                "--campaign-id",
                 CAMPAIGN_ID,
                 "--collection-content-ids",
                 f"{CC_ID_1},{CC_ID_2}",
                 "--dry-run",
             ],
-            "campaign-monitor.bulk-remove-content",
+            "campaign.content-bulk-remove",
         ),
     ],
 )
-def test_campaign_monitor_content_remove_dry_run_does_not_call_api(
+def test_campaign_content_remove_dry_run_does_not_call_api(
     monkeypatch: pytest.MonkeyPatch,
     argv: list[str],
     command: str,
@@ -104,7 +115,7 @@ def test_campaign_monitor_content_remove_dry_run_does_not_call_api(
     assert result["data"]["dry_run"] is True
 
 
-def test_campaign_monitor_content_remove_without_yes_requires_confirmation(
+def test_campaign_content_remove_without_yes_requires_confirmation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = _config_with_organization()
@@ -121,9 +132,10 @@ def test_campaign_monitor_content_remove_without_yes_requires_confirmation(
             main_module.dispatch(
                 parse(
                     [
-                        "campaign-monitor",
-                        "+remove-content",
-                        "--id",
+                        "campaign",
+                        "content",
+                        "+remove",
+                        "--campaign-id",
                         CAMPAIGN_ID,
                         "--collection-content-id",
                         CC_ID_1,
@@ -133,21 +145,23 @@ def test_campaign_monitor_content_remove_without_yes_requires_confirmation(
         )
 
 
-def test_campaign_monitor_content_remove_with_yes_posts_single_id(
+def test_campaign_content_remove_with_yes_posts_single_id(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = _config_with_organization()
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data", capture)
+    monkeypatch.setattr(main_module, "api_data_v2", _campaign_of_type("tracking"))
 
     result = asyncio.run(
         main_module.dispatch(
             parse(
                 [
-                    "campaign-monitor",
-                    "+remove-content",
-                    "--id",
+                    "campaign",
+                    "content",
+                    "+remove",
+                    "--campaign-id",
                     CAMPAIGN_ID,
                     "--collection-content-id",
                     CC_ID_1,
@@ -157,7 +171,7 @@ def test_campaign_monitor_content_remove_with_yes_posts_single_id(
         )
     )
 
-    assert result["command"] == "campaign-monitor.remove-content"
+    assert result["command"] == "campaign.content-remove"
     assert capture.calls == [
         {
             "method": "POST",
@@ -170,21 +184,23 @@ def test_campaign_monitor_content_remove_with_yes_posts_single_id(
     ]
 
 
-def test_campaign_monitor_content_batch_remove_parses_and_dedupes_ids(
+def test_campaign_content_batch_remove_parses_and_dedupes_ids(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = _config_with_organization()
     capture = _Capture()
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data", capture)
+    monkeypatch.setattr(main_module, "api_data_v2", _campaign_of_type("tracking"))
 
     asyncio.run(
         main_module.dispatch(
             parse(
                 [
-                    "campaign-monitor",
-                    "+bulk-remove-content",
-                    "--id",
+                    "campaign",
+                    "content",
+                    "+bulk-remove",
+                    "--campaign-id",
                     CAMPAIGN_ID,
                     "--collection-content-ids",
                     f"{CC_ID_1}, {CC_ID_2},{CC_ID_1}",
@@ -198,3 +214,31 @@ def test_campaign_monitor_content_batch_remove_parses_and_dedupes_ids(
         CC_ID_1,
         CC_ID_2,
     ]
+
+
+def test_campaign_content_remove_refuses_a_ugc_campaign(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A UGC Campaign's posts are counted through review; removing one here is refused."""
+    cfg = _config_with_organization()
+    capture = _Capture()
+    monkeypatch.setattr(main_module, "load_config", lambda: cfg)
+    monkeypatch.setattr(main_module, "api_data", capture)
+    monkeypatch.setattr(main_module, "api_data_v2", _campaign_of_type("ugc"))
+
+    with pytest.raises(ValueError, match="UGC Campaign"):
+        asyncio.run(
+            main_module.dispatch(
+                parse(
+                    [
+                        "campaign",
+                        "content",
+                        "+remove",
+                        "--campaign-id",
+                        CAMPAIGN_ID,
+                        "--collection-content-id",
+                        CC_ID_1,
+                        "--yes",
+                    ]
+                )
+            )
+        )
+    assert capture.calls == []

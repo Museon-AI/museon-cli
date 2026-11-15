@@ -60,11 +60,11 @@ https://www.museon.ai/cli/install.md
 
 当前工作树准备 CLI 2.0 命令面；下方固定安装链接仍指向最近已发布版本，发布另行执行。
 
-保留 `research`、`campaign-monitor`、`content-analysis`、`routines`、`skills`，
+保留 `research`、`campaign`（两种 Campaign：UGC 与内容追踪）、`content-analysis`、`routines`、`skills`，
 新增 `hireaicreator` 领域，围绕既有 API 执行查询、规划、版本化编辑与交付回读。
 新增 `media` 的本地文件上传、图片 URL 导入和媒体回读，并恢复 `artifacts` 的本地校验、
 托管和分享；`social-account` 精确保留账号连接、读取、云手机、表现和资料编辑；
-`ai-slideshow` 保留素材、独立生成与旧 slideshow 发布。五个集成 skill 分别承载基础原子能力、研究、HireAICreator、slideshow 与 campaign-monitor 流程。Agent 使用这些原子命令编排工作流。
+`ai-slideshow` 保留素材、独立生成与旧 slideshow 发布。五个集成 skill 分别承载基础原子能力、研究、HireAICreator、slideshow 与 Campaign（campaigns）流程。Agent 使用这些原子命令编排工作流。
 写入后必须回读所属业务状态，不能把请求成功当成任务完成。
 
 某件事该用哪个命令？`museoncli guide` 按章节列出所有任务（UGC Campaign 运营按实际工作顺序排列，
@@ -111,7 +111,7 @@ MuseOn 只有组织：访问权限由组织角色加 Campaign 范围决定。每
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.2.1/museoncli-1.2.1-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v2.0.0/museoncli-2.0.0-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：

@@ -263,7 +263,7 @@ def output(description: str) -> dict[str, Any]:
 
 def spec(
     *,
-    resource: str,
+    resource: str | None,
     shortcut: str,
     summary: str,
     adapter: str,
@@ -274,9 +274,10 @@ def spec(
     add_arguments: Any,
     build_arguments: Any,
     kind: dict[str, Any],
+    domain: Domain = DOMAIN,
 ) -> CommandSpec:
     return CommandSpec(
-        domain=DOMAIN,
+        domain=domain,
         resource=resource,
         shortcut=shortcut,
         summary=summary,

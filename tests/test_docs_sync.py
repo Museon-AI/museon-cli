@@ -16,7 +16,7 @@ SKILL_NAMES = (
     "museon-content-workflow-base",
     "museon-content-workflow-hireaicreator",
     "museon-content-workflow-ai-slideshow",
-    "museon-content-workflow-campaign-monitor",
+    "museon-content-workflow-campaigns",
 )
 SKILL_ROOTS = tuple(ROOT / "skills" / name for name in SKILL_NAMES)
 INSTALL_GUIDE_URL = "https://www.museon.ai/cli/install.md"

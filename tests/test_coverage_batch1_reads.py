@@ -167,12 +167,12 @@ def assert_organization_only(request: httpx.Request) -> None:
             {"scope": ["all"]},
         ),
         (
-            ["ugc", "campaign-settings", "+get", "--campaign-id", CAMPAIGN],
+            ["campaign", "settings", "+get", "--campaign-id", CAMPAIGN],
             f"/api/v2/ugc/campaigns/{CAMPAIGN}",
             {},
         ),
         (
-            ["ugc", "campaign-staff", "+list", "--campaign-id", CAMPAIGN],
+            ["campaign", "staff", "+list", "--campaign-id", CAMPAIGN],
             f"/api/v2/ugc/campaigns/{CAMPAIGN}/staff",
             {},
         ),
@@ -283,7 +283,7 @@ def test_campaign_setup_reads_every_section_and_reports_the_unreadable(server):
     the caller may read, with the rest under `unavailable`, instead of failing."""
     server["refuse"] = {"/payscales", "/staff"}
 
-    result = run("ugc", "campaign-setup", "+get", "--campaign-id", CAMPAIGN)
+    result = run("campaign", "setup", "+get", "--campaign-id", CAMPAIGN)
 
     paths = sorted(
         r.url.path.removeprefix(f"/api/v2/ugc/campaigns/{CAMPAIGN}") for r in server["requests"]
@@ -309,8 +309,8 @@ def test_campaign_setup_reads_every_section_and_reports_the_unreadable(server):
 
 def test_campaign_setup_reads_only_the_named_sections(server):
     run(
-        "ugc",
-        "campaign-setup",
+        "campaign",
+        "setup",
         "+get",
         "--campaign-id",
         CAMPAIGN,
@@ -329,7 +329,7 @@ def test_campaign_setup_reads_only_the_named_sections(server):
 def test_campaign_setup_with_nothing_readable_fails(server):
     server["refuse"] = {""}
 
-    result = fail("ugc", "campaign-setup", "+get", "--campaign-id", CAMPAIGN, "--section", "staff")
+    result = fail("campaign", "setup", "+get", "--campaign-id", CAMPAIGN, "--section", "staff")
 
     assert result["ok"] is False and result["reason"] == "not_found"
 

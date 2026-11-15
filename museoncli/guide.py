@@ -28,6 +28,7 @@ from museoncli.domains import (
     discoverable_command_specs,
 )
 from museoncli.domains._discovery import generated_example
+from museoncli.domains._removed import removed_aliases
 
 INDEX_RESOURCE = "task_index.yaml"
 SOURCE_INDEX = Path(__file__).resolve().parents[1] / "contracts" / "task-index.yaml"
@@ -491,7 +492,13 @@ def search(words: list[str], *, task_limit: int = 8, command_limit: int = 10) ->
     }
     ranked_commands = []
     for spec in discoverable_command_specs():
-        legacy = " ".join(spec.legacy_cli_path(name) for name in spec.legacy_shortcuts)
+        legacy = " ".join(
+            [
+                *(spec.legacy_cli_path(name) for name in spec.legacy_shortcuts),
+                # 1.x names it replaced: an Agent with an old Skill still finds it.
+                *(alias["cli"] for alias in removed_aliases(spec.cli_path.removeprefix("museoncli "))),
+            ]
+        )
         weighted = [
             (6, spec.cli_path.lower()),
             (5, spec.schema_name.lower()),

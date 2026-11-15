@@ -41,7 +41,7 @@ class Domain(str, Enum):
     CLOUD_PHONE = "cloud-phone"
     AI_SLIDESHOW = "ai-slideshow"
     AGENTIC_CAMPAIGN = "agentic-campaign"
-    CAMPAIGN_MONITOR = "campaign-monitor"
+    CAMPAIGN = "campaign"
     UGC = "ugc"
     SKILLS = "skills"
     STAFF_OPS = "staff-ops"

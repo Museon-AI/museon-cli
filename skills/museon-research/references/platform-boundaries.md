@@ -24,4 +24,4 @@ XHS `xhslink.cn` / `xhslink.com` links are first-class inputs for post, profile,
 
 ## Relationships
 
-This reference selects research inputs only. Use media for file inputs and campaign-monitor for continued monitoring. Do not infer production or delivery status from research results.
+This reference selects research inputs only. Use media for file inputs and a tracking Campaign (`campaign`) for continued tracking. Do not infer production or delivery status from research results.

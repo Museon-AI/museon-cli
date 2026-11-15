@@ -369,8 +369,7 @@ _CAMPAIGN_IDS = {
     "minItems": 1,
     "maxItems": MAX_CAMPAIGNS,
     "description": (
-        "The Campaigns the board reads (marketing campaign ids, as ugc campaign +list "
-        "returns them), 1 to 10."
+        "The Campaigns the board reads (ids from campaign +list), 1 to 10."
     ),
 }
 _CAMPAIGN_TYPE = {

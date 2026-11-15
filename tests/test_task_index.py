@@ -80,8 +80,8 @@ def test_guide_cli_overview_task_and_search_are_stable() -> None:
     assert english["data"]["tasks"][0]["id"] == "ugc-approve-applications"
     chinese = json.loads(_run("guide", "--search", "审核视频").stdout)
     assert chinese["data"]["tasks"][0]["id"] == "ugc-review-content"
-    renamed = json.loads(_run("guide", "--search", "creator-performance-get").stdout)
-    assert renamed["data"]["commands"][0]["name"] == "campaign-monitor.get-creator-performance"
+    renamed = json.loads(_run("guide", "--search", "creator-get-performance").stdout)
+    assert renamed["data"]["commands"][0]["name"] == "campaign.creator-get-performance"
 
 
 def test_unknown_guide_id_is_not_found() -> None:

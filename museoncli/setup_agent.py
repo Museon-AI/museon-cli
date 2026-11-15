@@ -19,7 +19,13 @@ MANAGED_SKILLS = (
     "museon-content-workflow-base",
     "museon-content-workflow-hireaicreator",
     "museon-content-workflow-ai-slideshow",
-    "museon-content-workflow-campaign-monitor",
+    "museon-content-workflow-campaigns",
+)
+#: Skills an earlier release installed under a name this one no longer ships. Setup
+#: removes them when Museon installed them (their SKILL.md names them), so an Agent never
+#: keeps reading commands that are gone; a same-named folder of the user's is left alone.
+RETIRED_SKILLS = (
+    "museon-content-workflow-campaign-monitor",  # 2.0.0: museon-content-workflow-campaigns
 )
 
 
@@ -35,16 +41,20 @@ def install_agent_skill(agent: str, *, force: bool = False) -> dict[str, Any]:
             _install_one(source, target, skill_name=skill_name, force=force)
             for skill_name, source in sources.items()
         ]
+        retired = _remove_retired(target)
         primary = installed[0]
         results.append(
             {
                 "agent": target,
                 "status": (
-                    "current" if all(item["status"] == "current" for item in installed) else "installed"
+                    "current"
+                    if all(item["status"] == "current" for item in installed) and not retired
+                    else "installed"
                 ),
                 "path": primary["path"],
                 "digest": primary["digest"],
                 "skills": installed,
+                **({"removed_retired_skills": retired} if retired else {}),
             }
         )
     return {
@@ -73,9 +83,13 @@ def stale_skill_agents() -> list[str]:
         # An Agent that never ran setup, or a same-named unmanaged folder that
         # setup would refuse to touch, has nothing to remind about.
         installed = {name for name in MANAGED_SKILLS if _is_managed_skill(root / name, name)}
-        if installed and (
-            len(installed) < len(MANAGED_SKILLS)
-            or any(_tree_digest(root / name) != digests[name] for name in installed)
+        retired = [name for name in RETIRED_SKILLS if _is_managed_skill(root / name, name)]
+        if retired or (
+            installed
+            and (
+                len(installed) < len(MANAGED_SKILLS)
+                or any(_tree_digest(root / name) != digests[name] for name in installed)
+            )
         ):
             stale.append(agent)
     return stale
@@ -193,6 +207,16 @@ def _install_one(
         "path": str(destination),
         "digest": source_digest,
     }
+
+
+def _remove_retired(agent: str) -> list[str]:
+    removed = []
+    for skill_name in RETIRED_SKILLS:
+        path = _agent_home(agent) / "skills" / skill_name
+        if _is_managed_skill(path, skill_name):
+            _remove_path(path)
+            removed.append(skill_name)
+    return removed
 
 
 def _validate_destination(agent: str, *, skill_name: str, force: bool) -> None:

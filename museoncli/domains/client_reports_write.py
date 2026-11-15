@@ -730,7 +730,7 @@ def _build_config_arguments(args: argparse.Namespace) -> dict[str, Any]:
 # -- schemas -----------------------------------------------------------------
 
 _CAMPAIGN_ID = uuid_property(
-    "UGC campaign ID (ugc campaign +list), the Campaign the reports are about."
+    "UGC Campaign ID (from campaign +list), the Campaign the reports are about."
 )
 _REPORT_ID = uuid_property("Client report ID (from the Campaign's report list).")
 _EXPECTED_REVISION = {

@@ -7,8 +7,8 @@ Campaign's operations team's (owner, admin, or an operator on it), and `reminder
 `reminder +subscribe` and `reminder-delegation` are MuseOn staff only. A refusal is
 `not_found` or `forbidden`: report it, never retry under another identity.
 
-`--campaign-id` is the UGC campaign id (`museoncli ugc campaign +list`). Board Campaign ids
-are the same marketing campaign ids.
+`--campaign-id` is the Campaign id from `museoncli campaign +list`; a board's Campaign ids are
+the same ids.
 
 ## Preview, ask, then write
 
