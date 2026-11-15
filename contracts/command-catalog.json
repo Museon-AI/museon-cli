@@ -14735,108 +14735,6 @@
             ],
             "resource_policy": "server_evaluated_organization_and_resource_access"
           },
-          "capability_key": "ugc.assignment-list",
-          "cli": "museoncli ugc assignment +list",
-          "domain": "ugc",
-          "execution": "direct",
-          "name": "ugc.assignment-list",
-          "removed_aliases": [
-            {
-              "capability_key": "campaign-monitor.assignment-list",
-              "cli": "museoncli campaign-monitor assignment +list",
-              "removed_in": "2.0.0"
-            }
-          ],
-          "requires_confirmation": false,
-          "resource": "assignment",
-          "risk_level": "read",
-          "shortcut": "+list",
-          "stability": "stable",
-          "summary": "List a UGC campaign's brief assignments and what is due. The owning organization's team only (a share does not open it, as on the web).",
-          "supports_dry_run": false,
-          "transport": "agent_cli_api"
-        },
-        {
-          "authorization": {
-            "authentication_required": true,
-            "enforcement": "museon_server",
-            "organization_bound": true,
-            "required_roles": [
-              "organization_member"
-            ],
-            "required_scopes": [
-              "agent_cli.access"
-            ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
-          },
-          "capability_key": "ugc.creator-check-get",
-          "cli": "museoncli ugc creator-check +get",
-          "domain": "ugc",
-          "execution": "direct",
-          "name": "ugc.creator-check-get",
-          "removed_aliases": [
-            {
-              "capability_key": "campaign-monitor.creator-check-get",
-              "cli": "museoncli campaign-monitor creator-check +get",
-              "removed_in": "2.0.0"
-            }
-          ],
-          "requires_confirmation": false,
-          "resource": "creator-check",
-          "risk_level": "read",
-          "shortcut": "+get",
-          "stability": "stable",
-          "summary": "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. The Campaign's team, or a share's operator tier.",
-          "supports_dry_run": false,
-          "transport": "agent_cli_api"
-        },
-        {
-          "authorization": {
-            "authentication_required": true,
-            "enforcement": "museon_server",
-            "organization_bound": true,
-            "required_roles": [
-              "organization_member"
-            ],
-            "required_scopes": [
-              "agent_cli.access"
-            ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
-          },
-          "capability_key": "ugc.creator-check-list",
-          "cli": "museoncli ugc creator-check +list",
-          "domain": "ugc",
-          "execution": "direct",
-          "name": "ugc.creator-check-list",
-          "removed_aliases": [
-            {
-              "capability_key": "campaign-monitor.creator-check-list",
-              "cli": "museoncli campaign-monitor creator-check +list",
-              "removed_in": "2.0.0"
-            }
-          ],
-          "requires_confirmation": false,
-          "resource": "creator-check",
-          "risk_level": "read",
-          "shortcut": "+list",
-          "stability": "stable",
-          "summary": "List the creators one check holds for. The Campaign's team, or a share's operator tier.",
-          "supports_dry_run": false,
-          "transport": "agent_cli_api"
-        },
-        {
-          "authorization": {
-            "authentication_required": true,
-            "enforcement": "museon_server",
-            "organization_bound": true,
-            "required_roles": [
-              "organization_member"
-            ],
-            "required_scopes": [
-              "agent_cli.access"
-            ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
-          },
           "capability_key": "ugc.enrollment-list",
           "cli": "museoncli ugc enrollment +list",
           "domain": "ugc",
@@ -15159,6 +15057,108 @@
           "stability": "stable",
           "summary": "Withdraw an assignment: the creator no longer has the brief. --dry-run returns the assignment without writing. The Agent runs it with --dry-run first, shows the user the result and asks before running it without --dry-run; the workbench itself asks nothing. Then pass --yes.",
           "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.assignment-list",
+          "cli": "museoncli ugc assignment +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.assignment-list",
+          "removed_aliases": [
+            {
+              "capability_key": "campaign-monitor.assignment-list",
+              "cli": "museoncli campaign-monitor assignment +list",
+              "removed_in": "2.0.0"
+            }
+          ],
+          "requires_confirmation": false,
+          "resource": "assignment",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List a UGC campaign's brief assignments and what is due. The owning organization's team only (a share does not open it, as on the web).",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.creator-check-get",
+          "cli": "museoncli ugc creator-check +get",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.creator-check-get",
+          "removed_aliases": [
+            {
+              "capability_key": "campaign-monitor.creator-check-get",
+              "cli": "museoncli campaign-monitor creator-check +get",
+              "removed_in": "2.0.0"
+            }
+          ],
+          "requires_confirmation": false,
+          "resource": "creator-check",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, quiet, not healthy. The Campaign's team, or a share's operator tier.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "ugc.creator-check-list",
+          "cli": "museoncli ugc creator-check +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.creator-check-list",
+          "removed_aliases": [
+            {
+              "capability_key": "campaign-monitor.creator-check-list",
+              "cli": "museoncli campaign-monitor creator-check +list",
+              "removed_in": "2.0.0"
+            }
+          ],
+          "requires_confirmation": false,
+          "resource": "creator-check",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List the creators one check holds for. The Campaign's team, or a share's operator tier.",
+          "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
         {
@@ -18228,8 +18228,8 @@
       "cloud-phone",
       "ai-slideshow",
       "campaign",
-      "ugc",
       "agentic-campaign",
+      "ugc",
       "skills",
       "staff-ops",
       "routines",
