@@ -109,6 +109,41 @@ WINDOW = {
     "platform": PLATFORM,
 }
 
+#: The Format and organization analytics reads take an explicit window or all time,
+#: never a guessed default (the service answers `analytics_date_range_required`).
+REQUIRED_WINDOW = {
+    **WINDOW,
+    "date_from": {
+        **D,
+        "description": "Published on or after (YYYY-MM-DD). Required with --date-to unless --all-time.",
+    },
+    "date_to": {
+        **D,
+        "description": "Published on or before (YYYY-MM-DD). Required with --date-from unless --all-time.",
+    },
+    "all_time": {
+        **B,
+        "description": "Every post ever published, instead of --date-from/--date-to.",
+    },
+}
+
+
+def _check_window(payload: dict[str, Any]) -> None:
+    """Both dates, or --all-time: say so before the request instead of the service's 422."""
+    dated = [payload.get(key) is not None for key in ("date_from", "date_to")]
+    if payload.get("all_time") is True:
+        if any(dated):
+            raise ValueError(
+                "--all-time reads every post ever published: drop --date-from/--date-to, "
+                "or drop --all-time to read a window"
+            )
+        return
+    if not all(dated):
+        raise ValueError(
+            "this read needs a window: --date-from and --date-to (YYYY-MM-DD, both), "
+            "or --all-time for every post ever published"
+        )
+
 
 def _campaign_read(
     resource: str,
@@ -248,18 +283,22 @@ def specs() -> list[CommandSpec]:
         _campaign_read(
             "format",
             "list",
-            {**WINDOW, "scope": SCOPE_DOC},
+            {**REQUIRED_WINDOW, "scope": SCOPE_DOC},
             lambda a: Route(
                 AGENCY_CONTENT + "/format-performance", {**_window(a), "link_status": _approved(a)}
             ),
-            summary="Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format.",
+            summary=(
+                "Read a UGC campaign's performance by Format (brief): posts, views and engagement "
+                "per Format. Needs --date-from and --date-to, or --all-time."
+            ),
             example="museoncli campaign format +list --campaign-id <campaign_id> --all-time",
+            check=_check_window,
         ),
         _campaign_read(
             "format-post",
             "list",
             {
-                **WINDOW,
+                **REQUIRED_WINDOW,
                 "scope": SCOPE_DOC,
                 "brief_id": {**U, "description": "The Format from format +list."},
             },
@@ -267,13 +306,17 @@ def specs() -> list[CommandSpec]:
                 AGENCY_CONTENT + "/format-performance/{brief_id}/posts",
                 {**_window(a), "link_status": _approved(a)},
             ),
-            summary="List the posts behind one Format's figures in format +list.",
+            summary=(
+                "List the posts behind one Format's figures in format +list, over the same "
+                "window: --date-from and --date-to, or --all-time."
+            ),
             example=(
                 "museoncli campaign format-post +list --campaign-id <campaign_id> "
-                "--brief-id <brief_id>"
+                "--brief-id <brief_id> --all-time"
             ),
             required=("brief_id",),
             paging="offset",
+            check=_check_window,
         ),
         _campaign_read(
             "report",
@@ -472,10 +515,11 @@ def specs() -> list[CommandSpec]:
             "get",
             summary=(
                 "Read the organization's analytics over all its UGC campaigns: views, engagement, "
-                "creators, posts and spend. The operating organization's team only, as on the web."
+                "creators, posts and spend, over --date-from/--date-to or --all-time. The "
+                "operating organization's team only, as on the web."
             ),
             properties={
-                **WINDOW,
+                **REQUIRED_WINDOW,
                 "scope": SCOPE_DOC,
                 "date_basis": {
                     **enum("upload", "view"),
@@ -489,6 +533,7 @@ def specs() -> list[CommandSpec]:
             example=(
                 "museoncli campaign analytics +get --date-from 2026-10-01 --date-to 2026-10-28"
             ),
+            check=_check_window,
         ),
         # -- the UGC Operations tab's reads, in ugc beside their writes ----------
         _campaign_read(

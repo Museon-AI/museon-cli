@@ -2,6 +2,16 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 2.0.1
+
+Fixes from a production sweep of 2.0.0.
+
+- One flag per id inside `campaign creator` and `campaign post`: the social account is `--creator-id` on every `campaign creator` command (`+get` and `+get-performance` took `--id`) and on `campaign post +list`; a post is `--content-id` on `campaign post +get` / `+get-performance` (they took `--id`). `--id` still answers there, hidden from help, with a deprecation warning in `warnings`.
+- `campaign creator +list` answers one shape for UGC and tracking Campaigns: `data.items` (the same fields for either kind: `creator_social_account_id`, platform, handle, profile, followers, tier, how and when it was added, post figures), `data.source_kind` (`ugc` or `tracking`), `data.campaign`, `total`, `page`, `page_size`, `total_pages`, `has_more` and `meta`. It answered the service's raw page (`data.data.creators`).
+- `campaign content +list` answers the same way (`data.items`, `data.source_kind`). On a UGC Campaign with no synced post for the filters, `next_steps` points at `campaign video +list`, its Content tab.
+- `campaign format +list`, `campaign format-post +list` and `campaign analytics +get` need `--date-from` and `--date-to`, or `--all-time`, and say so before any request (`invalid_input`); without a window the service answered `analytics_date_range_required`.
+- `campaign creator +add` / `campaign content +add` queue a background import and returned `ok` even when it later failed (an unsupported URL, say). They now say how to read the outcome (`next_steps`), and `--wait` (`--timeout`, `--poll-interval`) waits for it and reports each import in `data.imports` with every URL it could not read in `warnings`. New `campaign import +get --id <task_id>` reads an import's status, counts and per-URL failures later.
+
 ## 2.0.0
 
 One `campaign` command group for both kinds of Campaign, UGC and content tracking. Breaking: `campaign-monitor` and the Campaign commands of `ugc` are removed, with no aliases.

@@ -1,8 +1,10 @@
 """Museon's synced store, read by one creator (social account) or one post.
 
 Not scoped to one Campaign: `campaign creator +get` / `+get-performance` read a social
-account by its id (the creator_social_account_id `campaign creator +list` returns), and
-`campaign post` reads the posts Museon has synced, by creator or by post. Nothing here
+account by `--creator-id` (the creator_social_account_id `campaign creator +list` returns,
+the same flag every `campaign creator` command and `campaign post +list` take), and
+`campaign post` reads the posts Museon has synced, by creator or by post (`--content-id`).
+The old `--id` spelling still answers, hidden, with a deprecation warning. Nothing here
 fetches the platform live; `research +search-social-media` discovers outside Museon.
 """
 
@@ -22,6 +24,7 @@ from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import (
     _add_common_adapter_arguments,
     _direct_output_schema,
+    add_renamed_id_flag,
     _load_structured_args,
     _without_none,
 )
@@ -29,11 +32,14 @@ from museoncli.domains._shared import (
 
 def _add_social_media_creator_get_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
-    parser.add_argument(
-        "--id",
-        required=True,
+    add_renamed_id_flag(
+        parser,
+        "--creator-id",
         dest="creator_id",
-        help="The creator's social account ID (a social_account id), not a campaign ID.",
+        help=(
+            "The creator's social account ID (creator_social_account_id from campaign "
+            "creator +list), not a campaign ID."
+        ),
     )
 
 
@@ -45,7 +51,14 @@ def _build_social_media_creator_get_arguments(args: argparse.Namespace) -> dict[
 
 def _add_social_media_post_list_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
-    parser.add_argument("--creator-id", required=True)
+    parser.add_argument(
+        "--creator-id",
+        required=True,
+        help=(
+            "The creator's social account ID (creator_social_account_id from campaign "
+            "creator +list), not a campaign ID."
+        ),
+    )
     parser.add_argument("--page", type=int, default=1)
     parser.add_argument("--page-size", type=int, default=20)
 
@@ -121,7 +134,12 @@ def _check_creator_performance_window(payload: dict[str, Any]) -> None:
 
 def _add_social_media_post_get_arguments(parser: argparse.ArgumentParser) -> None:
     _add_common_adapter_arguments(parser)
-    parser.add_argument("--id", required=True, dest="content_id")
+    add_renamed_id_flag(
+        parser,
+        "--content-id",
+        dest="content_id",
+        help="The post's content id (content_id from campaign content +list or post +list).",
+    )
 
 
 def _build_social_media_post_get_arguments(args: argparse.Namespace) -> dict[str, Any]:
@@ -262,7 +280,7 @@ def specs() -> list[CommandSpec]:
             input_schema=_social_media_creator_get_input_schema(),
             output_schema=_direct_output_schema("Creator profile payload returned by Museon API."),
             examples=[
-                "museoncli campaign creator +get --id <creator_social_account_id>",
+                "museoncli campaign creator +get --creator-id <creator_social_account_id>",
             ],
             add_arguments=_add_social_media_creator_get_arguments,
             build_arguments=_build_social_media_creator_get_arguments,
@@ -307,7 +325,7 @@ def specs() -> list[CommandSpec]:
             examples=[
                 (
                     "museoncli campaign creator +get-performance "
-                    "--id <creator_social_account_id> --date-from 2026-10-01 --date-to 2026-10-28"
+                    "--creator-id <creator_social_account_id> --date-from 2026-10-01 --date-to 2026-10-28"
                 ),
             ],
             add_arguments=_add_social_media_creator_performance_get_arguments,
@@ -323,7 +341,7 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="social_media_post_get",
             input_schema=_social_media_post_get_input_schema(),
             output_schema=_direct_output_schema("Post detail payload returned by Museon API."),
-            examples=["museoncli campaign post +get --id <content_id>"],
+            examples=["museoncli campaign post +get --content-id <content_id>"],
             add_arguments=_add_social_media_post_get_arguments,
             build_arguments=_build_social_media_post_get_arguments,
         ),
@@ -340,7 +358,7 @@ def specs() -> list[CommandSpec]:
                 "Post performance history payload returned by Museon API."
             ),
             examples=[
-                ("museoncli campaign post +get-performance --id <content_id> --limit 10"),
+                ("museoncli campaign post +get-performance --content-id <content_id> --limit 10"),
             ],
             add_arguments=_add_social_media_post_performance_get_arguments,
             build_arguments=_build_social_media_post_performance_get_arguments,

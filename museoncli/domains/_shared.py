@@ -227,6 +227,45 @@ def _add_common_adapter_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--args-file")
 
 
+class _RenamedFlag(argparse.Action):
+    """A flag's old spelling: fills the same input and records the rename for a warning."""
+
+    def __init__(self, option_strings: list[str], dest: str, *, replacement: str, **kwargs: Any):
+        self.replacement = replacement
+        super().__init__(option_strings, dest, **kwargs)
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str | None = None,
+    ) -> None:
+        setattr(namespace, self.dest, values)
+        renamed = list(getattr(namespace, "renamed_flags", None) or [])
+        renamed.append((option_string or self.option_strings[0], self.replacement))
+        namespace.renamed_flags = renamed
+
+
+def add_renamed_id_flag(
+    parser: argparse.ArgumentParser,
+    flag: str,
+    *,
+    dest: str,
+    help: str,
+    old: str = "--id",
+) -> None:
+    """A required id flag whose old spelling (`--id`) still answers, hidden from help.
+
+    Using the old spelling adds a deprecation warning to the result (`renamed_flags`).
+    """
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(flag, dest=dest, help=help)
+    group.add_argument(
+        old, dest=dest, action=_RenamedFlag, replacement=flag, help=argparse.SUPPRESS
+    )
+
+
 def _load_structured_args(args: argparse.Namespace) -> dict[str, Any]:
     if getattr(args, "args_file", None):
         value = Path(args.args_file).read_text(encoding="utf-8")

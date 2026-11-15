@@ -1234,6 +1234,10 @@ def deprecation_notices(args: argparse.Namespace) -> list[str]:
             f"`{legacy}` is deprecated and will be removed; use "
             f"`{get_command_spec(command).cli_path}` (same inputs and output)."
         )
+    for old_flag, new_flag in getattr(args, "renamed_flags", None) or []:
+        notices.append(
+            f"`{old_flag}` is deprecated here and will be removed; use `{new_flag}` (same value)."
+        )
     if command:
         notice = workspace_flag_notice(get_command_spec(command), getattr(args, "workspace_id", None))
         if notice:

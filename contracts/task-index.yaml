@@ -36,7 +36,7 @@ topics:
     title: The three creator ids
     body: |
       - **UGC creator** (a person, `ugc_creator_id`): `ugc creator +list`/`+get --id`; `campaign content +list --ugc-creator-id`; `--creator-id` on `campaign video +list`, `campaign settlement +get` and `ugc enrollment +list`.
-      - **Social account** (one handle on one platform): `campaign creator +get --id`, `campaign creator +get-performance --id`, `campaign post +list --creator-id`, `campaign creator +remove --creator-id`, `campaign content +list --creator-id`. A social account's `creator_info.creator_id` is unrelated: never read the person from it or from a handle.
+      - **Social account** (one handle on one platform, `creator_social_account_id` from `campaign creator +list`): `--creator-id` on every `campaign creator` command (`+get`, `+get-performance`, `+add`, `+remove`), `campaign post +list` and `campaign content +list`. A post on its own is `--content-id` (`campaign post +get`, `+get-performance`); the old `--id` on those reads still answers with a deprecation warning. A social account's `creator_info.creator_id` is unrelated: never read the person from it or from a handle.
       - **Enrollment** (the person in one Campaign): what every `ugc enrollment`/`message` write takes.
       - The same flag name `--creator-id` means a person on some commands and a social account on others: read the flag's help (`<command> --help`) before passing it.
   - id: campaign-kinds
@@ -467,9 +467,10 @@ chapters:
         when: ["tracking campaign", "track creators", "track posts", "monitor", "add creators", "add posts", "追踪", "监测", "添加达人", "添加帖子", "监控"]
         steps:
           - campaign.create: "--type tracking."
-          - campaign.creator-add: "--url imports new creators by profile URL in the background (data.url_import_task); --creator-id attaches known social accounts."
-          - campaign.content-add: "--url imports posts by URL; --content-id attaches known ones."
-          - campaign.creator-list: "An import is accepted, not done: verify membership here."
+          - campaign.creator-add: "--url imports new creators by profile URL in the background (data.url_import_task); --creator-id attaches known social accounts. --wait reports each URL's outcome."
+          - campaign.content-add: "--url imports posts by URL; --content-id attaches known ones. --wait reports each URL's outcome."
+          - campaign.import-get: "An add is queued, not done: --id is its task id; failures list each URL it could not read."
+          - campaign.creator-list: "data.items, the same shape for either kind of Campaign."
           - campaign.content-list
       - id: tracking-remove
         title: Stop tracking creators or posts
@@ -494,10 +495,10 @@ chapters:
         when: ["creator history", "account history", "post performance", "post history", "resolve post", "账号历史", "帖子数据", "单帖"]
         before: This is Museon's synced store, not a live platform fetch.
         steps:
-          - campaign.creator-get: "--id is the social account id."
+          - campaign.creator-get: "--creator-id is the social account id."
           - campaign.post-list: "--creator-id is the social account id."
           - campaign.creator-get-performance: "--date-from and --date-to both required, at most 180 days."
-          - campaign.post-get
+          - campaign.post-get: "--content-id is the post's content_id."
           - campaign.post-get-performance
           - campaign.post-resolve: "A publish schedule item → the post it became."
         see: [creator-ids]
@@ -522,8 +523,8 @@ chapters:
           - campaign.video-list: "Content tab; --scope approved reads confirmed posts only."
           - campaign.video-get: "--content-id from video +list; --section detail|summary|daily|insights."
           - campaign.roster-list: "By Creator tab."
-          - campaign.format-list: "Performance by Format."
-          - campaign.format-post-list: "The posts behind one Format."
+          - campaign.format-list: "Performance by Format; --date-from and --date-to, or --all-time."
+          - campaign.format-post-list: "The posts behind one Format, same window."
           - campaign.audience-get: "--by period for the map and profile (owning organization only)."
           - campaign.activity-list: "Activity log (owning organization only)."
       - id: breakdown
@@ -539,7 +540,7 @@ chapters:
         when: ["all campaigns", "organization analytics", "agency analytics", "overall performance", "delivery progress", "全部活动", "整体数据", "交付进度"]
         steps:
           - campaign.list: "--with-progress: each Campaign's delivery progress."
-          - campaign.analytics-get: "Views, engagement, creators, posts and spend (operating organization only)."
+          - campaign.analytics-get: "Views, engagement, creators, posts and spend (operating organization only); --date-from and --date-to, or --all-time."
       - id: boards
         title: Build and read analytics boards
         when: ["board", "analytics board", "multi campaign board", "看板", "分析看板", "多活动"]

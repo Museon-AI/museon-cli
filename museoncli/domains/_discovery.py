@@ -153,7 +153,11 @@ def _placeholder(spec: CommandSpec, action: argparse.Action) -> str:
 def generated_example(spec: CommandSpec) -> str:
     """One invocation with every required input, accepted by the real parser."""
     parser = parser_for(spec)
-    by_dest = {action.dest: action for action in parser._actions if action.option_strings}
+    by_dest: dict[str, argparse.Action] = {}
+    for action in parser._actions:
+        # A renamed flag's hidden old spelling shares the dest; examples show the new one.
+        if action.option_strings and action.help is not argparse.SUPPRESS:
+            by_dest.setdefault(action.dest, action)
     required = [str(name) for name in spec.input_schema.get("required", [])]
     required += [
         action.dest

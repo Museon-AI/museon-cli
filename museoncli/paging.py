@@ -59,7 +59,7 @@ def _records_location(data: Any) -> tuple[dict[str, Any], str] | None:
     """Find the dict and key holding a page's records.
 
     Records sit at ``data.items``, ``data.data``, or one level deeper as the only
-    list under ``data.data`` (``campaign creator +list``: ``data.data.creators``).
+    list under ``data.data`` (a raw campaign-monitor page: ``data.data.creators``).
     """
     if not isinstance(data, dict):
         return None

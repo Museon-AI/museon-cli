@@ -23,7 +23,7 @@ A Campaign is one thing with one id, whichever kind it is:
 
 `museoncli campaign` is the Campaign itself and its figures, for both kinds: `+list`, `+get`, `+create`, the lifecycle, `settings`, `staff`, `setup`, the Dashboard reads, and a tracking Campaign's `creator` / `content` membership. `museoncli ugc` is the work with a UGC Campaign's creators: recruiting, the roster, tasks, messages, review, payscales, client reports. Every command that addresses a Campaign takes its id as `--campaign-id`, from `museoncli campaign +list`.
 
-Adding URLs to a tracking Campaign may start import or sync work: an import is accepted, not done, until a list read shows it. Removing a post from a Campaign changes the Campaign, not the platform post. Read [synced-store.md](references/synced-store.md).
+Adding URLs to a tracking Campaign starts a background import: it is accepted, not done. `+add --wait` (or `campaign import +get --id <task_id>`) reports each URL it could not read. Removing a post from a Campaign changes the Campaign, not the platform post. Read [synced-store.md](references/synced-store.md).
 
 ## Shortcuts
 
