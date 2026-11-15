@@ -27,6 +27,7 @@ jobs:
       - run: uv run pytest -q
       - run: uv run python scripts/gen_command_docs.py --check
       - run: uv run python scripts/gen_command_contract.py --check
+      - run: uv run python scripts/gen_task_index.py --check
 
   package:
     name: Build and inspect Python artifacts

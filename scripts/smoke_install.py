@@ -65,6 +65,22 @@ def _parse_envelope(raw: str) -> dict[str, object]:
     return payload
 
 
+def _assert_guide_works(command: Path, env: dict[str, str]) -> None:
+    """The task guide reads the index bundled in the wheel, with no login."""
+    overview = _parse_envelope(_run([str(command), "guide"], env=env))
+    chapters = overview.get("data", {}).get("chapters") or []  # type: ignore[union-attr]
+    tasks = [task["id"] for chapter in chapters for task in chapter.get("tasks", [])]
+    if not tasks:
+        raise RuntimeError(f"installed guide lists no tasks: {overview!r}")
+    detail = _parse_envelope(_run([str(command), "guide", tasks[0]], env=env))
+    if not detail.get("data", {}).get("steps"):  # type: ignore[union-attr]
+        raise RuntimeError(f"installed guide task has no steps: {detail!r}")
+    found = _parse_envelope(_run([str(command), "guide", "--search", "approve"], env=env))
+    if not found.get("data", {}).get("tasks"):  # type: ignore[union-attr]
+        raise RuntimeError(f"installed guide search found nothing: {found!r}")
+    _parse_envelope(_run([str(command), "schema", "--compact", "ugc"], env=env))
+
+
 def smoke_install(wheel: Path) -> None:
     if not wheel.is_file() or wheel.suffix != ".whl":
         raise RuntimeError(f"wheel not found: {wheel}")
@@ -92,6 +108,7 @@ def smoke_install(wheel: Path) -> None:
         )
         version = _parse_envelope(_run([str(command), "version"], env=env))
         schema = _parse_envelope(_run([str(command), "schema"], env=env))
+        _assert_guide_works(command, env)
         _run([str(command), "--help"], env=env)
         installed = _parse_envelope(
             _run([str(command), "setup", "--agent", "codex"], env=env)

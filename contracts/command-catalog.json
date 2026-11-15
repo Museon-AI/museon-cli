@@ -14,6 +14,13 @@
         "requires_confirmation": false,
         "risk_level": "write",
         "summary": "Upgrade to the latest stable release. An official uv tool install verifies and installs it (even with MUSEONCLI_UPDATE_CHECK=0); other installs get status manual and the command to run. Changes only the local CLI."
+      },
+      {
+        "cli": "museoncli guide",
+        "name": "guide",
+        "requires_confirmation": false,
+        "risk_level": "read",
+        "summary": "Which commands to use for a task, in order. No argument lists chapters and tasks; a task id returns its steps with each command's usage line (required flags), risk, summary and gotcha; --search ranks tasks and commands by the user's words. Reads the bundled task index: no login, no network."
       }
     ],
     "commands": {
@@ -17713,7 +17720,7 @@
       "organization"
     ]
   },
-  "contract_revision": "1.1.1",
+  "contract_revision": "1.2.0",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -30915,7 +30922,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -31770,7 +31777,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -31945,7 +31952,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -32265,7 +32272,7 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           }
@@ -32408,7 +32415,7 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           }
@@ -32556,7 +32563,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -32715,7 +32722,7 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           }
@@ -32868,7 +32875,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -33050,7 +33057,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -33231,7 +33238,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -35868,7 +35875,7 @@
         "additionalProperties": false,
         "properties": {
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -36342,7 +36349,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -36665,7 +36672,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -36879,7 +36886,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -37034,7 +37041,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -37215,7 +37222,7 @@
             "type": "string"
           },
           "id": {
-            "description": "Campaign id as campaign-monitor +list returns it.",
+            "description": "The Campaign's monitor collection id, as campaign-monitor +list returns it (not the UGC Campaign id that ugc commands take).",
             "format": "uuid",
             "type": "string"
           },
@@ -41302,6 +41309,143 @@
       "summary": "Run Content Analyzer for supported platform content (including Xiaohongshu image notes), uploaded video media, or local video files, optionally using a organization Business Skill.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
+    },
+    "guide": {
+      "authorization": {
+        "authentication_required": false,
+        "enforcement": "local"
+      },
+      "cli": "museoncli guide",
+      "examples": [
+        "museoncli guide",
+        "museoncli guide ugc-approve-applications",
+        "museoncli guide --search approve creator"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "search": {
+            "description": "Words describing the job (English or Chinese).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "task": {
+            "description": "Task, chapter or topic id from `museoncli guide`.",
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "guide",
+      "output_schema": {
+        "properties": {
+          "_notice": {
+            "description": "Present only when there is something to tell. Finish the user's request, then relay `message`; never paste the raw notice.",
+            "properties": {
+              "skills": {
+                "description": "Installed Museon Agent Skills were synced or are out of date.",
+                "type": "object"
+              },
+              "update": {
+                "description": "A newer stable release exists and was not installed. Tell the user and offer `museoncli upgrade`.",
+                "properties": {
+                  "changelog_url": {
+                    "type": "string"
+                  },
+                  "current": {
+                    "type": "string"
+                  },
+                  "install_method": {
+                    "enum": [
+                      "uv_tool",
+                      "pipx",
+                      "uv_pip",
+                      "pip",
+                      "other",
+                      "source",
+                      "managed"
+                    ]
+                  },
+                  "latest": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "upgrade_command": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "current",
+                  "latest",
+                  "install_method",
+                  "upgrade_command",
+                  "changelog_url",
+                  "message"
+                ],
+                "type": "object"
+              },
+              "updated": {
+                "description": "The CLI upgraded itself; reported once.",
+                "properties": {
+                  "changelog_url": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "highlights": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from",
+                  "to",
+                  "changelog_url",
+                  "highlights",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "data": {
+            "description": "No input: intro, chapters with their tasks, topics. A task: kind=task, steps[] of {step, command, usage, risk, needs_yes, summary, note}. --search: query, tasks[], commands[].",
+            "type": "object"
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "data"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "risk_level": "read",
+      "stability": "stable",
+      "summary": "Which commands to use for a task, in order. No argument lists chapters and tasks; a task id returns its steps with each command's usage line (required flags), risk, summary and gotcha; --search ranks tasks and commands by the user's words. Reads the bundled task index: no login, no network.",
+      "supports_dry_run": false,
+      "transport": "local"
     },
     "hireaicreator.account-check-eligibility": {
       "authorization": {

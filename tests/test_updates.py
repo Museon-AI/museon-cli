@@ -645,7 +645,7 @@ def test_version_and_upgrade_outputs_match_their_contract(installed, monkeypatch
 
     from museoncli.domains import schema_payload
 
-    assert [entry["name"] for entry in schema_payload()["cli"]] == ["version", "upgrade"]
+    assert [entry["name"] for entry in schema_payload()["cli"]] == ["version", "upgrade", "guide"]
     for command in ("version", "upgrade"):
         contract = schema_payload(command)
         assert schema_payload(f"museoncli {command}") == contract

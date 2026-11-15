@@ -16,7 +16,13 @@ from museoncli.domains._model import (
     Stability,
     Transport,
 )
-from museoncli.domains._discovery import command_examples, fill_flag_help
+from museoncli.domains._discovery import (
+    DOMAIN_HELP,
+    command_examples,
+    fill_flag_help,
+    one_line,
+    resource_help,
+)
 from museoncli.domains._legacy_workspace import legacy_workspace_spec
 from museoncli.domains._shared import (
     _spec_schema_payload,
@@ -203,7 +209,12 @@ def add_domain_command_parsers(
     for domain, specs in specs_by_domain().items():
         if not specs:
             continue
-        domain_parser = subparsers.add_parser(domain)
+        domain_parser = subparsers.add_parser(
+            domain,
+            help=DOMAIN_HELP.get(domain),
+            description=DOMAIN_HELP.get(domain),
+            epilog="Which command for a task: museoncli guide --search <words>",
+        )
         shortcut_subparsers = domain_parser.add_subparsers(dest="shortcut", required=True)
 
         def add_command_parser(
@@ -217,7 +228,7 @@ def add_domain_command_parsers(
             examples = "\n".join(f"  {example}" for example in command_examples(spec))
             shortcut_parser = parser.add_parser(
                 shortcut,
-                help=argparse.SUPPRESS if hidden else None,
+                help=argparse.SUPPRESS if hidden else one_line(spec.summary).replace("%", "%%"),
                 description=spec.summary,
                 epilog=f"Examples:\n{examples}" if examples else None,
                 formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -263,7 +274,9 @@ def add_domain_command_parsers(
             resource_specs.setdefault(spec.resource, []).append(spec)
 
         for resource, grouped_specs in resource_specs.items():
-            resource_parser = shortcut_subparsers.add_parser(resource)
+            resource_parser = shortcut_subparsers.add_parser(
+                resource, help=resource_help(grouped_specs)
+            )
             action_subparsers = resource_parser.add_subparsers(
                 dest="resource_action", required=True
             )

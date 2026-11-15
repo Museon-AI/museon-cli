@@ -8,19 +8,21 @@ wheel; the private runtime adds its own overlay afterward.
 
 1. Update `[project].version` in `pyproject.toml`, refresh `uv.lock`, and update
    the versioned wheel URL in the README, install guide, and bundled Skill.
-2. Regenerate the command docs and contract, then run the checks in
-   `CONTRIBUTING.md`.
+2. Regenerate the command docs, the contract and the task guide
+   (`scripts/gen_task_index.py`), then run the checks in `CONTRIBUTING.md`.
 3. Merge the CLI changes to `main`, then create tag `v<version>` on that reviewed
    commit.
 4. The release workflow verifies the tag and `main` ancestry, runs the Python
    test suite, builds the wheel once, checks its public boundary,
    and performs a clean wheel install.
-5. The workflow publishes the wheel, command contract, install guide,
-   deterministic `skills.tar.gz`, and SHA-256 checksums in a GitHub Release.
+5. The workflow publishes the wheel, command contract, install guide, task guide
+   (`guide.md`) and its index (`llms.txt`), deterministic `skills.tar.gz`, and SHA-256
+   checksums in a GitHub Release.
 6. After publication, the workflow sends the exact wheel, command contract,
    and skills archive URLs/hashes to the private Agent runtime release workflow.
-7. Verify the public wheel URL, then sync the command contract and install guide
-   to the Museon monorepo. The live guide must never point at an unpublished
+7. Verify the public wheel URL, then sync the command contract, install guide,
+   `guide.md` and `llms.txt` to the Museon monorepo (served at
+   `https://www.museon.ai/cli/install.md`, `/cli/guide.md` and `/cli/llms.txt`). The live guide must never point at an unpublished
    wheel.
 
 Do not rebuild or replace assets for an existing tag. If a published version is

@@ -15,7 +15,7 @@ from uuid import UUID
 
 import httpx
 
-from museoncli import __version__, updates
+from museoncli import __version__, guide, updates
 from museoncli.auth import (
     ORGANIZATION_HEADER,
     auth_headers,
@@ -320,7 +320,13 @@ def _configure_utf8_stdout() -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = JsonArgumentParser(prog="museoncli")
+    parser = JsonArgumentParser(
+        prog="museoncli",
+        description=(
+            "MuseOn from the command line. Start with `museoncli guide` to find the commands "
+            "for a task; `museoncli schema <command>` describes one command."
+        ),
+    )
     parser.add_argument(
         "--json",
         action="store_true",
@@ -336,10 +342,24 @@ def build_parser() -> argparse.ArgumentParser:
         "upgrade",
         help="Upgrade to the latest stable release, or print the command your installer needs.",
     )
-    sub.add_parser("whoami")
-    sub.add_parser("health")
+    guide_parser = sub.add_parser(
+        "guide",
+        help="Which commands to use for a task, in order (local; no login).",
+        description=(
+            "The task guide. No argument: chapters and tasks. TASK: a task's ordered steps "
+            "with each command's required flags, risk and gotcha (a chapter or topic id "
+            "works too). --search: tasks and commands matching the words (English or 中文)."
+        ),
+    )
+    guide_parser.add_argument("task", nargs="?", help="Task, chapter or topic id from `museoncli guide`.")
+    guide_parser.add_argument(
+        "--search", nargs="+", metavar="WORD", help="Words describing the job, e.g. approve creator."
+    )
+    sub.add_parser("whoami", help="The signed-in user and the organizations this login can act in.")
+    sub.add_parser("health", help="Check that the Museon API answers.")
     schema = sub.add_parser(
         "schema",
+        help="Describe commands: one command's inputs and outputs, a domain, or every command.",
         description=(
             "Describe commands. NAME is a capability key (hireaicreator.video-get), "
             "a domain (hireaicreator), or a CLI path (hireaicreator video +get)."
@@ -347,8 +367,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     schema.add_argument("name", nargs="?")
     schema.add_argument("path_rest", nargs="*", help=argparse.SUPPRESS)
+    schema.add_argument(
+        "--compact",
+        action="store_true",
+        help="Name, usage line, risk and summary only (no schemas or authorization).",
+    )
+    schema.add_argument(
+        "--search",
+        nargs="+",
+        metavar="WORD",
+        help="Rank commands by these words (compact entries).",
+    )
 
-    setup = sub.add_parser("setup")
+    setup = sub.add_parser("setup", help="Install the bundled Agent Skills for a host Agent.")
     setup.add_argument(
         "--agent",
         nargs="?",
@@ -359,14 +390,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     setup.add_argument("--force", action="store_true")
 
-    config = sub.add_parser("config")
+    config = sub.add_parser("config", help="Read or set the API and site URLs.")
     config_sub = config.add_subparsers(dest="config_command", required=True)
     config_sub.add_parser("get")
     config_set = config_sub.add_parser("set")
     config_set.add_argument("--api-base-url")
     config_set.add_argument("--site-url")
 
-    auth = sub.add_parser("auth")
+    auth = sub.add_parser("auth", help="Sign in (start, finish), check status, sign out.")
     auth_sub = auth.add_subparsers(dest="auth_command", required=True)
     login = auth_sub.add_parser("login")
     login.add_argument("--timeout", type=int, default=300)
@@ -402,6 +433,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 async def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
+    if args.command == "guide":
+        # Local and offline: the guide reads the bundled task index only.
+        return {"data": guide.guide_payload(args.task, args.search)}
     cfg = load_config()
     if args.command == "version":
         update = _ACTIVE_UPDATE.get()
@@ -437,6 +471,10 @@ async def dispatch(args: argparse.Namespace) -> dict[str, Any] | None:
         return await dispatch_org(args, cfg)
     if args.command == "schema":
         name = " ".join([args.name, *getattr(args, "path_rest", [])]) if args.name else None
+        if getattr(args, "search", None):
+            return {"data": {"commands": guide.search_commands(args.search)}}
+        if getattr(args, "compact", False):
+            return {"data": guide.compact_schema(name)}
         return {"data": schema_payload(name)}
     if getattr(args, "domain_command", None):
         return await dispatch_domain_command(args, cfg)
@@ -1153,7 +1191,10 @@ def _usage_hint(command: str | None) -> str:
             return f"Run `{get_command_spec(command).cli_path} --help` or `museoncli schema {command}`."
         except ValueError:
             pass
-    return "Run `museoncli --help` or `museoncli schema` to list commands."
+    return (
+        "Run `museoncli guide --search <words>` to find the command for a task, or "
+        "`museoncli --help`."
+    )
 
 
 def _error_message(detail: Any) -> str:
