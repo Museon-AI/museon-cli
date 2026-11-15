@@ -4314,7 +4314,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List the creators (social accounts) a Campaign covers, with their post figures in the window. A row's creator_social_account_id is what campaign creator +get, +remove and campaign content +list --creator-id take.",
+          "summary": "List the creators (social accounts) a Campaign covers, either kind, with their post figures in the window. One shape for both: data.items (one row per social account, the same fields for UGC and tracking) and data.source_kind (ugc or tracking). A row's creator_social_account_id is what --creator-id takes on every campaign creator command, campaign post +list and campaign content +list. A UGC Campaign's people (enrollments) are campaign roster +list.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -4397,7 +4397,7 @@
           "risk_level": "write",
           "shortcut": "+add",
           "stability": "stable",
-          "summary": "Track creators in a tracking Campaign so their matching posts sync in going forward. --url imports new creators by public profile URL via a background task (response data.url_import_task); --creator-id attaches creators already known to Museon. Verify with campaign creator +list later. A UGC Campaign's creators join through enrollments, so it refuses one.",
+          "summary": "Track creators in a tracking Campaign so their matching posts sync in going forward. --url imports new creators by public profile URL via a background task (response data.url_import_task); --creator-id attaches creators already known to Museon. The add is queued, not done: --wait waits and reports each URL's outcome (data.imports), or read it later with campaign import +get. A UGC Campaign's creators join through enrollments, so it refuses one.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -4563,7 +4563,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List the posts a Campaign covers, either kind, with their figures: filter by window, platform, creator, views and likes; a UGC Campaign also by Format (--brief-id), persona, UGC creator and review status. A row's collection_content_id is what campaign content +remove takes.",
+          "summary": "List the posts a Campaign covers, either kind, with their figures: filter by window, platform, creator, views and likes; a UGC Campaign also by Format (--brief-id), persona, UGC creator and review status. One shape for both: data.items and data.source_kind (ugc or tracking). A row's collection_content_id is what campaign content +remove takes. A UGC Campaign's Content tab (each video once, posts awaiting review) is campaign video +list.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -4646,7 +4646,7 @@
           "risk_level": "write",
           "shortcut": "+add",
           "stability": "stable",
-          "summary": "Track individual posts in a tracking Campaign. --url imports new posts by public URL via a background task (response data.url_import_task); --content-id attaches posts already known to Museon. Verify with campaign content +list later. A UGC Campaign's posts come from its creators, so it refuses one.",
+          "summary": "Track individual posts in a tracking Campaign. --url imports new posts by public URL via a background task (response data.url_import_task); --content-id attaches posts already known to Museon. The add is queued, not done: --wait waits and reports each URL's outcome (data.imports), or read it later with campaign import +get. A UGC Campaign's posts come from its creators, so it refuses one.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -4814,6 +4814,77 @@
           "stability": "stable",
           "summary": "Remove up to 100 posts from a tracking Campaign at once (soft delete of their place in the Campaign); it does NOT delete the original social-platform posts. Explicit operator confirmation is required before running with --yes. Split more than 100 into several calls; the response lists what was removed and what was missing. --collection-content-ids come from campaign content +list.",
           "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "campaign.import-get",
+          "cli": "museoncli campaign import +get",
+          "domain": "campaign",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the Campaigns list.",
+              "label": "Campaigns",
+              "path_template": "/campaigns",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the creators one Campaign covers.",
+              "label": "Campaign creators",
+              "path_template": "/campaigns/{campaign_id}/creators",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the posts one Campaign covers.",
+              "label": "Campaign contents",
+              "path_template": "/campaigns/{campaign_id}/contents",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the campaign performance analytics page.",
+              "label": "Campaign analytics",
+              "path_template": "/campaigns/{campaign_id}/analytics",
+              "required_fields": [
+                "campaign_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+            }
+          ],
+          "name": "campaign.import-get",
+          "requires_confirmation": false,
+          "resource": "import",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Read what became of a creator or post import that campaign creator +add / campaign content +add queued: status (pending, running, completed, failed), done, counts, and each URL or id that failed with its reason.",
+          "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
         {
@@ -5468,7 +5539,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format.",
+          "summary": "Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format. Needs --date-from and --date-to, or --all-time.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -5546,7 +5617,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List the posts behind one Format's figures in format +list.",
+          "summary": "List the posts behind one Format's figures in format +list, over the same window: --date-from and --date-to, or --all-time.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -6248,7 +6319,7 @@
           "risk_level": "read",
           "shortcut": "+get",
           "stability": "stable",
-          "summary": "Read the organization's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. The operating organization's team only, as on the web.",
+          "summary": "Read the organization's analytics over all its UGC campaigns: views, engagement, creators, posts and spend, over --date-from/--date-to or --all-time. The operating organization's team only, as on the web.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -18237,7 +18308,7 @@
       "organization"
     ]
   },
-  "contract_revision": "2.0.0",
+  "contract_revision": "2.0.1",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -31602,7 +31673,7 @@
         "additionalProperties": false,
         "properties": {
           "all_time": {
-            "description": "Every post ever published; ignores the dates.",
+            "description": "Every post ever published, instead of --date-from/--date-to.",
             "type": "boolean"
           },
           "date_basis": {
@@ -31614,12 +31685,12 @@
             "type": "string"
           },
           "date_from": {
-            "description": "Published on or after (YYYY-MM-DD).",
+            "description": "Published on or after (YYYY-MM-DD). Required with --date-to unless --all-time.",
             "format": "date",
             "type": "string"
           },
           "date_to": {
-            "description": "Published on or before (YYYY-MM-DD).",
+            "description": "Published on or before (YYYY-MM-DD). Required with --date-from unless --all-time.",
             "format": "date",
             "type": "string"
           },
@@ -31714,7 +31785,7 @@
       "risk_level": "read",
       "shortcut": "+get",
       "stability": "stable",
-      "summary": "Read the organization's analytics over all its UGC campaigns: views, engagement, creators, posts and spend. The operating organization's team only, as on the web.",
+      "summary": "Read the organization's analytics over all its UGC campaigns: views, engagement, creators, posts and spend, over --date-from/--date-to or --all-time. The operating organization's team only, as on the web.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -32251,7 +32322,7 @@
       "cli": "museoncli campaign content +add",
       "domain": "campaign",
       "examples": [
-        "museoncli campaign content +add --campaign-id <campaign_id> --url https://www.tiktok.com/@creator/video/123",
+        "museoncli campaign content +add --campaign-id <campaign_id> --url https://www.tiktok.com/@creator/video/123 --wait",
         "museoncli campaign content +add --campaign-id <campaign_id> --content-id <content_id>"
       ],
       "execution": "direct",
@@ -32307,7 +32378,7 @@
             "type": "string"
           },
           "content_ids": {
-            "description": "Existing content ids already known to Museon (field `id` from campaign content +list).",
+            "description": "Existing content ids already known to Museon (field content_id from campaign content +list or campaign post +list).",
             "items": {
               "type": "string"
             },
@@ -32317,7 +32388,7 @@
             ]
           },
           "content_urls": {
-            "description": "Public post/video URLs to track. Resolved in a background task (response data.url_import_task); verify later with campaign content +list.",
+            "description": "Public post/video URLs to track. Resolved in a background task (response data.url_import_task): --wait reports each URL's outcome, or read it later with campaign import +get --id <task id>.",
             "items": {
               "type": "string"
             },
@@ -32326,9 +32397,26 @@
               "null"
             ]
           },
+          "poll_interval_seconds": {
+            "default": 3.0,
+            "maximum": 30,
+            "minimum": 0.5,
+            "type": "number"
+          },
           "sync": {
             "default": true,
             "type": "boolean"
+          },
+          "wait": {
+            "default": false,
+            "description": "Wait for the background import(s) and report each one's outcome, per-URL failures included (data.imports).",
+            "type": "boolean"
+          },
+          "wait_timeout_seconds": {
+            "default": 120.0,
+            "maximum": 600,
+            "minimum": 1,
+            "type": "number"
           }
         },
         "required": [
@@ -32338,7 +32426,7 @@
       },
       "name": "campaign.content-add",
       "output_schema": {
-        "description": "Add summary: requested ids/urls, content_id_task, url_import_task.",
+        "description": "Add summary: requested ids/urls, content_id_task, url_import_task; with --wait, data.imports (each task's status, summary and per-URL failures).",
         "properties": {
           "command": {
             "type": "string"
@@ -32409,7 +32497,7 @@
       "risk_level": "write",
       "shortcut": "+add",
       "stability": "stable",
-      "summary": "Track individual posts in a tracking Campaign. --url imports new posts by public URL via a background task (response data.url_import_task); --content-id attaches posts already known to Museon. Verify with campaign content +list later. A UGC Campaign's posts come from its creators, so it refuses one.",
+      "summary": "Track individual posts in a tracking Campaign. --url imports new posts by public URL via a background task (response data.url_import_task); --content-id attaches posts already known to Museon. The add is queued, not done: --wait waits and reports each URL's outcome (data.imports), or read it later with campaign import +get. A UGC Campaign's posts come from its creators, so it refuses one.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -32783,7 +32871,7 @@
       },
       "name": "campaign.content-list",
       "output_schema": {
-        "description": "The Campaign's posts, from Museon API.",
+        "description": "data.items (one row per post), data.source_kind, data.campaign, total, page, page_size, total_pages, has_more, meta.",
         "properties": {
           "command": {
             "type": "string"
@@ -32854,7 +32942,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List the posts a Campaign covers, either kind, with their figures: filter by window, platform, creator, views and likes; a UGC Campaign also by Format (--brief-id), persona, UGC creator and review status. A row's collection_content_id is what campaign content +remove takes.",
+      "summary": "List the posts a Campaign covers, either kind, with their figures: filter by window, platform, creator, views and likes; a UGC Campaign also by Format (--brief-id), persona, UGC creator and review status. One shape for both: data.items and data.source_kind (ugc or tracking). A row's collection_content_id is what campaign content +remove takes. A UGC Campaign's Content tab (each video once, posts awaiting review) is campaign video +list.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -33208,7 +33296,7 @@
       "cli": "museoncli campaign creator +add",
       "domain": "campaign",
       "examples": [
-        "museoncli campaign creator +add --campaign-id <campaign_id> --url https://www.tiktok.com/@creator1",
+        "museoncli campaign creator +add --campaign-id <campaign_id> --url https://www.tiktok.com/@creator1 --wait",
         "museoncli campaign creator +add --campaign-id <campaign_id> --creator-id <creator_social_account_id>"
       ],
       "execution": "direct",
@@ -33274,7 +33362,7 @@
             ]
           },
           "creator_urls": {
-            "description": "Public creator profile URLs to track. Resolved in a background task (response data.url_import_task); verify later with campaign creator +list.",
+            "description": "Public creator profile URLs to track. Resolved in a background task (response data.url_import_task): --wait reports each URL's outcome, or read it later with campaign import +get --id <task id>.",
             "items": {
               "type": "string"
             },
@@ -33293,9 +33381,26 @@
               "null"
             ]
           },
+          "poll_interval_seconds": {
+            "default": 3.0,
+            "maximum": 30,
+            "minimum": 0.5,
+            "type": "number"
+          },
           "sync": {
             "default": true,
             "type": "boolean"
+          },
+          "wait": {
+            "default": false,
+            "description": "Wait for the background import(s) and report each one's outcome, per-URL failures included (data.imports).",
+            "type": "boolean"
+          },
+          "wait_timeout_seconds": {
+            "default": 120.0,
+            "maximum": 600,
+            "minimum": 1,
+            "type": "number"
           }
         },
         "required": [
@@ -33305,7 +33410,7 @@
       },
       "name": "campaign.creator-add",
       "output_schema": {
-        "description": "Add summary: requested ids/urls, creator_id_task, url_import_task.",
+        "description": "Add summary: requested ids/urls, creator_id_task, url_import_task; with --wait, data.imports (each task's status, summary and per-URL failures).",
         "properties": {
           "command": {
             "type": "string"
@@ -33376,7 +33481,7 @@
       "risk_level": "write",
       "shortcut": "+add",
       "stability": "stable",
-      "summary": "Track creators in a tracking Campaign so their matching posts sync in going forward. --url imports new creators by public profile URL via a background task (response data.url_import_task); --creator-id attaches creators already known to Museon. Verify with campaign creator +list later. A UGC Campaign's creators join through enrollments, so it refuses one.",
+      "summary": "Track creators in a tracking Campaign so their matching posts sync in going forward. --url imports new creators by public profile URL via a background task (response data.url_import_task); --creator-id attaches creators already known to Museon. The add is queued, not done: --wait waits and reports each URL's outcome (data.imports), or read it later with campaign import +get. A UGC Campaign's creators join through enrollments, so it refuses one.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -33397,7 +33502,7 @@
       "cli": "museoncli campaign creator +get",
       "domain": "campaign",
       "examples": [
-        "museoncli campaign creator +get --id <creator_social_account_id>"
+        "museoncli campaign creator +get --creator-id <creator_social_account_id>"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -33518,7 +33623,7 @@
       "cli": "museoncli campaign creator +get-performance",
       "domain": "campaign",
       "examples": [
-        "museoncli campaign creator +get-performance --id <creator_social_account_id> --date-from 2026-10-01 --date-to 2026-10-28"
+        "museoncli campaign creator +get-performance --creator-id <creator_social_account_id> --date-from 2026-10-01 --date-to 2026-10-28"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -33771,7 +33876,7 @@
       },
       "name": "campaign.creator-list",
       "output_schema": {
-        "description": "The Campaign's creators, from Museon API.",
+        "description": "data.items (creator_social_account_id, platform, username, nickname, profile_url, avatar_url, followers_count, tier, auth_status, added_method, is_active, added_at, group_id, group_name, content_count, video_count, views, avg_views, likes, comments, shares, collects, engagement_rate, last_published_at, source_kind), data.source_kind, data.campaign, total, page, page_size, total_pages, has_more, meta.",
         "properties": {
           "command": {
             "type": "string"
@@ -33842,7 +33947,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List the creators (social accounts) a Campaign covers, with their post figures in the window. A row's creator_social_account_id is what campaign creator +get, +remove and campaign content +list --creator-id take.",
+      "summary": "List the creators (social accounts) a Campaign covers, either kind, with their post figures in the window. One shape for both: data.items (one row per social account, the same fields for UGC and tracking) and data.source_kind (ugc or tracking). A row's creator_social_account_id is what --creator-id takes on every campaign creator command, campaign post +list and campaign content +list. A UGC Campaign's people (enrollments) are campaign roster +list.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -34227,7 +34332,7 @@
         "additionalProperties": false,
         "properties": {
           "all_time": {
-            "description": "Every post ever published; ignores the dates.",
+            "description": "Every post ever published, instead of --date-from/--date-to.",
             "type": "boolean"
           },
           "campaign_id": {
@@ -34236,12 +34341,12 @@
             "type": "string"
           },
           "date_from": {
-            "description": "Published on or after (YYYY-MM-DD).",
+            "description": "Published on or after (YYYY-MM-DD). Required with --date-to unless --all-time.",
             "format": "date",
             "type": "string"
           },
           "date_to": {
-            "description": "Published on or before (YYYY-MM-DD).",
+            "description": "Published on or before (YYYY-MM-DD). Required with --date-from unless --all-time.",
             "format": "date",
             "type": "string"
           },
@@ -34338,7 +34443,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format.",
+      "summary": "Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format. Needs --date-from and --date-to, or --all-time.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -34359,7 +34464,7 @@
       "cli": "museoncli campaign format-post +list",
       "domain": "campaign",
       "examples": [
-        "museoncli campaign format-post +list --campaign-id <campaign_id> --brief-id <brief_id>"
+        "museoncli campaign format-post +list --campaign-id <campaign_id> --brief-id <brief_id> --all-time"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -34410,7 +34515,7 @@
         "additionalProperties": false,
         "properties": {
           "all_time": {
-            "description": "Every post ever published; ignores the dates.",
+            "description": "Every post ever published, instead of --date-from/--date-to.",
             "type": "boolean"
           },
           "brief_id": {
@@ -34424,12 +34529,12 @@
             "type": "string"
           },
           "date_from": {
-            "description": "Published on or after (YYYY-MM-DD).",
+            "description": "Published on or after (YYYY-MM-DD). Required with --date-to unless --all-time.",
             "format": "date",
             "type": "string"
           },
           "date_to": {
-            "description": "Published on or before (YYYY-MM-DD).",
+            "description": "Published on or before (YYYY-MM-DD). Required with --date-from unless --all-time.",
             "format": "date",
             "type": "string"
           },
@@ -34538,7 +34643,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List the posts behind one Format's figures in format +list.",
+      "summary": "List the posts behind one Format's figures in format +list, over the same window: --date-from and --date-to, or --all-time.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -35265,6 +35370,148 @@
       "shortcut": "+get-summary",
       "stability": "stable",
       "summary": "Read a Campaign's daily content-trend totals over a date window (the Dashboard's KPI tiles and trend). This is not the Analytics Period Performance comparison; use +get-period-performance for period-end snapshots and previous-period deltas.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "campaign.import-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "campaign.import-get",
+      "cli": "museoncli campaign import +get",
+      "domain": "campaign",
+      "examples": [
+        "museoncli campaign import +get --id <task_id>"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the Campaigns list.",
+          "label": "Campaigns",
+          "path_template": "/campaigns",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the creators one Campaign covers.",
+          "label": "Campaign creators",
+          "path_template": "/campaigns/{campaign_id}/creators",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/creators"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the posts one Campaign covers.",
+          "label": "Campaign contents",
+          "path_template": "/campaigns/{campaign_id}/contents",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/contents"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the campaign performance analytics page.",
+          "label": "Campaign analytics",
+          "path_template": "/campaigns/{campaign_id}/analytics",
+          "required_fields": [
+            "campaign_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/campaigns/{campaign_id}/analytics"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "task_id": {
+            "description": "The import's task id, from campaign creator +add / content +add.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "type": "object"
+      },
+      "name": "campaign.import-get",
+      "output_schema": {
+        "description": "task_id, kind, campaign_id, status, done, summary (total, succeeded, failed, skipped), failures and skipped ([{reference, reference_type, message}]).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "import",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Read what became of a creator or post import that campaign creator +add / campaign content +add queued: status (pending, running, completed, failed), done, counts, and each URL or id that failed with its reason.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -36452,7 +36699,7 @@
       "cli": "museoncli campaign post +get",
       "domain": "campaign",
       "examples": [
-        "museoncli campaign post +get --id <content_id>"
+        "museoncli campaign post +get --content-id <content_id>"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -36583,7 +36830,7 @@
       "cli": "museoncli campaign post +get-performance",
       "domain": "campaign",
       "examples": [
-        "museoncli campaign post +get-performance --id <content_id> --limit 10"
+        "museoncli campaign post +get-performance --content-id <content_id> --limit 10"
       ],
       "execution": "direct",
       "frontend_url_templates": [

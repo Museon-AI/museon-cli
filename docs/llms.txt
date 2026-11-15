@@ -7,7 +7,7 @@ Museon CLI runs MuseOn's social-media operations from an Agent: UGC Campaigns (s
 ## Start
 
 - [Install guide](https://www.museon.ai/cli/install.md): install the CLI and its Agent Skills, sign in, choose an organization.
-- [Task guide](https://www.museon.ai/cli/guide.md): every task as ordered commands with their required flags, risk and gotchas (Museon CLI 2.0.0).
+- [Task guide](https://www.museon.ai/cli/guide.md): every task as ordered commands with their required flags, risk and gotchas (Museon CLI 2.0.1).
 - Offline, the CLI answers the same: `museoncli guide`, `museoncli guide <task-id>`, `museoncli guide --search <words>`, `museoncli schema <command>`.
 
 ## Tasks

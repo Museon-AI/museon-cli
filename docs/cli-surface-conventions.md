@@ -38,6 +38,11 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
 - Other write commands scoped inside a parent entity use `--id` for the parent and
   qualified flags for children.
 - Foreign references are always qualified: `--<entity>-id`.
+- One identifier keeps one flag across a command group, even where it is the entity
+  read: a social account is `--creator-id` on every `campaign creator` command and on
+  `campaign post +list` / `campaign content +list`, and a post is `--content-id` on
+  `campaign post +get` / `+get-performance`. A renamed flag keeps its old spelling
+  hidden, with a deprecation warning (`add_renamed_id_flag`).
 - Positional IDs are forbidden. The only allowed positional is a mode selector
   (`routines +record output|memory`).
 - ID values must be canonical UUIDs; the CLI rejects placeholders before any request.
