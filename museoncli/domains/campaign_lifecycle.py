@@ -1,4 +1,8 @@
-"""UGC Campaign lifecycle: create, launch, pause, resume, complete, archive, restore, rename.
+"""The Campaign itself, both kinds: list, get, create, launch, pause, resume, complete,
+archive, restore, rename.
+
+`+list` and `+get` read what the web's Campaigns page and Dashboard header read
+(`/api/v2/ugc/agency/{organization}/campaigns`, `/api/v2/ugc/collections/{id}/campaign`).
 
 The routes are the ones the web's new-Campaign flow and Campaign header call
 (`/api/v2/ugc/...`). Every status move carries `expected_status`: the status the
@@ -11,12 +15,15 @@ Campaign also its brand editors'.
 from __future__ import annotations
 
 import argparse
+import asyncio
 from typing import Any
 
 from museoncli.domains import _ugc_write as w
-from museoncli.domains._model import CommandSpec
+from museoncli.domains._model import CommandSpec, Domain
+from museoncli.domains._org_reads import Route, get, read, require_organization
+from museoncli.domains.hireaicreator import U, enum
 from museoncli.domains.ugc import _with_notes
-from museoncli.execution import CommandContext
+from museoncli.execution import CommandContext, agent_domain_result
 
 CAMPAIGN_STATUSES = ["draft", "active", "paused", "complete", "archived"]
 CAMPAIGN_TYPES = ["ugc", "tracking"]
@@ -49,6 +56,70 @@ _TRANSITION_NOTES = {
     ),
     "restore": "Restoring moves the Campaign back to the status it was archived from.",
 }
+
+
+# -- reads -------------------------------------------------------------------
+
+AGENCY = "/ugc/agency/{organization_id}"
+S = {"type": "string", "minLength": 1, "maxLength": 300}
+B = {"type": "boolean"}
+CAMPAIGN_ID = {**U, "description": "The Campaign's ID, from campaign +list."}
+EXECUTORS: dict[str, Any] = {}
+
+
+def _check_list(payload: dict[str, Any]) -> None:
+    if payload.get("with_progress") and any(
+        payload.get(key) not in (None, "archived") for key in ("campaign_type", "search", "status")
+    ):
+        raise ValueError(
+            "--with-progress reads every Campaign's delivery progress, page by page: it takes "
+            "--status archived and paging only. Drop --type, --search and --status, or read "
+            "the list without --with-progress."
+        )
+
+
+async def _list(ctx: CommandContext, arguments: dict[str, Any]) -> Any:
+    """The Campaigns page: own and shared-in Campaigns, both kinds, or their progress."""
+    require_organization(ctx)
+    status = arguments.get("status")
+    archived = True if status == "archived" else None
+    paging = {"cursor": arguments.get("cursor"), "limit": arguments.get("page_size") or 50}
+    if arguments.get("with_progress"):
+        return await get(ctx, Route(AGENCY + "/campaigns/progress", {"archived": archived, **paging}))
+    page = await get(
+        ctx,
+        Route(
+            AGENCY + "/campaigns",
+            {
+                "q": arguments.get("search"),
+                "campaign_type": arguments.get("campaign_type"),
+                "archived": archived,
+                **paging,
+            },
+        ),
+    )
+    # The route lists live Campaigns, or archived ones instead; draft/active/paused/complete
+    # are kept here. A filtered page can be shorter than its limit; next_cursor pages on.
+    if status and status != "archived" and isinstance(page, dict):
+        items = page.get("items")
+        if isinstance(items, list):
+            page = {
+                **page,
+                "items": [
+                    item for item in items if isinstance(item, dict) and item.get("status") == status
+                ],
+            }
+    return page
+
+
+async def _get_campaign(ctx: CommandContext, arguments: dict[str, Any]) -> Any:
+    """The Dashboard header (type, status, start day) and the Campaign's tracking record."""
+    campaign_id = arguments["campaign_id"]
+    header, tracking = await asyncio.gather(
+        ctx.api_data_v2(ctx.cfg, "GET", f"/ugc/collections/{campaign_id}/campaign"),
+        ctx.api_data(ctx.cfg, "GET", f"/agent-cli/campaign-monitors/{campaign_id}"),
+    )
+    return {"campaign": header, "tracking": agent_domain_result(tracking)}
 
 
 # -- organization fact the web's create flow uses ---------------------------
@@ -100,18 +171,19 @@ async def _execute_create(ctx: CommandContext) -> Any:
     created = await w.call(ctx, "POST", f"/organizations/{organization_id}/campaigns", body=body)
     data["campaign"] = w.campaign_line(created)
     steps = [
-        "The Campaign is a draft. Set it up (ugc campaign-settings +update, ugc payscale, "
-        "ugc contract-template +set, ugc brief +create) and launch it with ugc campaign +launch."
+        "The Campaign is a draft. Set it up (campaign settings +update, ugc payscale, "
+        "ugc contract-template +set, ugc brief +create) and launch it with campaign +launch."
         if campaign_type == "ugc"
-        else "The tracking Campaign is a draft; add creators or posts with campaign-monitor "
-        "using data.campaign.monitor_collection_id, and launch it with ugc campaign +launch."
+        else "The tracking Campaign is a draft; add creators and posts with campaign creator "
+        "+add and campaign content +add (--campaign-id data.campaign.id), and launch it with "
+        "campaign +launch."
     ]
     return data, [], steps
 
 
 async def _execute_transition(ctx: CommandContext, action: str) -> Any:
     args = ctx.arguments
-    view = await w.read_campaign(ctx, args["id"])
+    view = await w.read_campaign(ctx, args["campaign_id"])
     campaign = view["campaign"]
     status = campaign.get("status")
     w.check_token("status", status, args.get("expected_status"))
@@ -141,7 +213,7 @@ async def _execute_transition(ctx: CommandContext, action: str) -> Any:
     if args["dry_run"]:
         return data, warnings, w.ask(f"the Campaign and the move from {status}")
     written = await w.call(
-        ctx, "POST", f"/campaigns/{args['id']}/{action}", body={"expected_status": status}
+        ctx, "POST", f"/campaigns/{args['campaign_id']}/{action}", body={"expected_status": status}
     )
     data["campaign"] = w.campaign_line(written)
     data["after"] = data["campaign"].get("status")
@@ -150,7 +222,7 @@ async def _execute_transition(ctx: CommandContext, action: str) -> Any:
 
 async def _execute_rename(ctx: CommandContext) -> Any:
     args = ctx.arguments
-    view = await w.read_campaign(ctx, args["id"])
+    view = await w.read_campaign(ctx, args["campaign_id"])
     campaign = view["campaign"]
     data: dict[str, Any] = {
         "dry_run": args["dry_run"],
@@ -162,7 +234,9 @@ async def _execute_rename(ctx: CommandContext) -> Any:
         return data, [w.nothing_to_write("the current name")], []
     if args["dry_run"]:
         return data, [], w.ask("the old and new name")
-    written = await w.call(ctx, "POST", f"/campaigns/{args['id']}/rename", body={"name": args["name"]})
+    written = await w.call(
+        ctx, "POST", f"/campaigns/{args['campaign_id']}/rename", body={"name": args["name"]}
+    )
     data["campaign"] = w.campaign_line(written)
     return data, [], []
 
@@ -203,14 +277,7 @@ def _build_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _add_campaign_id(parser: argparse.ArgumentParser) -> None:
-    """The Campaign is ``--id`` here; ``--campaign-id`` is the name the other ugc commands use."""
-    parser.add_argument(
-        "--id",
-        "--campaign-id",
-        dest="id",
-        required=True,
-        help="ID of the Campaign (--campaign-id is the same flag, as on the other ugc commands).",
-    )
+    parser.add_argument("--campaign-id", required=True, help="ID of the Campaign (from campaign +list).")
 
 
 def _add_transition_arguments(*, confirm: bool):
@@ -226,7 +293,7 @@ def _add_transition_arguments(*, confirm: bool):
 
 def _build_transition_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return {
-        "id": w._uuid(args.id, flag="--id"),
+        "campaign_id": w._uuid(args.campaign_id, flag="--campaign-id"),
         **({"expected_status": args.expected_status} if args.expected_status else {}),
         "dry_run": bool(args.dry_run),
     }
@@ -239,12 +306,16 @@ def _add_rename_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_rename_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {"id": w._uuid(args.id, flag="--id"), "name": _name(args.name), "dry_run": bool(args.dry_run)}
+    return {
+        "campaign_id": w._uuid(args.campaign_id, flag="--campaign-id"),
+        "name": _name(args.name),
+        "dry_run": bool(args.dry_run),
+    }
 
 
 # -- specs -------------------------------------------------------------------
 
-_ID = w.uuid_property("UGC campaign ID (from ugc campaign +list).")
+_ID = w.uuid_property("Campaign ID (from campaign +list).")
 _EXPECTED_STATUS = {
     "type": "string",
     "enum": CAMPAIGN_STATUSES,
@@ -290,8 +361,63 @@ _TRANSITION_KIND = {
 def specs() -> list[CommandSpec]:
     campaign = w.CAMPAIGN
     built = [
+        read(
+            EXECUTORS,
+            Domain.CAMPAIGN,
+            None,
+            "list",
+            summary=(
+                "List the organization's Campaigns, both kinds (UGC and tracking), and those "
+                "shared into it, newest first, as the Campaigns page does: id (what every "
+                "--campaign-id takes), name, type, status, enrollments, targets, staff. "
+                "--type, --status and --search narrow it; --with-progress reads each "
+                "Campaign's delivery progress instead. Every member of the organization; an "
+                "operator limited to chosen Campaigns sees those."
+            ),
+            properties={
+                "campaign_type": {
+                    **enum("ugc", "tracking"),
+                    "description": "Only UGC Campaigns or only content tracking Campaigns.",
+                },
+                "status": {
+                    **enum(*CAMPAIGN_STATUSES),
+                    "description": "Only Campaigns in this status; archived ones only when asked.",
+                },
+                "search": {**S, "description": "Campaign name contains this."},
+                "with_progress": {
+                    **B,
+                    "description": (
+                        "Read each Campaign's delivery progress (posts, views) instead of "
+                        "its settings."
+                    ),
+                },
+            },
+            execute=_list,
+            paging="cursor",
+            flags={"campaign_type": "--type"},
+            check=_check_list,
+            example="museoncli campaign +list --type tracking --status active",
+            output="A page of Campaigns (items, next_cursor).",
+        ),
+        read(
+            EXECUTORS,
+            Domain.CAMPAIGN,
+            None,
+            "get",
+            summary=(
+                "Read one Campaign, either kind: data.campaign is its Dashboard header (type, "
+                "status, start day, name), data.tracking its tracking record (sync status, "
+                "date range, what it follows). Anyone who may see the Campaign reads it."
+            ),
+            properties={"campaign_id": CAMPAIGN_ID},
+            required=("campaign_id",),
+            execute=_get_campaign,
+            example="museoncli campaign +get --campaign-id <campaign_id>",
+            output="data.campaign (header) and data.tracking (tracking record).",
+        ),
         w.spec(
-            resource="campaign",
+            domain=Domain.CAMPAIGN,
+            resource=None,
             shortcut="+create",
             summary=(
                 "Create a Campaign in the selected organization, as the web's new-Campaign page "
@@ -300,7 +426,7 @@ def specs() -> list[CommandSpec]:
                 "must connect TikTok and Instagram) or tracking (content tracking). --dry-run "
                 "returns what would be created without writing." + w.CONFIRM_FIRST + _ROLE
             ),
-            adapter="ugc_campaign_create",
+            adapter="campaign_create",
             properties={
                 "name": {"type": "string", "maxLength": 200, "description": "Campaign name."},
                 "campaign_type": {
@@ -315,8 +441,8 @@ def specs() -> list[CommandSpec]:
             required=["name"],
             output_description="dry_run, organization and campaign (id, name, type, status, ...).",
             examples=[
-                "museoncli ugc campaign +create --name 'Spring launch' --type ugc --dry-run",
-                "museoncli ugc campaign +create --name 'Brand mentions' --type tracking",
+                "museoncli campaign +create --name 'Spring launch' --type ugc --dry-run",
+                "museoncli campaign +create --name 'Brand mentions' --type tracking",
             ],
             add_arguments=_add_create_arguments,
             build_arguments=_build_create_arguments,
@@ -329,15 +455,20 @@ def specs() -> list[CommandSpec]:
         tail = w.CONFIRM_YES if confirm else w.CONFIRM_FIRST
         built.append(
             w.spec(
-                resource="campaign",
+                domain=Domain.CAMPAIGN,
+                resource=None,
                 shortcut=f"+{action}",
                 summary=summary + tail + _ROLE,
-                adapter=f"ugc_campaign_{action}",
-                properties={"id": _ID, "expected_status": _EXPECTED_STATUS, "dry_run": w.DRY_RUN},
-                required=["id"],
+                adapter=f"campaign_{action}",
+                properties={
+                    "campaign_id": _ID,
+                    "expected_status": _EXPECTED_STATUS,
+                    "dry_run": w.DRY_RUN,
+                },
+                required=["campaign_id"],
                 output_description="dry_run, campaign, before and after status"
                 + (", launchability." if action == "launch" else "."),
-                examples=[f"museoncli ugc campaign +{action} --id {campaign} --dry-run"],
+                examples=[f"museoncli campaign +{action} --campaign-id {campaign} --dry-run"],
                 add_arguments=_add_transition_arguments(confirm=confirm),
                 build_arguments=_build_transition_arguments,
                 kind=kind,
@@ -345,22 +476,23 @@ def specs() -> list[CommandSpec]:
         )
     built.append(
         w.spec(
-            resource="campaign",
+            domain=Domain.CAMPAIGN,
+            resource=None,
             shortcut="+rename",
             summary=(
                 "Rename a Campaign in any status; its tracking pages' title follows. --dry-run "
                 "returns the old and new name without writing." + w.CONFIRM_FIRST
                 + " Role: owner, admin, or an operator or editor on the Campaign."
             ),
-            adapter="ugc_campaign_rename",
+            adapter="campaign_rename",
             properties={
-                "id": _ID,
+                "campaign_id": _ID,
                 "name": {"type": "string", "maxLength": 200, "description": "The new name."},
                 "dry_run": w.DRY_RUN,
             },
-            required=["id", "name"],
+            required=["campaign_id", "name"],
             output_description="dry_run, campaign, before and after name.",
-            examples=[f"museoncli ugc campaign +rename --id {campaign} --name 'Spring launch EU' --dry-run"],
+            examples=[f"museoncli campaign +rename --campaign-id {campaign} --name 'Spring launch EU' --dry-run"],
             add_arguments=_add_rename_arguments,
             build_arguments=_build_rename_arguments,
             kind=w.WRITE,
@@ -369,8 +501,10 @@ def specs() -> list[CommandSpec]:
     return built
 
 
-EXECUTORS = {
-    "ugc.campaign-create": _with_notes(_execute_create),
-    **{f"ugc.campaign-{action}": _transition_executor(action) for action in TRANSITIONS},
-    "ugc.campaign-rename": _with_notes(_execute_rename),
-}
+EXECUTORS.update(
+    {
+        "campaign.create": _with_notes(_execute_create),
+        **{f"campaign.{action}": _transition_executor(action) for action in TRANSITIONS},
+        "campaign.rename": _with_notes(_execute_rename),
+    }
+)

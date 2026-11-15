@@ -1,4 +1,4 @@
-"""Campaign Dashboard reads: the same API routes the Museon web Dashboard reads.
+"""Campaign Dashboard reads: the tabs the web shows for one Campaign, and the money pages.
 
 Each command calls the route the web calls for the same figures, so what a login
 may read is decided by the server exactly as it is in the browser, in whichever
@@ -8,41 +8,28 @@ the share's tier (the operator tier also reads settlement, payouts, enrollments 
 creator checks), and an unrelated caller nothing. A refusal is the server's
 ``not_found``.
 
-``--id`` is the campaign as ``campaign-monitor +list`` returns it (its monitor
-collection). Routes keyed by the UGC campaign resolve it first with one read of
-``/ugc/collections/{id}/campaign``; organization-wide routes are addressed by the
-organization the command acts in (``X-Organization-Id``), or without one by the
-caller's operator organization from ``/ugc/agency/me``.
+``--campaign-id`` is the Campaign's id as ``campaign +list`` returns it, for both kinds
+(UGC and tracking). Organization-wide routes are addressed by the organization the
+command acts in (``X-Organization-Id``: ``museoncli org select`` or
+``--organization-id``).
+
+Two reads of the UGC Operations tab live in ``ugc`` beside the writes they feed
+(``ugc assignment +list``, ``ugc creator-check``); they are declared here because
+they read the same routes the same way.
 """
 
 from __future__ import annotations
 
-import argparse
-from collections.abc import Callable
-from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any
 
 from museoncli.domains._model import CommandSpec, Domain
-from museoncli.domains._shared import _direct_output_schema
-from museoncli.domains.hireaicreator import D, TZ, U, _load, _wire, arr, enum, obj
-from museoncli.envelopes import direct_api_envelope
-from museoncli.execution import CommandContext
-
-Target = Literal["collection", "campaign", "agency", "organization"]
-Paging = Literal["offset", "cursor"] | None
+from museoncli.domains._org_reads import Route, read
+from museoncli.domains.hireaicreator import D, TZ, U, arr, enum
 
 S = {"type": "string", "minLength": 1, "maxLength": 300}
 B = {"type": "boolean"}
-PAGE = {"type": "integer", "minimum": 1}
-PAGE_SIZE = {"type": "integer", "minimum": 1, "maximum": 100}
 SCOPE = enum("all", "approved")
-CAMPAIGN_ID = {
-    **U,
-    "description": (
-        "The Campaign's monitor collection id, as campaign-monitor +list returns it "
-        "(not the UGC Campaign id that ugc commands take)."
-    ),
-}
+CAMPAIGN_ID = {**U, "description": "The Campaign's ID, from campaign +list."}
 DATE_FROM = {**D, "description": "Published on or after (YYYY-MM-DD)."}
 DATE_TO = {**D, "description": "Published on or before (YYYY-MM-DD)."}
 TIMEZONE = {**TZ, "description": "IANA timezone the dates are read in (default UTC)."}
@@ -72,139 +59,9 @@ POST_SORTS = tuple(
 
 EXECUTORS: dict[str, Any] = {}
 
-
-@dataclass(frozen=True, slots=True)
-class Route:
-    """One API read: its version, path template and the wire query it sends."""
-
-    path: str
-    query: dict[str, Any]
-    version: int = 2
-
-
-Build = Callable[[dict[str, Any]], Route]
-
-
-def _read(
-    resource: str,
-    action: str,
-    target: Target,
-    properties: dict[str, Any],
-    route: Build,
-    *,
-    summary: str,
-    example: str,
-    required: tuple[str, ...] = (),
-    paging: Paging = None,
-    flags: dict[str, str] | None = None,
-    check: Callable[[dict[str, Any]], None] | None = None,
-) -> CommandSpec:
-    props = dict(properties)
-    if target in ("collection", "campaign"):
-        props = {"id": CAMPAIGN_ID, **props}
-        required = ("id", *required)
-    if paging == "offset":
-        props.update(page=PAGE, page_size=PAGE_SIZE)
-    elif paging == "cursor":
-        props.update(cursor={**S, "maxLength": 2000}, page_size=PAGE_SIZE)
-    schema = obj(props, required)
-    name = f"{Domain.CAMPAIGN_MONITOR.value}.{resource}-{action}"
-    aliases = flags or {}
-
-    def add_arguments(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--args-json")
-        parser.add_argument("--args-file")
-        for key, field in props.items():
-            kind = field["type"]
-            base = next(x for x in kind if x != "null") if isinstance(kind, list) else kind
-            kwargs: dict[str, Any] = {"dest": key, "default": argparse.SUPPRESS}
-            item = field["items"] if base == "array" else field
-            if base == "boolean":
-                kwargs["action"] = argparse.BooleanOptionalAction
-            elif base == "array":
-                kwargs["action"] = "append"
-            elif base == "integer":
-                kwargs["type"] = int
-            if "enum" in item:
-                kwargs["choices"] = [value for value in item["enum"] if value is not None]
-            if field.get("description"):
-                kwargs["help"] = field["description"]
-            parser.add_argument(aliases.get(key, "--" + key.replace("_", "-")), **kwargs)
-
-    def build(args: argparse.Namespace) -> dict[str, Any]:
-        payload = _load(args, props, required)
-        if check is not None:
-            check(payload)
-        return payload
-
-    async def execute(ctx: CommandContext) -> dict[str, Any]:
-        arguments = _wire(dict(ctx.arguments), schema)
-        ids = await _resolve(ctx, target, arguments)
-        query = dict(arguments)
-        for key in ("id", "page", "page_size", "cursor"):
-            query.pop(key, None)
-        planned = route({**query, **ids})
-        wire = {**planned.query}
-        if paging == "offset":
-            size = arguments.get("page_size") or 50
-            wire.update(offset=(arguments.get("page", 1) - 1) * size, limit=size)
-        elif paging == "cursor":
-            wire.update(cursor=arguments.get("cursor"), limit=arguments.get("page_size") or 50)
-        call = ctx.api_data_v2 if planned.version == 2 else ctx.api_data
-        raw = await call(
-            ctx.cfg,
-            "GET",
-            planned.path.format(**ids, **query),
-            params={key: value for key, value in wire.items() if value is not None},
-        )
-        return direct_api_envelope(name, raw, site_url=ctx.cfg.site_url)
-
-    EXECUTORS[name] = execute
-    return CommandSpec(
-        domain=Domain.CAMPAIGN_MONITOR,
-        resource=resource,
-        shortcut="+" + action,
-        summary=summary,
-        risk_level="read",
-        execution="direct",
-        adapter_tool_name=f"campaign_monitor_{resource.replace('-', '_')}_{action.replace('-', '_')}",
-        input_schema=schema,
-        output_schema=_direct_output_schema("Unmodified Museon API read model."),
-        examples=[example],
-        add_arguments=add_arguments,
-        build_arguments=build,
-    )
-
-
-async def _resolve(
-    ctx: CommandContext, target: Target, arguments: dict[str, Any]
-) -> dict[str, Any]:
-    """The path ids a route is addressed by, read from the server where needed."""
-    if target == "collection":
-        return {"collection_id": arguments["id"]}
-    if target == "campaign":
-        viewed = await ctx.api_data_v2(
-            ctx.cfg, "GET", f"/ugc/collections/{arguments['id']}/campaign"
-        )
-        campaign_id = viewed.get("id") if isinstance(viewed, dict) else None
-        if not campaign_id:
-            raise RuntimeError("not_found: no UGC campaign stands for this campaign id")
-        return {"collection_id": arguments["id"], "campaign_id": campaign_id}
-    if target == "agency":
-        # The organization the command acts in, as the web addresses its own: the server
-        # decides what the caller reaches there (a brand organization's own Campaigns and
-        # those shared into it, or the operator organization's).
-        if ctx.organization_id:
-            return {"agency_id": ctx.organization_id}
-        view = await ctx.api_data_v2(ctx.cfg, "GET", "/ugc/agency/me")
-        if not isinstance(view, dict) or not view.get("enabled") or not view.get("organization_id"):
-            raise RuntimeError(
-                "missing_organization: select one with `museoncli org select` or pass "
-                "--organization-id"
-            )
-        return {"agency_id": view["organization_id"]}
-    # The payments routes read the organization from X-Organization-Id alone.
-    return {}
+CAMPAIGN = "/ugc/campaigns/{campaign_id}"
+AGENCY_CONTENT = "/ugc/agency/campaigns/{campaign_id}"
+AGENCY = "/ugc/agency/{organization_id}"
 
 
 def _approved(arguments: dict[str, Any]) -> str | None:
@@ -253,27 +110,39 @@ WINDOW = {
 }
 
 
+def _campaign_read(
+    resource: str,
+    action: str,
+    properties: dict[str, Any],
+    route: Any,
+    *,
+    summary: str,
+    example: str,
+    required: tuple[str, ...] = (),
+    domain: Domain = Domain.CAMPAIGN,
+    **options: Any,
+) -> CommandSpec:
+    """A read of one Campaign, addressed by --campaign-id."""
+    return read(
+        EXECUTORS,
+        domain,
+        resource,
+        action,
+        summary=summary,
+        properties={"campaign_id": CAMPAIGN_ID, **properties},
+        required=("campaign_id", *required),
+        route=route,
+        example=example,
+        **options,
+    )
+
+
 def specs() -> list[CommandSpec]:
-    campaign = "/ugc/campaigns/{campaign_id}"
-    agency_content = "/ugc/agency/campaigns/{campaign_id}"
     return [
-        # -- what the Brand View and the Agency workbench both show ----------------
-        _read(
-            "campaign",
-            "get",
-            "collection",
-            {},
-            lambda a: Route("/ugc/collections/{collection_id}/campaign", {}),
-            summary=(
-                "Read a campaign's type (ugc or tracking), status, start date and UGC campaign "
-                "identity, as its Dashboard header shows them."
-            ),
-            example="museoncli campaign-monitor campaign +get --id <campaign_id>",
-        ),
-        _read(
+        # -- the Dashboard tabs ----------------------------------------------------
+        _campaign_read(
             "video",
             "list",
-            "campaign",
             {
                 **WINDOW,
                 "scope": SCOPE_DOC,
@@ -286,7 +155,7 @@ def specs() -> list[CommandSpec]:
                 "sort": enum(*POST_SORTS),
             },
             lambda a: Route(
-                agency_content + "/content",
+                AGENCY_CONTENT + "/content",
                 {
                     "source": "merged",
                     "date_field": "post_date",
@@ -300,19 +169,19 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "List a UGC campaign's videos as its Content tab does: each creative once for its "
                 "confirmed posts, and posts still awaiting confirmation or review. Filter by "
-                "--status confirmation, review or not-counted. Tracking campaigns use +list-content."
+                "--status confirmation, review or not-counted. A tracking Campaign's posts are "
+                "campaign content +list."
             ),
             example=(
-                "museoncli campaign-monitor video +list --id <campaign_id> --date-from 2026-10-01 "
+                "museoncli campaign video +list --campaign-id <campaign_id> --date-from 2026-10-01 "
                 "--date-to 2026-10-28 --sort views-desc"
             ),
             paging="offset",
             check=_check_post_status,
         ),
-        _read(
+        _campaign_read(
             "video",
             "get",
-            "campaign",
             {
                 "content_id": {**U, "description": "The post's content id from video +list."},
                 "section": {
@@ -322,22 +191,21 @@ def specs() -> list[CommandSpec]:
                 "scope": SCOPE_DOC,
             },
             lambda a: Route(
-                agency_content
+                AGENCY_CONTENT
                 + "/content/{content_id}/detail"
                 + ("" if a.get("section") in (None, "detail") else "/" + a["section"]),
                 {"link_status": _approved(a) or "not_excluded"},
             ),
             summary="Read one UGC post's detail, summary, daily metrics or insights, as its post drawer does.",
             example=(
-                "museoncli campaign-monitor video +get --id <campaign_id> --content-id <content_id> "
+                "museoncli campaign video +get --campaign-id <campaign_id> --content-id <content_id> "
                 "--section daily"
             ),
             required=("content_id",),
         ),
-        _read(
+        _campaign_read(
             "roster",
             "list",
-            "campaign",
             {
                 "date_from": DATE_FROM,
                 "date_to": DATE_TO,
@@ -355,7 +223,7 @@ def specs() -> list[CommandSpec]:
                 "direction": enum("desc", "asc"),
             },
             lambda a: Route(
-                campaign + "/roster",
+                CAMPAIGN + "/roster",
                 {
                     "scope": a.get("scope"),
                     "section": a.get("section"),
@@ -374,42 +242,42 @@ def specs() -> list[CommandSpec]:
                 "List a UGC campaign's creators as the By Creator tab does: one row per enrollment "
                 "with its stage, tags and post figures."
             ),
-            example="museoncli campaign-monitor roster +list --id <campaign_id> --sort views",
+            example="museoncli campaign roster +list --campaign-id <campaign_id> --sort views",
             paging="cursor",
         ),
-        _read(
+        _campaign_read(
             "format",
             "list",
-            "campaign",
             {**WINDOW, "scope": SCOPE_DOC},
             lambda a: Route(
-                agency_content + "/format-performance", {**_window(a), "link_status": _approved(a)}
+                AGENCY_CONTENT + "/format-performance", {**_window(a), "link_status": _approved(a)}
             ),
             summary="Read a UGC campaign's performance by Format (brief): posts, views and engagement per Format.",
-            example="museoncli campaign-monitor format +list --id <campaign_id> --all-time",
+            example="museoncli campaign format +list --campaign-id <campaign_id> --all-time",
         ),
-        _read(
+        _campaign_read(
             "format-post",
             "list",
-            "campaign",
             {
                 **WINDOW,
                 "scope": SCOPE_DOC,
                 "brief_id": {**U, "description": "The Format from format +list."},
             },
             lambda a: Route(
-                agency_content + "/format-performance/{brief_id}/posts",
+                AGENCY_CONTENT + "/format-performance/{brief_id}/posts",
                 {**_window(a), "link_status": _approved(a)},
             ),
             summary="List the posts behind one Format's figures in format +list.",
-            example="museoncli campaign-monitor format-post +list --id <campaign_id> --brief-id <brief_id>",
+            example=(
+                "museoncli campaign format-post +list --campaign-id <campaign_id> "
+                "--brief-id <brief_id>"
+            ),
             required=("brief_id",),
             paging="offset",
         ),
-        _read(
+        _campaign_read(
             "report",
             "get",
-            "collection",
             {
                 "widget": {
                     **enum("cumulative-views", "content-tiers", "creator-countries"),
@@ -424,7 +292,7 @@ def specs() -> list[CommandSpec]:
                 "scope": SCOPE_DOC,
             },
             lambda a: Route(
-                "/monitor-collections/{collection_id}/report/widgets/"
+                "/monitor-collections/{campaign_id}/report/widgets/"
                 + {
                     "cumulative_views": "cumulative-views",
                     "content_tiers": "content-tier-breakdown",
@@ -449,24 +317,22 @@ def specs() -> list[CommandSpec]:
                 "or creator countries. Period-over-period core metrics are +get-period-performance."
             ),
             example=(
-                "museoncli campaign-monitor report +get --id <campaign_id> --widget content-tiers "
+                "museoncli campaign report +get --campaign-id <campaign_id> --widget content-tiers "
                 "--date-from 2026-10-01 --date-to 2026-10-28"
             ),
             required=("widget", "date_from", "date_to"),
         ),
-        _read(
+        _campaign_read(
             "creator-tag",
             "list",
-            "collection",
             {},
-            lambda a: Route("/monitor-collections/{collection_id}/creator-tags", {}),
+            lambda a: Route("/monitor-collections/{campaign_id}/creator-tags", {}),
             summary="List the creator tags set on a campaign's accounts.",
-            example="museoncli campaign-monitor creator-tag +list --id <campaign_id>",
+            example="museoncli campaign creator-tag +list --campaign-id <campaign_id>",
         ),
-        _read(
+        _campaign_read(
             "audience",
             "get",
-            "campaign",
             {
                 "by": {
                     **enum("day", "period"),
@@ -481,7 +347,7 @@ def specs() -> list[CommandSpec]:
                 "scope": SCOPE_DOC,
             },
             lambda a: Route(
-                campaign
+                CAMPAIGN
                 + (
                     "/analytics/daily-audience"
                     if a.get("by") != "period"
@@ -496,22 +362,29 @@ def specs() -> list[CommandSpec]:
             ),
             summary="Read a campaign's audience: by day as the trend tooltip shows it, or over the period.",
             example=(
-                "museoncli campaign-monitor audience +get --id <campaign_id> --by period "
+                "museoncli campaign audience +get --campaign-id <campaign_id> --by period "
                 "--date-from 2026-10-01 --date-to 2026-10-28"
             ),
             required=("date_from", "date_to"),
         ),
-        _read(
+        # -- money: the organization's payments, a Campaign's settlement --------
+        read(
+            EXECUTORS,
+            Domain.CAMPAIGN,
             "payment",
             "list",
-            "organization",
-            {
+            summary=(
+                "List the organization's creator payments, as the Payments page does. The "
+                "operating organization's team (owner, admin, operators on their Campaigns) "
+                "only, as on the web."
+            ),
+            properties={
                 "bucket": enum("pending-approval", "owed", "overdue", "sending", "paid"),
                 "date_from": DATE_FROM,
                 "date_to": DATE_TO,
                 "search": S,
             },
-            lambda a: Route(
+            route=lambda a: Route(
                 "/ugc/payments",
                 {
                     "bucket": a.get("bucket"),
@@ -520,37 +393,28 @@ def specs() -> list[CommandSpec]:
                     "q": a.get("search"),
                 },
             ),
-            summary=(
-                "List the organization's creator payments, as the Payments page does. The "
-                "operating organization's team (owner, admin, operators on their Campaigns) "
-                "only, as on the web."
-            ),
-            example="museoncli campaign-monitor payment +list --bucket owed",
+            example="museoncli campaign payment +list --bucket owed",
             paging="cursor",
         ),
-        _read(
+        read(
+            EXECUTORS,
+            Domain.CAMPAIGN,
             "payment-summary",
             "get",
-            "organization",
-            {"date_from": DATE_FROM, "date_to": DATE_TO},
-            lambda a: Route(
-                "/ugc/payments/summary",
-                {
-                    "date_from": a.get("date_from"),
-                    "date_to": a.get("date_to"),
-                },
-            ),
             summary=(
                 "Read the organization's payment totals, as the Payments header shows them. The "
                 "operating organization's team only, as on the web."
             ),
-            example="museoncli campaign-monitor payment-summary +get",
+            properties={"date_from": DATE_FROM, "date_to": DATE_TO},
+            route=lambda a: Route(
+                "/ugc/payments/summary",
+                {"date_from": a.get("date_from"), "date_to": a.get("date_to")},
+            ),
+            example="museoncli campaign payment-summary +get",
         ),
-        # -- the Agency team's reads: settlement, operations, activity -------------
-        _read(
+        _campaign_read(
             "settlement",
             "get",
-            "campaign",
             {
                 "date_from": {**D, "description": "Settlement period start (YYYY-MM-DD)."},
                 "date_to": {**D, "description": "Settlement period end (YYYY-MM-DD)."},
@@ -558,7 +422,7 @@ def specs() -> list[CommandSpec]:
                 "creator_id": {**U, "description": "One UGC creator's lines and evidence."},
             },
             lambda a: Route(
-                campaign
+                CAMPAIGN
                 + ("/payouts/preview" if a.get("creator_id") else "/payouts/preview/summary"),
                 {
                     "period_start": a["date_from"],
@@ -573,147 +437,44 @@ def specs() -> list[CommandSpec]:
                 "team: owner, admin and its operators, or a share's operator tier."
             ),
             example=(
-                "museoncli campaign-monitor settlement +get --id <campaign_id> "
+                "museoncli campaign settlement +get --campaign-id <campaign_id> "
                 "--date-from 2026-10-01 --date-to 2026-10-31"
             ),
             required=("date_from", "date_to"),
         ),
-        _read(
+        _campaign_read(
             "payout",
             "list",
-            "campaign",
             {"status": enum("pending", "confirmed", "approved", "rejected")},
-            lambda a: Route(campaign + "/payouts", {"status": a.get("status")}),
+            lambda a: Route(CAMPAIGN + "/payouts", {"status": a.get("status")}),
             summary=(
                 "List a UGC campaign's settled payouts and their lines. The Campaign's team: "
                 "owner, admin and its operators, or a share's operator tier."
             ),
-            example="museoncli campaign-monitor payout +list --id <campaign_id> --status confirmed",
+            example="museoncli campaign payout +list --campaign-id <campaign_id> --status confirmed",
         ),
-        _read(
+        _campaign_read(
             "activity",
             "list",
-            "campaign",
             {"search": {**S, "description": "Only changes to creators whose name contains this."}},
-            lambda a: Route(campaign + "/activity", {"q": a.get("search")}),
+            lambda a: Route(CAMPAIGN + "/activity", {"q": a.get("search")}),
             summary=(
                 "List a UGC campaign's activity log, newest first. The owning organization's "
                 "team only (a share does not open it, as on the web)."
             ),
-            example="museoncli campaign-monitor activity +list --id <campaign_id>",
+            example="museoncli campaign activity +list --campaign-id <campaign_id>",
             paging="cursor",
         ),
-        _read(
-            "enrollment",
-            "list",
-            "campaign",
-            {
-                "status": enum(
-                    "participating",
-                    "pending",
-                    "rejected",
-                    "onboarding",
-                    "active",
-                    "paused",
-                    "removed",
-                ),
-                "trial_only": B,
-                "creator_id": {**U, "description": "One UGC creator's enrollment."},
-                "search": S,
-            },
-            lambda a: Route(
-                campaign + "/enrollments",
-                {
-                    "status": a.get("status"),
-                    "trial_only": a.get("trial_only"),
-                    "creator_id": a.get("creator_id"),
-                    "q": a.get("search"),
-                },
-            ),
-            summary=(
-                "List a UGC campaign's enrollments with their stage, accounts, contract and Discord "
-                "state, as the Operations tab does. The Campaign's team: owner, admin and its "
-                "operators, or a share's operator tier."
-            ),
-            example="museoncli campaign-monitor enrollment +list --id <campaign_id> --status participating",
-            paging="cursor",
-        ),
-        _read(
-            "assignment",
-            "list",
-            "campaign",
-            {"status": enum("assigned", "in-progress", "delivered", "withdrawn")},
-            lambda a: Route(campaign + "/assignments", {"status": a.get("status")}),
-            summary=(
-                "List a UGC campaign's brief assignments and what is due. The owning "
-                "organization's team only (a share does not open it, as on the web)."
-            ),
-            example="museoncli campaign-monitor assignment +list --id <campaign_id> --status assigned",
-            paging="cursor",
-        ),
-        _read(
-            "creator-check",
+        read(
+            EXECUTORS,
+            Domain.CAMPAIGN,
+            "analytics",
             "get",
-            "campaign",
-            {},
-            lambda a: Route(campaign + "/creator-checks/summary", {}),
             summary=(
-                "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, "
-                "quiet, not healthy. The Campaign's team, or a share's operator tier."
+                "Read the organization's analytics over all its UGC campaigns: views, engagement, "
+                "creators, posts and spend. The operating organization's team only, as on the web."
             ),
-            example="museoncli campaign-monitor creator-check +get --id <campaign_id>",
-        ),
-        _read(
-            "creator-check",
-            "list",
-            "campaign",
-            {"kind": enum("cant-track", "not-set-up", "not-in-discord", "quiet", "not-healthy")},
-            lambda a: Route(campaign + "/creator-checks", {"kind": a["kind"]}),
-            summary=(
-                "List the creators one check holds for. The Campaign's team, or a share's "
-                "operator tier."
-            ),
-            example="museoncli campaign-monitor creator-check +list --id <campaign_id> --kind quiet",
-            required=("kind",),
-            paging="cursor",
-        ),
-        _read(
-            "agency-campaign",
-            "list",
-            "agency",
-            {
-                "search": S,
-                "campaign_type": enum("ugc", "tracking"),
-                "archived": B,
-                "with_progress": {
-                    **B,
-                    "description": "Read each campaign's delivery progress instead of its settings.",
-                },
-            },
-            lambda a: Route(
-                "/ugc/agency/{agency_id}/campaigns"
-                + ("/progress" if a.get("with_progress") else ""),
-                {"archived": a.get("archived")}
-                if a.get("with_progress")
-                else {
-                    "q": a.get("search"),
-                    "campaign_type": a.get("campaign_type"),
-                    "archived": a.get("archived"),
-                },
-            ),
-            summary=(
-                "List the organization's Campaigns, and those shared into it, or their delivery "
-                "progress with --with-progress, as the Campaigns page does. Every member of the "
-                "organization; an operator limited to chosen Campaigns sees those."
-            ),
-            example="museoncli campaign-monitor agency-campaign +list --campaign-type ugc",
-            paging="cursor",
-        ),
-        _read(
-            "agency-analytics",
-            "get",
-            "agency",
-            {
+            properties={
                 **WINDOW,
                 "scope": SCOPE_DOC,
                 "date_basis": {
@@ -721,14 +482,52 @@ def specs() -> list[CommandSpec]:
                     "description": "upload: posts published in the window; view: views gained in it.",
                 },
             },
-            lambda a: Route(
-                "/ugc/agency/{agency_id}/analytics",
+            route=lambda a: Route(
+                AGENCY + "/analytics",
                 {**_window(a), "date_basis": a.get("date_basis"), "link_status": _approved(a)},
             ),
-            summary=(
-                "Read the organization's analytics over all its UGC campaigns: views, engagement, "
-                "creators, posts and spend. The operating organization's team only, as on the web."
+            example=(
+                "museoncli campaign analytics +get --date-from 2026-10-01 --date-to 2026-10-28"
             ),
-            example="museoncli campaign-monitor agency-analytics +get --date-from 2026-10-01 --date-to 2026-10-28",
+        ),
+        # -- the UGC Operations tab's reads, in ugc beside their writes ----------
+        _campaign_read(
+            "assignment",
+            "list",
+            {"status": enum("assigned", "in-progress", "delivered", "withdrawn")},
+            lambda a: Route(CAMPAIGN + "/assignments", {"status": a.get("status")}),
+            summary=(
+                "List a UGC campaign's brief assignments and what is due. The owning "
+                "organization's team only (a share does not open it, as on the web)."
+            ),
+            example="museoncli ugc assignment +list --campaign-id <campaign_id> --status assigned",
+            paging="cursor",
+            domain=Domain.UGC,
+        ),
+        _campaign_read(
+            "creator-check",
+            "get",
+            {},
+            lambda a: Route(CAMPAIGN + "/creator-checks/summary", {}),
+            summary=(
+                "Count a UGC campaign's creators per check: can't track, not set up, not in Discord, "
+                "quiet, not healthy. The Campaign's team, or a share's operator tier."
+            ),
+            example="museoncli ugc creator-check +get --campaign-id <campaign_id>",
+            domain=Domain.UGC,
+        ),
+        _campaign_read(
+            "creator-check",
+            "list",
+            {"kind": enum("cant-track", "not-set-up", "not-in-discord", "quiet", "not-healthy")},
+            lambda a: Route(CAMPAIGN + "/creator-checks", {"kind": a["kind"]}),
+            summary=(
+                "List the creators one check holds for. The Campaign's team, or a share's "
+                "operator tier."
+            ),
+            example="museoncli ugc creator-check +list --campaign-id <campaign_id> --kind quiet",
+            required=("kind",),
+            paging="cursor",
+            domain=Domain.UGC,
         ),
     ]

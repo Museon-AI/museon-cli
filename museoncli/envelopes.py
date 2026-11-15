@@ -157,16 +157,15 @@ def without_provider_metadata(value: Any) -> Any:
 
 def _direct_api_warnings(command_name: str) -> list[str]:
     if command_name in {
-        "campaign-monitor.list-posts",
-        "campaign-monitor.get-creator-performance",
-        "campaign-monitor.get-post-performance",
+        "campaign.post-list",
+        "campaign.creator-get-performance",
+        "campaign.post-get-performance",
     }:
         return [
             (
-                "This command reads Museon's synced monitor store only; use "
-                "campaign-monitor +list-content/+list-creators/+get-summary for "
-                "campaign-scoped collections and research +search-social-media "
-                "for external discovery."
+                "This command reads the posts Museon has synced only; use campaign "
+                "content +list, campaign creator +list or campaign +get-summary for one "
+                "Campaign, and research +search-social-media for external discovery."
             )
         ]
     return []

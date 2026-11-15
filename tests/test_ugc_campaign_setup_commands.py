@@ -188,7 +188,7 @@ def _create_routes(kind: str = "operator") -> dict[tuple[str, str], Any]:
 def test_campaign_create_ugc_posts_the_web_flows_draft_to_the_organization_route(cli_run) -> None:
     server = Server(_create_routes())
 
-    code, result = cli_run(server, "ugc", "campaign", "+create", "--name", " Spring ")
+    code, result = cli_run(server, "campaign", "+create", "--name", " Spring ")
 
     assert code == 0, result
     sent = server.only_write()
@@ -211,7 +211,7 @@ def test_campaign_create_ugc_posts_the_web_flows_draft_to_the_organization_route
 def test_campaign_create_refuses_ugc_in_a_brand_organization(cli_run) -> None:
     server = Server(_create_routes(kind="brand"))
 
-    code, result = cli_run(server, "ugc", "campaign", "+create", "--name", "Spring")
+    code, result = cli_run(server, "campaign", "+create", "--name", "Spring")
 
     assert code == cli.EXIT_FAILURE
     assert result["reason"] == "invalid_input"
@@ -222,7 +222,7 @@ def test_campaign_create_refuses_ugc_in_a_brand_organization(cli_run) -> None:
 def test_campaign_create_tracking_needs_no_kind_check_and_requires_no_platform(cli_run) -> None:
     server = Server(_create_routes(kind="brand"))
 
-    code, _ = cli_run(server, "ugc", "campaign", "+create", "--name", "Mentions", "--type", "tracking")
+    code, _ = cli_run(server, "campaign", "+create", "--name", "Mentions", "--type", "tracking")
 
     assert code == 0
     assert body(server.only_write())["required_platforms"] == []
@@ -232,7 +232,7 @@ def test_campaign_create_tracking_needs_no_kind_check_and_requires_no_platform(c
 def test_campaign_create_dry_run_writes_nothing(cli_run) -> None:
     server = Server(_create_routes())
 
-    code, result = cli_run(server, "ugc", "campaign", "+create", "--name", "Spring", "--dry-run")
+    code, result = cli_run(server, "campaign", "+create", "--name", "Spring", "--dry-run")
 
     assert code == 0
     assert server.writes() == []
@@ -243,7 +243,7 @@ def test_campaign_create_dry_run_writes_nothing(cli_run) -> None:
 def test_launch_without_yes_is_refused_with_its_preview(cli_run) -> None:
     server = Server({("GET", f"{UGC}/campaigns/{CAMPAIGN}"): _view()})
 
-    code, result = cli_run(server, "ugc", "campaign", "+launch", "--id", CAMPAIGN)
+    code, result = cli_run(server, "campaign", "+launch", "--campaign-id", CAMPAIGN)
 
     assert code == cli.EXIT_FAILURE
     assert result["reason"] == "confirmation_required"
@@ -255,7 +255,7 @@ def test_launch_without_yes_is_refused_with_its_preview(cli_run) -> None:
 def test_launch_dry_run_reports_launchability_without_writing(cli_run) -> None:
     server = Server({("GET", f"{UGC}/campaigns/{CAMPAIGN}"): _view(ok=False)})
 
-    code, result = cli_run(server, "ugc", "campaign", "+launch", "--id", CAMPAIGN, "--dry-run")
+    code, result = cli_run(server, "campaign", "+launch", "--campaign-id", CAMPAIGN, "--dry-run")
 
     assert code == 0
     assert server.writes() == []
@@ -268,7 +268,7 @@ def test_restore_dry_run_names_the_status_it_would_return_to_and_campaign_id_is_
     server = Server({("GET", f"{UGC}/campaigns/{CAMPAIGN}"): _view("archived")})
 
     code, result = cli_run(
-        server, "ugc", "campaign", "+restore", "--campaign-id", CAMPAIGN, "--dry-run"
+        server, "campaign", "+restore", "--campaign-id", CAMPAIGN, "--dry-run"
     )
 
     assert code == 0
@@ -286,7 +286,7 @@ def test_launch_with_yes_sends_the_status_it_read(cli_run) -> None:
         }
     )
 
-    code, result = cli_run(server, "ugc", "campaign", "+launch", "--id", CAMPAIGN, "--yes")
+    code, result = cli_run(server, "campaign", "+launch", "--campaign-id", CAMPAIGN, "--yes")
 
     assert code == 0
     assert body(server.only_write()) == {"expected_status": "draft"}
@@ -302,7 +302,7 @@ def test_a_move_the_status_does_not_allow_is_refused_without_writing(
 ) -> None:
     server = Server({("GET", f"{UGC}/campaigns/{CAMPAIGN}"): _view(status)})
 
-    code, result = cli_run(server, "ugc", "campaign", f"+{action}", "--id", CAMPAIGN, *extra)
+    code, result = cli_run(server, "campaign", f"+{action}", "--campaign-id", CAMPAIGN, *extra)
 
     assert code == cli.EXIT_CONFLICT
     assert result["reason"] == "conflict"
@@ -314,7 +314,7 @@ def test_a_stale_expected_status_is_a_conflict(cli_run) -> None:
     server = Server({("GET", f"{UGC}/campaigns/{CAMPAIGN}"): _view("paused")})
 
     code, result = cli_run(
-        server, "ugc", "campaign", "+pause", "--id", CAMPAIGN, "--expected-status", "active"
+        server, "campaign", "+pause", "--campaign-id", CAMPAIGN, "--expected-status", "active"
     )
 
     assert code == cli.EXIT_CONFLICT
@@ -329,10 +329,10 @@ def test_archive_needs_yes_then_carries_the_status(cli_run) -> None:
         }
     )
 
-    code, result = cli_run(server, "ugc", "campaign", "+archive", "--id", CAMPAIGN)
+    code, result = cli_run(server, "campaign", "+archive", "--campaign-id", CAMPAIGN)
     assert result["reason"] == "confirmation_required"
 
-    code, result = cli_run(server, "ugc", "campaign", "+archive", "--id", CAMPAIGN, "--yes")
+    code, result = cli_run(server, "campaign", "+archive", "--campaign-id", CAMPAIGN, "--yes")
     assert code == 0
     assert body(server.only_write()) == {"expected_status": "complete"}
 
@@ -345,7 +345,7 @@ def test_pause_and_resume_are_plain_writes(cli_run) -> None:
         }
     )
 
-    code, _ = cli_run(server, "ugc", "campaign", "+pause", "--id", CAMPAIGN)
+    code, _ = cli_run(server, "campaign", "+pause", "--campaign-id", CAMPAIGN)
 
     assert code == 0
     assert body(server.only_write()) == {"expected_status": "active"}
@@ -359,10 +359,10 @@ def test_rename_posts_the_new_name_and_skips_an_unchanged_one(cli_run) -> None:
         }
     )
 
-    cli_run(server, "ugc", "campaign", "+rename", "--id", CAMPAIGN, "--name", "Spring")
+    cli_run(server, "campaign", "+rename", "--campaign-id", CAMPAIGN, "--name", "Spring")
     assert server.writes() == []
 
-    code, _ = cli_run(server, "ugc", "campaign", "+rename", "--id", CAMPAIGN, "--name", "Spring EU")
+    code, _ = cli_run(server, "campaign", "+rename", "--campaign-id", CAMPAIGN, "--name", "Spring EU")
     assert code == 0
     assert body(server.only_write()) == {"name": "Spring EU"}
 
@@ -383,7 +383,7 @@ def test_settings_update_writes_the_whole_object_with_only_the_edit_changed(cli_
 
     code, result = cli_run(
         server,
-        "ugc", "campaign-settings", "+update", "--campaign-id", CAMPAIGN,
+        "campaign", "settings", "+update", "--campaign-id", CAMPAIGN,
         "--approval-mode", "auto", "--budget-cap-cents", "500000", "--join-mode", "invite-only",
     )
 
@@ -406,7 +406,7 @@ def test_settings_json_changes_only_the_nested_keys_given(cli_run) -> None:
 
     cli_run(
         server,
-        "ugc", "campaign-settings", "+update", "--campaign-id", CAMPAIGN,
+        "campaign", "settings", "+update", "--campaign-id", CAMPAIGN,
         "--settings-json", '{"stay_rules": {"inactivity_days": 7}}',
     )
 
@@ -419,13 +419,13 @@ def test_settings_update_refuses_a_stale_token_and_a_required_platform_not_allow
     server = Server(_settings_routes())
 
     code, result = cli_run(
-        server, "ugc", "campaign-settings", "+update", "--campaign-id", CAMPAIGN,
+        server, "campaign", "settings", "+update", "--campaign-id", CAMPAIGN,
         "--approval-mode", "auto", "--expected-updated-at", "2026-01-01T00:00:00+00:00",
     )
     assert code == cli.EXIT_CONFLICT
 
     code, result = cli_run(
-        server, "ugc", "campaign-settings", "+update", "--campaign-id", CAMPAIGN,
+        server, "campaign", "settings", "+update", "--campaign-id", CAMPAIGN,
         "--required-platform", "youtube",
     )
     assert result["reason"] == "invalid_input"
@@ -434,7 +434,7 @@ def test_settings_update_refuses_a_stale_token_and_a_required_platform_not_allow
 
 def test_settings_json_refuses_fields_with_their_own_flags(cli_run) -> None:
     code, result = cli_run(
-        Server({}), "ugc", "campaign-settings", "+update", "--campaign-id", CAMPAIGN,
+        Server({}), "campaign", "settings", "+update", "--campaign-id", CAMPAIGN,
         "--settings-json", '{"approval_mode": "auto"}',
     )
 
@@ -446,7 +446,7 @@ def test_a_pay_rule_that_fits_the_stored_platforms_goes_first_and_hands_on_its_t
     rules = {"single_bps": 10000, "rules": [{"count": 2, "multiplier_bps": 12000, "platforms": ["tiktok", "instagram"]}]}
 
     code, _ = cli_run(
-        server, "ugc", "campaign-settings", "+update", "--campaign-id", CAMPAIGN,
+        server, "campaign", "settings", "+update", "--campaign-id", CAMPAIGN,
         "--approval-mode", "auto", "--platform-pay-rules-json", json.dumps(rules),
     )
 
@@ -463,7 +463,7 @@ def test_a_pay_rule_on_a_newly_allowed_platform_goes_after_the_settings(cli_run)
     rules = {"single_bps": 10000, "rules": [{"count": 2, "multiplier_bps": 12000, "platforms": ["tiktok", "youtube"]}]}
 
     cli_run(
-        server, "ugc", "campaign-settings", "+update", "--campaign-id", CAMPAIGN,
+        server, "campaign", "settings", "+update", "--campaign-id", CAMPAIGN,
         "--allowed-platform", "tiktok", "--allowed-platform", "instagram", "--allowed-platform", "youtube",
         "--platform-pay-rules-json", json.dumps(rules),
     )
@@ -483,7 +483,7 @@ def test_staff_set_replaces_one_role_and_keeps_the_other(cli_run) -> None:
     )
 
     code, _ = cli_run(
-        server, "ugc", "campaign-staff", "+set", "--campaign-id", CAMPAIGN, "--manager-user-id", USER_B,
+        server, "campaign", "staff", "+set", "--campaign-id", CAMPAIGN, "--manager-user-id", USER_B,
     )
 
     assert code == 0

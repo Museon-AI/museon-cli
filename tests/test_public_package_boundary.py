@@ -114,7 +114,7 @@ def test_release_workflow_publishes_deterministic_skills_asset(tmp_path: Path) -
         "museon-research",
         "museon-content-workflow-hireaicreator",
         "museon-content-workflow-ai-slideshow",
-        "museon-content-workflow-campaign-monitor",
+        "museon-content-workflow-campaigns",
     }
     assert "skills/museon-content-workflow-base/SKILL.md" in {member.name for member in members}
     assert "skills/museon-research/SKILL.md" in {member.name for member in members}

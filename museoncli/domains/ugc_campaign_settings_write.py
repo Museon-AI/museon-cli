@@ -1,9 +1,9 @@
 """UGC Campaign setup writes, each saved the way the web's Campaign setup page saves it.
 
-- `campaign-settings +update`: the settings object (`PUT /campaigns/{id}/settings`),
+- `campaign settings +update`: the settings object (`PUT /campaigns/{id}/settings`),
   merged from the live settings with only the passed fields changed, plus the
   publishing-platform pay rule (`PATCH /campaigns/{id}/pricing`), in the page's order.
-- `campaign-staff +set`: the Campaign team, PMs and OPs (`PUT .../staff`).
+- `campaign staff +set`: the Campaign team, PMs and OPs (`PUT .../staff`).
 - `delivery-target`: the delivery targets (`/campaigns/{id}/targets`).
 - `contract-template +set`: the creator contract (`PUT .../contract-template`).
 - `discord-server`: the Campaign's Discord server (`.../discord/guild-link`, `.../guild/initialize`).
@@ -23,7 +23,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from museoncli.domains import _ugc_write as w
-from museoncli.domains._model import CommandSpec
+from museoncli.domains._model import CommandSpec, Domain
 from museoncli.domains._shared import dekebab, kebab_choices
 from museoncli.domains.ugc import _with_notes
 from museoncli.execution import CommandContext
@@ -879,7 +879,7 @@ def _build_settings_arguments(args: argparse.Namespace) -> dict[str, Any]:
         raise ValueError(
             f"--settings-json does not take {', '.join(unknown)}; it takes "
             f"{', '.join(sorted(JSON_SETTINGS))} (the rest have their own flags; the name "
-            "changes with ugc campaign +rename)."
+            "changes with campaign +rename)."
         )
     edits.update(extra)
     if args.approval_mode:
@@ -1256,7 +1256,8 @@ def specs() -> list[CommandSpec]:
     eua = {"expected_updated_at": w.EXPECTED_UPDATED_AT}
     return [
         w.spec(
-            resource="campaign-settings",
+            domain=Domain.CAMPAIGN,
+            resource="settings",
             shortcut="+update",
             summary=(
                 "Change a UGC Campaign's settings as its setup page saves them: the whole settings "
@@ -1302,15 +1303,16 @@ def specs() -> list[CommandSpec]:
             required=["campaign_id"],
             output_description="dry_run, campaign, expected_updated_at, changes (field, before, after); settings on a dry run.",
             examples=[
-                f"museoncli ugc campaign-settings +update --campaign-id {c} --approval-mode manual --budget-cap-cents 500000 --dry-run",
-                f"museoncli ugc campaign-settings +update --campaign-id {c} --settings-json '{{\"stay_rules\": {{\"inactivity_days\": 7}}}}' --dry-run",
+                f"museoncli campaign settings +update --campaign-id {c} --approval-mode manual --budget-cap-cents 500000 --dry-run",
+                f"museoncli campaign settings +update --campaign-id {c} --settings-json '{{\"stay_rules\": {{\"inactivity_days\": 7}}}}' --dry-run",
             ],
             add_arguments=_add_settings_arguments,
             build_arguments=_build_settings_arguments,
             kind=w.WRITE,
         ),
         w.spec(
-            resource="campaign-staff",
+            domain=Domain.CAMPAIGN,
+            resource="staff",
             shortcut="+set",
             summary=(
                 "Set a Campaign's team: its PMs (--manager-user-id) and OPs (--operator-user-id), "
@@ -1330,7 +1332,7 @@ def specs() -> list[CommandSpec]:
             },
             required=["campaign_id"],
             output_description="dry_run, before (managers, operators), after (user ids), expected_updated_at.",
-            examples=[f"museoncli ugc campaign-staff +set --campaign-id {c} --manager-user-id {w.USER} --dry-run"],
+            examples=[f"museoncli campaign staff +set --campaign-id {c} --manager-user-id {w.USER} --dry-run"],
             add_arguments=_add_staff_arguments,
             build_arguments=_build_staff_arguments,
             kind=w.WRITE,
@@ -1718,8 +1720,8 @@ def _rate_properties(*, create: bool) -> dict[str, Any]:
 
 
 EXECUTORS = {
-    "ugc.campaign-settings-update": _with_notes(_execute_settings_update),
-    "ugc.campaign-staff-set": _with_notes(_execute_staff_set),
+    "campaign.settings-update": _with_notes(_execute_settings_update),
+    "campaign.staff-set": _with_notes(_execute_staff_set),
     "ugc.delivery-target-create": _with_notes(_execute_target_create),
     "ugc.delivery-target-update": _with_notes(_execute_target_update),
     "ugc.delivery-target-delete": _with_notes(_execute_target_delete),

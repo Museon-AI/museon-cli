@@ -856,29 +856,31 @@ def test_provider_projection_preserves_semantic_result_fields() -> None:
     }
 
 
-def test_campaign_monitor_post_resolve_parser() -> None:
+def test_campaign_post_resolve_parser() -> None:
     args = parse(
         [
-            "campaign-monitor",
-            "+resolve-post",
+            "campaign",
+            "post",
+            "+resolve",
             "--schedule-item-id",
             "5c000000-0000-4000-8000-000000000001",
         ]
     )
 
-    assert args.command == "campaign-monitor"
-    assert args.shortcut == "+resolve-post"
-    assert args.domain_command == "campaign-monitor.resolve-post"
+    assert args.command == "campaign"
+    assert (args.shortcut, args.resource_action) == ("post", "+resolve")
+    assert args.domain_command == "campaign.post-resolve"
     assert main_module.command_payload(args) == {
         "schedule_item_id": "5c000000-0000-4000-8000-000000000001"
     }
 
 
-def test_campaign_monitor_post_performance_parser() -> None:
+def test_campaign_post_performance_parser() -> None:
     args = parse(
         [
-            "campaign-monitor",
-            "+get-post-performance",
+            "campaign",
+            "post",
+            "+get-performance",
             "--id",
             "c0000000-0000-4000-8000-000000000001",
             "--date-from",
@@ -888,9 +890,9 @@ def test_campaign_monitor_post_performance_parser() -> None:
         ]
     )
 
-    assert args.command == "campaign-monitor"
-    assert args.shortcut == "+get-post-performance"
-    assert args.domain_command == "campaign-monitor.get-post-performance"
+    assert args.command == "campaign"
+    assert (args.shortcut, args.resource_action) == ("post", "+get-performance")
+    assert args.domain_command == "campaign.post-get-performance"
     assert main_module.command_payload(args) == {
         "content_id": "c0000000-0000-4000-8000-000000000001",
         "date_from": "2026-06-01",
@@ -898,7 +900,7 @@ def test_campaign_monitor_post_performance_parser() -> None:
     }
 
 
-def test_dispatch_campaign_monitor_post_list_warns_about_synced_store(
+def test_dispatch_campaign_post_list_warns_about_synced_store(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = Config()
@@ -932,22 +934,22 @@ def test_dispatch_campaign_monitor_post_list_warns_about_synced_store(
 
     args = parse(
         [
-            "campaign-monitor",
-            "+list-posts",
+            "campaign",
+            "post",
+            "+list",
             "--creator-id",
             creator_id,
         ]
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "campaign-monitor.list-posts"
+    assert result["command"] == "campaign.post-list"
     assert result["data"]["items"] == []
     assert result["warnings"] == [
         (
-            "This command reads Museon's synced monitor store only; use "
-            "campaign-monitor +list-content/+list-creators/+get-summary for "
-            "campaign-scoped collections and research +search-social-media "
-            "for external discovery."
+            "This command reads the posts Museon has synced only; use campaign "
+            "content +list, campaign creator +list or campaign +get-summary for one "
+            "Campaign, and research +search-social-media for external discovery."
         )
     ]
     assert calls == [
@@ -959,12 +961,13 @@ def test_dispatch_campaign_monitor_post_list_warns_about_synced_store(
     ]
 
 
-def test_campaign_monitor_content_list_parser() -> None:
+def test_campaign_content_list_parser() -> None:
     args = parse(
         [
-            "campaign-monitor",
-            "+list-content",
-            "--id",
+            "campaign",
+            "content",
+            "+list",
+            "--campaign-id",
             "campaign-1",
             "--creator-id",
             "c4000000-0000-4000-8000-000000000001",
@@ -987,9 +990,9 @@ def test_campaign_monitor_content_list_parser() -> None:
         ]
     )
 
-    assert args.command == "campaign-monitor"
-    assert args.shortcut == "+list-content"
-    assert args.domain_command == "campaign-monitor.list-content"
+    assert args.command == "campaign"
+    assert (args.shortcut, args.resource_action) == ("content", "+list")
+    assert args.domain_command == "campaign.content-list"
     assert main_module.command_payload(args) == {
         "campaign_id": "campaign-1",
         "timezone": "UTC",
@@ -1006,15 +1009,15 @@ def test_campaign_monitor_content_list_parser() -> None:
     }
 
 
-def test_campaign_monitor_link_status_only_takes_the_approved_scope() -> None:
+def test_campaign_link_status_only_takes_the_approved_scope() -> None:
     with pytest.raises(SystemExit):
-        parse(["campaign-monitor", "+list-creators", "--id", "campaign-1", "--link-status", "all"])
+        parse(["campaign", "creator", "+list", "--campaign-id", "campaign-1", "--link-status", "all"])
 
 
 _DIMENSIONS_CAMPAIGN_ID = "c6000000-0000-4000-8000-000000000001"
 
 
-def test_dispatch_campaign_monitor_dimensions_reads_the_campaign_menu(
+def test_dispatch_campaign_dimensions_reads_the_campaign_menu(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = Config()
@@ -1048,10 +1051,10 @@ def test_dispatch_campaign_monitor_dimensions_reads_the_campaign_menu(
     monkeypatch.setattr(main_module, "load_config", lambda: cfg)
     monkeypatch.setattr(main_module, "api_data", fake_api_data)
 
-    args = parse(["campaign-monitor", "+list-dimensions", "--id", _DIMENSIONS_CAMPAIGN_ID])
+    args = parse(["campaign", "+list-dimensions", "--campaign-id", _DIMENSIONS_CAMPAIGN_ID])
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "campaign-monitor.list-dimensions"
+    assert result["command"] == "campaign.list-dimensions"
     assert result["data"]["campaign_type"] == "ugc"
     assert calls == [
         {
@@ -1062,7 +1065,7 @@ def test_dispatch_campaign_monitor_dimensions_reads_the_campaign_menu(
     ]
 
 
-def test_dispatch_campaign_monitor_breakdown_reads_one_dimension(
+def test_dispatch_campaign_breakdown_reads_one_dimension(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = Config()
@@ -1091,9 +1094,9 @@ def test_dispatch_campaign_monitor_breakdown_reads_one_dimension(
 
     args = parse(
         [
-            "campaign-monitor",
+            "campaign",
             "+get-breakdown",
-            "--id",
+            "--campaign-id",
             _DIMENSIONS_CAMPAIGN_ID,
             "--by",
             "brief",
@@ -1105,7 +1108,7 @@ def test_dispatch_campaign_monitor_breakdown_reads_one_dimension(
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "campaign-monitor.get-breakdown"
+    assert result["command"] == "campaign.get-breakdown"
     assert calls == [
         {
             "method": "GET",
@@ -1121,7 +1124,7 @@ def test_dispatch_campaign_monitor_breakdown_reads_one_dimension(
     # The flag is kebab-case; the API names the dimension as +list-dimensions does.
     calls.clear()
     args = parse(
-        ["campaign-monitor", "+get-breakdown", "--id", _DIMENSIONS_CAMPAIGN_ID, "--by", "creator-tag"]
+        ["campaign", "+get-breakdown", "--campaign-id", _DIMENSIONS_CAMPAIGN_ID, "--by", "creator-tag"]
     )
     asyncio.run(main_module.dispatch(args))
     assert calls[0]["params"] == {"by": "creator_tag"}
@@ -1129,70 +1132,77 @@ def test_dispatch_campaign_monitor_breakdown_reads_one_dimension(
     # A Tracking Campaign also breaks down by source video (the server's `source_video`).
     calls.clear()
     args = parse(
-        ["campaign-monitor", "+get-breakdown", "--id", _DIMENSIONS_CAMPAIGN_ID, "--by", "source-video"]
+        ["campaign", "+get-breakdown", "--campaign-id", _DIMENSIONS_CAMPAIGN_ID, "--by", "source-video"]
     )
     asyncio.run(main_module.dispatch(args))
     assert calls[0]["path"] == f"/agent-cli/campaign-monitors/{_DIMENSIONS_CAMPAIGN_ID}/breakdown"
     assert calls[0]["params"] == {"by": "source_video"}
 
 
-def test_campaign_monitor_breakdown_only_takes_known_dimensions() -> None:
+def test_campaign_breakdown_only_takes_known_dimensions() -> None:
     with pytest.raises(SystemExit):
-        parse(["campaign-monitor", "+get-breakdown", "--id", "campaign-1", "--by", "platform"])
+        parse(["campaign", "+get-breakdown", "--campaign-id", "campaign-1", "--by", "platform"])
 
 
-def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
-    schema = main_module.schema_payload("campaign-monitor")
+def test_campaign_schema_exposes_tracking_commands() -> None:
+    schema = main_module.schema_payload("campaign")
 
-    assert schema["domain"] == "campaign-monitor"
+    assert schema["domain"] == "campaign"
     assert [command["name"] for command in schema["commands"]] == [
-        "campaign-monitor.list",
-        "campaign-monitor.get",
-        "campaign-monitor.list-dimensions",
-        "campaign-monitor.get-breakdown",
-        "campaign-monitor.list-creators",
-        "campaign-monitor.add-creators",
-        "campaign-monitor.remove-creators",
-        "campaign-monitor.list-content",
-        "campaign-monitor.add-content",
-        "campaign-monitor.remove-content",
-        "campaign-monitor.bulk-remove-content",
-        "campaign-monitor.get-summary",
-        "campaign-monitor.get-period-performance",
-        "campaign-monitor.get-creator",
-        "campaign-monitor.list-posts",
-        "campaign-monitor.get-creator-performance",
-        "campaign-monitor.get-post",
-        "campaign-monitor.get-post-performance",
-        "campaign-monitor.resolve-post",
-        "campaign-monitor.campaign-get",
-        "campaign-monitor.video-list",
-        "campaign-monitor.video-get",
-        "campaign-monitor.roster-list",
-        "campaign-monitor.format-list",
-        "campaign-monitor.format-post-list",
-        "campaign-monitor.report-get",
-        "campaign-monitor.creator-tag-list",
-        "campaign-monitor.audience-get",
-        "campaign-monitor.payment-list",
-        "campaign-monitor.payment-summary-get",
-        "campaign-monitor.settlement-get",
-        "campaign-monitor.payout-list",
-        "campaign-monitor.activity-list",
-        "campaign-monitor.enrollment-list",
-        "campaign-monitor.assignment-list",
-        "campaign-monitor.creator-check-get",
-        "campaign-monitor.creator-check-list",
-        "campaign-monitor.agency-campaign-list",
-        "campaign-monitor.agency-analytics-get",
+        "campaign.list",
+        "campaign.get",
+        "campaign.create",
+        "campaign.launch",
+        "campaign.pause",
+        "campaign.resume",
+        "campaign.complete",
+        "campaign.archive",
+        "campaign.restore",
+        "campaign.rename",
+        "campaign.list-dimensions",
+        "campaign.get-breakdown",
+        "campaign.get-summary",
+        "campaign.get-period-performance",
+        "campaign.creator-list",
+        "campaign.creator-add",
+        "campaign.creator-remove",
+        "campaign.content-list",
+        "campaign.content-add",
+        "campaign.content-remove",
+        "campaign.content-bulk-remove",
+        "campaign.creator-get",
+        "campaign.post-list",
+        "campaign.creator-get-performance",
+        "campaign.post-get",
+        "campaign.post-get-performance",
+        "campaign.post-resolve",
+        "campaign.video-list",
+        "campaign.video-get",
+        "campaign.roster-list",
+        "campaign.format-list",
+        "campaign.format-post-list",
+        "campaign.report-get",
+        "campaign.creator-tag-list",
+        "campaign.audience-get",
+        "campaign.payment-list",
+        "campaign.payment-summary-get",
+        "campaign.settlement-get",
+        "campaign.payout-list",
+        "campaign.activity-list",
+        "campaign.analytics-get",
+        "campaign.settings-update",
+        "campaign.staff-set",
+        "campaign.settings-get",
+        "campaign.staff-list",
+        "campaign.setup-get",
     ]
-    content_list = main_module.schema_payload("campaign-monitor.list-content")
+    content_list = main_module.schema_payload("campaign.content-list")
     properties = content_list["input_schema"]["properties"]
     assert properties["views_min"]["minimum"] == 0
     assert properties["likes_min"]["minimum"] == 0
     assert properties["likes_max"]["minimum"] == 0
 
-    period_performance = main_module.schema_payload("campaign-monitor.get-period-performance")
+    period_performance = main_module.schema_payload("campaign.get-period-performance")
     assert period_performance["input_schema"]["required"] == [
         "campaign_id",
         "current_period_start",
@@ -1204,12 +1214,12 @@ def test_campaign_monitor_schema_exposes_tracking_commands() -> None:
     assert "Period Performance snapshot" in period_performance["summary"]
 
 
-def test_campaign_monitor_period_performance_parser() -> None:
+def test_campaign_period_performance_parser() -> None:
     args = parse(
         [
-            "campaign-monitor",
+            "campaign",
             "+get-period-performance",
-            "--id",
+            "--campaign-id",
             "campaign-1",
             "--period-start",
             "2026-09-14",
@@ -1220,7 +1230,7 @@ def test_campaign_monitor_period_performance_parser() -> None:
         ]
     )
 
-    assert args.domain_command == "campaign-monitor.get-period-performance"
+    assert args.domain_command == "campaign.get-period-performance"
     assert main_module.command_payload(args) == {
         "campaign_id": "campaign-1",
         "current_period_start": "2026-09-14",
@@ -1349,9 +1359,9 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "publish",
         "cloud-phone",
         "ai-slideshow",
-        "campaign-monitor",
-        "agentic-campaign",
+        "campaign",
         "ugc",
+        "agentic-campaign",
         "skills",
         "staff-ops",
         "routines",
@@ -1379,46 +1389,53 @@ def test_schema_lists_fixed_domains_and_research_commands() -> None:
         "content-analysis.get",
         "content-analysis.list",
     ]
-    assert [item["name"] for item in result["data"]["commands"]["campaign-monitor"]] == [
-        "campaign-monitor.list",
-        "campaign-monitor.get",
-        "campaign-monitor.list-dimensions",
-        "campaign-monitor.get-breakdown",
-        "campaign-monitor.list-creators",
-        "campaign-monitor.add-creators",
-        "campaign-monitor.remove-creators",
-        "campaign-monitor.list-content",
-        "campaign-monitor.add-content",
-        "campaign-monitor.remove-content",
-        "campaign-monitor.bulk-remove-content",
-        "campaign-monitor.get-summary",
-        "campaign-monitor.get-period-performance",
-        "campaign-monitor.get-creator",
-        "campaign-monitor.list-posts",
-        "campaign-monitor.get-creator-performance",
-        "campaign-monitor.get-post",
-        "campaign-monitor.get-post-performance",
-        "campaign-monitor.resolve-post",
-        "campaign-monitor.campaign-get",
-        "campaign-monitor.video-list",
-        "campaign-monitor.video-get",
-        "campaign-monitor.roster-list",
-        "campaign-monitor.format-list",
-        "campaign-monitor.format-post-list",
-        "campaign-monitor.report-get",
-        "campaign-monitor.creator-tag-list",
-        "campaign-monitor.audience-get",
-        "campaign-monitor.payment-list",
-        "campaign-monitor.payment-summary-get",
-        "campaign-monitor.settlement-get",
-        "campaign-monitor.payout-list",
-        "campaign-monitor.activity-list",
-        "campaign-monitor.enrollment-list",
-        "campaign-monitor.assignment-list",
-        "campaign-monitor.creator-check-get",
-        "campaign-monitor.creator-check-list",
-        "campaign-monitor.agency-campaign-list",
-        "campaign-monitor.agency-analytics-get",
+    assert [item["name"] for item in result["data"]["commands"]["campaign"]] == [
+        "campaign.list",
+        "campaign.get",
+        "campaign.create",
+        "campaign.launch",
+        "campaign.pause",
+        "campaign.resume",
+        "campaign.complete",
+        "campaign.archive",
+        "campaign.restore",
+        "campaign.rename",
+        "campaign.list-dimensions",
+        "campaign.get-breakdown",
+        "campaign.get-summary",
+        "campaign.get-period-performance",
+        "campaign.creator-list",
+        "campaign.creator-add",
+        "campaign.creator-remove",
+        "campaign.content-list",
+        "campaign.content-add",
+        "campaign.content-remove",
+        "campaign.content-bulk-remove",
+        "campaign.creator-get",
+        "campaign.post-list",
+        "campaign.creator-get-performance",
+        "campaign.post-get",
+        "campaign.post-get-performance",
+        "campaign.post-resolve",
+        "campaign.video-list",
+        "campaign.video-get",
+        "campaign.roster-list",
+        "campaign.format-list",
+        "campaign.format-post-list",
+        "campaign.report-get",
+        "campaign.creator-tag-list",
+        "campaign.audience-get",
+        "campaign.payment-list",
+        "campaign.payment-summary-get",
+        "campaign.settlement-get",
+        "campaign.payout-list",
+        "campaign.activity-list",
+        "campaign.analytics-get",
+        "campaign.settings-update",
+        "campaign.staff-set",
+        "campaign.settings-get",
+        "campaign.staff-list",
+        "campaign.setup-get",
     ]
     assert "social-media" not in result["data"]["commands"]
     assert [item["name"] for item in result["data"]["commands"]["skills"]] == [
@@ -2775,7 +2792,7 @@ def test_dispatch_content_analysis_get_and_list_use_agent_api(
     ]
 
 
-def test_dispatch_campaign_monitor_post_resolve_uses_agent_api(
+def test_dispatch_campaign_post_resolve_uses_agent_api(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = Config()
@@ -2804,15 +2821,16 @@ def test_dispatch_campaign_monitor_post_resolve_uses_agent_api(
 
     args = parse(
         [
-            "campaign-monitor",
-            "+resolve-post",
+            "campaign",
+            "post",
+            "+resolve",
             "--schedule-item-id",
             "5c000000-0000-4000-8000-000000000001",
         ]
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "campaign-monitor.resolve-post"
+    assert result["command"] == "campaign.post-resolve"
     assert result["data"]["resolved"]["content_id"] == "c0000000-0000-4000-8000-000000000001"
     assert calls == [
         {
@@ -2825,7 +2843,7 @@ def test_dispatch_campaign_monitor_post_resolve_uses_agent_api(
     ]
 
 
-def test_dispatch_campaign_monitor_post_performance_uses_agent_api(
+def test_dispatch_campaign_post_performance_uses_agent_api(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     cfg = Config()
@@ -2854,8 +2872,9 @@ def test_dispatch_campaign_monitor_post_performance_uses_agent_api(
 
     args = parse(
         [
-            "campaign-monitor",
-            "+get-post-performance",
+            "campaign",
+            "post",
+            "+get-performance",
             "--id",
             "c0000000-0000-4000-8000-000000000001",
             "--date-from",
@@ -2866,14 +2885,13 @@ def test_dispatch_campaign_monitor_post_performance_uses_agent_api(
     )
     result = asyncio.run(main_module.dispatch(args))
 
-    assert result["command"] == "campaign-monitor.get-post-performance"
+    assert result["command"] == "campaign.post-get-performance"
     assert result["data"]["content_id"] == "c0000000-0000-4000-8000-000000000001"
     assert result["warnings"] == [
         (
-            "This command reads Museon's synced monitor store only; use "
-            "campaign-monitor +list-content/+list-creators/+get-summary for "
-            "campaign-scoped collections and research +search-social-media "
-            "for external discovery."
+            "This command reads the posts Museon has synced only; use campaign "
+            "content +list, campaign creator +list or campaign +get-summary for one "
+            "Campaign, and research +search-social-media for external discovery."
         )
     ]
     assert calls == [
@@ -2889,7 +2907,7 @@ def test_dispatch_campaign_monitor_post_performance_uses_agent_api(
 
 
 def test_schema_exposes_frontend_url_templates_for_campaigns_and_accounts() -> None:
-    campaign_schema = main_module.schema_payload("campaign-monitor.get-summary")
+    campaign_schema = main_module.schema_payload("campaign.get-summary")
 
     assert "/campaigns/{campaign_id}/creators" in {
         template["path_template"] for template in campaign_schema["frontend_url_templates"]
@@ -2907,8 +2925,8 @@ def test_schema_catalog_summaries_include_frontend_url_templates() -> None:
 
     campaign_get = next(
         item
-        for item in catalog["commands"]["campaign-monitor"]
-        if item["name"] == "campaign-monitor.get"
+        for item in catalog["commands"]["campaign"]
+        if item["name"] == "campaign.get"
     )
 
     assert any(

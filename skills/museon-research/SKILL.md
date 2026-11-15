@@ -37,12 +37,12 @@ For the Instagram Hook comparison workflow, begin with [setup.md](references/set
 ## DON'T
 
 - **DON'T** replace social-native search with generic web search for creators, posts, or comments.
-- **DON'T** treat campaign-monitor data as a live public-platform search.
+- **DON'T** treat a Campaign's synced data (`campaign`) as a live public-platform search.
 - **DON'T** resolve or scrape XHS short links in the shell; pass them directly.
 - **DON'T** infer causality, conversion, growth, competition, or geography from one ads snapshot.
 - **DON'T** lose returned pagination cursors or rewrite opaque cursor values.
 
 ## Relationships
 
-Use base media and content-analysis references for inputs and durable video analysis; use the campaign-monitor skill for stored creator/post history.
+Use base media and content-analysis references for inputs and durable video analysis; use the campaigns skill for stored creator/post history.
 Preserve a synthesis as a local report; business creation and delivery require their owning API.

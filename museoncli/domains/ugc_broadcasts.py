@@ -496,7 +496,7 @@ def _build_unschedule_arguments(args: argparse.Namespace) -> dict[str, Any]:
 
 # -- schemas -----------------------------------------------------------------
 
-_CAMPAIGN_ID = uuid_property("UGC campaign ID (ugc campaign +list).")
+_CAMPAIGN_ID = uuid_property("UGC Campaign ID (from campaign +list).")
 _BROADCAST_ID = uuid_property("Broadcast ID (ugc broadcast +list or +create).")
 _SELECTION = {
     "type": "object",

@@ -222,8 +222,8 @@ def _main(monkeypatch: pytest.MonkeyPatch, argv: list[str]) -> int:
     "argv",
     [
         ["routines", "+list", "--workspace-id", WORKSPACE],
-        ["ugc", "campaign", "+list", "--workspace-id", WORKSPACE],
-        ["campaign-monitor", "payment", "+list", "--workspace-id", WORKSPACE],
+        ["campaign", "+list", "--workspace-id", WORKSPACE],
+        ["campaign", "payment", "+list", "--workspace-id", WORKSPACE],
         ["media", "+get", "--id", UUID, "--workspace-id", WORKSPACE],
     ],
 )

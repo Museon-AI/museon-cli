@@ -50,12 +50,6 @@ _FORMAT_PLACEHOLDERS = {
 }
 
 
-COLLECTION_ID_HELP = (
-    "Monitor collection id from `campaign-monitor +list` (not the UGC Campaign id that "
-    "ugc commands take)."
-)
-
-
 def _id_kind(spec: CommandSpec, action: argparse.Action) -> str | None:
     """Which id an id flag takes when its name alone would mislead."""
     if not action.dest.endswith("id"):
@@ -63,10 +57,6 @@ def _id_kind(spec: CommandSpec, action: argparse.Action) -> str | None:
     text = " ".join(
         [str(_property(spec, action.dest).get("description") or ""), str(action.help or "")]
     ).lower()
-    if "campaign-monitor +list" in text or (
-        spec.domain.value == "campaign-monitor" and action.dest == "campaign_id"
-    ):
-        return "collection"
     if "social account id" in text:
         return "social-account"
     return None
@@ -102,8 +92,6 @@ def flag_help(spec: CommandSpec, action: argparse.Action) -> str | None:
     if option in _COMMON_FLAG_HELP:
         return _COMMON_FLAG_HELP[option]
     if option == "--id":
-        if _id_kind(spec, action) == "collection":
-            return COLLECTION_ID_HELP
         entity = _humanize(spec.resource or spec.domain.value)
         return f"ID of the {entity} this command acts on."
     schema = _property(spec, action.dest)
@@ -214,8 +202,11 @@ DOMAIN_HELP = {
     "cloud-phone": "Cloud phones, their IPs, groups, suppliers, app upgrades and recovery.",
     "ai-slideshow": "AI image posts: assets, generation, review and account publishing.",
     "agentic-campaign": "Agentic Creative Campaigns: persona Plans that keep publishing daily.",
-    "campaign-monitor": "Campaign Dashboard reads and tracked creators/posts (monitor collection id).",
-    "ugc": "Run UGC Campaigns: setup, recruiting, roster, tasks, messages, review, reports.",
+    "campaign": (
+        "Campaigns of both kinds (UGC and tracking): list, create, lifecycle, settings, "
+        "Dashboard figures, and a tracking Campaign's creators and posts."
+    ),
+    "ugc": "Run a UGC Campaign's creators: recruiting, roster, tasks, messages, review, reports.",
     "skills": "The organization's Business Skills (methodology for the Agent).",
     "staff-ops": "MuseOn staff diagnostics.",
     "analytics": "Multi-Campaign analytics boards.",

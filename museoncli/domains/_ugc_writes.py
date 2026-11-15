@@ -67,7 +67,7 @@ __all__ = [
 _PAGE_LIMIT = 100
 
 CAMPAIGN_ID = _uuid_property(
-    "UGC campaign ID (from ugc campaign +list), not a campaign-monitor collection id."
+    "UGC Campaign ID (from campaign +list)."
 )
 DRY_RUN = {
     "type": "boolean",

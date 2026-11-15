@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 from museoncli.domains._legacy_workspace import keeps_workspace
 from museoncli.domains._model import CommandSpec
+from museoncli.domains._removed import removed_aliases
 
 
 def _frontend_url_template(
@@ -183,18 +184,18 @@ _CAMPAIGN_FRONTEND_URL_TEMPLATES = [
     _frontend_url_template(
         "Campaigns",
         "/campaigns",
-        description="Open the campaign monitor list.",
+        description="Open the Campaigns list.",
     ),
     _frontend_url_template(
         "Campaign creators",
         "/campaigns/{campaign_id}/creators",
-        description="Open creators covered by one campaign monitor.",
+        description="Open the creators one Campaign covers.",
         required_fields=["campaign_id"],
     ),
     _frontend_url_template(
         "Campaign contents",
         "/campaigns/{campaign_id}/contents",
-        description="Open posts/content covered by one campaign monitor.",
+        description="Open the posts one Campaign covers.",
         required_fields=["campaign_id"],
     ),
     _frontend_url_template(
@@ -316,6 +317,10 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
             "enforcement": "museon_server" if spec.authentication_required else "local_process",
         },
     }
+    removed = removed_aliases(spec.cli_path.removeprefix("museoncli "))
+    if removed:
+        # 1.x names this command replaced: the CLI refuses them, the API still resolves them.
+        payload["removed_aliases"] = removed
     if spec.legacy_shortcuts:
         payload["deprecated_aliases"] = [
             {"cli": spec.legacy_cli_path(shortcut), "capability_key": key}
@@ -354,16 +359,11 @@ def _frontend_url_templates_for_spec(spec: CommandSpec) -> list[dict[str, Any]]:
         return [dict(template) for template in _SOCIAL_ACCOUNT_CONNECT_LINK_FRONTEND_URL_TEMPLATES]
     if schema_name.startswith("social-account."):
         return [dict(template) for template in _SOCIAL_ACCOUNT_FRONTEND_URL_TEMPLATES]
-    if schema_name == "campaign-monitor.get-creator":
+    if schema_name in {"campaign.creator-get", "campaign.creator-get-performance"}:
         return [dict(template) for template in _SOCIAL_MEDIA_CREATOR_FRONTEND_URL_TEMPLATES]
-    if schema_name in {
-        "campaign-monitor.list-posts",
-        "campaign-monitor.get-post",
-        "campaign-monitor.get-post-performance",
-        "campaign-monitor.resolve-post",
-    }:
+    if schema_name.startswith("campaign.post-"):
         return [dict(template) for template in _SOCIAL_MEDIA_POST_FRONTEND_URL_TEMPLATES]
-    if schema_name.startswith("campaign-monitor."):
+    if schema_name.startswith("campaign."):
         return [dict(template) for template in _CAMPAIGN_FRONTEND_URL_TEMPLATES]
     if schema_name.startswith("routines."):
         return [dict(template) for template in _ROUTINE_FRONTEND_URL_TEMPLATES]

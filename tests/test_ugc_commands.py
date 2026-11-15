@@ -250,7 +250,7 @@ def _campaign(campaign_id: str, campaign_type: str, status: str) -> dict[str, An
         ),
     ],
 )
-def test_campaign_list_reads_the_organization_route(
+def test_campaign_list_reads_the_campaigns_page_route(
     monkeypatch: pytest.MonkeyPatch,
     status: str | None,
     query: dict[str, Any],
@@ -262,16 +262,16 @@ def test_campaign_list_reads_the_organization_route(
         "items": [_campaign(f"c-{state}", "ugc", state) for state in items],
         "next_cursor": "next",
     }
-    workbench = _Workbench({("GET", "/ugc/organizations/org-1/campaigns"): page})
+    workbench = _Workbench({("GET", "/ugc/agency/org-1/campaigns"): page})
 
     result = _run(
         monkeypatch,
         workbench,
-        ["ugc", "campaign", "+list", *(["--status", status] if status else [])],
+        ["campaign", "+list", "--type", "ugc", *(["--status", status] if status else [])],
     )
 
     assert workbench.calls == [
-        {"method": "GET", "path": "/ugc/organizations/org-1/campaigns", "params": query}
+        {"method": "GET", "path": "/ugc/agency/org-1/campaigns", "params": query}
     ]
     assert [item["id"] for item in result["data"]["items"]] == expected
     assert result["data"]["next_cursor"] == "next"

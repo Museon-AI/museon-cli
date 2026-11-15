@@ -494,7 +494,7 @@ def _build_auto_nudge_update_arguments(args: argparse.Namespace) -> dict[str, An
 
 # -- schemas -----------------------------------------------------------------
 
-_CAMPAIGN_ID = uuid_property("UGC campaign ID (ugc campaign +list).")
+_CAMPAIGN_ID = uuid_property("UGC Campaign ID (from campaign +list).")
 _POLICY_EDITS = {
     "type": "object",
     "description": (

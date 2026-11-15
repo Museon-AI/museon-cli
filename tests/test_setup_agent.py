@@ -25,13 +25,13 @@ def test_setup_agent_installs_and_verifies_codex_skill(
     destination = codex_home / "skills" / "museon-content-workflow-base"
     research_destination = codex_home / "skills" / "museon-research"
     slideshow_destination = codex_home / "skills" / "museon-content-workflow-ai-slideshow"
-    campaign_destination = codex_home / "skills" / "museon-content-workflow-campaign-monitor"
+    campaign_destination = codex_home / "skills" / "museon-content-workflow-campaigns"
     assert first["agents"][0]["status"] == "installed"
     assert second["agents"][0]["status"] == "current"
     assert destination.joinpath("SKILL.md").is_file()
     assert destination.joinpath("agents", "openai.yaml").is_file()
     assert research_destination.joinpath("SKILL.md").is_file()
-    assert campaign_destination.joinpath("references", "monitor-store.md").is_file()
+    assert campaign_destination.joinpath("references", "synced-store.md").is_file()
     assert not (codex_home / "skills" / "museon-content-workflow-account-operation").exists()
     assert slideshow_destination.joinpath("SKILL.md").is_file()
     assert research_destination.joinpath("scripts", "rank_hooks.py").is_file()
@@ -178,3 +178,29 @@ def test_cli_syncs_stale_skills_unless_updates_are_pinned(tmp_path: Path) -> Non
     assert synced["_notice"]["skills"]["updated"] == ["codex"]
     assert stale_skill_agents() == []
     assert with_notice({"ok": True}, args, {"status": "current"}) == {"ok": True}
+
+
+def test_setup_removes_the_skill_2_0_renamed_but_not_a_users_own(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A host that ran 1.x setup keeps no Skill teaching the removed campaign-monitor commands."""
+    codex_home = tmp_path / "codex"
+    claude_home = tmp_path / "claude"
+    monkeypatch.setenv("CODEX_HOME", str(codex_home))
+    monkeypatch.setenv("CLAUDE_CONFIG_DIR", str(claude_home))
+    old = "museon-content-workflow-campaign-monitor"
+    managed = codex_home / "skills" / old
+    managed.mkdir(parents=True)
+    managed.joinpath("SKILL.md").write_text(f"---\nname: {old}\n---\n", encoding="utf-8")
+    own = claude_home / "skills" / old
+    own.mkdir(parents=True)
+    own.joinpath("SKILL.md").write_text("---\nname: my-own-notes\n---\n", encoding="utf-8")
+
+    assert "codex" in stale_skill_agents()
+    result = install_agent_skill("codex")
+    install_agent_skill("claude-code")
+
+    assert not managed.exists()
+    assert result["agents"][0]["removed_retired_skills"] == [old]
+    assert own.joinpath("SKILL.md").is_file()
+    assert (codex_home / "skills" / "museon-content-workflow-campaigns" / "SKILL.md").is_file()

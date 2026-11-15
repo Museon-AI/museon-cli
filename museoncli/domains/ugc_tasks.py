@@ -37,7 +37,7 @@ SCOPE = choice(
     "my-campaigns",
     "all",
 )
-CAMPAIGN = uuid("Only this Campaign's tasks (id from ugc campaign +list or agency-campaign +list).")
+CAMPAIGN = uuid("Only this Campaign's tasks (id from campaign +list).")
 
 
 async def _task_with_events(ctx: CommandContext, arguments: dict[str, Any]) -> Any:

@@ -27,25 +27,24 @@ topics:
   - id: ids
     title: Which id goes where
     body: |
-      - `ugc ... --campaign-id` (and `ugc campaign +launch --id`) is the **UGC Campaign id** from `museoncli ugc campaign +list`. `analytics board --campaign-id` and `campaign-monitor agency-campaign +list` use the same Campaign ids.
-      - Every `campaign-monitor` command that reads one Campaign takes `--id` = the **monitor collection id** from `museoncli campaign-monitor +list`. It is a different id from the UGC Campaign id; never pass one for the other. `campaign-monitor campaign +get --id <collection>` tells you the UGC Campaign behind a collection.
-      - Inside a parent, `--id` is the entity the command acts on and the parent is qualified: `ugc enrollment +approve --campaign-id <campaign> --id <enrollment>`, `ugc assignment +withdraw --campaign-id <campaign> --id <assignment>`. In `campaign-monitor` the parent collection is `--id` and children are qualified (`--content-id`, `--collection-content-id`).
-      - An enrollment id (`ugc enrollment +list`) is one creator's place in one Campaign: approve, message, nudge, persona and payscale take it. A creative id is one video (`ugc creative +list`, `campaign-monitor video +list`); a content id is one post on one platform.
+      - A Campaign has one id, whichever kind it is (UGC or tracking): the `id` of `museoncli campaign +list`. Every command that addresses a Campaign takes it as `--campaign-id`: `campaign`, `ugc` and `analytics board` alike.
+      - Inside a Campaign, `--id` is the entity the command acts on and the Campaign is `--campaign-id`: `ugc enrollment +approve --campaign-id <campaign> --id <enrollment>`, `ugc assignment +withdraw --campaign-id <campaign> --id <assignment>`. Other children are qualified (`campaign content +remove --collection-content-id`, `campaign video +get --content-id`).
+      - An enrollment id (`ugc enrollment +list`) is one creator's place in one Campaign: approve, message, nudge, persona and payscale take it. A creative id is one video (`ugc creative +list`, `campaign video +list`); a content id is one post on one platform; a collection-content id is one post's place in one Campaign (`campaign content +list`).
       - A task id comes from `ugc task +list`; its `actions` list what `ugc task +run-action --action` accepts.
       - Every id is a UUID; the CLI rejects placeholders before any request.
   - id: creator-ids
     title: The three creator ids
     body: |
-      - **UGC creator** (a person, `ugc_creator_id`): `ugc creator +list`/`+get --id`; `campaign-monitor +list-content --ugc-creator-id`; `--creator-id` on `campaign-monitor video +list`, `settlement +get` and `enrollment +list`.
-      - **Social account** (one handle on one platform): `campaign-monitor +get-creator --id`, `+list-posts --creator-id`, `+get-creator-performance --id`, `+remove-creators --creator-id`, `+list-content --creator-id`. A social account's `creator_info.creator_id` is unrelated: never read the person from it or from a handle.
+      - **UGC creator** (a person, `ugc_creator_id`): `ugc creator +list`/`+get --id`; `campaign content +list --ugc-creator-id`; `--creator-id` on `campaign video +list`, `campaign settlement +get` and `ugc enrollment +list`.
+      - **Social account** (one handle on one platform): `campaign creator +get --id`, `campaign creator +get-performance --id`, `campaign post +list --creator-id`, `campaign creator +remove --creator-id`, `campaign content +list --creator-id`. A social account's `creator_info.creator_id` is unrelated: never read the person from it or from a handle.
       - **Enrollment** (the person in one Campaign): what every `ugc enrollment`/`message` write takes.
       - The same flag name `--creator-id` means a person on some commands and a social account on others: read the flag's help (`<command> --help`) before passing it.
   - id: campaign-kinds
     title: The kinds of campaign
     body: |
-      - **UGC Campaign** (`ugc`, `ugc campaign +create --type ugc`): creators apply, sign a contract, post against Formats (脚本, `brief` in commands) and are paid by payscales. Run by the operating team's organization.
-      - **Content tracking Campaign** (`ugc campaign +create --type tracking`): no applications or review; you add creators and posts to its monitor collection and read their performance (`campaign-monitor`).
-      - **Monitor collection** (`campaign-monitor +list`): the analytics side of either kind; every Dashboard read is keyed by it.
+      - **UGC Campaign** (`campaign +create --type ugc`): creators apply, sign a contract, post against Formats (脚本, `brief` in commands) and are paid by payscales. Run by the operating team's organization; its creator work is `ugc`.
+      - **Content tracking Campaign** (`campaign +create --type tracking`): no applications or review; you add creators and posts (`campaign creator +add`, `campaign content +add`) and read their performance.
+      - Both kinds are listed, created, launched, set up and read the same way, with `campaign` (`campaign +list --type ugc|tracking`).
       - **Agentic Creative Campaign** (`agentic-campaign`): MuseOn keeps publishing AI image posts on chosen accounts by persona Plans. Separate ids, its own lifecycle.
       - HireAICreator plans and test groups (`hireaicreator`) are a separate product with their own Skill.
   - id: confirmation
@@ -79,30 +78,22 @@ topics:
   - id: which-one
     title: Which of two similar commands to use
     rows:
-      - need: "Find a UGC Campaign's id for ugc and analytics commands"
-        use: ugc.campaign-list
-        not: [campaign-monitor.list]
-        why: "campaign-monitor +list returns monitor collection ids, which only campaign-monitor takes."
-      - need: "Find the id for Dashboard reads (campaign-monitor)"
-        use: campaign-monitor.list
-        not: [ugc.campaign-list]
-        why: "Dashboard reads are keyed by the monitor collection."
       - need: "A UGC Campaign's roster to act on (approve, assign, message, persona)"
         use: ugc.enrollment-list
-        not: [campaign-monitor.enrollment-list]
-        why: "ugc returns the enrollment ids ugc writes take; campaign-monitor enrollment +list is the Operations tab view with contract and Discord state."
+        not: [campaign.roster-list]
+        why: "ugc enrollment +list returns the enrollment ids ugc writes take (--detail adds contract and Discord state); campaign roster +list is the By Creator tab's figures."
       - need: "Creators of a UGC Campaign with their post figures"
-        use: campaign-monitor.roster-list
-        not: [ugc.enrollment-list, campaign-monitor.list-creators]
-        why: "roster +list is the By Creator tab; +list-creators lists tracked social accounts, the tracking Campaign view."
+        use: campaign.roster-list
+        not: [ugc.enrollment-list, campaign.creator-list]
+        why: "roster +list is the By Creator tab; campaign creator +list lists the social accounts a Campaign covers, the tracking Campaign view."
       - need: "One creator (a person) and their Campaigns"
         use: ugc.creator-get
-        not: [campaign-monitor.get-creator]
-        why: "campaign-monitor +get-creator reads one social account by its social account id."
+        not: [campaign.creator-get]
+        why: "campaign creator +get reads one social account by its social account id."
       - need: "A UGC Campaign's videos and their review state"
-        use: campaign-monitor.video-list
-        not: [campaign-monitor.list-content, ugc.creative-list]
-        why: "video +list is the Content tab (each video once); +list-content lists every post with attribution and is the one for tracking Campaigns; ugc creative +list is the brief view for assigning Formats."
+        use: campaign.video-list
+        not: [campaign.content-list, ugc.creative-list]
+        why: "video +list is the Content tab (each video once); campaign content +list lists every post with attribution and is the one for tracking Campaigns; ugc creative +list is the brief view for assigning Formats."
       - need: "Approve or reject an application"
         use: ugc.enrollment-approve
         not: [ugc.task-run-action]
@@ -116,13 +107,13 @@ topics:
         not: [ugc.broadcast-create, ugc.enrollment-nudge]
         why: "A broadcast goes to many on Discord; a nudge is the fixed reminder for one check."
       - need: "Daily trend and KPI tiles"
-        use: campaign-monitor.get-summary
-        not: [campaign-monitor.get-period-performance]
+        use: campaign.get-summary
+        not: [campaign.get-period-performance]
         why: "+get-period-performance compares a period with the one before it."
       - need: "Figures over several Campaigns"
         use: analytics.board-get-data
-        not: [campaign-monitor.agency-analytics-get]
-        why: "A board reads the Campaigns it holds; agency-analytics +get is every UGC Campaign of the operating organization."
+        not: [campaign.analytics-get]
+        why: "A board reads the Campaigns it holds; campaign analytics +get is every UGC Campaign of the operating organization."
       - need: "Publish ready video files or photo sets"
         use: publish.post-schedule
         not: [ai-slideshow.publish-create-schedule, hireaicreator.delivery-share]
@@ -192,43 +183,41 @@ chapters:
     summary: >-
       A UGC Campaign in the order the work happens: create and set it up, recruit, approve
       applications, contract, run the day's tasks and messages, review content, decide what
-      counts, report to the client and read settlement. Every `ugc` command takes the UGC
-      Campaign id from `ugc campaign +list` as --campaign-id.
+      counts, report to the client and read settlement. The Campaign itself (create, launch,
+      settings) is `campaign`; the work with its creators is `ugc`. Both take the Campaign id
+      from `campaign +list` as --campaign-id.
     see: [ids, creator-ids, confirmation, safe-writes, organizations]
     tasks:
-      - id: ugc-find-campaign
-        title: Find a UGC Campaign and its ids
+      - id: find-campaign
+        title: Find a Campaign and its id
         when: ["find campaign", "campaign id", "list campaigns", "which campaign", "找活动", "活动列表", "campaign 列表"]
         steps:
-          - ugc.campaign-list: "Its ids are the --campaign-id of every ugc command."
-          - campaign-monitor.agency-campaign-list: "The Campaigns page: own and shared-in Campaigns; --with-progress for delivery progress."
-          - campaign-monitor.list: "Monitor collection ids, for campaign-monitor reads only."
-          - campaign-monitor.get: "One monitor collection's own record."
-          - campaign-monitor.campaign-get: "Maps a collection to its UGC Campaign (type, status, start date)."
+          - campaign.list: "Both kinds, own and shared-in; --type ugc|tracking, --status, --search narrow it. Its id is every --campaign-id."
+          - campaign.get: "One Campaign's header (type, status, start day) and tracking record."
       - id: ugc-create-campaign
         title: Create and set up a UGC Campaign
         when: ["create campaign", "new campaign", "set up campaign", "campaign setup", "launch campaign", "新建活动", "创建活动", "活动设置", "上线活动"]
         before: Dry-run each write, show the user, then write. A UGC Campaign can be created only in the operating team's organization.
         steps:
-          - ugc.campaign-create: "--type ugc; data.campaign.id is the new --campaign-id. Rerun an unknown outcome with the returned idempotency key."
-          - ugc.campaign-settings-update: "Approval and join mode, budget cap, platforms, languages, rules; only the fields passed change."
-          - ugc.campaign-staff-set: "PMs (--manager-user-id) and OPs (--operator-user-id); user ids from organization member +list."
+          - campaign.create: "--type ugc; data.campaign.id is the new --campaign-id. Rerun an unknown outcome with the returned idempotency key."
+          - campaign.settings-update: "Approval and join mode, budget cap, platforms, languages, rules; only the fields passed change."
+          - campaign.staff-set: "PMs (--manager-user-id) and OPs (--operator-user-id); user ids from organization member +list."
           - ugc.delivery-target-create: "A target's dates are its own window; they never move the Campaign's start day."
           - ugc.contract-template-set: "--source default or custom; the dry run returns the filled preview."
           - ugc.payscale-create: "The default payscale exists already; add custom ones only when creators are paid differently."
           - ugc.pay-rate-create: "A video-content rate needs a description; lifetime-views needs min_creator_views."
           - ugc.discord-server-initialize: "Builds onboarding channels and roles in a server the MuseOn bot is already in."
           - ugc.brief-create: "Or link library Formats with ugc brief +link (task ugc-formats)."
-          - ugc.campaign-setup-get: "Read everything back; sections you may not read are listed under unavailable."
-          - ugc.campaign-launch: "Dry run first: launchability.ok and reasons; then run it with --expected-status draft."
+          - campaign.setup-get: "Read everything back; sections you may not read are listed under unavailable."
+          - campaign.launch: "Dry run first: launchability.ok and reasons; then run it with --expected-status draft."
         see: [ugc-formats, ugc-recruit]
       - id: ugc-read-setup
         title: Read how a Campaign is configured
         when: ["campaign settings", "budget", "approval mode", "contract template", "payscale", "staff", "discord server", "dm rules", "活动配置", "预算", "价格", "合同模板", "设置页"]
         steps:
-          - ugc.campaign-setup-get: "Everything the setup page reads; --section narrows it."
-          - ugc.campaign-settings-get: "Type, status, settings, product, readiness, briefs."
-          - ugc.campaign-staff-list
+          - campaign.setup-get: "Everything the setup page reads; --section narrows it."
+          - campaign.settings-get: "Type, status, settings, product, readiness, briefs."
+          - campaign.staff-list
           - ugc.delivery-target-list
           - ugc.payscale-list
           - ugc.contract-template-get
@@ -239,8 +228,8 @@ chapters:
         title: Change a Campaign's settings, team, targets, payscales or Discord
         when: ["change settings", "edit campaign", "budget cap", "change payscale", "pay rate", "delivery target", "discord", "修改设置", "改预算", "改价格", "目标"]
         steps:
-          - ugc.campaign-settings-update: "Writes the whole settings object back with only your fields changed; brand editors may not change the team's settings."
-          - ugc.campaign-staff-set: "A role not passed keeps its people; --no-managers / --no-operators empties it."
+          - campaign.settings-update: "Writes the whole settings object back with only your fields changed; brand editors may not change the team's settings."
+          - campaign.staff-set: "A role not passed keeps its people; --no-managers / --no-operators empties it."
           - ugc.delivery-target-update: "'none' clears a figure or date."
           - ugc.delivery-target-delete
           - ugc.payscale-update
@@ -254,13 +243,13 @@ chapters:
         title: Launch, pause, resume, end, archive or rename a Campaign
         when: ["launch", "pause campaign", "resume campaign", "end campaign", "complete", "archive", "restore", "rename", "暂停活动", "结束活动", "归档", "恢复", "改名"]
         steps:
-          - ugc.campaign-launch: "Draft → active; a UGC one opens its apply link."
-          - ugc.campaign-pause
-          - ugc.campaign-resume
-          - ugc.campaign-complete: "Cannot reopen; creators' accounts are released."
-          - ugc.campaign-archive: "Draft or completed only; +restore brings it back."
-          - ugc.campaign-restore: "Back to the status it was archived from."
-          - ugc.campaign-rename
+          - campaign.launch: "Draft → active; a UGC one opens its apply link."
+          - campaign.pause
+          - campaign.resume
+          - campaign.complete: "Cannot reopen; creators' accounts are released."
+          - campaign.archive: "Draft or completed only; +restore brings it back."
+          - campaign.restore: "Back to the status it was archived from."
+          - campaign.rename
       - id: ugc-formats
         title: Write and link Formats (脚本, brief)
         when: ["format", "brief", "script", "脚本", "brief library", "格式", "写脚本", "脚本库", "link brief"]
@@ -295,7 +284,7 @@ chapters:
         steps:
           - ugc.enrollment-list: "--status participating: the enrollment ids to assign."
           - ugc.brief-progress: "Raw counts per brief and assignment; report them, never judge who owes a video."
-          - campaign-monitor.assignment-list: "The Operations tab's assignments and what is due (collection id)."
+          - ugc.assignment-list: "The Operations tab's assignments and what is due."
           - ugc.assignment-create: "One brief to one or more enrollments, with video limit, due time, note, priority."
           - ugc.assignment-update-terms: "Saving sends the creator one updated brief."
           - ugc.assignment-withdraw: "The creator no longer has the brief."
@@ -374,8 +363,8 @@ chapters:
         title: Nudge creators who are stuck (not signed, not set up, quiet)
         when: ["nudge", "remind creators", "quiet creators", "not set up", "creator checks", "auto nudge", "催", "提醒达人", "催更", "自动提醒"]
         steps:
-          - campaign-monitor.creator-check-get: "Creators per check (collection id)."
-          - campaign-monitor.creator-check-list: "--kind cant-track|not-set-up|not-in-discord|quiet|not-healthy."
+          - ugc.creator-check-get: "Creators per check."
+          - ugc.creator-check-list: "--kind cant-track|not-set-up|not-in-discord|quiet|not-healthy."
           - ugc.enrollment-nudge: "One creator, one check, once a day; the preview says whether the check holds."
           - ugc.enrollment-bulk-nudge: "Everyone a check holds for, skipping those nudged today."
           - ugc.auto-nudge-get
@@ -410,8 +399,8 @@ chapters:
         when: ["review video", "content review", "approve video", "reject video", "feedback", "审核视频", "内容审核", "过审", "打回", "反馈"]
         steps:
           - ugc.task-list: "--queue media: the videos waiting for review."
-          - campaign-monitor.video-list: "--status review on the collection id: the Content tab's queue."
-          - campaign-monitor.video-get: "One post's detail, daily metrics or insights."
+          - campaign.video-list: "--status review: the Content tab's queue."
+          - campaign.video-get: "One post's detail, daily metrics or insights."
           - ugc.creative-review: "--decision approve|reject; a rejection sends --note and reopens the assignment."
           - ugc.task-run-action: "Or press the review task's approve/reject (--comments go to the creator)."
           - ugc.feedback-thread-create: "At --time-ms into the video; the creator reads it in Discord."
@@ -422,7 +411,7 @@ chapters:
         when: ["counting", "not counted", "stop counting", "split post", "merge videos", "attribution", "attach post", "计入", "不计入", "拆分", "合并视频", "归属"]
         before: A post or video a payout already pays for refuses every counting change (post_in_payout); tell the user, do not work around it.
         steps:
-          - campaign-monitor.video-list: "--status not-counted or confirmation to see the buckets."
+          - campaign.video-list: "--status not-counted or confirmation to see the buckets."
           - ugc.creative-set-counting: "--counted / --no-counted on an approved video; the creator is not told."
           - ugc.post-stop-counting: "Up to 100 posts by content id."
           - ugc.post-split: "One confirmed post becomes its own video under the same Format."
@@ -451,74 +440,73 @@ chapters:
         steps:
           - ugc.creator-list: "Across the organization's Campaigns; --search."
           - ugc.creator-get: "Profile, accounts and Campaigns of one person (UGC creator id)."
-          - campaign-monitor.enrollment-list: "Their enrollment with contract and Discord state: --creator-id <ugc creator> on the collection id."
+          - ugc.enrollment-list: "Their enrollment in one Campaign: --creator-id <ugc creator> --detail for contract and Discord state."
         see: [creator-ids]
       - id: ugc-settlement-reads
         title: Read settlement, payouts and payments (reads only)
         when: ["settlement", "payout", "payments", "how much to pay", "结算", "打款", "付款", "支付"]
         before: The CLI only reads money. Settling and paying stay in the web.
         steps:
-          - campaign-monitor.settlement-get: "A period's settlement per creator, or one creator's lines with --creator-id (UGC creator)."
-          - campaign-monitor.payout-list: "Settled payouts and their lines."
-          - campaign-monitor.payment-list: "The organization's creator payments (operating organization's team)."
-          - campaign-monitor.payment-summary-get
+          - campaign.settlement-get: "A period's settlement per creator, or one creator's lines with --creator-id (UGC creator)."
+          - campaign.payout-list: "Settled payouts and their lines."
+          - campaign.payment-list: "The organization's creator payments (operating organization's team)."
+          - campaign.payment-summary-get
 
   # ---------------------------------------------------------------------------
   - id: tracking
     title: "2. Track content (content tracking Campaigns)"
     summary: >-
       A content tracking Campaign follows creators' and posts' performance without
-      applications or review. Create it, add what to track to its monitor collection, read
-      the numbers. Everything after creation takes the collection id from
-      `campaign-monitor +list` as --id.
+      applications or review. Create it, add the creators and posts to track, read the
+      numbers. Everything after creation takes the Campaign id (`data.campaign.id` of
+      `campaign +create`, or `campaign +list --type tracking`) as --campaign-id.
     see: [ids, campaign-kinds]
     tasks:
       - id: tracking-create
         title: Create a tracking Campaign and add creators or posts
         when: ["tracking campaign", "track creators", "track posts", "monitor", "add creators", "add posts", "追踪", "监测", "添加达人", "添加帖子", "监控"]
         steps:
-          - ugc.campaign-create: "--type tracking."
-          - campaign-monitor.list: "Find its monitor collection id."
-          - campaign-monitor.add-creators: "--url imports new creators by profile URL in the background (data.url_import_task); --creator-id attaches known social accounts."
-          - campaign-monitor.add-content: "--url imports posts by URL; --content-id attaches known ones."
-          - campaign-monitor.list-creators: "An import is accepted, not done: verify membership here."
-          - campaign-monitor.list-content
+          - campaign.create: "--type tracking."
+          - campaign.creator-add: "--url imports new creators by profile URL in the background (data.url_import_task); --creator-id attaches known social accounts."
+          - campaign.content-add: "--url imports posts by URL; --content-id attaches known ones."
+          - campaign.creator-list: "An import is accepted, not done: verify membership here."
+          - campaign.content-list
       - id: tracking-remove
         title: Stop tracking creators or posts
         when: ["remove creator", "remove post", "stop tracking", "删除追踪", "移除帖子", "移除达人"]
-        before: Removing only changes the collection; the platform account or post is untouched.
+        before: Removing only changes the Campaign; the platform account or post is untouched.
         steps:
-          - campaign-monitor.remove-creators: "--creator-id is the social account id; also drops its derived posts."
-          - campaign-monitor.remove-content: "--collection-content-id, not the content id."
-          - campaign-monitor.bulk-remove-content
+          - campaign.creator-remove: "--creator-id is the social account id; also drops its derived posts."
+          - campaign.content-remove: "--collection-content-id, not the content id."
+          - campaign.content-bulk-remove
       - id: tracking-performance
         title: Read a tracking Campaign's performance
         when: ["tracking performance", "views", "daily trend", "breakdown", "by creator tag", "source video", "追踪数据", "播放量", "趋势", "分组"]
         steps:
-          - campaign-monitor.get-summary: "Daily totals in --timezone; observed deltas are snapshot sums, not platform plays per day."
-          - campaign-monitor.get-period-performance: "Current period vs the one before."
-          - campaign-monitor.list-dimensions: "What it can be broken down by."
-          - campaign-monitor.get-breakdown: "--by creator-tag or source-video for tracking Campaigns."
-          - campaign-monitor.list-content: "The posts behind a number, same window and timezone."
-          - campaign-monitor.creator-tag-list
+          - campaign.get-summary: "Daily totals in --timezone; observed deltas are snapshot sums, not platform plays per day."
+          - campaign.get-period-performance: "Current period vs the one before."
+          - campaign.list-dimensions: "What it can be broken down by."
+          - campaign.get-breakdown: "--by creator-tag or source-video for tracking Campaigns."
+          - campaign.content-list: "The posts behind a number, same window and timezone."
+          - campaign.creator-tag-list
       - id: account-and-post-history
         title: Read one account's or one post's synced history
         when: ["creator history", "account history", "post performance", "post history", "resolve post", "账号历史", "帖子数据", "单帖"]
         before: This is Museon's synced store, not a live platform fetch.
         steps:
-          - campaign-monitor.get-creator: "--id is the social account id."
-          - campaign-monitor.list-posts: "--creator-id is the social account id."
-          - campaign-monitor.get-creator-performance: "--date-from and --date-to both required, at most 180 days."
-          - campaign-monitor.get-post
-          - campaign-monitor.get-post-performance
-          - campaign-monitor.resolve-post: "A publish schedule item → the post it became."
+          - campaign.creator-get: "--id is the social account id."
+          - campaign.post-list: "--creator-id is the social account id."
+          - campaign.creator-get-performance: "--date-from and --date-to both required, at most 180 days."
+          - campaign.post-get
+          - campaign.post-get-performance
+          - campaign.post-resolve: "A publish schedule item → the post it became."
         see: [creator-ids]
 
   # ---------------------------------------------------------------------------
   - id: analytics
     title: "3. Read Campaign analytics and boards"
     summary: >-
-      The web Campaign Dashboard, tab by tab, keyed by the monitor collection id; breakdowns
+      The web Campaign Dashboard, tab by tab, keyed by the Campaign id; breakdowns
       by Format, persona and tag; the organization's analytics; multi-Campaign boards. Say
       which window, timezone and post scope (approved or all) every number uses.
     see: [ids, organizations]
@@ -527,31 +515,31 @@ chapters:
         title: Read a UGC Campaign's Dashboard
         when: ["dashboard", "campaign performance", "kpi", "content tab", "videos", "creators tab", "audience", "看板", "活动数据", "数据", "视频列表", "受众"]
         steps:
-          - campaign-monitor.campaign-get: "Header: type, status, start date."
-          - campaign-monitor.get-summary: "KPI tiles and trend."
-          - campaign-monitor.get-period-performance: "Analytics tab: this period vs the previous one."
-          - campaign-monitor.report-get: "--widget cumulative-views|content-tiers|creator-countries."
-          - campaign-monitor.video-list: "Content tab; --scope approved reads confirmed posts only."
-          - campaign-monitor.video-get: "--content-id from video +list; --section detail|summary|daily|insights."
-          - campaign-monitor.roster-list: "By Creator tab."
-          - campaign-monitor.format-list: "Performance by Format."
-          - campaign-monitor.format-post-list: "The posts behind one Format."
-          - campaign-monitor.audience-get: "--by period for the map and profile (owning organization only)."
-          - campaign-monitor.activity-list: "Activity log (owning organization only)."
+          - campaign.get: "Header: type, status, start day."
+          - campaign.get-summary: "KPI tiles and trend."
+          - campaign.get-period-performance: "Analytics tab: this period vs the previous one."
+          - campaign.report-get: "--widget cumulative-views|content-tiers|creator-countries."
+          - campaign.video-list: "Content tab; --scope approved reads confirmed posts only."
+          - campaign.video-get: "--content-id from video +list; --section detail|summary|daily|insights."
+          - campaign.roster-list: "By Creator tab."
+          - campaign.format-list: "Performance by Format."
+          - campaign.format-post-list: "The posts behind one Format."
+          - campaign.audience-get: "--by period for the map and profile (owning organization only)."
+          - campaign.activity-list: "Activity log (owning organization only)."
       - id: breakdown
         title: Compare Formats, personas or tags
         when: ["which format performs best", "breakdown", "compare briefs", "persona comparison", "tag comparison", "哪个脚本好", "对比", "分组对比", "人设对比"]
         before: Report the unassigned and awaiting-review buckets before any per-brief number; compare on median views with the post count beside it.
         steps:
-          - campaign-monitor.list-dimensions: "campaign_type decides what it offers; post_scopes says which scopes exist."
-          - campaign-monitor.get-breakdown: "--by brief|persona|tag (UGC); --link-status linked reads approved posts only."
-          - campaign-monitor.list-content: "Drill into a row: --brief-id / --persona-id with the same window."
+          - campaign.list-dimensions: "campaign_type decides what it offers; post_scopes says which scopes exist."
+          - campaign.get-breakdown: "--by brief|persona|tag (UGC); --link-status linked reads approved posts only."
+          - campaign.content-list: "Drill into a row: --brief-id / --persona-id with the same window."
       - id: org-analytics
         title: Read the organization's analytics over all Campaigns
         when: ["all campaigns", "organization analytics", "agency analytics", "overall performance", "delivery progress", "全部活动", "整体数据", "交付进度"]
         steps:
-          - campaign-monitor.agency-campaign-list: "--with-progress: each Campaign's delivery progress."
-          - campaign-monitor.agency-analytics-get: "Views, engagement, creators, posts and spend (operating organization only)."
+          - campaign.list: "--with-progress: each Campaign's delivery progress."
+          - campaign.analytics-get: "Views, engagement, creators, posts and spend (operating organization only)."
       - id: boards
         title: Build and read analytics boards
         when: ["board", "analytics board", "multi campaign board", "看板", "分析看板", "多活动"]

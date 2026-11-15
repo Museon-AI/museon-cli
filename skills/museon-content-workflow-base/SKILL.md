@@ -49,7 +49,7 @@ verify `museoncli version`,
 then resume the original task:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.2.1/museoncli-1.2.1-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v2.0.0/museoncli-2.0.0-py3-none-any.whl"
 ```
 
 Read [operating-model.md](references/operating-model.md) for risk, async work, authentication,
@@ -102,8 +102,8 @@ or input error. Only `agentic-campaign` and `hireaicreator` still document their
 | Desired result | Skill |
 | --- | --- |
 | External evidence and research synthesis | `museon-research` |
-| Monitored creator/content history | `museon-content-workflow-campaign-monitor` |
-| UGC briefs, brief assignments and creative brief links (`ugc`) | `museon-content-workflow-campaign-monitor` |
-| Tasks, Campaign setup, creator conversations, creators, client reports (`ugc`), analytics boards (`analytics`), organization members and billing (`organization`) | `museon-content-workflow-campaign-monitor` |
+| Campaigns of both kinds: list, create, set up, Dashboard figures, tracked creator/post history (`campaign`) | `museon-content-workflow-campaigns` |
+| UGC briefs, brief assignments and creative brief links (`ugc`) | `museon-content-workflow-campaigns` |
+| Tasks, creator conversations, creators, client reports (`ugc`), analytics boards (`analytics`), organization members and billing (`organization`) | `museon-content-workflow-campaigns` |
 | Reusable slideshow assets, generation and publish | `museon-content-workflow-ai-slideshow` |
 | HireAICreator content planning, editing and delivery | `museon-content-workflow-hireaicreator` |

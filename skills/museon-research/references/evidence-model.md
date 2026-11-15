@@ -24,4 +24,4 @@ Content Analyzer creates a durable video analysis run from a supported platform 
 
 ## Relationships
 
-Media preserves input files; campaign-monitor preserves monitored history. Keep the synthesis in a local report with evidence links.
+Media preserves input files; a Campaign (`campaign`) preserves tracked history. Keep the synthesis in a local report with evidence links.

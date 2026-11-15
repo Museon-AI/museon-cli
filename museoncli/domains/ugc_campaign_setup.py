@@ -1,16 +1,15 @@
 """Campaign setup reads: everything the Campaign setup page (/campaigns/{id}/setup) reads.
 
-``--campaign-id`` is the UGC campaign id (``ugc campaign +list``, or the ``id`` of
-``campaign-monitor agency-campaign +list``), not a campaign-monitor collection id.
+``--campaign-id`` is the Campaign id from ``campaign +list``.
 
-- ``campaign-settings +get``: the page's Campaign view -- type, status, settings
+- ``campaign settings +get``: the page's Campaign view -- type, status, settings
   (approval mode, platforms, budget cap, language), product and promotion context,
   readiness and confirmed steps, the briefs, and for the Campaign's team also the
   payscales, pay defaults and contract template.
 - One command per section the page reads beside it: staff (PM/OP), delivery targets,
   payscales and rates, the contract template, the Discord server link, DM rules and
   automations.
-- ``campaign-setup +get`` reads all of those at once (a fixed handful of requests) and
+- ``campaign setup +get`` reads all of those at once (a fixed handful of requests) and
   reports a section the caller may not read under ``unavailable`` instead of failing.
 
 Who reads what is the server's: the Campaign view is open to everyone who may see the
@@ -30,10 +29,7 @@ from museoncli.execution import CommandContext
 EXECUTORS: dict[str, Any] = {}
 
 CAMPAIGN = "/ugc/campaigns/{campaign_id}"
-CAMPAIGN_ID = uuid(
-    "UGC campaign id (ugc campaign +list, or agency-campaign +list's id), not a "
-    "campaign-monitor collection id."
-)
+CAMPAIGN_ID = uuid("Campaign ID (from campaign +list).")
 TEAM = (
     " Owner/admin and the Campaign's operators of the organization that owns it; members "
     "cannot read it."
@@ -80,36 +76,44 @@ async def _setup(ctx: CommandContext, arguments: dict[str, Any]) -> Any:
     return {"campaign_id": campaign_id, "sections": sections, "unavailable": unavailable}
 
 
-def _one(resource: str, action: str, suffix: str, summary: str, example_tail: str = "") -> Any:
+def _one(
+    resource: str,
+    action: str,
+    suffix: str,
+    summary: str,
+    domain: Domain = Domain.UGC,
+) -> Any:
     return read(
         EXECUTORS,
-        Domain.UGC,
+        domain,
         resource,
         action,
         summary=summary,
         properties={"campaign_id": CAMPAIGN_ID},
         required=("campaign_id",),
         route=lambda a: Route(CAMPAIGN + suffix),
-        example=f"museoncli ugc {resource} +{action} --campaign-id <campaign_id>{example_tail}",
+        example=f"museoncli {domain.value} {resource} +{action} --campaign-id <campaign_id>",
     )
 
 
 def specs() -> list[CommandSpec]:
     return [
         _one(
-            "campaign-settings",
+            "settings",
             "get",
             "",
             "Read a Campaign's setup as its setup page does: type, status, settings (approval "
             "mode, platforms, budget cap, language), product and promotion context, readiness, "
             "confirmed steps and briefs; for the Campaign's team also payscales, pay defaults "
             "and the contract template. Anyone who may see the Campaign reads it.",
+            Domain.CAMPAIGN,
         ),
         _one(
-            "campaign-staff",
+            "staff",
             "list",
             "/staff",
             "List a Campaign's staff (PM / OP) with their roles." + TEAM,
+            Domain.CAMPAIGN,
         ),
         _one(
             "delivery-target",
@@ -151,8 +155,8 @@ def specs() -> list[CommandSpec]:
         ),
         read(
             EXECUTORS,
-            Domain.UGC,
-            "campaign-setup",
+            Domain.CAMPAIGN,
+            "setup",
             "get",
             summary=(
                 "Read everything a Campaign's setup page reads in one call: settings, staff, "
@@ -173,7 +177,7 @@ def specs() -> list[CommandSpec]:
             required=("campaign_id",),
             execute=_setup,
             example=(
-                "museoncli ugc campaign-setup +get --campaign-id <campaign_id> "
+                "museoncli campaign setup +get --campaign-id <campaign_id> "
                 "--section settings --section payscales"
             ),
             output="data.sections (by name), data.unavailable (name -> http_status, code).",

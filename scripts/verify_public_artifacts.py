@@ -16,7 +16,7 @@ MANAGED_SKILLS = (
     "museon-content-workflow-base",
     "museon-content-workflow-hireaicreator",
     "museon-content-workflow-ai-slideshow",
-    "museon-content-workflow-campaign-monitor",
+    "museon-content-workflow-campaigns",
 )
 PRIVATE_REFERENCES = (
     b"apps/museoncli",

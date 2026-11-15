@@ -71,7 +71,7 @@ at the last published release until a separate release is approved.
 | --- | --- |
 | Research public content and Hooks | `research` |
 | Plan, inspect, edit and verify HireAICreator content | `hireaicreator` |
-| Track creators, posts and performance | `campaign-monitor` |
+| List, create, launch and set up Campaigns of both kinds (UGC and content tracking); read their Dashboard figures; track creators and posts | `campaign` |
 | Edit UGC briefs, brief assignments and which brief a creative cites; run a UGC campaign day to day (tasks, roster, creator messages, content review, recruiting); broadcast to creators, set team reminders and automatic creator nudges; generate, review and send client reports | `ugc` |
 | Create, edit and delete multi-Campaign analytics boards | `analytics` |
 | Analyze video content | `content-analysis` |
@@ -140,7 +140,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.2.1/museoncli-1.2.1-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v2.0.0/museoncli-2.0.0-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:

@@ -40,6 +40,7 @@ from museoncli.domains import (
     get_command_spec,
     schema_payload,
 )
+from museoncli.domains._removed import RemovedCommandError, removed_invocation
 from museoncli.domains._legacy_workspace import (
     ORGANIZATION_WORKSPACE_MISMATCH_MESSAGE,
     keeps_workspace,
@@ -139,6 +140,7 @@ EXIT_INTERRUPTED = 130
 
 _EXIT_CODE_BY_REASON = {
     "usage_error": EXIT_USAGE,
+    "invalid_command": EXIT_USAGE,
     "not_found": EXIT_NOT_FOUND,
     "missing_auth": EXIT_AUTH_REQUIRED,
     "unauthorized": EXIT_AUTH_REQUIRED,
@@ -197,6 +199,12 @@ class JsonArgumentParser(argparse.ArgumentParser):
 def main(*, update: dict[str, Any] | None = None) -> None:
     _configure_utf8_stdout()
     argv = sys.argv[1:]
+    removed = removed_invocation([item for item in argv if item != "--json"])
+    if removed is not None:
+        # A 1.x command name: answer with its 2.0 replacement instead of argparse's choices.
+        payload, code = error_envelope(removed, command=None)
+        emit(payload)
+        raise SystemExit(code)
     parser = build_parser()
     try:
         args, extras = parser.parse_known_args([item for item in argv if item != "--json"])
@@ -1097,6 +1105,8 @@ def clear_expired_pending_web_approval(cfg: Config) -> None:
 def reason_from_exception(exc: Exception) -> str:
     if isinstance(exc, UsageError):
         return "usage_error"
+    if isinstance(exc, RemovedCommandError):
+        return "invalid_command"
     if isinstance(exc, CliOutdatedError):
         return "cli_outdated"
     if isinstance(exc, ApiRequestError):
@@ -1144,6 +1154,8 @@ def reason_from_exception(exc: Exception) -> str:
 
 
 def exception_detail(exc: Exception) -> Any:
+    if isinstance(exc, RemovedCommandError):
+        return exc.detail()
     return exc.detail if isinstance(exc, ApiRequestError) else str(exc)
 
 
@@ -1166,6 +1178,9 @@ def error_envelope(exc: Exception, *, command: str | None) -> tuple[dict[str, An
             error["message"] = _SERVER_CODE_MESSAGES[detail["code"]]
     if isinstance(exc, CliOutdatedError):
         error["hint"] = exc.detail.get("install_hint")
+    if isinstance(exc, RemovedCommandError):
+        error["replacement"] = exc.replacement
+        error["hint"] = f"Run `{exc.replacement} --help`."
     error["retryable"] = reason in _RETRYABLE_REASONS
     payload: dict[str, Any] = {
         "ok": False,

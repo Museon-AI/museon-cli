@@ -2,6 +2,8 @@
 
 状态：已随 0.6.0 发布。本文保留为 CLI 2.0 迁移记录，下文的命令数量是当时的快照；当前命令面以 `museoncli schema` 和 `docs/agent-discoverability.md` 为准。
 
+注意：这里的「CLI 2.0」是 0.6.0 时的内部命令面代号，与软件包版本 2.0.0 无关。2.0.0 把 `campaign-monitor` 和 `ugc` 的 Campaign 命令合并为 `campaign`，见 [CHANGELOG](../CHANGELOG.md) 的 2.0.0 一节。
+
 保留 research、campaign-monitor、content-analysis、artifacts、social-account 的 13 个指定入口、routines、skills 和认证、组织（org）、schema、setup 等基础入口。新增 media 五个原子入口（upload/import/get/generate/status），普通文件通过upload/get的显式file类型分支。新增 hireaicreator 40 个业务命令；ai-slideshow 以素材7条、独立生成3条和旧 slideshow 发布22条承接明确保留能力；仍是未发布候选。
 
 ## 旧入口处理

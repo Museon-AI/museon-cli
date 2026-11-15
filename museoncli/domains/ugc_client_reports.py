@@ -20,7 +20,7 @@ from museoncli.execution import CommandContext
 
 EXECUTORS: dict[str, Any] = {}
 
-CAMPAIGN_ID = uuid("Campaign id (ugc campaign +list, or agency-campaign +list's id).")
+CAMPAIGN_ID = uuid("Campaign ID (from campaign +list).")
 REPORT_FIELDS = (
     "id",
     "type",

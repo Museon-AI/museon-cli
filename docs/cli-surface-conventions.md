@@ -30,9 +30,13 @@ museoncli <domain> <resource> +<action> [flags]   # hireaicreator, ai-slideshow
 
 - The id of the entity a command returns or acts on is always `--id`.
   (`routines +get --id`, `content-analysis +get --id`, `media +get --id`)
-- Write commands scoped inside a parent entity use `--id` for the parent and
-  qualified flags for children (`campaign-monitor +content-remove --id <campaign>
-  --collection-content-id <content>`).
+- A Campaign is always `--campaign-id`, on the Campaign's own commands too
+  (`campaign +get --campaign-id`, `campaign +launch --campaign-id`). Inside a Campaign,
+  `--id` is the child the command acts on and other children are qualified
+  (`ugc enrollment +approve --campaign-id <campaign> --id <enrollment>`,
+  `campaign content +remove --campaign-id <campaign> --collection-content-id <content>`).
+- Other write commands scoped inside a parent entity use `--id` for the parent and
+  qualified flags for children.
 - Foreign references are always qualified: `--<entity>-id`.
 - Positional IDs are forbidden. The only allowed positional is a mode selector
   (`routines +record output|memory`).

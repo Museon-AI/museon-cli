@@ -2,6 +2,89 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 2.0.0
+
+One `campaign` command group for both kinds of Campaign, UGC and content tracking. Breaking: `campaign-monitor` and the Campaign commands of `ugc` are removed, with no aliases.
+
+- A Campaign has one id, and every command that addresses one takes it as `--campaign-id`, the Campaign's own commands included (`campaign +get --campaign-id`, `campaign +launch --campaign-id`; 1.x took `--id` there). The "monitor collection id" is gone from help, the guide and the Skills: it was always the Campaign's id.
+- `campaign` is the Campaign itself and its figures: `+list` (both kinds and shared-in Campaigns, as the Campaigns page lists them; `--type ugc|tracking`, `--status`, `--search`, `--with-progress`), `+get` (the Dashboard header and the tracking record in one read), `+create`, `+launch` / `+pause` / `+resume` / `+complete` / `+archive` / `+restore` / `+rename`, `settings`, `staff`, `setup`, the figures (`+get-summary`, `+get-period-performance`, `+list-dimensions`, `+get-breakdown`), the Dashboard tabs (`video`, `roster`, `format`, `format-post`, `report`, `creator-tag`, `audience`, `settlement`, `payout`, `activity`), the organization's `analytics` and `payment` reads, and a Campaign's `creator` and `content` (posts).
+- `campaign creator +add` / `+remove` and `campaign content +add` / `+remove` / `+bulk-remove` refuse a UGC Campaign with `invalid_input`, as the web does: its creators join through enrollments and its posts are counted through review (`ugc post +stop-counting`).
+- `ugc` keeps the work with a UGC Campaign's creators. `ugc enrollment +list` takes `--trial-only`, `--creator-id` (a UGC creator) and `--detail` (the Operations tab's whole row, with contract and Discord state), replacing `campaign-monitor enrollment +list`. `ugc assignment +list` and `ugc creator-check +get` / `+list` moved from `campaign-monitor`.
+- Dashboard reads address their routes by the Campaign id directly: the extra read that mapped a collection to its UGC Campaign is gone. The organization-wide reads (`campaign +list`, `campaign analytics +get`) need an organization (`museoncli org select` or `--organization-id`); they no longer fall back to the caller's operator organization.
+- A removed name answers `ok: false`, `reason: invalid_command` (exit 2) with `error.replacement`, the command to use instead, whether it is run, passed to `museoncli schema`, or named as a group (`museoncli campaign-monitor`). `museoncli guide --search <old name>` finds its replacement. The command contract lists the removed names under each replacement as `removed_aliases`, so the Museon API still resolves a 1.x name.
+- Skills: `museon-content-workflow-campaign-monitor` is now `museon-content-workflow-campaigns`. `museoncli setup` (and the automatic Skill sync) removes the old one when Museon installed it; a same-named folder of your own is left alone.
+
+| 1.x command | 2.0 command |
+| --- | --- |
+| `campaign-monitor +list` | `campaign +list` |
+| `campaign-monitor +get` | `campaign +get` |
+| `campaign-monitor campaign +get` | `campaign +get` |
+| `campaign-monitor agency-campaign +list` | `campaign +list` |
+| `campaign-monitor +list-dimensions` | `campaign +list-dimensions` |
+| `campaign-monitor +get-breakdown` | `campaign +get-breakdown` |
+| `campaign-monitor +get-summary` | `campaign +get-summary` |
+| `campaign-monitor +summary` | `campaign +get-summary` |
+| `campaign-monitor +get-period-performance` | `campaign +get-period-performance` |
+| `campaign-monitor +period-performance` | `campaign +get-period-performance` |
+| `campaign-monitor +list-creators` | `campaign creator +list` |
+| `campaign-monitor +creator-list` | `campaign creator +list` |
+| `campaign-monitor +add-creators` | `campaign creator +add` |
+| `campaign-monitor +creator-add` | `campaign creator +add` |
+| `campaign-monitor +remove-creators` | `campaign creator +remove` |
+| `campaign-monitor +creator-remove` | `campaign creator +remove` |
+| `campaign-monitor +list-content` | `campaign content +list` |
+| `campaign-monitor +content-list` | `campaign content +list` |
+| `campaign-monitor +add-content` | `campaign content +add` |
+| `campaign-monitor +content-add` | `campaign content +add` |
+| `campaign-monitor +remove-content` | `campaign content +remove` |
+| `campaign-monitor +content-remove` | `campaign content +remove` |
+| `campaign-monitor +bulk-remove-content` | `campaign content +bulk-remove` |
+| `campaign-monitor +content-batch-remove` | `campaign content +bulk-remove` |
+| `campaign-monitor +get-creator` | `campaign creator +get` |
+| `campaign-monitor +creator-get` | `campaign creator +get` |
+| `campaign-monitor +get-creator-performance` | `campaign creator +get-performance` |
+| `campaign-monitor +creator-performance-get` | `campaign creator +get-performance` |
+| `campaign-monitor +list-posts` | `campaign post +list` |
+| `campaign-monitor +post-list` | `campaign post +list` |
+| `campaign-monitor +get-post` | `campaign post +get` |
+| `campaign-monitor +post-get` | `campaign post +get` |
+| `campaign-monitor +get-post-performance` | `campaign post +get-performance` |
+| `campaign-monitor +post-performance-get` | `campaign post +get-performance` |
+| `campaign-monitor +resolve-post` | `campaign post +resolve` |
+| `campaign-monitor +post-resolve` | `campaign post +resolve` |
+| `campaign-monitor video +list` | `campaign video +list` |
+| `campaign-monitor video +get` | `campaign video +get` |
+| `campaign-monitor roster +list` | `campaign roster +list` |
+| `campaign-monitor format +list` | `campaign format +list` |
+| `campaign-monitor format-post +list` | `campaign format-post +list` |
+| `campaign-monitor report +get` | `campaign report +get` |
+| `campaign-monitor creator-tag +list` | `campaign creator-tag +list` |
+| `campaign-monitor audience +get` | `campaign audience +get` |
+| `campaign-monitor payment +list` | `campaign payment +list` |
+| `campaign-monitor payment-summary +get` | `campaign payment-summary +get` |
+| `campaign-monitor settlement +get` | `campaign settlement +get` |
+| `campaign-monitor payout +list` | `campaign payout +list` |
+| `campaign-monitor activity +list` | `campaign activity +list` |
+| `campaign-monitor agency-analytics +get` | `campaign analytics +get` |
+| `campaign-monitor enrollment +list` | `ugc enrollment +list` |
+| `campaign-monitor assignment +list` | `ugc assignment +list` |
+| `campaign-monitor creator-check +get` | `ugc creator-check +get` |
+| `campaign-monitor creator-check +list` | `ugc creator-check +list` |
+| `ugc campaign +list` | `campaign +list` |
+| `ugc campaign +create` | `campaign +create` |
+| `ugc campaign +launch` | `campaign +launch` |
+| `ugc campaign +pause` | `campaign +pause` |
+| `ugc campaign +resume` | `campaign +resume` |
+| `ugc campaign +complete` | `campaign +complete` |
+| `ugc campaign +archive` | `campaign +archive` |
+| `ugc campaign +restore` | `campaign +restore` |
+| `ugc campaign +rename` | `campaign +rename` |
+| `ugc campaign-settings +get` | `campaign settings +get` |
+| `ugc campaign-settings +update` | `campaign settings +update` |
+| `ugc campaign-staff +list` | `campaign staff +list` |
+| `ugc campaign-staff +set` | `campaign staff +set` |
+| `ugc campaign-setup +get` | `campaign setup +get` |
+
 ## 1.2.1
 
 - `museoncli guide --search` finds the application approval task by 审批 / 审批报名 / 批准 (it only knew 审核报名, 通过报名, 拒绝报名).

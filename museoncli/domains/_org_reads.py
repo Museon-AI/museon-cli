@@ -93,7 +93,7 @@ async def get(ctx: CommandContext, route: Route, arguments: dict[str, Any] | Non
 def read(
     executors: dict[str, Any],
     domain: Domain,
-    resource: str,
+    resource: str | None,
     action: str,
     *,
     summary: str,
@@ -108,7 +108,7 @@ def read(
     output: str = "Unmodified Museon API read model.",
 ) -> CommandSpec:
     """A read command: one `route` (or a bounded `execute` over several), registered in
-    `executors` under its schema name."""
+    `executors` under its schema name. `resource` None makes a flat `<domain> +<action>`."""
     if (route is None) == (execute is None):
         raise ValueError("a read names exactly one of route and execute")
     props = dict(properties)
@@ -117,7 +117,7 @@ def read(
     elif paging == "offset":
         props.update(page=PAGE, page_size=PAGE_SIZE)
     schema = obj(props, required)
-    name = f"{domain.value}.{resource}-{action}"
+    name = f"{domain.value}.{resource}-{action}" if resource else f"{domain.value}.{action}"
     aliases = flags or {}
 
     def add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -171,7 +171,9 @@ def read(
         summary=summary,
         risk_level="read",
         execution="direct",
-        adapter_tool_name=f"{domain.value}_{resource}_{action}".replace("-", "_"),
+        adapter_tool_name="_".join(
+            part for part in (domain.value, resource, action) if part
+        ).replace("-", "_"),
         input_schema=schema,
         output_schema=_direct_output_schema(output),
         examples=[example],

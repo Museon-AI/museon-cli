@@ -24,6 +24,7 @@ from museoncli.domains._discovery import (
     resource_help,
 )
 from museoncli.domains._legacy_workspace import legacy_workspace_spec
+from museoncli.domains._removed import removed_schema_name
 from museoncli.domains._shared import (
     _spec_schema_payload,
     _spec_summary_payload,
@@ -40,17 +41,17 @@ from museoncli.domains import (
     publish,
     cloud_phone,
     ai_slideshow,
-    campaign_monitor,
+    campaign_lifecycle,
+    campaign_data,
+    campaign_store,
+    campaign_dashboard,
     agentic_campaign,
-    social_media,
-    campaign_monitor_dashboard,
     ugc,
     ugc_task_actions,
     ugc_enrollment_actions,
     ugc_review_actions,
     ugc_messaging,
     ugc_recruiting,
-    ugc_campaign_lifecycle,
     ugc_campaign_settings_write,
     ugc_briefs,
     ugc_personas,
@@ -88,17 +89,17 @@ _DOMAIN_MODULES = (
     publish,
     cloud_phone,
     ai_slideshow,
-    campaign_monitor,
+    campaign_lifecycle,
+    campaign_data,
+    campaign_store,
+    campaign_dashboard,
     agentic_campaign,
-    social_media,
-    campaign_monitor_dashboard,
     ugc,
     ugc_task_actions,
     ugc_enrollment_actions,
     ugc_review_actions,
     ugc_messaging,
     ugc_recruiting,
-    ugc_campaign_lifecycle,
     ugc_campaign_settings_write,
     ugc_briefs,
     ugc_personas,
@@ -178,7 +179,9 @@ def get_command_spec(schema_name: str) -> CommandSpec:
                 and len(resource) <= 1
             ):
                 return spec
-        raise ValueError(f"Unknown command schema: {schema_name}")
+        raise removed_schema_name(schema_name) or ValueError(
+            f"Unknown command schema: {schema_name}"
+        )
     normalized = schema_name.replace(".+", ".")
     for spec in command_specs():
         if spec.schema_name == normalized:
@@ -186,7 +189,7 @@ def get_command_spec(schema_name: str) -> CommandSpec:
     for spec in command_specs():
         if normalized in spec.legacy_schema_names:
             return spec
-    raise ValueError(f"Unknown command schema: {schema_name}")
+    raise removed_schema_name(schema_name) or ValueError(f"Unknown command schema: {schema_name}")
 
 
 def _hide_legacy_choices(

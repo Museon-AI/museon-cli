@@ -4,10 +4,9 @@ Each command reads the route the web page reads, in the organization the command
 (`museoncli org select`, or `--organization-id` for one call). The server decides what the
 login may see, exactly as in the browser; on a Campaign shared into the organization the CLI
 reads only its figures, and at the operator tier also its settlement, payouts, enrollments and
-creator checks (`campaign-monitor`); a refusal is `not_found` (or `forbidden`): say the
-login cannot see it, never retry under another identity. `--campaign-id` is the UGC campaign
-id (`ugc campaign +list`, or `agency-campaign +list`'s `id`), not a campaign-monitor
-collection id. All of these are reads: nothing changes.
+creator checks; a refusal is `not_found` (or `forbidden`): say the login cannot see it,
+never retry under another identity. `--campaign-id` is the Campaign id from
+`campaign +list`. All of these are reads: nothing changes.
 
 ## Tasks (任务)
 
@@ -24,16 +23,16 @@ Pages follow `next_cursor` with `--cursor`.
 
 | Need | Command | Who |
 | --- | --- | --- |
-| Everything the setup page shows, at once | `ugc campaign-setup +get --campaign-id <id> [--section <name> ...]` | per section, below |
-| Type, approval mode, platforms, budget cap, product, readiness, briefs (payscales and contract for the team) | `ugc campaign-settings +get --campaign-id <id>` | anyone who sees the Campaign |
-| PM / OP | `ugc campaign-staff +list --campaign-id <id>` | owner, admin, the Campaign's operators |
+| Everything the setup page shows, at once | `campaign setup +get --campaign-id <id> [--section <name> ...]` | per section, below |
+| Type, approval mode, platforms, budget cap, product, readiness, briefs (payscales and contract for the team) | `campaign settings +get --campaign-id <id>` | anyone who sees the Campaign |
+| PM / OP | `campaign staff +list --campaign-id <id>` | owner, admin, the Campaign's operators |
 | Delivery targets | `ugc delivery-target +list --campaign-id <id>` | same |
 | Payscales and rates | `ugc payscale +list --campaign-id <id>` | same |
 | Contract template | `ugc contract-template +get --campaign-id <id>` | owner, admin, the Campaign's operators |
 | Discord server | `ugc discord-server +get --campaign-id <id>` | same |
 | DM rules, DM automations | `ugc dm-rule +list`, `ugc dm-automation +list` `--campaign-id <id>` | same |
 
-`campaign-setup +get` lists a section the login may not read under `data.unavailable` with its
+`campaign setup +get` lists a section the login may not read under `data.unavailable` with its
 HTTP status (a member reads `settings` only). Report what is unavailable; don't guess it.
 
 ## Creators and conversations

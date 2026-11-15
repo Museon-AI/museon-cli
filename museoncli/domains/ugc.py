@@ -1,9 +1,8 @@
-"""UGC workbench commands: campaigns, roster, briefs, creatives and assignments.
+"""UGC workbench commands: roster, briefs, creatives and assignments.
 
 Every call goes straight to the UGC workbench (``/api/v2/ugc``), which
 authorizes the CLI's API key with the same organization role as the web app. The
-ids are UGC campaign ids (``marketing_campaigns.id``), not campaign-monitor
-collection ids.
+ids are Campaign ids (``marketing_campaigns.id``), as ``campaign +list`` returns them.
 
 The workbench has no confirmation step of its own. The agreed rule is that the
 Agent runs a write with ``--dry-run`` first, shows the user what it returned and
@@ -302,40 +301,6 @@ def brief_progress(
 # -- executors: reads ------------------------------------------------------
 
 
-async def _execute_campaign_list(ctx: CommandContext) -> Any:
-    args = ctx.arguments
-    status = args.get("status")
-    if not ctx.organization_id:
-        raise RuntimeError(
-            "missing_organization: select one with `museoncli org select` or pass --organization-id"
-        )
-    page = await _get(
-        ctx,
-        f"/organizations/{ctx.organization_id}/campaigns",
-        compact_params(
-            {
-                "campaign_type": "ugc",
-                "cursor": args.get("cursor"),
-                "limit": args.get("page_size"),
-                # The route lists live campaigns, or archived ones instead of them.
-                "archived": True if status == "archived" else None,
-            }
-        ),
-    )
-    # The route has no status filter (draft/active/...); keep --status on the client.
-    # A filtered page can be shorter than its limit; next_cursor still pages on.
-    if status and isinstance(page, dict) and isinstance(page.get("items"), list):
-        page = {
-            **page,
-            "items": [
-                item
-                for item in page["items"]
-                if isinstance(item, dict) and item.get("status") == status
-            ],
-        }
-    return page
-
-
 def _enrollment_row(item: dict[str, Any]) -> dict[str, Any]:
     creator = item.get("creator") if isinstance(item.get("creator"), dict) else {}
     return {
@@ -363,6 +328,8 @@ async def _execute_enrollment_list(ctx: CommandContext) -> Any:
         compact_params(
             {
                 "status": args.get("status"),
+                "trial_only": args.get("trial_only"),
+                "creator_id": args.get("creator_id"),
                 "q": args.get("search"),
                 "cursor": args.get("cursor"),
                 "limit": args.get("page_size"),
@@ -370,8 +337,10 @@ async def _execute_enrollment_list(ctx: CommandContext) -> Any:
         ),
     )
     page = page if isinstance(page, dict) else {}
+    rows = _dicts(page.get("items"))
     return {
-        "items": [_enrollment_row(item) for item in _dicts(page.get("items"))],
+        # --detail: the Operations tab's whole row (contract, Discord state, ...).
+        "items": rows if args.get("detail") else [_enrollment_row(item) for item in rows],
         "next_cursor": page.get("next_cursor"),
     }
 
@@ -785,25 +754,13 @@ def _page_size(args: argparse.Namespace) -> int:
     return int(args.page_size)
 
 
-def _add_campaign_list_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--status", choices=CAMPAIGN_STATUSES)
-    _add_cursor_paging(parser)
-
-
-def _build_campaign_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return compact_params(
-        {
-            "status": args.status,
-            "cursor": args.cursor,
-            "page_size": _page_size(args),
-        }
-    )
-
-
 def _add_enrollment_list_arguments(parser: argparse.ArgumentParser) -> None:
     _add_campaign_id(parser)
     parser.add_argument("--status", choices=ENROLLMENT_STATUSES)
+    parser.add_argument("--trial-only", action="store_true")
+    parser.add_argument("--creator-id")
     parser.add_argument("--search")
+    parser.add_argument("--detail", action="store_true")
     _add_cursor_paging(parser)
 
 
@@ -812,7 +769,10 @@ def _build_enrollment_list_arguments(args: argparse.Namespace) -> dict[str, Any]
         {
             **_campaign_args(args),
             "status": args.status,
+            "trial_only": True if args.trial_only else None,
+            "creator_id": _uuid(args.creator_id, flag="--creator-id") if args.creator_id else None,
             "search": args.search,
+            "detail": True if args.detail else None,
             "cursor": args.cursor,
             "page_size": _page_size(args),
         }
@@ -1070,8 +1030,7 @@ def _uuid_property(description: str) -> dict[str, Any]:
 
 
 _CAMPAIGN_ID = _uuid_property(
-    "UGC campaign ID (marketing campaign id from ugc campaign +list), not a "
-    "campaign-monitor collection id."
+    "UGC Campaign ID (from campaign +list)."
 )
 _DRY_RUN = {
     "type": "boolean",
@@ -1122,38 +1081,14 @@ def specs() -> list[CommandSpec]:
     return [
         CommandSpec(
             domain=domain,
-            resource="campaign",
-            shortcut="+list",
-            summary=(
-                "List the selected organization's UGC campaigns, newest first. Their ids are what "
-                "every other ugc command takes as --campaign-id."
-            ),
-            adapter_tool_name="ugc_campaign_list",
-            input_schema=_schema(
-                {
-                    "status": {
-                        "type": ["string", "null"],
-                        "enum": [*CAMPAIGN_STATUSES, None],
-                        "description": "Only campaigns in this status; archived ones only when asked.",
-                    },
-                    **_PAGING,
-                },
-                [],
-            ),
-            output_schema=_direct_output_schema("A page of UGC campaigns: items and next_cursor."),
-            examples=["museoncli ugc campaign +list --status active"],
-            add_arguments=_add_campaign_list_arguments,
-            build_arguments=_build_campaign_list_arguments,
-            **read,  # type: ignore[arg-type]
-        ),
-        CommandSpec(
-            domain=domain,
             resource="enrollment",
             shortcut="+list",
             summary=(
                 "List a UGC campaign's roster: enrollment id, status, persona, creator name and "
                 "accounts, newest first. Use it to find the enrollment ids to assign a brief to; "
-                "participating is onboarding, active and paused together."
+                "participating is onboarding, active and paused together. --detail returns the "
+                "Operations tab's whole row (contract and Discord state). The Campaign's team: "
+                "owner, admin and its operators, or a share's operator tier."
             ),
             adapter_tool_name="ugc_enrollment_list",
             input_schema=_schema(
@@ -1164,7 +1099,23 @@ def specs() -> list[CommandSpec]:
                         "enum": [*ENROLLMENT_STATUSES, None],
                         "description": "Only enrollments in this status.",
                     },
+                    "trial_only": {
+                        "type": "boolean",
+                        "description": "Only enrollments still in their trial.",
+                    },
+                    "creator_id": {
+                        "type": ["string", "null"],
+                        "format": "uuid",
+                        "description": "Only this UGC creator's enrollment (a person, from ugc creator +list).",
+                    },
                     "search": {"type": ["string", "null"], "description": "Creator name search."},
+                    "detail": {
+                        "type": "boolean",
+                        "description": (
+                            "Return the Operations tab's whole row (contract, Discord state, "
+                            "accounts) instead of the compact one."
+                        ),
+                    },
                     **_PAGING,
                 },
                 ["campaign_id"],
@@ -1540,7 +1491,6 @@ def specs() -> list[CommandSpec]:
 
 
 EXECUTORS = {
-    "ugc.campaign-list": direct_enveloped(_execute_campaign_list),
     "ugc.enrollment-list": direct_enveloped(_execute_enrollment_list),
     "ugc.brief-list": direct_enveloped(_execute_brief_list),
     "ugc.brief-get": direct_enveloped(_execute_brief_get),
