@@ -167,6 +167,48 @@ CLI_COMMANDS: list[dict[str, Any]] = [
             }
         ),
     },
+    {
+        **_COMMON,
+        "name": "guide",
+        "cli": "museoncli guide",
+        "examples": [
+            "museoncli guide",
+            "museoncli guide ugc-approve-applications",
+            "museoncli guide --search approve creator",
+        ],
+        "risk_level": "read",
+        "summary": (
+            "Which commands to use for a task, in order. No argument lists chapters and tasks; "
+            "a task id returns its steps with each command's usage line (required flags), risk, "
+            "summary and gotcha; --search ranks tasks and commands by the user's words. Reads "
+            "the bundled task index: no login, no network."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task": {
+                    "type": "string",
+                    "description": "Task, chapter or topic id from `museoncli guide`.",
+                },
+                "search": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Words describing the job (English or Chinese).",
+                },
+            },
+            "required": [],
+        },
+        "output_schema": _envelope(
+            {
+                "type": "object",
+                "description": (
+                    "No input: intro, chapters with their tasks, topics. A task: kind=task, "
+                    "steps[] of {step, command, usage, risk, needs_yes, summary, note}. "
+                    "--search: query, tasks[], commands[]."
+                ),
+            }
+        ),
+    },
 ]
 
 

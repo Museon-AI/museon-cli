@@ -39,6 +39,9 @@ unrelated tasks in their own context.
 
 ## Mental model
 
+**Start with `museoncli guide`:** `museoncli guide --search <the user's words>` finds the task, `museoncli guide <task-id>` gives its commands in order with required flags, risk and gotchas.
+The same index is in [task-index.md](references/task-index.md); read its topics before the first write.
+
 Museon CLI is the execution layer; bundled workflow Skills provide durable operating judgment;
 runtime Business Skills provide organization methodology. The live schema is the sole source for
 commands and inputs. Install the CLI when needed: if it is absent, install the reviewed wheel,
@@ -46,7 +49,7 @@ verify `museoncli version`,
 then resume the original task:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.1.1/museoncli-1.1.1-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.2.0/museoncli-1.2.0-py3-none-any.whl"
 ```
 
 Read [operating-model.md](references/operating-model.md) for risk, async work, authentication,
@@ -62,7 +65,8 @@ and Business Skill boundaries. Read only the reference needed for the current ca
 
 | Situation | Start with |
 | --- | --- |
-| Discover a domain or command | `museoncli schema` |
+| Which command does this job | `museoncli guide --search <words>`, then `museoncli guide <task-id>` |
+| One command's inputs and outputs | `museoncli schema <command>` (`--compact` for a short list) |
 | Strategic/research/audit work | `museoncli skills +list` |
 | Known Business Skill | `museoncli skills +get` |
 | Authentication failure | `museoncli auth start` |

@@ -1,6 +1,6 @@
 ---
 name: museon-content-workflow-campaign-monitor
-description: "Track campaign collections, creators, content, synced posts, and local performance history with Museon CLI; create, launch and set up UGC Campaigns; manage Formats (briefs), personas, brief assignments and creative brief links; build analytics boards; generate and send client reports; broadcast to creators; set reminders and automatic nudges; run a UGC campaign day to day: tasks, approving and removing creators, messages and nudges, content review and counting, recruitment links and invitations.; read tasks, Campaign setup, creator conversations, creators, client reports, boards and organization members."
+description: "Run MuseOn Campaigns with Museon CLI. Use for UGC Campaign setup and daily operations (recruiting, approvals, contracts, tasks, creator messages, content review, counting, client reports), Campaign Dashboard and content tracking reads, analytics boards and organization members."
 metadata:
   requires:
     bins: ["museoncli"]
@@ -11,6 +11,8 @@ metadata:
 # Campaign monitor
 
 **CRITICAL — first read [`../museon-content-workflow-base/SKILL.md`](../museon-content-workflow-base/SKILL.md).**
+
+Find the commands for a job with `museoncli guide --search <words>`; chapters 1 (UGC Campaign operations, in working order), 2 (tracking) and 3 (analytics) of `museoncli guide` cover this Skill. The references below explain the judgment behind them.
 
 ## Mental model
 

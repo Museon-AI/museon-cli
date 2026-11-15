@@ -67,6 +67,11 @@ https://www.museon.ai/cli/install.md
 `ai-slideshow` 保留素材、独立生成与旧 slideshow 发布。五个集成 skill 分别承载基础原子能力、研究、HireAICreator、slideshow 与 campaign-monitor 流程。Agent 使用这些原子命令编排工作流。
 写入后必须回读所属业务状态，不能把请求成功当成任务完成。
 
+某件事该用哪个命令？`museoncli guide` 按章节列出所有任务（UGC Campaign 运营按实际工作顺序排列，
+另有内容追踪、数据分析、账号与发布、AI 图文、调研、组织）；`museoncli guide <task-id>` 给出该任务按顺序的命令、
+必填参数、风险和注意事项；`museoncli guide --search <词>` 用用户自己的话（中英文都可）查任务和命令。
+它在本地运行，不需要登录。同一份指南也以 [`guide.md`](docs/guide.md) 发布，并由 [`llms.txt`](docs/llms.txt) 索引。
+
 升级前请阅读[迁移说明](docs/cli-2-migration.md)。HireAICreator 业务域已包含在这个未发布候选中。
 后端能力和数据没有随命令面退役而删除；权限仍由后端按用户、组织角色和 Campaign 范围检查。
 
@@ -106,7 +111,7 @@ MuseOn 只有组织：访问权限由组织角色加 Campaign 范围决定。每
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.1.1/museoncli-1.1.1-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.2.0/museoncli-1.2.0-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：

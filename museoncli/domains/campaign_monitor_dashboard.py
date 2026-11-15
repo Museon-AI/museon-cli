@@ -36,7 +36,13 @@ B = {"type": "boolean"}
 PAGE = {"type": "integer", "minimum": 1}
 PAGE_SIZE = {"type": "integer", "minimum": 1, "maximum": 100}
 SCOPE = enum("all", "approved")
-CAMPAIGN_ID = {**U, "description": "Campaign id as campaign-monitor +list returns it."}
+CAMPAIGN_ID = {
+    **U,
+    "description": (
+        "The Campaign's monitor collection id, as campaign-monitor +list returns it "
+        "(not the UGC Campaign id that ugc commands take)."
+    ),
+}
 DATE_FROM = {**D, "description": "Published on or after (YYYY-MM-DD)."}
 DATE_TO = {**D, "description": "Published on or before (YYYY-MM-DD)."}
 TIMEZONE = {**TZ, "description": "IANA timezone the dates are read in (default UTC)."}

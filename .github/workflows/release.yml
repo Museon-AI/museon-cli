@@ -32,6 +32,7 @@ jobs:
           uv run pytest -q
           uv run python scripts/gen_command_docs.py --check
           uv run python scripts/gen_command_contract.py --check
+          uv run python scripts/gen_task_index.py --check
           uv build --wheel
           uv run python scripts/verify_public_artifacts.py
           uv run python scripts/smoke_install.py
@@ -39,7 +40,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir release
-          cp dist/*.whl contracts/command-catalog.json docs/install.md release/
+          cp dist/*.whl contracts/command-catalog.json docs/install.md docs/guide.md docs/llms.txt release/
           uv run python scripts/build_skills_archive.py
           (cd release && sha256sum -- * > checksums.txt)
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

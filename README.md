@@ -86,6 +86,14 @@ The CLI executes atomic operations; the Agent composes workflows. Museon checks 
 organization role and Campaign scope for every request. Verify writes with
 readback from the owning domain, not with a request receipt alone.
 
+Which command does a job? `museoncli guide` lists every task by chapter (UGC Campaign
+operations in the order the work happens, tracking, analytics, accounts and publishing,
+AI image posts, research, the organization); `museoncli guide <task-id>` gives its
+commands in order with their required flags, risk and gotcha; `museoncli guide --search
+<words>` finds a task from the user's words, in English or Chinese. It runs locally and
+needs no login. The same guide is published as [`guide.md`](docs/guide.md) and indexed by
+[`llms.txt`](docs/llms.txt).
+
 See [the migration guide](docs/cli-2-migration.md) before replacing an older CLI.
 The HireAICreator domain is included in this unpublished candidate.
 
@@ -132,7 +140,7 @@ If you prefer to install the CLI yourself, use Python 3.11+, `uv`, and the exact
 wheel from the official GitHub release:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.1.1/museoncli-1.1.1-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.2.0/museoncli-1.2.0-py3-none-any.whl"
 ```
 
 Then continue with Skill setup and browser authorization:

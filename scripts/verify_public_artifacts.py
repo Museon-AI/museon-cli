@@ -28,6 +28,7 @@ PRIVATE_REFERENCES = (
     b"movora-469510",
     b"DOPPLER_TOKEN",
 )
+TASK_INDEX_ENTRY = "museoncli/task_index.yaml"
 FORBIDDEN_SUFFIXES = (".env", ".key", ".pem", ".p12", ".pfx")
 FORBIDDEN_FILES = {
     "museoncli/prompt.py",
@@ -114,6 +115,15 @@ def _assert_public_wheel_content(entries: list[ArchiveEntry], *, artifact: Path)
             raise RuntimeError(f"{artifact.name} is missing the {command!r} console entry point")
 
 
+def _assert_task_index_packaged(entries: list[ArchiveEntry], *, artifact: Path) -> None:
+    """`museoncli guide` reads the task index from the wheel; it must be the reviewed one."""
+    packaged = next((entry.payload for entry in entries if entry.name == TASK_INDEX_ENTRY), None)
+    if packaged is None:
+        raise RuntimeError(f"{artifact.name} is missing {TASK_INDEX_ENTRY}")
+    if packaged != (ROOT / "contracts" / "task-index.yaml").read_bytes():
+        raise RuntimeError(f"{artifact.name} packages a task index that differs from contracts/")
+
+
 def _repository_license_files() -> list[str]:
     return sorted(
         path.name
@@ -169,6 +179,7 @@ def verify_dist(dist_dir: Path) -> None:
             artifact=wheel,
         )
     _assert_public_wheel_content(wheel_entries, artifact=wheel)
+    _assert_task_index_packaged(wheel_entries, artifact=wheel)
 
     _assert_license_files_packaged(
         source_license_files=_repository_license_files(),

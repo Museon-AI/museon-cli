@@ -1,0 +1,27 @@
+# Museon CLI
+
+> Museon CLI (`museoncli`) is the agent-ready command line for MuseOn, a social-media operating platform for UGC creator Campaigns, content tracking, analytics, social accounts, publishing and research; this index maps tasks to the exact commands.
+
+Museon CLI runs MuseOn's social-media operations from an Agent: UGC Campaigns (set up, recruit, approve, contract, daily tasks, content review, counting, client reports), content tracking Campaigns, analytics boards, social accounts and publishing, AI image posts, research and the organization. Find the task below, then run its commands in order. Every command prints one JSON envelope; reads change nothing; a write that reaches someone outside the organization or cannot be undone needs --yes, which only the user may give.
+
+## Start
+
+- [Install guide](https://www.museon.ai/cli/install.md): install the CLI and its Agent Skills, sign in, choose an organization.
+- [Task guide](https://www.museon.ai/cli/guide.md): every task as ordered commands with their required flags, risk and gotchas (Museon CLI 1.2.0).
+- Offline, the CLI answers the same: `museoncli guide`, `museoncli guide <task-id>`, `museoncli guide --search <words>`, `museoncli schema <command>`.
+
+## Tasks
+
+- [0. Start here](https://www.museon.ai/cli/guide.md#0-start-here): Sign in, choose the organization, find a command, keep the CLI and its Skills current. Tasks: `login`, `choose-organization`, `find-a-command`, `keep-cli-current`.
+- [1. Run a UGC Campaign](https://www.museon.ai/cli/guide.md#1-run-a-ugc-campaign): A UGC Campaign in the order the work happens: create and set it up, recruit, approve applications, contract, run the day's tasks and messages, review content, decide what counts, report to the client and read settlement. Tasks: `ugc-find-campaign`, `ugc-create-campaign`, `ugc-read-setup`, `ugc-change-setup`, `ugc-lifecycle`, `ugc-formats`, `ugc-personas`, `ugc-assign-formats`, `ugc-recruit`, `ugc-approve-applications`, `ugc-contract`, `ugc-manage-roster`, `ugc-daily-tasks`, `ugc-message-creator`, `ugc-nudge-creators`, `ugc-broadcast`, `ugc-team-reminders`, `ugc-review-content`, `ugc-counting`, `ugc-client-reports`, `ugc-creator-directory`, `ugc-settlement-reads`.
+- [2. Track content (content tracking Campaigns)](https://www.museon.ai/cli/guide.md#2-track-content-content-tracking-campaigns): A content tracking Campaign follows creators' and posts' performance without applications or review. Tasks: `tracking-create`, `tracking-remove`, `tracking-performance`, `account-and-post-history`.
+- [3. Read Campaign analytics and boards](https://www.museon.ai/cli/guide.md#3-read-campaign-analytics-and-boards): The web Campaign Dashboard, tab by tab, keyed by the monitor collection id; breakdowns by Format, persona and tag; the organization's analytics; multi-Campaign boards. Tasks: `dashboard`, `breakdown`, `org-analytics`, `boards`.
+- [4. Manage social accounts, publishing and cloud phones](https://www.museon.ai/cli/guide.md#4-manage-social-accounts-publishing-and-cloud-phones): The organization's own social accounts: connect, tag, read performance, edit profiles, publish videos and photo sets, and run the cloud phones and IPs behind them. Tasks: `accounts-list`, `accounts-connect`, `accounts-tags`, `accounts-performance`, `accounts-profile`, `publish-posts`, `cloud-phone-session`, `cloud-phone-fleet`, `cloud-phone-apps`, `cloud-phone-proxies`, `cloud-phone-recovery`.
+- [5. Make and publish AI image posts (slideshows)](https://www.museon.ai/cli/guide.md#5-make-and-publish-ai-image-posts-slideshows): AI image posts (生图/图文) are built from reusable format, topic and persona assets, reviewed, then published by account schedules; Agentic Creative Campaigns keep them publishing every day without the Agent. Tasks: `slideshow-assets`, `slideshow-generate`, `slideshow-review`, `slideshow-publish-config`, `slideshow-schedules`, `slideshow-bulk`, `slideshow-cta`, `managed-publishing`, `managed-publishing-maintain`.
+- [6. Research, analyze content and handle media](https://www.museon.ai/cli/guide.md#6-research-analyze-content-and-handle-media): Public evidence from the web, social platforms, communities and ad libraries; Hook analysis of Instagram posts; content analysis of videos; media upload and generation; shareable report artifacts. Tasks: `research-search`, `hook-analysis`, `ads-search`, `content-analysis`, `media`, `media-collections`, `artifacts`.
+- [7. Organization, Business Skills and routines](https://www.museon.ai/cli/guide.md#7-organization-business-skills-and-routines): Who is in the organization and its billing; the organization's Business Skills (methodology the Agent loads before strategic work); routines that run work on a schedule. Tasks: `org-members`, `business-skills`, `routines`.
+
+## Optional
+
+- [Topics](https://www.museon.ai/cli/guide.md#topics): Which id goes where; The three creator ids; The kinds of campaign; Dry run, --yes and confirmation_required; Conflicts, retries and async work; Organizations, roles and who may do what; When a command fails; Which of two similar commands to use; Renamed commands.
+- [Source and command contract](https://github.com/Museon-AI/museon-cli): `contracts/command-catalog.json` lists every command's schema.

@@ -70,7 +70,7 @@ If the command is unavailable:
    reviewed wheel from the official GitHub release:
 
    ```bash
-   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.1.1/museoncli-1.1.1-py3-none-any.whl"
+   uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v1.2.0/museoncli-1.2.0-py3-none-any.whl"
    ```
 
    Do not clone the repository, install from a mutable branch, or substitute a
@@ -103,11 +103,11 @@ or `current` and includes their destination paths.
 For another Agent that supports Skills, use that Agent's native Skill installer
 to install the workflow Skill folders and Hook Analysis Skill:
 
-https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-content-workflow-base
-https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-research
-https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-content-workflow-hireaicreator
-https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-content-workflow-ai-slideshow
-https://github.com/Museon-AI/museon-cli/tree/v1.1.1/skills/museon-content-workflow-campaign-monitor
+https://github.com/Museon-AI/museon-cli/tree/v1.2.0/skills/museon-content-workflow-base
+https://github.com/Museon-AI/museon-cli/tree/v1.2.0/skills/museon-research
+https://github.com/Museon-AI/museon-cli/tree/v1.2.0/skills/museon-content-workflow-hireaicreator
+https://github.com/Museon-AI/museon-cli/tree/v1.2.0/skills/museon-content-workflow-ai-slideshow
+https://github.com/Museon-AI/museon-cli/tree/v1.2.0/skills/museon-content-workflow-campaign-monitor
 
 Do not invent a Skill directory for an unsupported host. If the Agent has no
 native Skill installation mechanism, finish the CLI authorization steps and
@@ -223,9 +223,12 @@ pending; do not say that the current Agent session is ready.
 
 ## After onboarding
 
-Use the installed Museon CLI Skill for future tasks. Discover the live command
-surface with `museoncli schema`; do not rely on remembered command names or
-flags. Read-only work may run when it directly serves the user's request.
+Use the installed Museon CLI Skill for future tasks. Find the commands for a task
+with `museoncli guide` (`museoncli guide --search <words>` matches the user's own
+words, `museoncli guide <task-id>` gives the ordered steps), and read one command's
+inputs with `museoncli schema <command>`; do not rely on remembered command names or
+flags. The same task guide is published at https://www.museon.ai/cli/guide.md
+(index: https://www.museon.ai/cli/llms.txt). Read-only work may run when it directly serves the user's request.
 Creating, changing, scheduling, publishing, or deleting anything requires the
 approval policy defined by the Skill and the command schema.
 

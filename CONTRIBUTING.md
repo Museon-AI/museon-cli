@@ -21,6 +21,7 @@ uv run ruff check .
 uv run pytest -q
 uv run python scripts/gen_command_docs.py --check
 uv run python scripts/gen_command_contract.py --check
+uv run python scripts/gen_task_index.py --check
 uv build --wheel
 uv run python scripts/verify_public_artifacts.py
 uv run python scripts/smoke_install.py
@@ -31,14 +32,18 @@ When adding or changing a command:
 1. Keep its definition in the appropriate module under `museoncli/domains/`.
 2. Declare its input and output schema, risk level, execution mode, and examples.
 3. Add focused parser, payload, execution, and organization-scope tests.
-4. Regenerate both generated artifacts:
+4. Place it in the task guide: add it as a step of the right task in
+   `contracts/task-index.yaml` (with a one-line gotcha when there is one), or list it
+   under `unlisted` with the reason. `tests/test_task_index.py` fails until you do.
+5. Regenerate the generated artifacts:
 
    ```bash
    uv run python scripts/gen_command_docs.py
    uv run python scripts/gen_command_contract.py
+   uv run python scripts/gen_task_index.py
    ```
 
-5. Do not add Museon service credentials, private host prompts, customer data,
+6. Do not add Museon service credentials, private host prompts, customer data,
    internal runbooks, or server implementation code to this repository.
 
 ## Pull requests

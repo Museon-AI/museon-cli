@@ -2,6 +2,18 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 1.2.0
+
+Which command does a job: a task guide, short help at every level, and a compact, searchable schema.
+
+- New `museoncli guide`. No argument lists the chapters and their tasks, one line each: 0 Start, 1 Run a UGC Campaign (in the order the work happens: create and set up, recruit, approve, contract, daily tasks and messages, content review, counting, client reports, settlement reads), 2 content tracking, 3 analytics and boards, 4 accounts, publishing and cloud phones, 5 AI image posts and Agentic Creative Campaigns, 6 research and media, 7 organization, Business Skills and routines. `museoncli guide <task-id>` returns the task's commands in order, each with its usage line (required flags), risk, whether it needs `--yes`, its summary and a one-line gotcha. `museoncli guide --search <words>` ranks tasks and commands by the user's words, in English or Chinese, and finds a renamed command by its old name. Topics cover which id goes where (UGC Campaign id vs monitor collection id, enrollment, creative, content), the three creator ids, the kinds of campaign, the confirmation rule, conflicts and retries, organizations and roles, failures, which of two similar commands to use, and every renamed command. It reads the task index bundled in the wheel: no login, no network.
+- One source: `contracts/task-index.yaml` is written by hand; usage lines, risk and summaries come from the registry. `scripts/gen_task_index.py` renders it as the Agent Skill reference `museon-content-workflow-base/references/task-index.md`, `docs/guide.md` and `docs/llms.txt`; `--check` runs in CI and the release. A step that names a missing or renamed command fails the tests, and so does a new command that sits in no task and is not listed as unlisted with a reason (`hireaicreator` and `staff-ops` keep their own Skills).
+- New release assets `guide.md` (the whole guide) and `llms.txt` (a short index following the llms.txt convention), next to `install.md`, for https://www.museon.ai/cli/guide.md and /cli/llms.txt.
+- `museoncli schema --compact` lists name, usage line, risk, confirmation and summary without schemas or the authorization block (the whole catalog drops from about 524 KB to 190 KB; `schema ugc --compact` from 130 KB to 68 KB). `museoncli schema --search <words>` returns the best-matching commands in that form.
+- `--help` says what each entry does at every level: every domain has a one-line description, every resource lists its actions, every action shows the first sentence of its summary, and the built-in commands have help.
+- `campaign-monitor`: `--id` help and generated usage lines now say it is the monitor collection id from `campaign-monitor +list`, not the UGC Campaign id `ugc` commands take; social-account ids read `<social-account-id>` in generated usage lines.
+- Skills: the base Skill starts with `museoncli guide`; `museon-content-workflow-campaign-monitor`'s description is shorter (what and when, under 300 characters) and points to the guide's chapters.
+
 ## 1.1.1
 
 Fixes for what the production end-to-end run of 1.1.0 found. Each was checked against the server source before it was changed.
