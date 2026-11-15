@@ -2,6 +2,10 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 1.2.1
+
+- `museoncli guide --search` finds the application approval task by 审批 / 审批报名 / 批准 (it only knew 审核报名, 通过报名, 拒绝报名).
+
 ## 1.2.0
 
 Which command does a job: a task guide, short help at every level, and a compact, searchable schema.

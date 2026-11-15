@@ -17720,7 +17720,7 @@
       "organization"
     ]
   },
-  "contract_revision": "1.2.0",
+  "contract_revision": "1.2.1",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {

@@ -319,7 +319,7 @@ chapters:
           - ugc.dm-rule-update: "--status paused stops it, active resumes it, archived ends it."
       - id: ugc-approve-applications
         title: Approve or reject applications and onboard creators
-        when: ["approve application", "reject application", "pending creators", "admit", "onboarding", "trial", "审核报名", "通过报名", "拒绝报名", "入驻", "试用"]
+        when: ["approve application", "reject application", "pending creators", "admit", "onboarding", "trial", "审批", "审批报名", "批准", "审核报名", "通过报名", "拒绝报名", "入驻", "试用"]
         before: Applications wait in the onboarding queue. The task's own approve/reject and the enrollment commands have the same effect.
         steps:
           - ugc.task-list: "--queue onboarding --actor operator: what waits on the team."
