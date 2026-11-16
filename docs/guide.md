@@ -675,7 +675,7 @@ Preview, then submit with the preview token and a stable idempotency key; the jo
 MuseOn publishes on its own after the rollout; do not run a local loop. Plans keep reviewed {format, topic} pairs, never a cross product.
 
 1. `museoncli agentic-campaign +list` (read)
-2. `museoncli agentic-campaign +campaign-create --name <name>` (write): Confirm name, budget and persona count with the user first.
+2. `museoncli agentic-campaign +campaign-create --name <name>` (write): Confirm name, budget, persona count and publish time (--preferred-publish-windows-json read in --publish-timezone, an IANA zone) with the user first.
 3. `museoncli agentic-campaign +campaign-review-only --campaign-id <campaign-id>` (write): Manual review for the whole Campaign; tell the user it affects every Plan.
 4. `museoncli agentic-campaign +plan-create --campaign-id <campaign-id> --name <name> --account-budget 1` (write): Only in setup; --persona-id.
 5. `museoncli agentic-campaign plan +supply-update --campaign-id <campaign-id> --plan-id <plan-id> --persona-id <persona-id> --expected-version 1 --pairs-json <pairs-json>` (write): The complete paired supply with the latest Plan version; opens a proposal, does not publish.
@@ -698,7 +698,7 @@ MuseOn publishes on its own after the rollout; do not run a local loop. Plans ke
 3. `museoncli agentic-campaign +plan-get --campaign-id <campaign-id> --plan-id <plan-id>` (read)
 4. `museoncli agentic-campaign +plan-tags --campaign-id <campaign-id> --plan-id <plan-id>` (read)
 5. `museoncli agentic-campaign +plan-attribution --campaign-id <campaign-id> --plan-id <plan-id>` (read)
-6. `museoncli agentic-campaign +campaign-update --campaign-id <campaign-id>` (write, needs --yes): Budget and config are setup-only; change the name by itself.
+6. `museoncli agentic-campaign +campaign-update --campaign-id <campaign-id>` (write, needs --yes): Change the name by itself. Publish window and --publish-timezone may change while active; future not-yet-generated slots move to the new time.
 7. `museoncli agentic-campaign +plan-update --campaign-id <campaign-id> --plan-id <plan-id>` (write)
 8. `museoncli agentic-campaign +campaign-pause --campaign-id <campaign-id>` (write)
 9. `museoncli agentic-campaign +campaign-activate --campaign-id <campaign-id>` (write)

@@ -225,6 +225,7 @@ def _add_campaign_create_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--required-hashtags", default=None)
     parser.add_argument("--required-mentions", default=None)
     parser.add_argument("--preferred-publish-windows-json", default=None)
+    parser.add_argument("--publish-timezone", default=None)
     parser.add_argument("--bind-notification-conversation", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
 
@@ -234,11 +235,12 @@ def _field_config(args: argparse.Namespace) -> dict[str, Any] | None:
         args.required_hashtags,
         args.required_mentions,
         args.preferred_publish_windows_json,
+        args.publish_timezone,
     )
     if args.config_json is not None and any(value is not None for value in values):
         raise ValueError(
             "--config-json is mutually exclusive with --required-hashtags, "
-            "--required-mentions, and --preferred-publish-windows-json."
+            "--required-mentions, --preferred-publish-windows-json, and --publish-timezone."
         )
     if args.config_json is not None:
         return _candidate_json(args.config_json, field="config", expected_type=dict)
@@ -253,6 +255,8 @@ def _field_config(args: argparse.Namespace) -> dict[str, Any] | None:
             field="preferred-publish-windows",
             expected_type=list,
         )
+    if args.publish_timezone is not None:
+        config["publish_timezone"] = args.publish_timezone
     return config or None
 
 
@@ -286,6 +290,7 @@ def _add_campaign_update_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--required-hashtags")
     parser.add_argument("--required-mentions")
     parser.add_argument("--preferred-publish-windows-json")
+    parser.add_argument("--publish-timezone")
     parser.add_argument("--bind-notification-conversation", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--yes", action="store_true")
@@ -296,11 +301,12 @@ def _build_campaign_update_arguments(args: argparse.Namespace) -> dict[str, Any]
         args.required_hashtags,
         args.required_mentions,
         args.preferred_publish_windows_json,
+        args.publish_timezone,
     )
     if args.config_json is not None and any(value is not None for value in field_config_values):
         raise ValueError(
             "--config-json is mutually exclusive with --required-hashtags, "
-            "--required-mentions, and --preferred-publish-windows-json."
+            "--required-mentions, --preferred-publish-windows-json, and --publish-timezone."
         )
     mutable = compact_params(
         {
@@ -329,6 +335,7 @@ def _build_campaign_update_arguments(args: argparse.Namespace) -> dict[str, Any]
                 if args.preferred_publish_windows_json is not None
                 else None
             ),
+            "publish_timezone": args.publish_timezone,
             "bind_notification_conversation": (
                 True if args.bind_notification_conversation else None
             ),
@@ -493,6 +500,14 @@ def _campaign_config_schema() -> dict[str, Any]:
                     "required": ["start", "end"],
                 },
                 "default": [],
+            },
+            "publish_timezone": {
+                "type": "string",
+                "maxLength": 64,
+                "description": (
+                    "IANA timezone every member account reads the publish windows in, "
+                    "for example Europe/London. Defaults to Asia/Shanghai."
+                ),
             },
         },
     }
@@ -749,7 +764,7 @@ def specs() -> list[CommandSpec]:
         CommandSpec(
             domain=domain,
             shortcut="+campaign-update",
-            summary="Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
+            summary="Patch only supplied campaign fields; name must be changed by itself. Field-level hashtag, mention, publish-window and publish-timezone options merge into existing config, while --config-json replaces the full config. The publish time is --preferred-publish-windows-json read in --publish-timezone (IANA, default Asia/Shanghai) for every member account; both can change while the campaign is active, and future not-yet-generated slots move to the new time.",
             risk_level="write",
             requires_confirmation=True,
             execution="direct",
@@ -772,6 +787,9 @@ def specs() -> list[CommandSpec]:
                     "preferred_publish_windows": _campaign_config_schema()["properties"][
                         "preferred_publish_windows"
                     ],
+                    "publish_timezone": _campaign_config_schema()["properties"][
+                        "publish_timezone"
+                    ],
                     "bind_notification_conversation": {"type": "boolean"},
                     "dry_run": {"type": "boolean", "default": False},
                 },
@@ -781,6 +799,7 @@ def specs() -> list[CommandSpec]:
             examples=[
                 "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --total-account-budget 107 --yes",
                 "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --bind-notification-conversation --yes",
+                "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --preferred-publish-windows-json '[{\"start\":\"20:00\",\"end\":\"20:01\"}]' --publish-timezone Europe/London --yes",
             ],
             add_arguments=_add_campaign_update_arguments,
             build_arguments=_build_campaign_update_arguments,
@@ -1390,6 +1409,7 @@ async def _execute_campaign_update(ctx: CommandContext) -> Any:
                 "required_hashtags",
                 "required_mentions",
                 "preferred_publish_windows",
+                "publish_timezone",
                 "bind_notification_conversation",
             }
         }

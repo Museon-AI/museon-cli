@@ -397,7 +397,7 @@
           "risk_level": "write",
           "shortcut": "+campaign-update",
           "stability": "stable",
-          "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
+          "summary": "Patch only supplied campaign fields; name must be changed by itself. Field-level hashtag, mention, publish-window and publish-timezone options merge into existing config, while --config-json replaces the full config. The publish time is --preferred-publish-windows-json read in --publish-timezone (IANA, default Asia/Shanghai) for every member account; both can change while the campaign is active, and future not-yet-generated slots move to the new time.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -18592,6 +18592,11 @@
                 },
                 "type": "array"
               },
+              "publish_timezone": {
+                "description": "IANA timezone every member account reads the publish windows in, for example Europe/London. Defaults to Asia/Shanghai.",
+                "maxLength": 64,
+                "type": "string"
+              },
               "required_hashtags": {
                 "default": [],
                 "items": {
@@ -18993,7 +18998,8 @@
       "domain": "agentic-campaign",
       "examples": [
         "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --total-account-budget 107 --yes",
-        "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --bind-notification-conversation --yes"
+        "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --bind-notification-conversation --yes",
+        "museoncli agentic-campaign +campaign-update --campaign-id 22222222-2222-4222-8222-222222222222 --preferred-publish-windows-json '[{\"start\":\"20:00\",\"end\":\"20:01\"}]' --publish-timezone Europe/London --yes"
       ],
       "execution": "direct",
       "input_schema": {
@@ -19033,6 +19039,11 @@
                   "type": "object"
                 },
                 "type": "array"
+              },
+              "publish_timezone": {
+                "description": "IANA timezone every member account reads the publish windows in, for example Europe/London. Defaults to Asia/Shanghai.",
+                "maxLength": 64,
+                "type": "string"
               },
               "required_hashtags": {
                 "default": [],
@@ -19101,6 +19112,11 @@
               "33333333-3333-4333-8333-333333333333"
             ],
             "format": "uuid",
+            "type": "string"
+          },
+          "publish_timezone": {
+            "description": "IANA timezone every member account reads the publish windows in, for example Europe/London. Defaults to Asia/Shanghai.",
+            "maxLength": 64,
             "type": "string"
           },
           "required_hashtags": {
@@ -19198,7 +19214,7 @@
       "risk_level": "write",
       "shortcut": "+campaign-update",
       "stability": "stable",
-      "summary": "Patch only supplied campaign fields. Budget and config fields are setup-only; name must be changed by itself. Field-level hashtag, mention, and publish-window options merge into existing config, while --config-json replaces the full config.",
+      "summary": "Patch only supplied campaign fields; name must be changed by itself. Field-level hashtag, mention, publish-window and publish-timezone options merge into existing config, while --config-json replaces the full config. The publish time is --preferred-publish-windows-json read in --publish-timezone (IANA, default Asia/Shanghai) for every member account; both can change while the campaign is active, and future not-yet-generated slots move to the new time.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

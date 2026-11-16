@@ -33,7 +33,12 @@ Do not schedule a local Codex loop or use the manual generation path for this in
 3. Keep each reference as an explicit `{format_id, topic_id}` pair. Twenty
    references mean twenty reviewed pairs, never a Cartesian product. Read back
    resource IDs before retrying imports; do not blindly recreate successful assets.
-4. Create a Campaign only when the selected scope needs one. New CLI campaigns
+4. Agree the publish time with the operator before any account is admitted: a
+   window in `--preferred-publish-windows-json` read in `--publish-timezone`
+   (IANA, e.g. `Europe/London`; default `Asia/Shanghai`), set on
+   `+campaign-create` or `+campaign-update`. One Campaign has one publish time
+   for all member accounts. Never convert the time into Asia/Shanghai by hand.
+   Create a Campaign only when the selected scope needs one. New CLI campaigns
    require manual strategy review and disable automatic recruitment. Existing
    campaigns must have that policy before `plan +supply-update`; changing it with
    `+campaign-review-only` affects the whole Campaign, so do not silently change
@@ -50,8 +55,10 @@ Do not schedule a local Codex loop or use the manual generation path for this in
    reference version is confirmed. This applies their finalized supply and tops
    up the existing seven-day window. Inspect the calendar and `+plan-get` before
    `plan +account-control --action enable` for each selected account, using its
-   returned version. Current cadence is one post per account per local day,
-   starting with the next local day; do not promise arbitrary daily frequency.
+   returned version. Current cadence is one post per account per day at the
+   Campaign publish time, starting with the next day; do not promise arbitrary
+   daily frequency. Changing the publish time later moves future slots that
+   have not started generating; today's slot keeps its time.
 8. Return the Plan ID, `web_url`, exact accounts, reference count, schedule,
    timezone and execution state. Use `plan +posts` and the account/calendar views
    for readback. Generation done, channel acceptance, public post and metrics
@@ -80,6 +87,7 @@ stop on a handover conflict. Never overwrite the old Plan's persona identity.
 ## DON'T
 
 - **DON'T** bind generation to an account or schedule.
+- **DON'T** build schedules with `publish +submit-schedule-plan` or `publish +create-schedule` for accounts that are members of an Agentic Creative Campaign: those rows are outside the Plan and are never generated automatically. Change the Plan (`agentic-campaign`) instead.
 - **DON'T** treat generation creation or a batch job receipt as terminal success.
 - **DON'T** add evaluator or CTA inputs, or bind generation itself to an account or schedule.
 - **DON'T** confuse a product's CTA targets (`cta-target`, what its posts point viewers to) with generation inputs. Listing, creating and editing them is staff only; `+retire` takes owner, admin or operator and `--yes` after the user agrees. `+create` has no idempotency key: list before retrying an unknown outcome.
