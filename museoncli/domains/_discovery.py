@@ -237,4 +237,3 @@ def one_line(text: str, limit: int = 110) -> str:
 def resource_help(specs: list[CommandSpec]) -> str:
     """What a resource offers: its actions."""
     return ", ".join(spec.shortcut for spec in specs)
-

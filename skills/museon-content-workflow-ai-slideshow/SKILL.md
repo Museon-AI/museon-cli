@@ -89,7 +89,7 @@ stop on a handover conflict. Never overwrite the old Plan's persona identity.
 ## DON'T
 
 - **DON'T** bind generation to an account or schedule.
-- **DON'T** build schedules with `publish +submit-schedule-plan` or `publish +create-schedule` for accounts that are members of an Agentic Creative Campaign. Their posts come from the Plan: to add one post (for example a missed day) use `agentic-campaign plan +extra-post`; to post a new format/topic, add the pair with `plan +supply-update`. Publish schedules for these accounts are accepted only for the Plan's current pairs and are rejected with `AGENTIC_PLAN_PAIR_NOT_IN_PLAN` otherwise.
+- **DON'T** expect a manual publish schedule on an Agentic Creative Campaign account to add a post: `publish +create-schedule` / `+submit-schedule-plan` on such an account makes that row the day's Plan post and replaces the automatic post of the day (even if already generated) unless it is publishing. Use it when the operator prepared that day's post by hand. To add a post on top of the daily one use `agentic-campaign plan +extra-post`; to post a new format/topic add the pair with `plan +supply-update` (other pairs are rejected with `AGENTIC_PLAN_PAIR_NOT_IN_PLAN`).
 - **DON'T** treat generation creation or a batch job receipt as terminal success.
 - **DON'T** add evaluator or CTA inputs, or bind generation itself to an account or schedule.
 - **DON'T** confuse a product's CTA targets (`cta-target`, what its posts point viewers to) with generation inputs. Listing, creating and editing them is staff only; `+retire` takes owner, admin or operator and `--yes` after the user agrees. `+create` has no idempotency key: list before retrying an unknown outcome.

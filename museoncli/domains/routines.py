@@ -475,8 +475,7 @@ def _routine_command_spec_payloads() -> list[dict[str, Any]]:
             "domain": ROUTINES_DOMAIN,
             "shortcut": "accept-draft",
             "summary": (
-                "Accept a draft ad-hoc routine and register its trigger with Museon's "
-                "scheduler."
+                "Accept a draft ad-hoc routine and register its trigger with Museon's scheduler."
             ),
             "risk_level": "write",
             "execution": "direct",

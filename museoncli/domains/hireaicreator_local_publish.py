@@ -150,9 +150,7 @@ async def _publish(ctx: CommandContext) -> dict[str, Any]:
                 _save(receipt_path, record)
         if raw is None:
             raw = await submit({**body, "campaign_id": campaign_id})
-        receipt = direct_api_envelope(
-            ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url
-        )
+        receipt = direct_api_envelope(ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url)
         receipt["warnings"].append(
             "Accepted publication tasks, not proof of public posts. Read each video for final delivery state."
         )

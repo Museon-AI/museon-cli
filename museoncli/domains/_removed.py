@@ -154,7 +154,7 @@ def removed_invocation(tokens: list[str]) -> RemovedCommandError | None:
         if group not in REMOVED_GROUPS:
             continue
         if action is not None:
-            resource = words[1:words.index(action)]
+            resource = words[1 : words.index(action)]
             path = " ".join([words[0], *resource, action])
             if path in REMOVED_COMMANDS:
                 return RemovedCommandError(path, REMOVED_COMMANDS[path], exact=True)

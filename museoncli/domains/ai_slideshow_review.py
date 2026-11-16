@@ -114,9 +114,7 @@ def _decide(action: str):
 
     async def run(ctx: CommandContext) -> Any:
         generation_id = ctx.arguments["generation_id"]
-        data = await ctx.api_data_v2(
-            ctx.cfg, "POST", _path(generation_id, suffix), json_body={}
-        )
+        data = await ctx.api_data_v2(ctx.cfg, "POST", _path(generation_id, suffix), json_body={})
         return data, [], [f"museoncli ai-slideshow generation +get --id {generation_id}"]
 
     return with_notes(run)
@@ -134,7 +132,9 @@ async def _execute_adjust(ctx: CommandContext) -> Any:
     )
     return (
         data,
-        ["The adjustment starts a new generation; data.replacement_generation_id is the post to review next."],
+        [
+            "The adjustment starts a new generation; data.replacement_generation_id is the post to review next."
+        ],
         [],
     )
 
@@ -193,7 +193,9 @@ def _build_adjust_arguments(args: argparse.Namespace) -> dict[str, Any]:
         if len(annotations) > MAX_ANNOTATIONS:
             raise ValueError(f"annotations takes at most {MAX_ANNOTATIONS} marks.")
     if not payload.get("instruction") and not annotations:
-        raise ValueError("Adjustment feedback must not be empty: give --instruction or annotations.")
+        raise ValueError(
+            "Adjustment feedback must not be empty: give --instruction or annotations."
+        )
     _dry_run(args, payload)
     return payload
 

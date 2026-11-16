@@ -109,9 +109,7 @@ def redact(value: Any) -> Any:
 
 
 def _envelope(ctx: CommandContext, raw: Any) -> dict[str, Any]:
-    return direct_api_envelope(
-        ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url
-    )
+    return direct_api_envelope(ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url)
 
 
 async def _get(ctx: CommandContext, path: str, **params: Any) -> Any:

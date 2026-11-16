@@ -160,8 +160,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+sync-all",
             summary=(
                 "Sync every bound profile in the caller's own landing workspace of the "
-                "selected organization (not every workspace in it). Repeating it is safe."
-                + _ROLE
+                "selected organization (not every workspace in it). Repeating it is safe." + _ROLE
             ),
             risk_level="write",
             adapter_tool_name="social_account_sync_all",
@@ -182,13 +181,14 @@ def specs() -> list[CommandSpec]:
                 "the id and echoes it: it reads nothing from the server, so confirm which "
                 "account that id is (social-account +list) before asking the user to approve; "
                 "then run with --yes. The account has to be connected again "
-                "(social-account +create-connect-link) to publish."
-                + _ROLE
+                "(social-account +create-connect-link) to publish." + _ROLE
             ),
             risk_level="destructive",
             adapter_tool_name="social_account_unbind",
             input_schema=schema(_UNBIND, ["account_id"]),
-            output_schema=output_schema("data.unbound and data.account_id; a dry run echoes the validated input."),
+            output_schema=output_schema(
+                "data.unbound and data.account_id; a dry run echoes the validated input."
+            ),
             examples=[
                 f"museoncli social-account +unbind --account-id {_EXAMPLE_ACCOUNT} --dry-run",
                 f"museoncli social-account +unbind --account-id {_EXAMPLE_ACCOUNT} --yes",

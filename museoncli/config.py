@@ -141,7 +141,8 @@ class Config:
                 if authenticated
                 else "unauthenticated"
             ),
-            "reason": self.auth.resolution_error or ("credential_expired" if auth_expired else None),
+            "reason": self.auth.resolution_error
+            or ("credential_expired" if auth_expired else None),
             "auth_method": self.auth.method or ("api_key" if auth.get("api_key") else "none"),
             "credential_storage": self.auth.provider or credential_backend(config_path()),
             "expires_at": auth.get("expires_at"),

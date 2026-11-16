@@ -139,9 +139,7 @@ def _live(row: dict[str, Any]) -> bool:
 def _envelope(
     ctx: CommandContext, data: Any, warnings: list[str], next_steps: list[str]
 ) -> dict[str, Any]:
-    envelope = direct_api_envelope(
-        ctx.spec.schema_name, data, site_url=ctx.cfg.site_url
-    )
+    envelope = direct_api_envelope(ctx.spec.schema_name, data, site_url=ctx.cfg.site_url)
     envelope["warnings"] = [*envelope["warnings"], *warnings]
     envelope["next_steps"] = [*envelope["next_steps"], *next_steps]
     return envelope
@@ -292,7 +290,9 @@ def brief_progress(
                 "videos_counted": sum(int(row.get("videos_counted") or 0) for row in live),
                 "video_limit_total": sum(int(limit) for limit in limits if limit is not None),
                 "unlimited_assignments": sum(1 for limit in limits if limit is None),
-                "rows": [{field: row.get(field) for field in _ASSIGNMENT_ROW_FIELDS} for row in live],
+                "rows": [
+                    {field: row.get(field) for field in _ASSIGNMENT_ROW_FIELDS} for row in live
+                ],
             }
         )
     return output
@@ -518,7 +518,11 @@ async def _execute_brief_update(ctx: CommandContext) -> Any:
     live = sum(1 for row in assignments if row.get("brief_id") == brief_id and _live(row))
     data: dict[str, Any] = {
         "dry_run": dry_run,
-        "brief": {"id": brief_id, "title": summary.get("title"), "current_version": current_version},
+        "brief": {
+            "id": brief_id,
+            "title": summary.get("title"),
+            "current_version": current_version,
+        },
         "changes": changes,
         "live_assignments": live,
     }
@@ -589,7 +593,11 @@ async def _execute_brief_upload_media(ctx: CommandContext) -> Any:
         content_type=str(session.get("content_type") or ""),
         size_bytes=int(args["size_bytes"]),
     )
-    reference: dict[str, Any] = {"type": "stored", "kind": session.get("kind"), "url": session["url"]}
+    reference: dict[str, Any] = {
+        "type": "stored",
+        "kind": session.get("kind"),
+        "url": session["url"],
+    }
     if session.get("kind") == "file":
         reference["name"] = args["filename"]
     data = {
@@ -598,10 +606,14 @@ async def _execute_brief_upload_media(ctx: CommandContext) -> Any:
         "url": session["url"],
         "size_bytes": args["size_bytes"],
     }
-    return data, [], [
-        "Add data.reference to the brief's current references (document.references of "
-        "+get) and pass the whole list as --references-json to +update."
-    ]
+    return (
+        data,
+        [],
+        [
+            "Add data.reference to the brief's current references (document.references of "
+            "+get) and pass the whole list as --references-json to +update."
+        ],
+    )
 
 
 async def _file_chunks(path: Path) -> AsyncIterator[bytes]:
@@ -642,7 +654,10 @@ async def _execute_assignment_create(ctx: CommandContext) -> Any:
             {
                 "enrollment_id": enrollment_id,
                 "existing_assignment": (
-                    {"id": held[enrollment_id].get("id"), "status": held[enrollment_id].get("status")}
+                    {
+                        "id": held[enrollment_id].get("id"),
+                        "status": held[enrollment_id].get("status"),
+                    }
                     if enrollment_id in held
                     else None
                 ),
@@ -1029,9 +1044,7 @@ def _uuid_property(description: str) -> dict[str, Any]:
     return {"type": "string", "format": "uuid", "description": description}
 
 
-_CAMPAIGN_ID = _uuid_property(
-    "UGC Campaign ID (from campaign +list)."
-)
+_CAMPAIGN_ID = _uuid_property("UGC Campaign ID (from campaign +list).")
 _DRY_RUN = {
     "type": "boolean",
     "default": False,
@@ -1121,7 +1134,9 @@ def specs() -> list[CommandSpec]:
                 ["campaign_id"],
             ),
             output_schema=_direct_output_schema("Roster rows (items) and next_cursor."),
-            examples=[f"museoncli ugc enrollment +list --campaign-id {campaign} --status participating"],
+            examples=[
+                f"museoncli ugc enrollment +list --campaign-id {campaign} --status participating"
+            ],
             add_arguments=_add_enrollment_list_arguments,
             build_arguments=_build_enrollment_list_arguments,
             **read,  # type: ignore[arg-type]
@@ -1276,7 +1291,9 @@ def specs() -> list[CommandSpec]:
                 "which creatives it would link, without writing." + _CONFIRM_FIRST
             ),
             adapter_tool_name="ugc_creative_apply_default_briefs",
-            input_schema=_schema({"campaign_id": _CAMPAIGN_ID, "dry_run": _DRY_RUN}, ["campaign_id"]),
+            input_schema=_schema(
+                {"campaign_id": _CAMPAIGN_ID, "dry_run": _DRY_RUN}, ["campaign_id"]
+            ),
             output_schema=_direct_output_schema(
                 "linked (creative_id, brief_id, brief_title), ambiguous, without_assignment, dry_run."
             ),

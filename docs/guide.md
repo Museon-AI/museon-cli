@@ -700,7 +700,7 @@ MuseOn publishes on its own after the rollout; do not run a local loop. Plans ke
 5. `museoncli agentic-campaign +plan-attribution --campaign-id <campaign-id> --plan-id <plan-id>` (read)
 6. `museoncli agentic-campaign +campaign-update --campaign-id <campaign-id>` (write, needs --yes): Change the name by itself. Publish window and --publish-timezone may change while active; future not-yet-generated slots move to the new time.
 7. `museoncli agentic-campaign +plan-update --campaign-id <campaign-id> --plan-id <plan-id>` (write)
-8. `museoncli agentic-campaign plan +extra-post --campaign-id <campaign-id> --plan-id <plan-id> --account-id <account-id> --scheduled-at 2026-10-01T09:00:00+08:00 --idempotency-key <stable-key>` (write): One more post (e.g. a missed day) for one member, from the Plan's reference pairs; never an ai-slideshow publish schedule for these accounts.
+8. `museoncli agentic-campaign plan +extra-post --campaign-id <campaign-id> --plan-id <plan-id> --account-id <account-id> --scheduled-at 2026-10-01T09:00:00+08:00 --idempotency-key <stable-key>` (write): One more post on top of the daily one (e.g. a missed day). A manual ai-slideshow publish schedule on these accounts instead replaces that day's automatic post.
 9. `museoncli agentic-campaign +campaign-pause --campaign-id <campaign-id>` (write)
 10. `museoncli agentic-campaign +campaign-activate --campaign-id <campaign-id>` (write)
 11. `museoncli agentic-campaign +campaign-archive --campaign-id <campaign-id>` (destructive, needs --yes): Stops every member account of every Plan.

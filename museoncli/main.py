@@ -266,9 +266,7 @@ def with_notice(
     return {**payload, "_notice": notice} if notice else payload
 
 
-def skills_notice(
-    args: argparse.Namespace, update: dict[str, Any] | None
-) -> dict[str, Any] | None:
+def skills_notice(args: argparse.Namespace, update: dict[str, Any] | None) -> dict[str, Any] | None:
     """Keep the Agent's installed Skills on this CLI's version.
 
     Skills that `setup` installed are synced automatically, like the CLI itself; the
@@ -359,9 +357,14 @@ def build_parser() -> argparse.ArgumentParser:
             "works too). --search: tasks and commands matching the words (English or 中文)."
         ),
     )
-    guide_parser.add_argument("task", nargs="?", help="Task, chapter or topic id from `museoncli guide`.")
     guide_parser.add_argument(
-        "--search", nargs="+", metavar="WORD", help="Words describing the job, e.g. approve creator."
+        "task", nargs="?", help="Task, chapter or topic id from `museoncli guide`."
+    )
+    guide_parser.add_argument(
+        "--search",
+        nargs="+",
+        metavar="WORD",
+        help="Words describing the job, e.g. approve creator.",
     )
     sub.add_parser("whoami", help="The signed-in user and the organizations this login can act in.")
     sub.add_parser("health", help="Check that the Museon API answers.")
@@ -572,9 +575,7 @@ _WHOAMI_KEYS = ("user", "organizations", "default_organization_id", "default_org
 def organizations_from_whoami(data: dict[str, Any]) -> tuple[list[dict[str, Any]], str | None]:
     """Organizations a login can act in, and its default one."""
     rows = [
-        row
-        for row in data.get("organizations") or []
-        if isinstance(row, dict) and row.get("id")
+        row for row in data.get("organizations") or [] if isinstance(row, dict) and row.get("id")
     ]
     default_id = data.get("default_organization_id") or next(
         (row["id"] for row in rows if row.get("is_default")), None
@@ -689,12 +690,15 @@ async def download_api_file(
                     raise cli_outdated_error(response)
                 raise ApiRequestError(response.status_code, response_error_payload(response))
             content_type = response.headers.get("content-type", "").split(";", 1)[0].lower()
-            if content_type not in (allowed_content_types or {
-                "video/mp4",
-                "video/quicktime",
-                "video/webm",
-                "video/x-msvideo",
-            }):
+            if content_type not in (
+                allowed_content_types
+                or {
+                    "video/mp4",
+                    "video/quicktime",
+                    "video/webm",
+                    "video/x-msvideo",
+                }
+            ):
                 raise RuntimeError("unsupported_media_type")
             declared_length = response.headers.get("content-length")
             if declared_length:
@@ -704,7 +708,9 @@ async def download_api_file(
                 except ValueError as exc:
                     raise RuntimeError("invalid_content_length") from exc
             written = 0
-            with os.fdopen(os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as output:
+            with os.fdopen(
+                os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb"
+            ) as output:
                 async for chunk in response.aiter_bytes():
                     written += len(chunk)
                     if written > max_bytes:
@@ -730,7 +736,11 @@ async def _api_request(
     if not auth_headers(cfg):
         raise RuntimeError("missing_auth")
     response = await _api_send(
-        cfg, method, url, json_body=json_body, params=params,
+        cfg,
+        method,
+        url,
+        json_body=json_body,
+        params=params,
         **({"idempotency_key": idempotency_key} if idempotency_key is not None else {}),
     )
     if response.status_code == 401:
@@ -767,7 +777,14 @@ async def _api_send(
                 return await client.request(
                     method,
                     url,
-                    headers={**_request_headers(cfg), **({"Idempotency-Key": idempotency_key} if idempotency_key is not None else {})},
+                    headers={
+                        **_request_headers(cfg),
+                        **(
+                            {"Idempotency-Key": idempotency_key}
+                            if idempotency_key is not None
+                            else {}
+                        ),
+                    },
                     json=json_body,
                     params=params,
                 )
@@ -829,9 +846,7 @@ def organization_id_arg(args: argparse.Namespace, arguments: dict[str, Any]) -> 
     return str(value)
 
 
-def envelope_organization(
-    cfg: Config, organization_id: str | None
-) -> dict[str, Any] | None:
+def envelope_organization(cfg: Config, organization_id: str | None) -> dict[str, Any] | None:
     """The organization a command addressed, for the envelope's ``organization`` key."""
     if organization_id and organization_id != cfg.organization.id:
         return {"id": organization_id, "name": None}
@@ -992,8 +1007,7 @@ async def upload_media_file(
         UUID(str(media_id))
     except (ValueError, TypeError, AttributeError):
         raise RuntimeError(
-            "media_upload_unverified: receipt has no valid media_id; "
-            "do not retry the write blindly"
+            "media_upload_unverified: receipt has no valid media_id; do not retry the write blindly"
         ) from None
     return receipt
 
@@ -1029,9 +1043,7 @@ async def upload_artifact_file(
         ):
             value = arguments.get(argument_key)
             if isinstance(value, dict):
-                form_data[form_key] = json.dumps(
-                    value, ensure_ascii=False, separators=(",", ":")
-                )
+                form_data[form_key] = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
     if private_media_file and arguments.get("title") is not None:
         form_data["title"] = str(arguments["title"])
     if not auth_headers(cfg):
@@ -1239,7 +1251,9 @@ def deprecation_notices(args: argparse.Namespace) -> list[str]:
             f"`{old_flag}` is deprecated here and will be removed; use `{new_flag}` (same value)."
         )
     if command:
-        notice = workspace_flag_notice(get_command_spec(command), getattr(args, "workspace_id", None))
+        notice = workspace_flag_notice(
+            get_command_spec(command), getattr(args, "workspace_id", None)
+        )
         if notice:
             notices.append(notice)
     return notices

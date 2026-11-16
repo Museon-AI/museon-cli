@@ -545,8 +545,7 @@ def _powershell_query_manifest(path: str) -> dict[str, Any]:
         ],
         "templates": {
             "keys_and_types": (
-                load
-                + "$result.PSObject.Properties.Name | ConvertTo-Json -Compress"
+                load + "$result.PSObject.Properties.Name | ConvertTo-Json -Compress"
             ),
             "count_and_fields": (
                 load

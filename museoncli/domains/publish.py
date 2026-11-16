@@ -236,9 +236,7 @@ async def _schedule(ctx: CommandContext) -> dict[str, Any]:
             idempotency_key=args["idempotency_key"],
             unwrap_success=False,
         )
-        receipt = direct_api_envelope(
-            ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url
-        )
+        receipt = direct_api_envelope(ctx.spec.schema_name, raw, site_url=ctx.cfg.site_url)
         receipt["warnings"].append(
             "Accepted publish tasks, not proof of public posts. Read each task for its final state."
         )

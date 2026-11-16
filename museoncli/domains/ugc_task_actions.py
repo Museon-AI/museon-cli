@@ -323,9 +323,7 @@ def _add_set_assignees(parser: argparse.ArgumentParser) -> None:
 
 def _build_set_assignees(args: argparse.Namespace) -> dict[str, Any]:
     assignees = (
-        []
-        if args.unassign
-        else uuids(args.assignee_user_ids, flag="--assignee-user-id", limit=20)
+        [] if args.unassign else uuids(args.assignee_user_ids, flag="--assignee-user-id", limit=20)
     )
     return {
         **_id_args(args),
@@ -372,7 +370,9 @@ def _add_run_action(parser: argparse.ArgumentParser) -> None:
 def _build_run_action(args: argparse.Namespace) -> dict[str, Any]:
     action = args.action.strip().lower()
     if not _ACTION.match(action):
-        raise ValueError("--action must be one of the task's actions, e.g. approve or attach-unpaid.")
+        raise ValueError(
+            "--action must be one of the task's actions, e.g. approve or attach-unpaid."
+        )
     fields: dict[str, Any] = {}
     if args.fields_json is not None:
         try:

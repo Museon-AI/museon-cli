@@ -164,9 +164,7 @@ def _skill_sources() -> dict[str, Any]:
     return sources
 
 
-def _install_one(
-    source, agent: str, *, skill_name: str, force: bool
-) -> dict[str, str]:
+def _install_one(source, agent: str, *, skill_name: str, force: bool) -> dict[str, str]:
     destination = _agent_home(agent) / "skills" / skill_name
     source_digest = _tree_digest(source)
     if destination.is_dir() and _tree_digest(destination) == source_digest:

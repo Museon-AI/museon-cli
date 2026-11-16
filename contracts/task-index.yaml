@@ -773,7 +773,7 @@ chapters:
           - agentic-campaign.plan-attribution
           - agentic-campaign.campaign-update: "Change the name by itself. Publish window and --publish-timezone may change while active; future not-yet-generated slots move to the new time."
           - agentic-campaign.plan-update
-          - agentic-campaign.plan-extra-post: "One more post (e.g. a missed day) for one member, from the Plan's reference pairs; never an ai-slideshow publish schedule for these accounts."
+          - agentic-campaign.plan-extra-post: "One more post on top of the daily one (e.g. a missed day). A manual ai-slideshow publish schedule on these accounts instead replaces that day's automatic post."
           - agentic-campaign.campaign-pause
           - agentic-campaign.campaign-activate
           - agentic-campaign.campaign-archive: "Stops every member account of every Plan."

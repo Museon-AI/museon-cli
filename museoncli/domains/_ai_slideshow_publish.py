@@ -1040,7 +1040,7 @@ def specs() -> list[CommandSpec]:
                 "publish-version calls. "
                 "The response preview_token must be passed unchanged to the matching replace "
                 "submission. "
-                "Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`."
+                "On an account in an Agentic Creative Campaign a manual row becomes that day's Plan post and replaces the automatic post of the day unless it is already publishing (the cadence adds none); its format/topic must be one of the Plan's current reference pairs, otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN. To add a post on top of the daily one use `agentic-campaign plan +extra-post`."
             ),
             risk_level="read",
             execution="direct",
@@ -1071,7 +1071,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+submit-schedule-plan",
             legacy_shortcuts=("+schedule-plan-batch",),
             summary=(
-                "Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`. "
+                "On an account in an Agentic Creative Campaign a manual row becomes that day's Plan post and replaces the automatic post of the day unless it is already publishing (the cadence adds none); its format/topic must be one of the Plan's current reference pairs, otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN. To add a post on top of the daily one use `agentic-campaign plan +extra-post`. "
                 "Submit one durable asynchronous schedule-plan operation. --operation "
                 "cancel-only is the primary batch deletion path for current eligible schedule "
                 "items; it requires the matching preview token and reports cancelled, already "

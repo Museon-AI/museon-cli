@@ -441,8 +441,6 @@ def _build_campaign_period_performance_arguments(
     return payload
 
 
-
-
 def _campaign_id_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
@@ -1157,8 +1155,6 @@ async def _read_creator_page(ctx: CommandContext) -> Any:
     )
 
 
-
-
 async def _execute_dimensions(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
@@ -1196,8 +1192,6 @@ async def _execute_breakdown(ctx: CommandContext) -> Any:
             ),
         )
     )
-
-
 
 
 async def _execute_summary(ctx: CommandContext) -> Any:
@@ -1356,8 +1350,18 @@ async def _campaign_kind(ctx: CommandContext) -> str:
 def _creator_item(row: dict[str, Any], source_kind: str) -> dict[str, Any]:
     performance = row.get("performance") if isinstance(row.get("performance"), dict) else {}
     values = {
-        **{key: performance.get(key) for key in ("views", "avg_views", "likes", "comments",
-                                                  "shares", "collects", "engagement_rate")},
+        **{
+            key: performance.get(key)
+            for key in (
+                "views",
+                "avg_views",
+                "likes",
+                "comments",
+                "shares",
+                "collects",
+                "engagement_rate",
+            )
+        },
         **{key: value for key, value in row.items() if value is not None},
     }
     values["creator_social_account_id"] = row.get("creator_social_account_id") or row.get("id")
@@ -1402,9 +1406,7 @@ def _normalized_page(
 
 async def _execute_creator_list(ctx: CommandContext) -> dict[str, Any]:
     raw, source_kind = await asyncio.gather(_read_creator_page(ctx), _campaign_kind(ctx))
-    data = _normalized_page(
-        raw, list_key="creators", source_kind=source_kind, item=_creator_item
-    )
+    data = _normalized_page(raw, list_key="creators", source_kind=source_kind, item=_creator_item)
     next_steps: list[str] = []
     if source_kind == "ugc":
         next_steps.append(

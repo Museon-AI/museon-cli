@@ -1010,7 +1010,7 @@ def _all_specs() -> list[CommandSpec]:
             domain=Domain.AI_SLIDESHOW,
             shortcut="+create-schedule",
             legacy_shortcuts=("+schedule-create",),
-            summary="Create one manual account publish schedule item. Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`.",
+            summary="Create one manual account publish schedule item. On an account in an Agentic Creative Campaign a manual row becomes that day's Plan post and replaces the automatic post of the day unless it is already publishing (the cadence adds none); its format/topic must be one of the Plan's current reference pairs, otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN. To add a post on top of the daily one use `agentic-campaign plan +extra-post`.",
             risk_level="write",
             execution="direct",
             adapter_tool_name="social_account_schedule_create",

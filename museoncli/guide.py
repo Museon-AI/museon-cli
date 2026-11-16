@@ -236,7 +236,9 @@ def validate() -> list[str]:
     seen: set[str] = set()
 
     def claim(kind: str, identifier: Any) -> None:
-        if not isinstance(identifier, str) or not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", identifier):
+        if not isinstance(identifier, str) or not re.fullmatch(
+            r"[a-z0-9]+(-[a-z0-9]+)*", identifier
+        ):
             problems.append(f"{kind} id must be kebab-case: {identifier!r}")
             return
         if identifier in seen:
@@ -341,9 +343,7 @@ def overview() -> dict[str, Any]:
             }
             for chapter in chapters()
         ],
-        "unlisted": [
-            {"match": entry["match"], "reason": entry["reason"]} for entry in unlisted()
-        ],
+        "unlisted": [{"match": entry["match"], "reason": entry["reason"]} for entry in unlisted()],
     }
 
 
@@ -496,7 +496,10 @@ def search(words: list[str], *, task_limit: int = 8, command_limit: int = 10) ->
             [
                 *(spec.legacy_cli_path(name) for name in spec.legacy_shortcuts),
                 # 1.x names it replaced: an Agent with an old Skill still finds it.
-                *(alias["cli"] for alias in removed_aliases(spec.cli_path.removeprefix("museoncli "))),
+                *(
+                    alias["cli"]
+                    for alias in removed_aliases(spec.cli_path.removeprefix("museoncli "))
+                ),
             ]
         )
         weighted = [
@@ -741,9 +744,7 @@ def render_llms_txt() -> str:
         )
     lines += ["", "## Optional", ""]
     lines.append(
-        f"- [Topics]({GUIDE_URL}#topics): "
-        + "; ".join(topic["title"] for topic in topics())
-        + "."
+        f"- [Topics]({GUIDE_URL}#topics): " + "; ".join(topic["title"] for topic in topics()) + "."
     )
     lines.append(
         "- [Source and command contract](https://github.com/Museon-AI/museon-cli): "

@@ -214,8 +214,7 @@ CLI_COMMANDS: list[dict[str, Any]] = [
 
 def cli_command_summary(entry: dict[str, Any]) -> dict[str, Any]:
     return {
-        key: entry[key]
-        for key in ("name", "cli", "summary", "risk_level", "requires_confirmation")
+        key: entry[key] for key in ("name", "cli", "summary", "risk_level", "requires_confirmation")
     }
 
 
