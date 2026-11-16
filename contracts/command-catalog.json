@@ -95,6 +95,34 @@
             "resource_policy": "server_evaluated_organization_and_resource_access",
             "workspace_bound": true
           },
+          "capability_key": "agentic-campaign.plan-extra-post",
+          "cli": "museoncli agentic-campaign plan +extra-post",
+          "domain": "agentic-campaign",
+          "execution": "direct",
+          "name": "agentic-campaign.plan-extra-post",
+          "requires_confirmation": false,
+          "resource": "plan",
+          "risk_level": "write",
+          "shortcut": "+extra-post",
+          "stability": "stable",
+          "summary": "Schedule one more post for one member account of a Plan, outside its daily cadence (for example to make up a missed day). The post uses one of the Plan's current reference pairs (--element-id, or the Plan's rotation when omitted), is generated and published by Museon like the daily posts, and neither replaces nor occupies that day's daily post. The account must be a member with automatic execution enabled, and --scheduled-at (ISO-8601 with offset) at least 30 minutes ahead. Use this instead of `ai-slideshow publish` schedules for Agentic Campaign accounts.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access",
+            "workspace_bound": true
+          },
           "capability_key": "agentic-campaign.plan-posts",
           "cli": "museoncli agentic-campaign plan +posts",
           "domain": "agentic-campaign",
@@ -1791,7 +1819,7 @@
           "risk_level": "read",
           "shortcut": "+preview-schedule-plan",
           "stability": "stable",
-          "summary": "Live-preview a durable schedule-plan operation without writing. --operation cancel-only is the primary way to inspect deletion of current eligible schedule items: it returns cancellable/protected counts by status and an opaque token for the matching batch. For --operation plan, use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission.",
+          "summary": "Live-preview a durable schedule-plan operation without writing. --operation cancel-only is the primary way to inspect deletion of current eligible schedule items: it returns cancellable/protected counts by status and an opaque token for the matching batch. For --operation plan, use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission. Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -1824,7 +1852,7 @@
           "risk_level": "destructive",
           "shortcut": "+submit-schedule-plan",
           "stability": "stable",
-          "summary": "Submit one durable asynchronous schedule-plan operation. --operation cancel-only is the primary batch deletion path for current eligible schedule items; it requires the matching preview token and reports cancelled, already cancelled, and protected results by prior status. For --operation plan, create MULTIPLE accounts or MULTIPLE occurrences. MUST use this command instead of looping social-account +list-schedules/+create-schedule/+delete-schedule or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +get-schedule-plan-job. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them.",
+          "summary": "Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`. Submit one durable asynchronous schedule-plan operation. --operation cancel-only is the primary batch deletion path for current eligible schedule items; it requires the matching preview token and reports cancelled, already cancelled, and protected results by prior status. For --operation plan, create MULTIPLE accounts or MULTIPLE occurrences. MUST use this command instead of looping social-account +list-schedules/+create-schedule/+delete-schedule or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +get-schedule-plan-job. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -2253,7 +2281,7 @@
           "risk_level": "write",
           "shortcut": "+create-schedule",
           "stability": "stable",
-          "summary": "Create one manual account publish schedule item.",
+          "summary": "Create one manual account publish schedule item. Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -19997,6 +20025,157 @@
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
+    "agentic-campaign.plan-extra-post": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access",
+        "workspace_bound": true
+      },
+      "capability_key": "agentic-campaign.plan-extra-post",
+      "cli": "museoncli agentic-campaign plan +extra-post",
+      "domain": "agentic-campaign",
+      "examples": [
+        "museoncli agentic-campaign plan +extra-post --campaign-id 11111111-1111-4111-8111-111111111111 --plan-id 33333333-3333-4333-8333-333333333333 --account-id 44444444-4444-4444-8444-444444444444 --scheduled-at 2026-11-17T15:00:00+00:00 --idempotency-key makeup-20261114"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "properties": {
+          "account_id": {
+            "description": "Member account",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "campaign_id": {
+            "description": "Owning Museon campaign id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "dry_run": {
+            "type": "boolean"
+          },
+          "element_id": {
+            "description": "Plan reference pair (element) to publish",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "type": "string"
+          },
+          "plan_id": {
+            "description": "Agentic Persona Plan id",
+            "examples": [
+              "33333333-3333-4333-8333-333333333333"
+            ],
+            "format": "uuid",
+            "type": "string"
+          },
+          "scheduled_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "plan_id",
+          "account_id",
+          "scheduled_at",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "agentic-campaign.plan-extra-post",
+      "output_schema": {
+        "description": "Created schedule item id and its Plan occurrence key.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "workspace": {
+            "deprecated": true,
+            "description": "Deprecated: the --workspace-id this command was given, if any.",
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "plan",
+      "risk_level": "write",
+      "shortcut": "+extra-post",
+      "stability": "stable",
+      "summary": "Schedule one more post for one member account of a Plan, outside its daily cadence (for example to make up a missed day). The post uses one of the Plan's current reference pairs (--element-id, or the Plan's rotation when omitted), is generated and published by Museon like the daily posts, and neither replaces nor occupies that day's daily post. The account must be a member with automatic execution enabled, and --scheduled-at (ISO-8601 with offset) at least 30 minutes ahead. Use this instead of `ai-slideshow publish` schedules for Agentic Campaign accounts.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
     "agentic-campaign.plan-get": {
       "authorization": {
         "authentication_required": true,
@@ -26605,7 +26784,7 @@
       "risk_level": "write",
       "shortcut": "+create-schedule",
       "stability": "stable",
-      "summary": "Create one manual account publish schedule item.",
+      "summary": "Create one manual account publish schedule item. Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -28173,7 +28352,7 @@
       "risk_level": "read",
       "shortcut": "+preview-schedule-plan",
       "stability": "stable",
-      "summary": "Live-preview a durable schedule-plan operation without writing. --operation cancel-only is the primary way to inspect deletion of current eligible schedule items: it returns cancellable/protected counts by status and an opaque token for the matching batch. For --operation plan, use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission.",
+      "summary": "Live-preview a durable schedule-plan operation without writing. --operation cancel-only is the primary way to inspect deletion of current eligible schedule items: it returns cancellable/protected counts by status and an opaque token for the matching batch. For --operation plan, use this before replace-non-published; unlike generic --dry-run, it asks the server to inspect current conflicts, account assets, product bindings, and BGM availability. After resolving account IDs in one bulk social-account +list call, invoke this preview directly; do not preflight with per-account asset, BGM, schedule, or publish-version calls. The response preview_token must be passed unchanged to the matching replace submission. Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -28736,7 +28915,7 @@
       "risk_level": "destructive",
       "shortcut": "+submit-schedule-plan",
       "stability": "stable",
-      "summary": "Submit one durable asynchronous schedule-plan operation. --operation cancel-only is the primary batch deletion path for current eligible schedule items; it requires the matching preview token and reports cancelled, already cancelled, and protected results by prior status. For --operation plan, create MULTIPLE accounts or MULTIPLE occurrences. MUST use this command instead of looping social-account +list-schedules/+create-schedule/+delete-schedule or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +get-schedule-plan-job. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them.",
+      "summary": "Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`. Submit one durable asynchronous schedule-plan operation. --operation cancel-only is the primary batch deletion path for current eligible schedule items; it requires the matching preview token and reports cancelled, already cancelled, and protected results by prior status. For --operation plan, create MULTIPLE accounts or MULTIPLE occurrences. MUST use this command instead of looping social-account +list-schedules/+create-schedule/+delete-schedule or Python/shell scripts. One plan accepts up to 200 accounts and 5,000 total occurrences. BGM mode required makes an account fail when its pool has no valid BGM; it never silently creates a no-BGM occurrence. After submission, the only state source is +get-schedule-plan-job. When --bgm-policy required finishes with status succeeded, the server guarantees every created occurrence has a concrete BGM; use bgm_bound_count/summary.bgm_bound and never call schedule-list, bgm-asset-list, or routines to verify it. Inspect every failed/skipped account. replace-non-published requires the opaque preview token from a matching live preview and fails closed when the preview has drifted. --idempotency-key is required: reuse it only for retries of the same submission, and use a new key for an intentional new job. Copy full canonical account UUIDs and the preview token verbatim from the successful preview; never reconstruct them.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

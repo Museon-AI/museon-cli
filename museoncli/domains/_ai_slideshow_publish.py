@@ -1039,7 +1039,8 @@ def specs() -> list[CommandSpec]:
                 "preview directly; do not preflight with per-account asset, BGM, schedule, or "
                 "publish-version calls. "
                 "The response preview_token must be passed unchanged to the matching replace "
-                "submission."
+                "submission. "
+                "Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`."
             ),
             risk_level="read",
             execution="direct",
@@ -1070,6 +1071,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+submit-schedule-plan",
             legacy_shortcuts=("+schedule-plan-batch",),
             summary=(
+                "Accounts in an Agentic Creative Campaign are run by their Persona Plan: these rows join that Plan only when each format/topic is one of its current reference pairs (otherwise AGENTIC_PLAN_PAIR_NOT_IN_PLAN); to add a post for such an account prefer `agentic-campaign plan +extra-post`. "
                 "Submit one durable asynchronous schedule-plan operation. --operation "
                 "cancel-only is the primary batch deletion path for current eligible schedule "
                 "items; it requires the matching preview token and reports cancelled, already "
@@ -1210,9 +1212,7 @@ async def _execute_asset_pools_batch_cancel(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         f"/account-publish/asset-pools/jobs/{job_id}:cancel",
-        json_body=compact_params(
-            {"reason": ctx.arguments.get("reason")}
-        ),
+        json_body=compact_params({"reason": ctx.arguments.get("reason")}),
     )
 
 
@@ -1249,9 +1249,7 @@ async def _execute_schedule_plan_cancel(ctx: CommandContext) -> Any:
         ctx.cfg,
         "POST",
         f"/account-publish/schedule-plans/{job_id}:cancel",
-        json_body=compact_params(
-            {"reason": ctx.arguments.get("reason")}
-        ),
+        json_body=compact_params({"reason": ctx.arguments.get("reason")}),
     )
 
 
@@ -1262,9 +1260,13 @@ EXECUTORS = {
     ),
     "ai-slideshow.publish-bulk-set-asset-pools": direct_enveloped(_execute_asset_pools_batch_set),
     "ai-slideshow.publish-get-asset-pool-job": direct_enveloped(_execute_asset_pools_batch_status),
-    "ai-slideshow.publish-cancel-asset-pool-job": direct_enveloped(_execute_asset_pools_batch_cancel),
+    "ai-slideshow.publish-cancel-asset-pool-job": direct_enveloped(
+        _execute_asset_pools_batch_cancel
+    ),
     "ai-slideshow.publish-preview-schedule-plan": direct_enveloped(_execute_schedule_plan_preview),
     "ai-slideshow.publish-submit-schedule-plan": direct_enveloped(_execute_schedule_plan_batch),
     "ai-slideshow.publish-get-schedule-plan-job": direct_enveloped(_execute_schedule_plan_status),
-    "ai-slideshow.publish-cancel-schedule-plan-job": direct_enveloped(_execute_schedule_plan_cancel),
+    "ai-slideshow.publish-cancel-schedule-plan-job": direct_enveloped(
+        _execute_schedule_plan_cancel
+    ),
 }

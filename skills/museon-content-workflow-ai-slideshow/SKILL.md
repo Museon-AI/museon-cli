@@ -64,6 +64,8 @@ Do not schedule a local Codex loop or use the manual generation path for this in
    for readback. Generation done, channel acceptance, public post and metrics
    availability are different facts. Missing metrics are not zero results.
 
+To make up a missed day or add a post for one member, use `plan +extra-post`
+with a stable idempotency key; it does not change the daily cadence.
 Maintenance uses the same Plan and resource IDs. Retire references through a
 reviewed supply update; do not erase their history. Reconcile the full desired
 account list to add/remove members. Pause/resume/stop selected accounts through
@@ -87,7 +89,7 @@ stop on a handover conflict. Never overwrite the old Plan's persona identity.
 ## DON'T
 
 - **DON'T** bind generation to an account or schedule.
-- **DON'T** build schedules with `publish +submit-schedule-plan` or `publish +create-schedule` for accounts that are members of an Agentic Creative Campaign: those rows are outside the Plan and are never generated automatically. Change the Plan (`agentic-campaign`) instead.
+- **DON'T** build schedules with `publish +submit-schedule-plan` or `publish +create-schedule` for accounts that are members of an Agentic Creative Campaign. Their posts come from the Plan: to add one post (for example a missed day) use `agentic-campaign plan +extra-post`; to post a new format/topic, add the pair with `plan +supply-update`. Publish schedules for these accounts are accepted only for the Plan's current pairs and are rejected with `AGENTIC_PLAN_PAIR_NOT_IN_PLAN` otherwise.
 - **DON'T** treat generation creation or a batch job receipt as terminal success.
 - **DON'T** add evaluator or CTA inputs, or bind generation itself to an account or schedule.
 - **DON'T** confuse a product's CTA targets (`cta-target`, what its posts point viewers to) with generation inputs. Listing, creating and editing them is staff only; `+retire` takes owner, admin or operator and `--yes` after the user agrees. `+create` has no idempotency key: list before retrying an unknown outcome.
