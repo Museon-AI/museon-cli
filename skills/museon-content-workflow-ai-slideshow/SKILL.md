@@ -96,8 +96,9 @@ plans:
 1. `museoncli agentic-campaign +apply-spec --campaign-id <id> --file spec.yaml`
    previews: it writes nothing and returns the diff and a `preview_token`.
 2. Show the diff to the user. On their go-ahead run the same command with
-   `--preview-token <token>`. A changed campaign after the preview is refused;
-   preview again.
+   `--preview-token <token>`; it answers `status: accepted` and applies in the
+   background. Preview again until it reports `changed: false`. A changed
+   campaign after the preview is refused; preview again.
 3. Re-applying the same file is a no-op; editing one day re-commits only that
    Plan. Calendar dates are in the Campaign publish timezone. Days without a
    cell keep the Plan's rotation. Plans without accounts keep their calendar
