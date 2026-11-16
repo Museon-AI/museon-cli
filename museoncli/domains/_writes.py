@@ -88,7 +88,9 @@ def require_organization(ctx: CommandContext) -> str:
     return ctx.organization_id
 
 
-def changes(before: dict[str, Any], after: dict[str, Any], fields: list[str]) -> list[dict[str, Any]]:
+def changes(
+    before: dict[str, Any], after: dict[str, Any], fields: list[str]
+) -> list[dict[str, Any]]:
     return [
         {"field": field, "before": before.get(field), "after": after.get(field)}
         for field in fields

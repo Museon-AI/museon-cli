@@ -1392,7 +1392,9 @@ async def _execute_list(ctx: CommandContext) -> Any:
                 "topic_direction_id": filters.get("topic_direction_id"),
                 "status": filters.get("status"),
                 # The assets API still names the organization's own library "workspace".
-                "scope": _ORGANIZATION_SCOPE_ON_WIRE.get(filters.get("scope"), filters.get("scope")),
+                "scope": _ORGANIZATION_SCOPE_ON_WIRE.get(
+                    filters.get("scope"), filters.get("scope")
+                ),
                 "media_type": filters.get("media_type"),
                 "source_type": filters.get("source_type"),
                 "page": page_number,

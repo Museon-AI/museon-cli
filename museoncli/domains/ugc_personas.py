@@ -200,13 +200,22 @@ def specs() -> list[CommandSpec]:
             ),
             adapter="ugc_persona_create",
             properties={
-                "title": {"type": "string", "description": "Persona title, unique in the organization."},
-                "description": {"type": "string", "maxLength": 2000, "description": "Who this creator is."},
+                "title": {
+                    "type": "string",
+                    "description": "Persona title, unique in the organization.",
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "Who this creator is.",
+                },
                 "dry_run": w.DRY_RUN,
             },
             required=["title"],
             output_description="dry_run and persona.",
-            examples=["museoncli ugc persona +create --title 'Busy mom' --description 'Parents of toddlers' --dry-run"],
+            examples=[
+                "museoncli ugc persona +create --title 'Busy mom' --description 'Parents of toddlers' --dry-run"
+            ],
             add_arguments=_add_create_arguments,
             build_arguments=_build_create_arguments,
             kind=w.WRITE,
@@ -222,7 +231,11 @@ def specs() -> list[CommandSpec]:
             properties={
                 "id": _ID,
                 "title": {"type": "string", "description": "New title."},
-                "description": {"type": "string", "maxLength": 2000, "description": "New description."},
+                "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "New description.",
+                },
                 "dry_run": w.DRY_RUN,
             },
             required=["id"],

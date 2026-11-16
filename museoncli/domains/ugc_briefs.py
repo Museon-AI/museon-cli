@@ -61,7 +61,9 @@ def _shared_warning(view: dict[str, Any]) -> list[str]:
     if not linked:
         return []
     more = " or more" if view.get("has_more_campaigns") else ""
-    return [f"{_plural(len(linked), 'Campaign uses', 'Campaigns use')}{more} this Format; the change reaches every one of them."]
+    return [
+        f"{_plural(len(linked), 'Campaign uses', 'Campaigns use')}{more} this Format; the change reaches every one of them."
+    ]
 
 
 # -- library -------------------------------------------------------------------
@@ -98,10 +100,15 @@ async def _execute_library_get(ctx: CommandContext) -> Any:
     view = await _library_brief(ctx, args["id"])
     summary = view["brief"]
     wanted = args.get("version") or summary.get("current_version")
-    versions = [*w._dicts(view.get("versions")), *([view["current"]] if isinstance(view.get("current"), dict) else [])]
+    versions = [
+        *w._dicts(view.get("versions")),
+        *([view["current"]] if isinstance(view.get("current"), dict) else []),
+    ]
     version = next((item for item in versions if item.get("version") == wanted), None)
     if version is None:
-        raise RuntimeError(f"not_found: brief_version_not_found: the Format has no version {wanted}")
+        raise RuntimeError(
+            f"not_found: brief_version_not_found: the Format has no version {wanted}"
+        )
     return {
         "brief": summary,
         "version": version,
@@ -117,7 +124,11 @@ async def _execute_library_create(ctx: CommandContext) -> Any:
     args = ctx.arguments
     key = w.idempotency_key(args)
     document = args.get("document") or {}
-    data: dict[str, Any] = {"dry_run": args["dry_run"], "document": document, "idempotency_key": key}
+    data: dict[str, Any] = {
+        "dry_run": args["dry_run"],
+        "document": document,
+        "idempotency_key": key,
+    }
     if args["dry_run"]:
         return data, [], w.ask("the new Format")
     view = await w.call(
@@ -212,11 +223,16 @@ async def _execute_campaign_create(ctx: CommandContext) -> Any:
     campaign_id = args["campaign_id"]
     briefs = await _campaign_briefs(ctx, campaign_id)
     key = w.idempotency_key(args)
-    body = {**args["document"], **({"persona_id": args["persona_id"]} if args.get("persona_id") else {})}
+    body = {
+        **args["document"],
+        **({"persona_id": args["persona_id"]} if args.get("persona_id") else {}),
+    }
     data: dict[str, Any] = {"dry_run": args["dry_run"], "document": body, "idempotency_key": key}
     warnings = (
         [f"The Campaign already links a Format titled {body['title']!r}."]
-        if any(item.get("title") == body["title"] and item.get("status") == "active" for item in briefs)
+        if any(
+            item.get("title") == body["title"] and item.get("status") == "active" for item in briefs
+        )
         else []
     )
     if args["dry_run"]:
@@ -243,7 +259,9 @@ async def _execute_campaign_link(ctx: CommandContext) -> Any:
         return data, ["The Campaign already links this Format; nothing was written."], []
     warnings = []
     if replaces and replaces not in linked:
-        warnings.append("The Campaign does not link the Format to replace; the workbench refuses it.")
+        warnings.append(
+            "The Campaign does not link the Format to replace; the workbench refuses it."
+        )
     if args["dry_run"]:
         return data, warnings, w.ask("which Format the Campaign would link")
     await w.call(
@@ -260,7 +278,10 @@ async def _execute_campaign_unlink(ctx: CommandContext) -> Any:
     args = ctx.arguments
     campaign_id, brief_id = args["campaign_id"], args["id"]
     linked = {item.get("id"): item for item in await _campaign_briefs(ctx, campaign_id)}
-    data: dict[str, Any] = {"dry_run": args["dry_run"], "brief": _brief_line(linked.get(brief_id) or {"id": brief_id})}
+    data: dict[str, Any] = {
+        "dry_run": args["dry_run"],
+        "brief": _brief_line(linked.get(brief_id) or {"id": brief_id}),
+    }
     if brief_id not in linked:
         return data, ["The Campaign does not link this Format; nothing was written."], []
     warnings = ["The Format stays in the library; only this Campaign stops using it."]
@@ -294,7 +315,11 @@ async def _execute_campaign_copy(ctx: CommandContext) -> Any:
     if args["dry_run"]:
         return data, warnings, w.ask("the Format copy")
     params = compact_params(
-        {"version": version, "persona_id": args.get("persona_id"), "keep_source": "true" if keep_source else None}
+        {
+            "version": version,
+            "persona_id": args.get("persona_id"),
+            "keep_source": "true" if keep_source else None,
+        }
     )
     written = await w.call(
         ctx,
@@ -331,7 +356,11 @@ def _document(args: argparse.Namespace) -> dict[str, Any]:
     )
     if len(content) > 20000:
         raise ValueError("The Format's body is at most 20000 characters.")
-    references = [write_reference(item) for item in _references(args.references_json)] if args.references_json else []
+    references = (
+        [write_reference(item) for item in _references(args.references_json)]
+        if args.references_json
+        else []
+    )
     if len(references) > 20:
         raise ValueError("At most 20 references.")
     caption = (args.required_caption or "").strip() or None
@@ -357,7 +386,12 @@ def _build_library_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
     if not 1 <= args.page_size <= _PAGE_LIMIT:
         raise ValueError(f"--page-size must be between 1 and {_PAGE_LIMIT}.")
     return compact_params(
-        {"status": args.status, "search": args.search, "cursor": args.cursor, "page_size": args.page_size}
+        {
+            "status": args.status,
+            "search": args.search,
+            "cursor": args.cursor,
+            "page_size": args.page_size,
+        }
     )
 
 
@@ -377,7 +411,11 @@ def _add_library_create_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_library_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    return {"document": _document(args), **w.build_idempotency_key(args), "dry_run": bool(args.dry_run)}
+    return {
+        "document": _document(args),
+        **w.build_idempotency_key(args),
+        "dry_run": bool(args.dry_run),
+    }
 
 
 def _add_library_update_arguments(parser: argparse.ArgumentParser) -> None:
@@ -389,7 +427,9 @@ def _add_library_update_arguments(parser: argparse.ArgumentParser) -> None:
     content.add_argument("--content-file")
     parser.add_argument("--references-json")
     parser.add_argument("--required-caption")
-    parser.add_argument("--require-ad-disclosure", action=argparse.BooleanOptionalAction, default=None)
+    parser.add_argument(
+        "--require-ad-disclosure", action=argparse.BooleanOptionalAction, default=None
+    )
     w.add_dry_run(parser)
 
 
@@ -463,7 +503,9 @@ def _build_campaign_create_arguments(args: argparse.Namespace) -> dict[str, Any]
     return {
         "campaign_id": w._uuid(args.campaign_id, flag="--campaign-id"),
         "document": _document(args),
-        **({"persona_id": w._uuid(args.persona_id, flag="--persona-id")} if args.persona_id else {}),
+        **(
+            {"persona_id": w._uuid(args.persona_id, flag="--persona-id")} if args.persona_id else {}
+        ),
         **w.build_idempotency_key(args),
         "dry_run": bool(args.dry_run),
     }
@@ -508,7 +550,9 @@ def _build_campaign_copy_arguments(args: argparse.Namespace) -> dict[str, Any]:
         "campaign_id": w._uuid(args.campaign_id, flag="--campaign-id"),
         "id": w._uuid(args.id, flag="--id"),
         **({"version": args.version} if args.version else {}),
-        **({"persona_id": w._uuid(args.persona_id, flag="--persona-id")} if args.persona_id else {}),
+        **(
+            {"persona_id": w._uuid(args.persona_id, flag="--persona-id")} if args.persona_id else {}
+        ),
         "keep_source": bool(args.keep_source),
         **w.build_idempotency_key(args),
         "dry_run": bool(args.dry_run),
@@ -521,8 +565,15 @@ _ROLE = " Role: owner, admin or operator; the server decides."
 _ID = w.uuid_property("Format (brief) ID.")
 _DOCUMENT = {
     "title": {"type": "string", "maxLength": 200, "description": "Format title."},
-    "content": {"type": "string", "maxLength": 20000, "description": "The Format's body, Markdown."},
-    "content_file": {"type": "string", "description": "Path to a UTF-8 file holding the Markdown body."},
+    "content": {
+        "type": "string",
+        "maxLength": 20000,
+        "description": "The Format's body, Markdown.",
+    },
+    "content_file": {
+        "type": "string",
+        "description": "Path to a UTF-8 file holding the Markdown body.",
+    },
     "references_json": {
         "type": "string",
         "description": (
@@ -531,10 +582,21 @@ _DOCUMENT = {
             "optional note. Upload a file first with ugc brief +upload-media."
         ),
     },
-    "required_caption": {"type": "string", "maxLength": 2200, "description": "Caption every post must carry."},
-    "require_ad_disclosure": {"type": "boolean", "description": "Posts must carry an ad disclosure."},
+    "required_caption": {
+        "type": "string",
+        "maxLength": 2200,
+        "description": "Caption every post must carry.",
+    },
+    "require_ad_disclosure": {
+        "type": "boolean",
+        "description": "Posts must carry an ad disclosure.",
+    },
 }
-_VERSION = {"type": "integer", "minimum": 1, "description": "Version to use; the current one when left out."}
+_VERSION = {
+    "type": "integer",
+    "minimum": 1,
+    "description": "Version to use; the current one when left out.",
+}
 _EXPECTED_VERSION = {
     "type": "integer",
     "minimum": 0,
@@ -555,10 +617,22 @@ def specs() -> list[CommandSpec]:
             ),
             adapter="ugc_brief_library_list",
             properties={
-                "status": {"type": "string", "enum": BRIEF_STATUSES, "description": "active (default) or archived."},
+                "status": {
+                    "type": "string",
+                    "enum": BRIEF_STATUSES,
+                    "description": "active (default) or archived.",
+                },
                 "search": {"type": "string", "maxLength": 200, "description": "Title search."},
-                "cursor": {"type": ["string", "null"], "description": "next_cursor from the previous page."},
-                "page_size": {"type": "integer", "minimum": 1, "maximum": _PAGE_LIMIT, "default": 50},
+                "cursor": {
+                    "type": ["string", "null"],
+                    "description": "next_cursor from the previous page.",
+                },
+                "page_size": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": _PAGE_LIMIT,
+                    "default": 50,
+                },
             },
             required=[],
             output_description="Format lines (items: id, title, status, persona_id, current_version, ...) and next_cursor.",
@@ -589,13 +663,16 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Create a Format in the organization's library (not yet used by any Campaign; "
                 "link it with ugc brief +link). --dry-run returns the document without writing."
-                + w.CONFIRM_FIRST + _ROLE
+                + w.CONFIRM_FIRST
+                + _ROLE
             ),
             adapter="ugc_brief_library_create",
             properties={**_DOCUMENT, "idempotency_key": w.IDEMPOTENCY_KEY, "dry_run": w.DRY_RUN},
             required=["title"],
             output_description="dry_run, document, idempotency_key, brief.",
-            examples=["museoncli ugc brief-library +create --title 'Morning routine' --content-file ./format.md --dry-run"],
+            examples=[
+                "museoncli ugc brief-library +create --title 'Morning routine' --content-file ./format.md --dry-run"
+            ],
             add_arguments=_add_library_create_arguments,
             build_arguments=_build_library_create_arguments,
             kind=w.WRITE,
@@ -617,7 +694,9 @@ def specs() -> list[CommandSpec]:
             },
             required=["id", "expected_version"],
             output_description="dry_run, brief, changes (field, before, after), linked_campaign_ids.",
-            examples=[f"museoncli ugc brief-library +update --id {b} --expected-version 2 --title 'Morning hook' --dry-run"],
+            examples=[
+                f"museoncli ugc brief-library +update --id {b} --expected-version 2 --title 'Morning hook' --dry-run"
+            ],
             add_arguments=_add_library_update_arguments,
             build_arguments=_build_library_update_arguments,
             kind=w.WRITE,
@@ -627,13 +706,17 @@ def specs() -> list[CommandSpec]:
             shortcut="+archive",
             summary=(
                 "Archive a library Format: it leaves the library list (there is no restore). "
-                "--dry-run returns it and the Campaigns using it without writing." + w.CONFIRM_YES + _ROLE
+                "--dry-run returns it and the Campaigns using it without writing."
+                + w.CONFIRM_YES
+                + _ROLE
             ),
             adapter="ugc_brief_library_archive",
             properties={"id": _ID, "expected_version": _EXPECTED_VERSION, "dry_run": w.DRY_RUN},
             required=["id", "expected_version"],
             output_description="dry_run, brief, linked_campaign_ids.",
-            examples=[f"museoncli ugc brief-library +archive --id {b} --expected-version 2 --dry-run"],
+            examples=[
+                f"museoncli ugc brief-library +archive --id {b} --expected-version 2 --dry-run"
+            ],
             add_arguments=_add_library_archive_arguments,
             build_arguments=_build_library_archive_arguments,
             kind=w.DESTRUCTIVE,
@@ -644,10 +727,16 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Duplicate a library Format (its current version, or --version N) as a new "
                 "Format in the library. --dry-run returns the source without writing."
-                + w.CONFIRM_FIRST + _ROLE
+                + w.CONFIRM_FIRST
+                + _ROLE
             ),
             adapter="ugc_brief_library_copy",
-            properties={"id": _ID, "version": _VERSION, "idempotency_key": w.IDEMPOTENCY_KEY, "dry_run": w.DRY_RUN},
+            properties={
+                "id": _ID,
+                "version": _VERSION,
+                "idempotency_key": w.IDEMPOTENCY_KEY,
+                "dry_run": w.DRY_RUN,
+            },
             required=["id"],
             output_description="dry_run, source, version, idempotency_key, brief (the copy).",
             examples=[f"museoncli ugc brief-library +copy --id {b} --dry-run"],
@@ -673,7 +762,9 @@ def specs() -> list[CommandSpec]:
             },
             required=["campaign_id", "title"],
             output_description="dry_run, document, idempotency_key, brief.",
-            examples=[f"museoncli ugc brief +create --campaign-id {c} --title 'Unboxing' --content 'Open the box on camera.' --persona-id {p} --dry-run"],
+            examples=[
+                f"museoncli ugc brief +create --campaign-id {c} --title 'Unboxing' --content 'Open the box on camera.' --persona-id {p} --dry-run"
+            ],
             add_arguments=_add_campaign_create_arguments,
             build_arguments=_build_campaign_create_arguments,
             kind=w.WRITE,
@@ -729,14 +820,22 @@ def specs() -> list[CommandSpec]:
                 "campaign_id": w.CAMPAIGN_ID,
                 "id": _ID,
                 "version": _VERSION,
-                "persona_id": w.uuid_property("The persona the copy is written for; the source's when left out."),
-                "keep_source": {"type": "boolean", "default": False, "description": "Link the copy beside the source."},
+                "persona_id": w.uuid_property(
+                    "The persona the copy is written for; the source's when left out."
+                ),
+                "keep_source": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Link the copy beside the source.",
+                },
                 "idempotency_key": w.IDEMPOTENCY_KEY,
                 "dry_run": w.DRY_RUN,
             },
             required=["campaign_id", "id"],
             output_description="dry_run, source, version, persona_id, keep_source, idempotency_key, brief.",
-            examples=[f"museoncli ugc brief +copy --campaign-id {c} --id {o} --keep-source --persona-id {p} --dry-run"],
+            examples=[
+                f"museoncli ugc brief +copy --campaign-id {c} --id {o} --keep-source --persona-id {p} --dry-run"
+            ],
             add_arguments=_add_campaign_copy_arguments,
             build_arguments=_build_campaign_copy_arguments,
             kind=w.WRITE,

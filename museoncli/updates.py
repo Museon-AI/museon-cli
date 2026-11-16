@@ -663,6 +663,5 @@ def upgrade_result(update: dict[str, Any] | None) -> dict[str, Any]:
             "cannot upgrade itself."
         )
     raise RuntimeError(
-        "network_error: could not reach GitHub to find the latest Museon CLI release; "
-        "retry later."
+        "network_error: could not reach GitHub to find the latest Museon CLI release; retry later."
     )

@@ -147,7 +147,9 @@ def _blocked(report: dict[str, Any], action: str) -> list[str]:
     capability = _capability(report, action)
     if capability.get("enabled", True):
         return []
-    codes = [item.get("code") for item in capability.get("blockers") or [] if isinstance(item, dict)]
+    codes = [
+        item.get("code") for item in capability.get("blockers") or [] if isinstance(item, dict)
+    ]
     return [f"The server would refuse {action} now: {', '.join(map(str, codes)) or 'blocked'}."]
 
 
@@ -248,7 +250,10 @@ async def _execute_regenerate(ctx: CommandContext) -> Any:
     if args.get("dry_run"):
         return (
             data,
-            [*warnings, "Regenerating replaces the report's text with a fresh draft from the data."],
+            [
+                *warnings,
+                "Regenerating replaces the report's text with a fresh draft from the data.",
+            ],
             [ask_first("the report that would be rewritten")],
         )
     data["report"] = await _post(
@@ -280,8 +285,10 @@ async def _execute_refresh(ctx: CommandContext) -> Any:
         "dry_run": bool(args.get("dry_run")),
         "report": _report_line(report),
         "changes": [
-            {**{key: item.get(key) for key in ("id", "label", "before", "after")},
-             "apply": str(item.get("id")) not in keep}
+            {
+                **{key: item.get(key) for key in ("id", "label", "before", "after")},
+                "apply": str(item.get("id")) not in keep,
+            }
             for item in found
         ],
     }
@@ -426,7 +433,9 @@ def _settings_view(write: dict[str, Any]) -> dict[str, Any]:
         "timezone": write.get("timezone"),
         "daily_generate_time": write.get("dailyGenerateTime"),
         "daily_due_time": write.get("dailyOperatorDueTime"),
-        "weekly_weekday": WEEKDAYS[weekday] if isinstance(weekday, int) and 0 <= weekday <= 6 else None,
+        "weekly_weekday": WEEKDAYS[weekday]
+        if isinstance(weekday, int) and 0 <= weekday <= 6
+        else None,
         "weekly_generate_time": schedule.get("generateTime"),
         "weekly_due_time": schedule.get("submissionDueTime"),
         "data_scope": write.get("reportDataScope"),
@@ -481,7 +490,10 @@ def apply_settings_edits(
         if edit in edits:
             after["weeklySchedule"][key] = edits[edit]
     if "language" in edits:
-        after["defaultAppearance"] = {**(after.get("defaultAppearance") or {}), "language": edits["language"]}
+        after["defaultAppearance"] = {
+            **(after.get("defaultAppearance") or {}),
+            "language": edits["language"],
+        }
     for edit, key in (("owner_user_id", "ownerUserId"), ("reviewer_user_id", "reviewerUserId")):
         if edit in edits:
             after[key] = None if edits[edit] == NONE else edits[edit]
@@ -498,7 +510,9 @@ async def _execute_config_update(ctx: CommandContext) -> Any:
     args = ctx.arguments
     workspace = await _workspace(ctx, args["campaign_id"])
     communication = _communication(workspace)
-    candidates = workspace.get("candidates") if isinstance(workspace.get("candidates"), list) else []
+    candidates = (
+        workspace.get("candidates") if isinstance(workspace.get("candidates"), list) else []
+    )
     before = settings_write(communication)
     after = apply_settings_edits(before, args.get("edits") or {}, candidates)
     view_before, view_after = _settings_view(before), _settings_view(after)
@@ -522,7 +536,10 @@ async def _execute_config_update(ctx: CommandContext) -> Any:
             "PUT",
             f"{_base(args['campaign_id'])}/communication",
             params=_query(ctx),
-            json_body={"expectedVersion": int(communication.get("version") or 0), "communication": after},
+            json_body={
+                "expectedVersion": int(communication.get("version") or 0),
+                "communication": after,
+            },
         )
     )
     data["settings"] = _settings_view(settings_write(saved if isinstance(saved, dict) else {}))
@@ -597,7 +614,12 @@ def _build_update_arguments(args: argparse.Namespace) -> dict[str, Any]:
     if args.title is not None and not args.title.strip():
         raise ValueError("--title cannot be empty.")
     return compact_params(
-        {**_report_args(args), "title": args.title, "markdown": markdown, "dry_run": bool(args.dry_run)}
+        {
+            **_report_args(args),
+            "title": args.title,
+            "markdown": markdown,
+            "dry_run": bool(args.dry_run),
+        }
     )
 
 
@@ -697,7 +719,12 @@ def _build_config_arguments(args: argparse.Namespace) -> dict[str, Any]:
         edits["disable"] = list(args.disable)
     if args.timezone is not None:
         edits["timezone"] = args.timezone
-    for name in ("daily_generate_time", "daily_due_time", "weekly_generate_time", "weekly_due_time"):
+    for name in (
+        "daily_generate_time",
+        "daily_due_time",
+        "weekly_generate_time",
+        "weekly_due_time",
+    ):
         value = getattr(args, name)
         if value is not None:
             edits[name] = _clock(value, flag="--" + name.replace("_", "-"))
@@ -741,7 +768,11 @@ _EXPECTED_REVISION = {
         "Omitted, the revision read just before the write is used."
     ),
 }
-_REPORT_INPUT = {"campaign_id": _CAMPAIGN_ID, "id": _REPORT_ID, "expected_revision": _EXPECTED_REVISION}
+_REPORT_INPUT = {
+    "campaign_id": _CAMPAIGN_ID,
+    "id": _REPORT_ID,
+    "expected_revision": _EXPECTED_REVISION,
+}
 _REPORT_OUT = _direct_output_schema("report (id, type, status, revision, period) after the write.")
 
 
@@ -773,7 +804,11 @@ def specs() -> list[CommandSpec]:
                 {
                     "campaign_id": _CAMPAIGN_ID,
                     "type": {"type": "string", "enum": REPORT_TYPES},
-                    "date": {"type": "string", "format": "date", "description": "A day of the report's period."},
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "A day of the report's period.",
+                    },
                     "language": {"type": "string", "enum": LANGUAGES},
                     "title": {"type": "string", "maxLength": 500},
                     "markdown": {"type": "string", "maxLength": 500000},
@@ -782,7 +817,9 @@ def specs() -> list[CommandSpec]:
                 },
                 ["campaign_id", "type", "date"],
             ),
-            output_schema=_direct_output_schema("The report as generated (id, status, revision, markdown)."),
+            output_schema=_direct_output_schema(
+                "The report as generated (id, status, revision, markdown)."
+            ),
             examples=[
                 f"museoncli ugc client-report +create --campaign-id {campaign} --type daily "
                 "--date 2026-11-12 --dry-run"
@@ -856,7 +893,9 @@ def specs() -> list[CommandSpec]:
                 },
                 ["campaign_id", "id"],
             ),
-            output_schema=_direct_output_schema("report and changes (id, label, before, after, apply)."),
+            output_schema=_direct_output_schema(
+                "report and changes (id, label, before, after, apply)."
+            ),
             examples=[
                 f"museoncli ugc client-report +refresh --campaign-id {campaign} --id {report} --dry-run"
             ],
@@ -869,7 +908,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+request-review",
             summary=(
                 "Ask the Campaign's reviewer to review a client report: posts it to the internal "
-                "Feishu group. Without --yes it is refused with a preview of the report and the group." + _ROLE
+                "Feishu group. Without --yes it is refused with a preview of the report and the group."
+                + _ROLE
             ),
             adapter_tool_name="ugc_client_report_request_review",
             input_schema=schema({**_REPORT_INPUT, "dry_run": DRY_RUN}, ["campaign_id", "id"]),
@@ -949,7 +989,9 @@ def specs() -> list[CommandSpec]:
                 },
                 ["campaign_id", "id"],
             ),
-            output_schema=_direct_output_schema("action, destination and the report after sending."),
+            output_schema=_direct_output_schema(
+                "action, destination and the report after sending."
+            ),
             examples=[
                 f"museoncli ugc client-report +send --campaign-id {campaign} --id {report}",
                 f"museoncli ugc client-report +send --campaign-id {campaign} --id {report} --yes",
@@ -986,7 +1028,9 @@ def specs() -> list[CommandSpec]:
                 },
                 ["campaign_id", "edits"],
             ),
-            output_schema=_direct_output_schema("version, settings and changes (field, before, after)."),
+            output_schema=_direct_output_schema(
+                "version, settings and changes (field, before, after)."
+            ),
             examples=[
                 f"museoncli ugc client-report-config +update --campaign-id {campaign} --enable daily "
                 "--daily-generate-time 09:00 --daily-due-time 12:00 --dry-run"
@@ -1009,7 +1053,9 @@ EXECUTORS = {
     "ugc.client-report-approve": with_notes(
         _action_executor("approve", what="the report revision being approved")
     ),
-    "ugc.client-report-skip": with_notes(_action_executor("skip", what="the report and the reason")),
+    "ugc.client-report-skip": with_notes(
+        _action_executor("skip", what="the report and the reason")
+    ),
     "ugc.client-report-send": with_notes(
         _action_executor("send", what="the report and where it would go")
     ),

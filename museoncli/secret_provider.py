@@ -71,7 +71,9 @@ class AgentSessionSecretProvider:
             persistable=False,
         )
         if lease.is_expired():
-            return CredentialLease(**{**lease.__dict__, "value": None, "error": "credential_expired"})
+            return CredentialLease(
+                **{**lease.__dict__, "value": None, "error": "credential_expired"}
+            )
         return lease
 
     def _failure(self, error: str) -> CredentialLease:

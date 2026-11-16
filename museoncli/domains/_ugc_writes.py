@@ -66,9 +66,7 @@ __all__ = [
 
 _PAGE_LIMIT = 100
 
-CAMPAIGN_ID = _uuid_property(
-    "UGC Campaign ID (from campaign +list)."
-)
+CAMPAIGN_ID = _uuid_property("UGC Campaign ID (from campaign +list).")
 DRY_RUN = {
     "type": "boolean",
     "default": False,
@@ -99,8 +97,7 @@ ROLE_ENROLLMENT = (
     "members and Brand viewers cannot."
 )
 ROLE_MESSAGE = (
-    " Role: owner, admin, or an operator assigned to the Campaign; members cannot message "
-    "creators."
+    " Role: owner, admin, or an operator assigned to the Campaign; members cannot message creators."
 )
 ROLE_REVIEW = (
     " Role: owner, admin, an operator assigned to the Campaign, or a Brand editor on a "
@@ -246,4 +243,3 @@ def same_key_next_step(key: str) -> str:
         f"If the outcome is unknown (timeout, network error), retry with --idempotency-key {key} "
         "and the same text; a new key sends a second message."
     )
-

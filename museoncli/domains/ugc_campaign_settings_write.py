@@ -141,10 +141,20 @@ async def _execute_settings_update(ctx: CommandContext) -> Any:
     _validate_settings(merged, set(edits))
     diff = w.changes(current, merged, [*SETTINGS_FIELDS])
     if "application_form" in edits:
-        diff.append({"field": "application_form", "before": stored.get("application_form"), "after": edits["application_form"]})
+        diff.append(
+            {
+                "field": "application_form",
+                "before": stored.get("application_form"),
+                "after": edits["application_form"],
+            }
+        )
     rules_change = None
     if rules is not ... and rules != stored.get("platform_pay_rules"):
-        rules_change = {"field": "platform_pay_rules", "before": stored.get("platform_pay_rules"), "after": rules}
+        rules_change = {
+            "field": "platform_pay_rules",
+            "before": stored.get("platform_pay_rules"),
+            "after": rules,
+        }
         unknown = _platforms_of_rules(rules) - set(merged.get("allowed_platforms") or [])
         if unknown:
             raise ValueError(
@@ -223,7 +233,10 @@ async def _execute_staff_set(ctx: CommandContext) -> Any:
     after = {key: args.get(key, before[key]) for key in before}
     data: dict[str, Any] = {
         "dry_run": args["dry_run"],
-        "before": {"managers": _people(stored.get("managers")), "operators": _people(stored.get("operators"))},
+        "before": {
+            "managers": _people(stored.get("managers")),
+            "operators": _people(stored.get("operators")),
+        },
         "after": after,
         "expected_updated_at": token,
     }
@@ -241,12 +254,18 @@ async def _execute_staff_set(ctx: CommandContext) -> Any:
 # -- delivery targets --------------------------------------------------------
 
 TARGET_FIELDS = ("target_views", "target_posts", "target_creators", "start_date", "due_date")
-_TARGET_MAX = {"target_views": 9007199254740991, "target_posts": 2147483647, "target_creators": 100000}
+_TARGET_MAX = {
+    "target_views": 9007199254740991,
+    "target_posts": 2147483647,
+    "target_creators": 100000,
+}
 
 
 def _validate_target(target: dict[str, Any]) -> None:
     if not any(target.get(field) is not None for field in _TARGET_MAX):
-        raise ValueError("A target needs at least one of --target-views, --target-posts, --target-creators.")
+        raise ValueError(
+            "A target needs at least one of --target-views, --target-posts, --target-creators."
+        )
     for field, maximum in _TARGET_MAX.items():
         value = target.get(field)
         if value is not None and not 0 < value <= maximum:
@@ -262,7 +281,9 @@ async def _targets(ctx: CommandContext, campaign_id: str) -> dict[str, Any]:
 
 
 def _find_target(view: dict[str, Any], target_id: str) -> dict[str, Any]:
-    found = next((item for item in w._dicts(view.get("items")) if item.get("id") == target_id), None)
+    found = next(
+        (item for item in w._dicts(view.get("items")) if item.get("id") == target_id), None
+    )
     if found is None:
         raise RuntimeError("not_found: campaign_target_not_found: no such target in this Campaign")
     return found
@@ -295,13 +316,20 @@ async def _execute_target_update(ctx: CommandContext) -> Any:
     after = {**before, **args["target"]}
     _validate_target(after)
     diff = w.changes(before, after, TARGET_FIELDS)
-    data: dict[str, Any] = {"dry_run": args["dry_run"], "id": target_id, "changes": diff, "expected_updated_at": token}
+    data: dict[str, Any] = {
+        "dry_run": args["dry_run"],
+        "id": target_id,
+        "changes": diff,
+        "expected_updated_at": token,
+    }
     if not diff:
         return data, [w.nothing_to_write("the current target")], []
     if args["dry_run"]:
         return data, [], w.ask("the target changes")
     body = {**after, "expected_updated_at": token}
-    data["target"] = await w.call(ctx, "PUT", f"/campaigns/{campaign_id}/targets/{target_id}", body=body)
+    data["target"] = await w.call(
+        ctx, "PUT", f"/campaigns/{campaign_id}/targets/{target_id}", body=body
+    )
     return data, [], []
 
 
@@ -343,7 +371,9 @@ def _validate_terms(terms: list[dict[str, Any]]) -> None:
         if not label or len(label) > 80:
             raise ValueError(f"Contract term {name}: label is required, at most 80 characters.")
         if not str(term.get("default_value") or "") or len(str(term["default_value"])) > 2000:
-            raise ValueError(f"Contract term {name}: default_value is required, at most 2000 characters.")
+            raise ValueError(
+                f"Contract term {name}: default_value is required, at most 2000 characters."
+            )
 
 
 async def _execute_contract_set(ctx: CommandContext) -> Any:
@@ -365,13 +395,21 @@ async def _execute_contract_set(ctx: CommandContext) -> Any:
             terms = _terms_of(stored)
         _validate_terms(terms)
         body = {"source": "custom", "body": text, "terms": terms}
-    before = {"source": stored.get("source"), "body": stored.get("body"), "terms": _terms_of(stored)}
+    before = {
+        "source": stored.get("source"),
+        "body": stored.get("body"),
+        "terms": _terms_of(stored),
+    }
     after = {"source": source, "body": body.get("body"), "terms": body.get("terms", [])}
-    diff = w.changes(before, after, ["source", "body", "terms"] if source == "custom" else ["source"])
+    diff = w.changes(
+        before, after, ["source", "body", "terms"] if source == "custom" else ["source"]
+    )
     data: dict[str, Any] = {"dry_run": args["dry_run"], "changes": diff}
     if not diff:
         return data, [w.nothing_to_write("the current contract")], []
-    warnings = ["Contracts already sent keep their wording; contracts sent from now on use the new one."]
+    warnings = [
+        "Contracts already sent keep their wording; contracts sent from now on use the new one."
+    ]
     if args["dry_run"]:
         if source == "custom":
             # The page's preview: the body filled the way sending fills it, for an example creator.
@@ -523,7 +561,9 @@ def _validate_dm_rule(rule: dict[str, Any]) -> None:
     for field in ("utm_medium", "utm_source_platform"):
         value = str(rule.get(field) or "")
         if _PLACEHOLDER.search(value) or len(value) > 100:
-            raise ValueError(f"{field} takes no {{{{...}}}} placeholder and at most 100 characters.")
+            raise ValueError(
+                f"{field} takes no {{{{...}}}} placeholder and at most 100 characters."
+            )
     campaign = str(rule.get("utm_campaign") or "").strip()
     if any(token != _ACCOUNT_TOKEN for token in _PLACEHOLDER.findall(campaign)):
         raise ValueError(f"utm_campaign takes only the {_ACCOUNT_TOKEN} placeholder.")
@@ -553,7 +593,9 @@ _DM_DEFAULTS = {
 async def _execute_dm_create(ctx: CommandContext) -> Any:
     args = ctx.arguments
     campaign_id = args["campaign_id"]
-    existing = [item for item in await _dm_rules(ctx, campaign_id) if item.get("status") != "archived"]
+    existing = [
+        item for item in await _dm_rules(ctx, campaign_id) if item.get("status") != "archived"
+    ]
     rule = {**_DM_DEFAULTS, "keywords": [], **args["rule"]}
     _validate_dm_rule(rule)
     data: dict[str, Any] = {"dry_run": args["dry_run"], "rule": rule}
@@ -578,7 +620,9 @@ async def _execute_dm_create(ctx: CommandContext) -> Any:
 async def _execute_dm_update(ctx: CommandContext) -> Any:
     args = ctx.arguments
     campaign_id, rule_id = args["campaign_id"], args["id"]
-    stored = next((item for item in await _dm_rules(ctx, campaign_id) if item.get("id") == rule_id), None)
+    stored = next(
+        (item for item in await _dm_rules(ctx, campaign_id) if item.get("id") == rule_id), None
+    )
     if stored is None:
         raise RuntimeError("not_found: dm_rule_not_found: no such rule in this Campaign")
     token = w.check_token("updated_at", stored.get("updated_at"), args.get("expected_updated_at"))
@@ -586,7 +630,12 @@ async def _execute_dm_update(ctx: CommandContext) -> Any:
     after = {**before, **args["rule"]}
     _validate_dm_rule(after)
     diff = w.changes(before, after, DM_FIELDS)
-    data: dict[str, Any] = {"dry_run": args["dry_run"], "id": rule_id, "changes": diff, "expected_updated_at": token}
+    data: dict[str, Any] = {
+        "dry_run": args["dry_run"],
+        "id": rule_id,
+        "changes": diff,
+        "expected_updated_at": token,
+    }
     if not diff:
         return data, [w.nothing_to_write("the current rule")], []
     warnings: list[str] = []
@@ -723,9 +772,11 @@ async def _execute_payscale_create(ctx: CommandContext) -> Any:
     if args["dry_run"]:
         return data, warnings, w.ask("the new payscale")
     data["payscale"] = await w.call(ctx, "POST", f"/campaigns/{campaign_id}/payscales", body=body)
-    return data, warnings, [
-        "Add its pay rates with ugc pay-rate +create --payscale-id <data.payscale.id>."
-    ]
+    return (
+        data,
+        warnings,
+        ["Add its pay rates with ugc pay-rate +create --payscale-id <data.payscale.id>."],
+    )
 
 
 async def _execute_payscale_update(ctx: CommandContext) -> Any:
@@ -734,7 +785,11 @@ async def _execute_payscale_update(ctx: CommandContext) -> Any:
     edits = args["edits"]
     before = {field: scale.get(field) for field in edits}
     diff = w.changes(before, edits, list(edits))
-    data: dict[str, Any] = {"dry_run": args["dry_run"], "payscale": _payscale_line(scale), "changes": diff}
+    data: dict[str, Any] = {
+        "dry_run": args["dry_run"],
+        "payscale": _payscale_line(scale),
+        "changes": diff,
+    }
     if not diff:
         return data, [w.nothing_to_write("the current payscale")], []
     warnings = []
@@ -788,7 +843,11 @@ async def _execute_rate_create(ctx: CommandContext) -> Any:
     scale = _find_payscale(await _payscales(ctx, campaign_id), args["payscale_id"])
     rate = {**args["rate"], "kind": args["kind"]}
     check_rate(args["kind"], rate)
-    data: dict[str, Any] = {"dry_run": args["dry_run"], "payscale": _payscale_line(scale), "rate": rate}
+    data: dict[str, Any] = {
+        "dry_run": args["dry_run"],
+        "payscale": _payscale_line(scale),
+        "rate": rate,
+    }
     if args["dry_run"]:
         data["preview"] = await _rate_preview(ctx, campaign_id, rate)
         return data, [], w.ask("the new pay rate and what a video would earn under it")
@@ -813,7 +872,9 @@ async def _execute_rate_update(ctx: CommandContext) -> Any:
     if not diff:
         return data, [w.nothing_to_write("the current pay rate")], []
     if args["dry_run"]:
-        data["preview"] = await _rate_preview(ctx, campaign_id, {**after, "kind": stored.get("kind")})
+        data["preview"] = await _rate_preview(
+            ctx, campaign_id, {**after, "kind": stored.get("kind")}
+        )
         return data, [], w.ask("the pay rate changes and what a video would earn under it")
     data["rate"] = await w.call(ctx, "PUT", f"/pay-rates/{args['id']}", body=after)
     return data, ["Creators on this payscale are paid by the changed rate from now on."], []
@@ -860,8 +921,12 @@ def _add_settings_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--budget-cap-cents")
     parser.add_argument("--post-grouping", choices=kebab_choices(POST_GROUPINGS))
     parser.add_argument("--brief-mode", choices=kebab_choices(BRIEF_MODES))
-    parser.add_argument("--allowed-platform", action="append", choices=w.PLATFORMS, dest="allowed_platforms")
-    parser.add_argument("--required-platform", action="append", choices=w.PLATFORMS, dest="required_platforms")
+    parser.add_argument(
+        "--allowed-platform", action="append", choices=w.PLATFORMS, dest="allowed_platforms"
+    )
+    parser.add_argument(
+        "--required-platform", action="append", choices=w.PLATFORMS, dest="required_platforms"
+    )
     parser.add_argument("--no-required-platforms", action="store_true")
     parser.add_argument("--files-only", action=argparse.BooleanOptionalAction, default=None)
     parser.add_argument("--discord-onboarding", action=argparse.BooleanOptionalAction, default=None)
@@ -983,7 +1048,9 @@ def _build_target_arguments(args: argparse.Namespace) -> dict[str, Any]:
         {
             "target_views": w.optional_int(args.target_views, flag="--target-views", minimum=1),
             "target_posts": w.optional_int(args.target_posts, flag="--target-posts", minimum=1),
-            "target_creators": w.optional_int(args.target_creators, flag="--target-creators", minimum=1),
+            "target_creators": w.optional_int(
+                args.target_creators, flag="--target-creators", minimum=1
+            ),
             "start_date": _date(args.start_date, flag="--start-date"),
             "due_date": _date(args.due_date, flag="--due-date"),
         }
@@ -1017,7 +1084,11 @@ def _add_contract_arguments(parser: argparse.ArgumentParser) -> None:
 
 def _build_contract_arguments(args: argparse.Namespace) -> dict[str, Any]:
     out = _common(args) | {"source": args.source}
-    text = args.body if args.body is not None else (w.read_text(args.body_file) if args.body_file else None)
+    text = (
+        args.body
+        if args.body is not None
+        else (w.read_text(args.body_file) if args.body_file else None)
+    )
     terms = w.json_value(args.terms_json, flag="--terms-json")
     if args.source == "default" and (text is not None or terms is not ...):
         raise ValueError("--source default takes no --body or --terms-json.")
@@ -1027,7 +1098,9 @@ def _build_contract_arguments(args: argparse.Namespace) -> dict[str, Any]:
         out["body"] = text
     if terms is not ...:
         if not isinstance(terms, list) or not all(isinstance(item, dict) for item in terms):
-            raise ValueError("--terms-json must be a JSON array of {name, label, default_value, states_pay}.")
+            raise ValueError(
+                "--terms-json must be a JSON array of {name, label, default_value, states_pay}."
+            )
         out["terms"] = [
             {
                 "name": item.get("name"),
@@ -1067,7 +1140,10 @@ def _guild(args: argparse.Namespace) -> str:
 
 def _build_discord_set_arguments(args: argparse.Namespace) -> dict[str, Any]:
     layout = w.passed(
-        {field: _snowflake(getattr(args, field), flag=f"--{field.replace('_', '-')}") for field in GUILD_FIELDS}
+        {
+            field: _snowflake(getattr(args, field), flag=f"--{field.replace('_', '-')}")
+            for field in GUILD_FIELDS
+        }
         | {"invite_url": w.optional_text(args.invite_url)}
     )
     invite = layout.get("invite_url")
@@ -1111,11 +1187,12 @@ def _add_dm_arguments(*, create: bool):
         parser.add_argument("--utm-medium")
         parser.add_argument("--utm-campaign")
         parser.add_argument(
-            "--utm-parameter", action="append", dest="utm_parameters", choices=kebab_choices(UTM_PARAMETERS)
+            "--utm-parameter",
+            action="append",
+            dest="utm_parameters",
+            choices=kebab_choices(UTM_PARAMETERS),
         )
-        parser.add_argument(
-            "--status", choices=DM_STATUSES if not create else ["active", "paused"]
-        )
+        parser.add_argument("--status", choices=DM_STATUSES if not create else ["active", "paused"])
         parser.add_argument("--utm-source-platform")
         w.add_dry_run(parser)
         w.add_yes(parser)
@@ -1171,8 +1248,12 @@ def _build_payscale_arguments(args: argparse.Namespace) -> dict[str, Any]:
     fields = w.passed(
         {
             "name": w.optional_text(args.name),
-            "cap_per_creator_cents": w.optional_int(args.cap_per_creator_cents, flag="--cap-per-creator-cents"),
-            "cap_reset_days": w.optional_int(args.cap_reset_days, flag="--cap-reset-days", minimum=1),
+            "cap_per_creator_cents": w.optional_int(
+                args.cap_per_creator_cents, flag="--cap-per-creator-cents"
+            ),
+            "cap_reset_days": w.optional_int(
+                args.cap_reset_days, flag="--cap-reset-days", minimum=1
+            ),
         }
     )
     if "name" in fields and not fields["name"]:
@@ -1222,7 +1303,10 @@ def _build_rate_arguments(args: argparse.Namespace) -> dict[str, Any]:
     if getattr(args, "payscale_id", None) is not None:
         if not str(rate.get("name") or "").strip():
             raise ValueError('--rate-json needs a "name".')
-        out |= {"payscale_id": w._uuid(args.payscale_id, flag="--payscale-id"), "kind": dekebab(args.kind)}
+        out |= {
+            "payscale_id": w._uuid(args.payscale_id, flag="--payscale-id"),
+            "kind": dekebab(args.kind),
+        }
     elif not rate:
         raise ValueError("--rate-json must name at least one field to change.")
     return out
@@ -1247,7 +1331,10 @@ _ID = w.uuid_property
 
 
 def _int_or_none(description: str) -> dict[str, Any]:
-    return {"type": ["integer", "string", "null"], "description": description + " 'none' clears it."}
+    return {
+        "type": ["integer", "string", "null"],
+        "description": description + " 'none' clears it.",
+    }
 
 
 def specs() -> list[CommandSpec]:
@@ -1265,22 +1352,53 @@ def specs() -> list[CommandSpec]:
                 "mode, budget cap, post grouping, Format mode, platforms, Discord onboarding, and "
                 "via --settings-json languages, countries, stay/warmup/trial rules, content intake "
                 "and the apply form), plus the publishing-platform pay rule. --dry-run returns "
-                "the changes and the current settings without writing." + w.CONFIRM_FIRST
+                "the changes and the current settings without writing."
+                + w.CONFIRM_FIRST
                 + _SETTINGS_ROLE
             ),
             adapter="ugc_campaign_settings_update",
             properties={
                 "campaign_id": w.CAMPAIGN_ID,
-                "approval_mode": {"type": "string", "enum": APPROVAL_MODES, "description": "auto approves applicants; manual waits for a reviewer."},
-                "join_mode": {"type": "string", "enum": kebab_choices(JOIN_MODES), "description": "open (anyone with the apply link) or invite-only."},
+                "approval_mode": {
+                    "type": "string",
+                    "enum": APPROVAL_MODES,
+                    "description": "auto approves applicants; manual waits for a reviewer.",
+                },
+                "join_mode": {
+                    "type": "string",
+                    "enum": kebab_choices(JOIN_MODES),
+                    "description": "open (anyone with the apply link) or invite-only.",
+                },
                 "budget_cap_cents": _int_or_none("Campaign budget cap in cents."),
-                "post_grouping": {"type": "string", "enum": kebab_choices(POST_GROUPINGS), "description": "How a creative's posts on several platforms are counted for pay."},
-                "brief_mode": {"type": "string", "enum": kebab_choices(BRIEF_MODES), "description": "Whether creators pick a Format or get one written for them."},
-                "allowed_platforms": {"type": "array", "items": {"type": "string", "enum": w.PLATFORMS}, "description": "The platforms creators post on (replaces the list)."},
-                "required_platforms": {"type": "array", "items": {"type": "string", "enum": w.PLATFORMS}, "description": "Platforms a creator must connect before starting; a subset of allowed_platforms."},
+                "post_grouping": {
+                    "type": "string",
+                    "enum": kebab_choices(POST_GROUPINGS),
+                    "description": "How a creative's posts on several platforms are counted for pay.",
+                },
+                "brief_mode": {
+                    "type": "string",
+                    "enum": kebab_choices(BRIEF_MODES),
+                    "description": "Whether creators pick a Format or get one written for them.",
+                },
+                "allowed_platforms": {
+                    "type": "array",
+                    "items": {"type": "string", "enum": w.PLATFORMS},
+                    "description": "The platforms creators post on (replaces the list).",
+                },
+                "required_platforms": {
+                    "type": "array",
+                    "items": {"type": "string", "enum": w.PLATFORMS},
+                    "description": "Platforms a creator must connect before starting; a subset of allowed_platforms.",
+                },
                 "no_required_platforms": {"type": "boolean", "description": "Require no platform."},
-                "files_only": {"type": "boolean", "description": "Creators deliver files instead of posting."},
-                "discord_onboarding": {"type": "boolean", "description": "Onboard creators through the Campaign's Discord server."},
+                "files_only": {
+                    "type": "boolean",
+                    "description": "Creators deliver files instead of posting.",
+                },
+                "discord_onboarding": {
+                    "type": "boolean",
+                    "description": "Onboard creators through the Campaign's Discord server.",
+                },
                 "settings_json": {
                     "type": "string",
                     "description": (
@@ -1304,7 +1422,7 @@ def specs() -> list[CommandSpec]:
             output_description="dry_run, campaign, expected_updated_at, changes (field, before, after); settings on a dry run.",
             examples=[
                 f"museoncli campaign settings +update --campaign-id {c} --approval-mode manual --budget-cap-cents 500000 --dry-run",
-                f"museoncli campaign settings +update --campaign-id {c} --settings-json '{{\"stay_rules\": {{\"inactivity_days\": 7}}}}' --dry-run",
+                f'museoncli campaign settings +update --campaign-id {c} --settings-json \'{{"stay_rules": {{"inactivity_days": 7}}}}\' --dry-run',
             ],
             add_arguments=_add_settings_arguments,
             build_arguments=_build_settings_arguments,
@@ -1323,8 +1441,18 @@ def specs() -> list[CommandSpec]:
             adapter="ugc_campaign_staff_set",
             properties={
                 "campaign_id": w.CAMPAIGN_ID,
-                "manager_user_ids": {"type": "array", "items": {"type": "string", "format": "uuid"}, "maxItems": MAX_STAFF, "description": "User IDs of the PMs (replaces the list)."},
-                "operator_user_ids": {"type": "array", "items": {"type": "string", "format": "uuid"}, "maxItems": MAX_STAFF, "description": "User IDs of the OPs (replaces the list)."},
+                "manager_user_ids": {
+                    "type": "array",
+                    "items": {"type": "string", "format": "uuid"},
+                    "maxItems": MAX_STAFF,
+                    "description": "User IDs of the PMs (replaces the list).",
+                },
+                "operator_user_ids": {
+                    "type": "array",
+                    "items": {"type": "string", "format": "uuid"},
+                    "maxItems": MAX_STAFF,
+                    "description": "User IDs of the OPs (replaces the list).",
+                },
                 "no_managers": {"type": "boolean", "description": "Remove every PM."},
                 "no_operators": {"type": "boolean", "description": "Remove every OP."},
                 **eua,
@@ -1332,7 +1460,9 @@ def specs() -> list[CommandSpec]:
             },
             required=["campaign_id"],
             output_description="dry_run, before (managers, operators), after (user ids), expected_updated_at.",
-            examples=[f"museoncli campaign staff +set --campaign-id {c} --manager-user-id {w.USER} --dry-run"],
+            examples=[
+                f"museoncli campaign staff +set --campaign-id {c} --manager-user-id {w.USER} --dry-run"
+            ],
             add_arguments=_add_staff_arguments,
             build_arguments=_build_staff_arguments,
             kind=w.WRITE,
@@ -1352,14 +1482,29 @@ def specs() -> list[CommandSpec]:
                 "campaign_id": w.CAMPAIGN_ID,
                 "target_views": {"type": "integer", "minimum": 1, "description": "Views to reach."},
                 "target_posts": {"type": "integer", "minimum": 1, "description": "Posts to reach."},
-                "target_creators": {"type": "integer", "minimum": 1, "maximum": 100000, "description": "Creators to reach."},
-                "start_date": {"type": "string", "format": "date", "description": "First day counted."},
-                "due_date": {"type": "string", "format": "date", "description": "Last day counted."},
+                "target_creators": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "Creators to reach.",
+                },
+                "start_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "First day counted.",
+                },
+                "due_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Last day counted.",
+                },
                 "dry_run": w.DRY_RUN,
             },
             required=["campaign_id"],
             output_description="dry_run, target, existing_targets.",
-            examples=[f"museoncli ugc delivery-target +create --campaign-id {c} --target-views 1000000 --due-date 2026-12-31 --dry-run"],
+            examples=[
+                f"museoncli ugc delivery-target +create --campaign-id {c} --target-views 1000000 --due-date 2026-12-31 --dry-run"
+            ],
             add_arguments=_add_target_arguments(create=True),
             build_arguments=_build_target_arguments,
             kind=w.WRITE,
@@ -1371,7 +1516,8 @@ def specs() -> list[CommandSpec]:
                 "Change a Campaign's delivery target; figures and dates not passed keep their "
                 "value, 'none' clears one. The dates are the target's window only; they do not "
                 "move the Campaign's start day. --dry-run returns the changes without writing."
-                + w.CONFIRM_FIRST + _TEAM_ROLE
+                + w.CONFIRM_FIRST
+                + _TEAM_ROLE
             ),
             adapter="ugc_delivery_target_update",
             properties={
@@ -1380,14 +1526,24 @@ def specs() -> list[CommandSpec]:
                 "target_views": _int_or_none("Views to reach."),
                 "target_posts": _int_or_none("Posts to reach."),
                 "target_creators": _int_or_none("Creators to reach."),
-                "start_date": {"type": "string", "format": "date", "description": "First day counted; 'none' opens it."},
-                "due_date": {"type": "string", "format": "date", "description": "Last day counted; 'none' opens it."},
+                "start_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "First day counted; 'none' opens it.",
+                },
+                "due_date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Last day counted; 'none' opens it.",
+                },
                 **eua,
                 "dry_run": w.DRY_RUN,
             },
             required=["campaign_id", "id"],
             output_description="dry_run, id, changes, expected_updated_at, target.",
-            examples=[f"museoncli ugc delivery-target +update --campaign-id {c} --id {o} --target-posts 300 --dry-run"],
+            examples=[
+                f"museoncli ugc delivery-target +update --campaign-id {c} --id {o} --target-posts 300 --dry-run"
+            ],
             add_arguments=_add_target_arguments(create=False),
             build_arguments=_build_target_arguments,
             kind=w.WRITE,
@@ -1400,10 +1556,17 @@ def specs() -> list[CommandSpec]:
                 "writing." + w.CONFIRM_YES + _TEAM_ROLE
             ),
             adapter="ugc_delivery_target_delete",
-            properties={"campaign_id": w.CAMPAIGN_ID, "id": _ID("Target ID."), **eua, "dry_run": w.DRY_RUN},
+            properties={
+                "campaign_id": w.CAMPAIGN_ID,
+                "id": _ID("Target ID."),
+                **eua,
+                "dry_run": w.DRY_RUN,
+            },
             required=["campaign_id", "id"],
             output_description="dry_run, target, deleted.",
-            examples=[f"museoncli ugc delivery-target +delete --campaign-id {c} --id {o} --dry-run"],
+            examples=[
+                f"museoncli ugc delivery-target +delete --campaign-id {c} --id {o} --dry-run"
+            ],
             add_arguments=_add_target_delete_arguments,
             build_arguments=_build_id_arguments,
             kind=w.DESTRUCTIVE,
@@ -1421,9 +1584,20 @@ def specs() -> list[CommandSpec]:
             adapter="ugc_contract_template_set",
             properties={
                 "campaign_id": w.CAMPAIGN_ID,
-                "source": {"type": "string", "enum": CONTRACT_SOURCES, "description": "default or custom."},
-                "body": {"type": "string", "maxLength": 100000, "description": "The custom contract text, with {{name}} fields."},
-                "body_file": {"type": "string", "description": "Path to a UTF-8 file holding the custom contract text."},
+                "source": {
+                    "type": "string",
+                    "enum": CONTRACT_SOURCES,
+                    "description": "default or custom.",
+                },
+                "body": {
+                    "type": "string",
+                    "maxLength": 100000,
+                    "description": "The custom contract text, with {{name}} fields.",
+                },
+                "body_file": {
+                    "type": "string",
+                    "description": "Path to a UTF-8 file holding the custom contract text.",
+                },
                 "terms_json": {
                     "type": "string",
                     "description": (
@@ -1452,22 +1626,35 @@ def specs() -> list[CommandSpec]:
                 "visitor and ops role ids and the invite link. On the same server, ids not "
                 "passed keep their value; 'none' clears one. The workbench checks them with "
                 "Discord first. --dry-run returns the layout before and after without writing."
-                + w.CONFIRM_FIRST + _TEAM_ROLE
+                + w.CONFIRM_FIRST
+                + _TEAM_ROLE
             ),
             adapter="ugc_discord_server_set",
             properties={
                 "campaign_id": w.CAMPAIGN_ID,
-                "guild_id": {"type": "string", "pattern": "^[0-9]{17,20}$", "description": "Discord server id."},
+                "guild_id": {
+                    "type": "string",
+                    "pattern": "^[0-9]{17,20}$",
+                    "description": "Discord server id.",
+                },
                 **{
-                    field: {"type": "string", "description": f"Discord {field.removesuffix('_id').replace('_', ' ')} id; 'none' clears it."}
+                    field: {
+                        "type": "string",
+                        "description": f"Discord {field.removesuffix('_id').replace('_', ' ')} id; 'none' clears it.",
+                    }
                     for field in GUILD_FIELDS
                 },
-                "invite_url": {"type": "string", "description": "https:// invite link creators join with."},
+                "invite_url": {
+                    "type": "string",
+                    "description": "https:// invite link creators join with.",
+                },
                 "dry_run": w.DRY_RUN,
             },
             required=["campaign_id", "guild_id"],
             output_description="dry_run, changes, guild_link.",
-            examples=[f"museoncli ugc discord-server +set --campaign-id {c} --guild-id 123456789012345678 --welcome-channel-id 223456789012345678 --dry-run"],
+            examples=[
+                f"museoncli ugc discord-server +set --campaign-id {c} --guild-id 123456789012345678 --welcome-channel-id 223456789012345678 --dry-run"
+            ],
             add_arguments=_add_discord_set_arguments,
             build_arguments=_build_discord_set_arguments,
             kind=w.WRITE,
@@ -1483,12 +1670,18 @@ def specs() -> list[CommandSpec]:
             adapter="ugc_discord_server_initialize",
             properties={
                 "campaign_id": w.CAMPAIGN_ID,
-                "guild_id": {"type": "string", "pattern": "^[0-9]{17,20}$", "description": "Discord server id."},
+                "guild_id": {
+                    "type": "string",
+                    "pattern": "^[0-9]{17,20}$",
+                    "description": "Discord server id.",
+                },
                 "dry_run": w.DRY_RUN,
             },
             required=["campaign_id", "guild_id"],
             output_description="dry_run, guild_id, current, guild_link.",
-            examples=[f"museoncli ugc discord-server +initialize --campaign-id {c} --guild-id 123456789012345678 --dry-run"],
+            examples=[
+                f"museoncli ugc discord-server +initialize --campaign-id {c} --guild-id 123456789012345678 --dry-run"
+            ],
             add_arguments=_add_discord_initialize_arguments,
             build_arguments=_build_discord_initialize_arguments,
             kind=w.CONFIRMED_WRITE,
@@ -1498,7 +1691,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+remove",
             summary=(
                 "Stop using the Campaign's Discord server; its channels and roles stay in "
-                "Discord. --dry-run returns the current server without writing." + w.CONFIRM_YES
+                "Discord. --dry-run returns the current server without writing."
+                + w.CONFIRM_YES
                 + _TEAM_ROLE
             ),
             adapter="ugc_discord_server_remove",
@@ -1543,7 +1737,9 @@ def specs() -> list[CommandSpec]:
             properties=_dm_properties(create=False),
             required=["campaign_id", "id"],
             output_description="dry_run, id, changes, expected_updated_at, rule.",
-            examples=[f"museoncli ugc dm-rule +update --campaign-id {c} --id {o} --status paused --dry-run"],
+            examples=[
+                f"museoncli ugc dm-rule +update --campaign-id {c} --id {o} --status paused --dry-run"
+            ],
             add_arguments=_add_dm_arguments(create=False),
             build_arguments=_build_dm_arguments,
             kind=w.CONFIRMED_WRITE,
@@ -1555,19 +1751,30 @@ def specs() -> list[CommandSpec]:
                 "Add a custom payscale to a Campaign, with an optional per-creator cap "
                 "(--cap-per-creator-cents over --cap-reset-days). Add its rates with ugc pay-rate "
                 "+create. --dry-run returns it and the existing payscales without writing."
-                + w.CONFIRM_FIRST + _TEAM_ROLE
+                + w.CONFIRM_FIRST
+                + _TEAM_ROLE
             ),
             adapter="ugc_payscale_create",
             properties={
                 "campaign_id": w.CAMPAIGN_ID,
                 "name": {"type": "string", "description": "Payscale name."},
-                "cap_per_creator_cents": {"type": "integer", "minimum": 0, "description": "Most a creator earns per window, in cents."},
-                "cap_reset_days": {"type": "integer", "minimum": 1, "description": "The cap's window in days."},
+                "cap_per_creator_cents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Most a creator earns per window, in cents.",
+                },
+                "cap_reset_days": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "The cap's window in days.",
+                },
                 "dry_run": w.DRY_RUN,
             },
             required=["campaign_id", "name"],
             output_description="dry_run, payscale, existing.",
-            examples=[f"museoncli ugc payscale +create --campaign-id {c} --name 'Top creators' --dry-run"],
+            examples=[
+                f"museoncli ugc payscale +create --campaign-id {c} --name 'Top creators' --dry-run"
+            ],
             add_arguments=_add_payscale_arguments(create=True),
             build_arguments=_build_payscale_arguments,
             kind=w.WRITE,
@@ -1591,7 +1798,9 @@ def specs() -> list[CommandSpec]:
             },
             required=["campaign_id", "id"],
             output_description="dry_run, payscale, changes.",
-            examples=[f"museoncli ugc payscale +update --campaign-id {c} --id {o} --cap-per-creator-cents 50000 --dry-run"],
+            examples=[
+                f"museoncli ugc payscale +update --campaign-id {c} --id {o} --cap-per-creator-cents 50000 --dry-run"
+            ],
             add_arguments=_add_payscale_arguments(create=False),
             build_arguments=_build_payscale_arguments,
             kind=w.WRITE,
@@ -1601,10 +1810,15 @@ def specs() -> list[CommandSpec]:
             shortcut="+delete",
             summary=(
                 "Delete a custom payscale nobody is on. --dry-run returns it without writing."
-                + w.CONFIRM_YES + _TEAM_ROLE
+                + w.CONFIRM_YES
+                + _TEAM_ROLE
             ),
             adapter="ugc_payscale_delete",
-            properties={"campaign_id": w.CAMPAIGN_ID, "id": _ID("Payscale ID."), "dry_run": w.DRY_RUN},
+            properties={
+                "campaign_id": w.CAMPAIGN_ID,
+                "id": _ID("Payscale ID."),
+                "dry_run": w.DRY_RUN,
+            },
             required=["campaign_id", "id"],
             output_description="dry_run, payscale, deleted.",
             examples=[f"museoncli ugc payscale +delete --campaign-id {c} --id {o} --dry-run"],
@@ -1627,7 +1841,7 @@ def specs() -> list[CommandSpec]:
             required=["campaign_id", "payscale_id", "kind", "rate_json"],
             output_description="dry_run, payscale, rate, preview (dry run).",
             examples=[
-                f"museoncli ugc pay-rate +create --campaign-id {c} --payscale-id {o} --kind anything-else --rate-json '{{\"name\": \"Per video\", \"base_rate_mode\": \"per_video\", \"base_fee_cents\": 5000}}' --dry-run"
+                f'museoncli ugc pay-rate +create --campaign-id {c} --payscale-id {o} --kind anything-else --rate-json \'{{"name": "Per video", "base_rate_mode": "per_video", "base_fee_cents": 5000}}\' --dry-run'
             ],
             add_arguments=_add_rate_arguments(create=True),
             build_arguments=_build_rate_arguments,
@@ -1639,13 +1853,17 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Change a pay rate: the fields in --rate-json change, the rest keep their value, "
                 "and the rate is written whole (its kind never changes). --dry-run returns the "
-                "changes and what a video would earn, without writing." + w.CONFIRM_FIRST + _TEAM_ROLE
+                "changes and what a video would earn, without writing."
+                + w.CONFIRM_FIRST
+                + _TEAM_ROLE
             ),
             adapter="ugc_pay_rate_update",
             properties=_rate_properties(create=False),
             required=["campaign_id", "id", "rate_json"],
             output_description="dry_run, payscale, id, changes, preview (dry run), rate.",
-            examples=[f"museoncli ugc pay-rate +update --campaign-id {c} --id {o} --rate-json '{{\"base_fee_cents\": 6000}}' --dry-run"],
+            examples=[
+                f"museoncli ugc pay-rate +update --campaign-id {c} --id {o} --rate-json '{{\"base_fee_cents\": 6000}}' --dry-run"
+            ],
             add_arguments=_add_rate_arguments(create=False),
             build_arguments=_build_rate_arguments,
             kind=w.WRITE,
@@ -1655,10 +1873,15 @@ def specs() -> list[CommandSpec]:
             shortcut="+delete",
             summary=(
                 "Delete a pay rate from its payscale. --dry-run returns it without writing."
-                + w.CONFIRM_YES + _TEAM_ROLE
+                + w.CONFIRM_YES
+                + _TEAM_ROLE
             ),
             adapter="ugc_pay_rate_delete",
-            properties={"campaign_id": w.CAMPAIGN_ID, "id": _ID("Pay rate ID."), "dry_run": w.DRY_RUN},
+            properties={
+                "campaign_id": w.CAMPAIGN_ID,
+                "id": _ID("Pay rate ID."),
+                "dry_run": w.DRY_RUN,
+            },
             required=["campaign_id", "id"],
             output_description="dry_run, payscale, rate, deleted.",
             examples=[f"museoncli ugc pay-rate +delete --campaign-id {c} --id {o} --dry-run"],
@@ -1675,20 +1898,61 @@ def _dm_properties(*, create: bool) -> dict[str, Any]:
         properties["id"] = _ID("Rule ID.")
         properties["expected_updated_at"] = w.EXPECTED_UPDATED_AT
     properties |= {
-        "keywords": {"type": "array", "items": {"type": "string", "maxLength": 50}, "maxItems": 20, "description": "Words a comment must carry (replaces the list)."},
+        "keywords": {
+            "type": "array",
+            "items": {"type": "string", "maxLength": 50},
+            "maxItems": 20,
+            "description": "Words a comment must carry (replaces the list).",
+        },
         "any_comment": {"type": "boolean", "description": "Any comment triggers the DM."},
         "match_mode": {"type": "string", "enum": MATCH_MODES, "description": "How keywords match."},
-        "dm_message": {"type": "string", "maxLength": 607, "description": "The DM; {{name}} is the commenter."},
-        "dm_message_file": {"type": "string", "description": "Path to a UTF-8 file holding the DM."},
-        "comment_replies": {"type": "array", "items": {"type": "string", "maxLength": 300}, "maxItems": 6, "description": "Public replies to the comment, used in turn."},
+        "dm_message": {
+            "type": "string",
+            "maxLength": 607,
+            "description": "The DM; {{name}} is the commenter.",
+        },
+        "dm_message_file": {
+            "type": "string",
+            "description": "Path to a UTF-8 file holding the DM.",
+        },
+        "comment_replies": {
+            "type": "array",
+            "items": {"type": "string", "maxLength": 300},
+            "maxItems": 6,
+            "description": "Public replies to the comment, used in turn.",
+        },
         "no_comment_replies": {"type": "boolean", "description": "Reply to no comment publicly."},
-        "button_title": {"type": "string", "maxLength": 20, "description": "The DM's button label."},
+        "button_title": {
+            "type": "string",
+            "maxLength": 20,
+            "description": "The DM's button label.",
+        },
         "destination_url": {"type": "string", "description": "https:// page the button opens."},
-        "utm_medium": {"type": "string", "maxLength": 100, "description": "The link's UTM medium (default dm)."},
-        "utm_campaign": {"type": "string", "maxLength": 100, "description": "The link's UTM campaign; {{account}} is the posting account."},
-        "utm_parameters": {"type": "array", "items": {"type": "string", "enum": kebab_choices(UTM_PARAMETERS)}, "description": "UTM parameters the link carries (replaces the list)."},
-        "utm_source_platform": {"type": "string", "maxLength": 100, "description": "The link's UTM source platform (default museon)."},
-        "status": {"type": "string", "enum": DM_STATUSES if not create else ["active", "paused"], "description": "active DMs, paused stops; archived ends the rule."},
+        "utm_medium": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "The link's UTM medium (default dm).",
+        },
+        "utm_campaign": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "The link's UTM campaign; {{account}} is the posting account.",
+        },
+        "utm_parameters": {
+            "type": "array",
+            "items": {"type": "string", "enum": kebab_choices(UTM_PARAMETERS)},
+            "description": "UTM parameters the link carries (replaces the list).",
+        },
+        "utm_source_platform": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "The link's UTM source platform (default museon).",
+        },
+        "status": {
+            "type": "string",
+            "enum": DM_STATUSES if not create else ["active", "paused"],
+            "description": "active DMs, paused stops; archived ends the rule.",
+        },
         "dry_run": w.DRY_RUN,
     }
     return properties
@@ -1698,7 +1962,11 @@ def _rate_properties(*, create: bool) -> dict[str, Any]:
     properties: dict[str, Any] = {"campaign_id": w.CAMPAIGN_ID}
     if create:
         properties["payscale_id"] = _ID("Payscale ID.")
-        properties["kind"] = {"type": "string", "enum": kebab_choices(RATE_KINDS), "description": "What the block is; fixed once created."}
+        properties["kind"] = {
+            "type": "string",
+            "enum": kebab_choices(RATE_KINDS),
+            "description": "What the block is; fixed once created.",
+        }
     else:
         properties["id"] = _ID("Pay rate ID.")
     properties["rate_json"] = {

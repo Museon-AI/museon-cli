@@ -152,7 +152,11 @@ async def _execute_update(ctx: CommandContext) -> Any:
         "changes": diff,
     }
     if not diff:
-        return data, ["Nothing differs from the project's saved reminders; nothing was written."], []
+        return (
+            data,
+            ["Nothing differs from the project's saved reminders; nothing was written."],
+            [],
+        )
     warnings = []
     if settings.get("covered") is False:
         warnings.append(
@@ -176,9 +180,11 @@ async def _execute_test(ctx: CommandContext) -> Any:
     settings = await _settings(ctx, args["campaign_id"])
     data: dict[str, Any] = {"dry_run": bool(args.get("dry_run")), **_settings_line(settings)}
     if args.get("dry_run"):
-        return data, [], [
-            ask_then_yes("that a test of the group's reminders goes to their own chat with Mel")
-        ]
+        return (
+            data,
+            [],
+            [ask_then_yes("that a test of the group's reminders goes to their own chat with Mel")],
+        )
     result = await ctx.api_data_v2(
         ctx.cfg, "POST", f"{_base(args['campaign_id'])}/reminder-settings/test"
     )
@@ -214,9 +220,7 @@ async def _execute_subscribe(ctx: CommandContext) -> Any:
 
 async def _execute_delegation_create(ctx: CommandContext) -> Any:
     args = ctx.arguments
-    body = {
-        key: args[key] for key in ("user_id", "delegate_user_id", "starts_at", "ends_at")
-    }
+    body = {key: args[key] for key in ("user_id", "delegate_user_id", "starts_at", "ends_at")}
     if args.get("dry_run"):
         settings = await _settings(ctx, args["campaign_id"])
         overlapping = [
@@ -288,9 +292,11 @@ async def _execute_auto_nudge_update(ctx: CommandContext) -> Any:
         warnings.append("Days with no check are refused: pass --check for who gets nudged.")
     if args.get("dry_run"):
         turning = "off" if not after.get("days") else "on"
-        return data, warnings, [
-            ask_then_yes(f"the change (it turns automatic creator nudges {turning})")
-        ]
+        return (
+            data,
+            warnings,
+            [ask_then_yes(f"the change (it turns automatic creator nudges {turning})")],
+        )
     body = {
         "checks": after.get("checks") or [],
         "days": after.get("days") or [],
@@ -343,7 +349,9 @@ def _switch(value: str) -> bool | None:
     return None if value == INHERIT else value == "on"
 
 
-def _list_edit(values: list[str], *, flag: str, allowed: list[str] | None = None) -> list[str] | None:
+def _list_edit(
+    values: list[str], *, flag: str, allowed: list[str] | None = None
+) -> list[str] | None:
     """inherit -> null (fall back), none -> [] (nothing), otherwise the values."""
     if _inherit_list(values):
         return None
@@ -556,7 +564,9 @@ def specs() -> list[CommandSpec]:
                 {"campaign_id": _CAMPAIGN_ID, "edits": _POLICY_EDITS, "dry_run": DRY_RUN},
                 ["campaign_id", "edits"],
             ),
-            output_schema=_direct_output_schema("campaign_layer, effective and changes (field, before, after)."),
+            output_schema=_direct_output_schema(
+                "campaign_layer, effective and changes (field, before, after)."
+            ),
             examples=[
                 f"museoncli ugc reminder +update --campaign-id {campaign} --feishu on "
                 "--digest-time 09:30 --digest-time 17:30 --task-kind review-creative "
@@ -577,7 +587,9 @@ def specs() -> list[CommandSpec]:
             ),
             adapter_tool_name="ugc_reminder_test",
             input_schema=schema({"campaign_id": _CAMPAIGN_ID, "dry_run": DRY_RUN}, ["campaign_id"]),
-            output_schema=_direct_output_schema("test.outcome: sent, already_sent, no_direct_chat or unavailable."),
+            output_schema=_direct_output_schema(
+                "test.outcome: sent, already_sent, no_direct_chat or unavailable."
+            ),
             examples=[f"museoncli ugc reminder +test --campaign-id {campaign} --yes"],
             add_arguments=_add_test_arguments,
             build_arguments=_build_test_arguments,
@@ -593,7 +605,11 @@ def specs() -> list[CommandSpec]:
             ),
             adapter_tool_name="ugc_reminder_subscribe",
             input_schema=schema(
-                {"campaign_id": _CAMPAIGN_ID, "subscribed": {"type": "boolean"}, "dry_run": DRY_RUN},
+                {
+                    "campaign_id": _CAMPAIGN_ID,
+                    "subscribed": {"type": "boolean"},
+                    "dry_run": DRY_RUN,
+                },
                 ["campaign_id", "subscribed"],
             ),
             output_schema=_direct_output_schema("subscribed before and after."),
@@ -668,7 +684,9 @@ def specs() -> list[CommandSpec]:
             ),
             adapter_tool_name="ugc_auto_nudge_get",
             input_schema=campaign_only,
-            output_schema=_direct_output_schema("checks, days, send_at, timezone, next_send_at, recent."),
+            output_schema=_direct_output_schema(
+                "checks, days, send_at, timezone, next_send_at, recent."
+            ),
             examples=[f"museoncli ugc auto-nudge +get --campaign-id {campaign}"],
             add_arguments=_add_campaign_only,
             build_arguments=_campaign,

@@ -1212,10 +1212,7 @@ async def _execute_adb_connect(ctx: CommandContext) -> Any:
     )
     if isinstance(resolved_account, dict):
         result.update(
-            {
-                key: resolved_account.get(key)
-                for key in ("account_id", "username", "platform")
-            }
+            {key: resolved_account.get(key) for key in ("account_id", "username", "platform")}
         )
     return result
 

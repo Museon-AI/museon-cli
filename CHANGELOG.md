@@ -2,6 +2,14 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 2.1.0
+
+Agentic Creative Campaign publish time and one-off Plan posts.
+
+- `agentic-campaign +campaign-create` / `+campaign-update --publish-timezone <IANA>`: the Campaign publish time is `--preferred-publish-windows-json` read in this timezone for every member account (default `Asia/Shanghai`). Both may change while the Campaign is active; future slots that have not started generating move to the new time. The help no longer says config is setup-only.
+- New `agentic-campaign plan +extra-post`: one more post for one Plan member outside the daily cadence (for example a missed day), from the Plan's current reference pairs, generated and published by Museon, idempotent per `--idempotency-key`.
+- `ai-slideshow publish +create-schedule`, `+preview-schedule-plan` and `+submit-schedule-plan` explain Agentic Campaign accounts: a manual row becomes that day's Plan post and replaces the automatic post of the day unless it is publishing; pairs outside the Plan are rejected with `AGENTIC_PLAN_PAIR_NOT_IN_PLAN`; `plan +extra-post` adds a post on top. The managed-publishing skill and task guide say the same and ask to agree the publish time before admitting accounts.
+
 ## 2.0.1
 
 Fixes from a production sweep of 2.0.0.

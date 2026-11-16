@@ -216,10 +216,14 @@ async def _execute_invitation_create(ctx: CommandContext) -> Any:
             if not cursor:
                 break
         same = [
-            row for row in open_rows if str(row.get("address") or "").lower() == args["email"].lower()
+            row
+            for row in open_rows
+            if str(row.get("address") or "").lower() == args["email"].lower()
         ]
         if same:
-            data["open_invitations_to_this_address"] = [pick(row, *_INVITATION_FIELDS) for row in same]
+            data["open_invitations_to_this_address"] = [
+                pick(row, *_INVITATION_FIELDS) for row in same
+            ]
             warnings.append(
                 "An open invitation to this address exists; resend it with ugc invitation "
                 "+resend instead of sending another."
@@ -291,7 +295,11 @@ def _add_list(parser: argparse.ArgumentParser) -> None:
 
 
 def _list_args(args: argparse.Namespace) -> dict[str, Any]:
-    return {**_campaign(args), "page_size": _page_size(args), **compact_params({"cursor": args.cursor})}
+    return {
+        **_campaign(args),
+        "page_size": _page_size(args),
+        **compact_params({"cursor": args.cursor}),
+    }
 
 
 def _add_link_fields(parser: argparse.ArgumentParser) -> None:
@@ -511,7 +519,8 @@ def specs() -> list[CommandSpec]:
             resource="recruit-link",
             shortcut="+revoke",
             summary=(
-                "Revoke a recruitment link: it stops working at once." + OUTBOUND_NOTE
+                "Revoke a recruitment link: it stops working at once."
+                + OUTBOUND_NOTE
                 + ROLE_ENROLLMENT
             ),
             adapter_tool_name="ugc_recruit_link_revoke",
@@ -557,7 +566,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+create",
             summary=(
                 "Invite a creator to a UGC campaign by email; MuseOn sends the invitation. The "
-                "preview flags an open invitation already sent to the address." + OUTBOUND_NOTE
+                "preview flags an open invitation already sent to the address."
+                + OUTBOUND_NOTE
                 + ROLE_ENROLLMENT
             ),
             adapter_tool_name="ugc_invitation_create",
@@ -602,7 +612,8 @@ def specs() -> list[CommandSpec]:
             resource="invitation",
             shortcut="+revoke",
             summary=(
-                "Revoke an open invitation: its link stops working." + OUTBOUND_NOTE
+                "Revoke an open invitation: its link stops working."
+                + OUTBOUND_NOTE
                 + ROLE_ENROLLMENT
             ),
             adapter_tool_name="ugc_invitation_revoke",

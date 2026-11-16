@@ -154,9 +154,7 @@ async def _execute_update(ctx: CommandContext) -> Any:
         return data, ["Nothing differs from the board as saved; nothing was written."], []
     if args.get("dry_run"):
         return data, [], [ask_first("these changes")]
-    body = compact_params(
-        {"name": args.get("name"), "filters": filters if edits else None}
-    )
+    body = compact_params({"name": args.get("name"), "filters": filters if edits else None})
     data["board"] = await ctx.api_data(ctx.cfg, "PATCH", _path(args["id"]), json_body=body)
     return data, [], []
 
@@ -257,7 +255,8 @@ def _filter_edits(args: argparse.Namespace) -> dict[str, Any]:
         edits["chart_mode"] = args.chart_mode
     if args.account_ids is not None:
         edits["accounts"] = (
-            [] if _is_none(args.account_ids)
+            []
+            if _is_none(args.account_ids)
             else [uuid_arg(value, flag="--account-id") for value in args.account_ids]
         )
     if args.metrics is not None:
@@ -368,9 +367,7 @@ _CAMPAIGN_IDS = {
     "items": {"type": "string", "format": "uuid"},
     "minItems": 1,
     "maxItems": MAX_CAMPAIGNS,
-    "description": (
-        "The Campaigns the board reads (ids from campaign +list), 1 to 10."
-    ),
+    "description": ("The Campaigns the board reads (ids from campaign +list), 1 to 10."),
 }
 _CAMPAIGN_TYPE = {
     "type": "string",
@@ -392,7 +389,11 @@ _FILTERS = {
             "enum": POST_SCOPES,
             "description": "approved shows confirmed posts only (UGC and mixed boards).",
         },
-        "accounts": {"type": "array", "items": {"type": "string", "format": "uuid"}, "maxItems": 50},
+        "accounts": {
+            "type": "array",
+            "items": {"type": "string", "format": "uuid"},
+            "maxItems": 50,
+        },
         "thresholds": {
             "type": "object",
             "description": "METRIC_min / METRIC_max floors and ceilings, e.g. views_min: 1000.",
@@ -444,7 +445,9 @@ def specs() -> list[CommandSpec]:
                 },
                 ["name", "campaign_ids", "campaign_type"],
             ),
-            output_schema=_direct_output_schema("The board as saved (id, name, campaigns, filters)."),
+            output_schema=_direct_output_schema(
+                "The board as saved (id, name, campaigns, filters)."
+            ),
             examples=[
                 f'museoncli analytics board +create --name "Q4 UGC" --campaign-type ugc '
                 f"--campaign-id {campaign} --campaign-id {other} --post-scope approved --dry-run"

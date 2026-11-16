@@ -185,11 +185,13 @@ def _build_social_media_post_resolve_arguments(args: argparse.Namespace) -> dict
 def _social_media_creator_get_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
-        "properties": {"creator_id": {
+        "properties": {
+            "creator_id": {
                 "type": "string",
                 "minLength": 1,
                 "description": "The creator's social account ID (not a campaign ID).",
-            }},
+            }
+        },
         "required": ["creator_id"],
     }
 

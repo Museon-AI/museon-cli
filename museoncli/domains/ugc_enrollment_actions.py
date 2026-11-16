@@ -178,9 +178,7 @@ async def _execute_pause(ctx: CommandContext) -> Any:
         route="pause",
         allowed="active",
         done="paused",
-        warnings=[
-            "A paused creator's posts are not collected or settled until they are resumed."
-        ],
+        warnings=["A paused creator's posts are not collected or settled until they are resumed."],
         ask="whom this pauses",
     )
 
@@ -241,9 +239,7 @@ async def _execute_set_persona(ctx: CommandContext) -> Any:
     data: dict[str, Any] = {"dry_run": args["dry_run"], "persona_id": persona}
     if args["dry_run"]:
         rows = await _rows(ctx, ids)
-        data["enrollments"] = [
-            {**_row(rows[key]), "after": persona} for key in ids
-        ]
+        data["enrollments"] = [{**_row(rows[key]), "after": persona} for key in ids]
         changing = sum(1 for key in ids if rows[key].get("persona_id") != persona)
         warnings = [] if changing else ["Every enrollment already has this persona."]
         return data, warnings, [_ask_next_step("the persona before and after")]
@@ -296,10 +292,14 @@ async def _execute_graduate_trial(ctx: CommandContext) -> Any:
         "trial": pick(trial, "on_trial", "outcome", "measure_by", "views_observed", "target_views"),
     }
     if args["dry_run"]:
-        return data, [
-            "Graduating moves the creator off the trial payment structure onto the Campaign's "
-            "regular one."
-        ], [_ask_next_step("who graduates")]
+        return (
+            data,
+            [
+                "Graduating moves the creator off the trial payment structure onto the Campaign's "
+                "regular one."
+            ],
+            [_ask_next_step("who graduates")],
+        )
     written = await call(ctx, "POST", f"/enrollments/{args['id']}/graduate-trial", body)
     data["enrollment"] = _row(written) if isinstance(written, dict) else written
     return data, [], []

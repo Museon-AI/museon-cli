@@ -348,9 +348,7 @@ def _spec_summary_payload(spec: CommandSpec) -> dict[str, Any]:
             "organization_bound": spec.organization_bound,
             # agentic-campaign and hireaicreator keep their 0.25 contract, mirror included.
             **(
-                {"workspace_bound": spec.organization_bound}
-                if keeps_workspace(spec.domain)
-                else {}
+                {"workspace_bound": spec.organization_bound} if keeps_workspace(spec.domain) else {}
             ),
             "resource_policy": spec.resource_policy,
             "enforcement": "museon_server" if spec.authentication_required else "local_process",

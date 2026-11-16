@@ -332,13 +332,9 @@ def _build_social_hook_source_arguments(args: argparse.Namespace) -> dict[str, A
     payload = _load_structured_args(args)
     if args.candidate_urls:
         payload["candidate_urls"] = list(args.candidate_urls)
-    candidate_urls = _optional_url_list(
-        payload.get("candidate_urls"), field="candidate_urls"
-    )
+    candidate_urls = _optional_url_list(payload.get("candidate_urls"), field="candidate_urls")
     if not 1 <= len(candidate_urls) <= 40:
-        raise ValueError(
-            "research +submit-hook-candidates requires 1 to 40 --url values."
-        )
+        raise ValueError("research +submit-hook-candidates requires 1 to 40 --url values.")
     if len(candidate_urls) != len(set(candidate_urls)):
         raise ValueError("--url values must be unique.")
     payload["candidate_urls"] = candidate_urls
@@ -346,9 +342,7 @@ def _build_social_hook_source_arguments(args: argparse.Namespace) -> dict[str, A
     payload["idempotency_key"] = args.idempotency_key.strip()
     if not 8 <= len(payload["idempotency_key"]) <= 240:
         raise ValueError("--idempotency-key must contain 8 to 240 characters.")
-    _validate_int_range(
-        payload, key="max_items", flag="--max-items", minimum=1, maximum=30
-    )
+    _validate_int_range(payload, key="max_items", flag="--max-items", minimum=1, maximum=30)
     return payload
 
 
@@ -1780,13 +1774,9 @@ EXECUTORS = {
     "research.list-ads-search-results": direct_enveloped(_execute_creative_search_ads_results),
     "research.create-hook-analysis": direct_enveloped(_execute_social_hook_analyze),
     "research.submit-hook-candidates": direct_enveloped(_execute_social_hook_source),
-    "research.check-hooks-analyzed": direct_enveloped(
-        _execute_social_hook_analyze_seen
-    ),
+    "research.check-hooks-analyzed": direct_enveloped(_execute_social_hook_analyze_seen),
     "research.get-hook-analysis": direct_enveloped(_execute_social_hook_get),
     "research.bulk-get-hook-analyses": direct_enveloped(_execute_social_hook_poll),
     "research.list-hook-analysis-results": direct_enveloped(_execute_social_hook_results),
-    "research.get-hook-analysis-media": direct_enveloped(
-        _execute_social_hook_media_get
-    ),
+    "research.get-hook-analysis-media": direct_enveloped(_execute_social_hook_media_get),
 }

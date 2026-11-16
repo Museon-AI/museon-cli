@@ -147,7 +147,9 @@ async def _execute_merge(ctx: CommandContext) -> Any:
         "into": pick(target, *_CREATIVE_FIELDS),
         "merged": [pick(rows[key], *_CREATIVE_FIELDS) for key in merged],
     }
-    others = [key for key in merged if rows[key].get("ugc_creator_id") != target.get("ugc_creator_id")]
+    others = [
+        key for key in merged if rows[key].get("ugc_creator_id") != target.get("ugc_creator_id")
+    ]
     if others:
         raise RuntimeError(
             "conflict: video_merge_unavailable: only videos of the same creator merge; "
@@ -183,7 +185,9 @@ async def _execute_stop_counting(ctx: CommandContext) -> Any:
         # No per-post read: the workbench decides each post when it is sent.
         return data, warnings, [_ask_next_step("which posts would stop counting")]
     if len(ids) == 1:
-        data["result"] = await call(ctx, "POST", f"/campaigns/{campaign}/posts/{ids[0]}/not-counted")
+        data["result"] = await call(
+            ctx, "POST", f"/campaigns/{campaign}/posts/{ids[0]}/not-counted"
+        )
     else:
         data["result"] = await call(
             ctx, "POST", f"/campaigns/{campaign}/posts/not-counted", {"content_ids": ids}
@@ -313,7 +317,9 @@ def _review_args(args: argparse.Namespace) -> dict[str, Any]:
         **compact_params(
             {
                 "note": text(args.note, flag="--note", limit=5000),
-                "review_classification": "strategist_original" if args.strategist_original else None,
+                "review_classification": "strategist_original"
+                if args.strategist_original
+                else None,
                 "expected_status": dekebab(args.expected_status),
             }
         ),
@@ -606,7 +612,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+create",
             summary=(
                 "Start a feedback thread on a creative (optionally at --time-ms into the "
-                "video); the creator reads it and it is pushed to their Discord." + OUTBOUND_NOTE
+                "video); the creator reads it and it is pushed to their Discord."
+                + OUTBOUND_NOTE
                 + ROLE_REVIEW
             ),
             adapter_tool_name="ugc_feedback_thread_create",
@@ -625,7 +632,9 @@ def specs() -> list[CommandSpec]:
                 },
                 ["campaign_id", "creative_id", "body"],
             ),
-            output_schema=_direct_output_schema("dry_run, creative, body, idempotency_key, thread."),
+            output_schema=_direct_output_schema(
+                "dry_run, creative, body, idempotency_key, thread."
+            ),
             examples=[
                 f"museoncli ugc feedback-thread +create --campaign-id {campaign} "
                 f"--creative-id {creative} --body 'Cut the intro' --time-ms 2500 --dry-run"
@@ -639,7 +648,8 @@ def specs() -> list[CommandSpec]:
             resource="feedback-thread",
             shortcut="+reply",
             summary=(
-                "Reply in a creative's feedback thread; the creator reads it." + OUTBOUND_NOTE
+                "Reply in a creative's feedback thread; the creator reads it."
+                + OUTBOUND_NOTE
                 + ROLE_REVIEW
             ),
             adapter_tool_name="ugc_feedback_thread_reply",
@@ -654,9 +664,7 @@ def specs() -> list[CommandSpec]:
                 },
                 ["campaign_id", "creative_id", "id", "body"],
             ),
-            output_schema=_direct_output_schema(
-                "dry_run, thread, reply and idempotency_key."
-            ),
+            output_schema=_direct_output_schema("dry_run, thread, reply and idempotency_key."),
             examples=[
                 f"museoncli ugc feedback-thread +reply --campaign-id {campaign} "
                 f"--creative-id {creative} --id {thread} --body 'Looks good now' --dry-run"

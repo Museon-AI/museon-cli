@@ -85,7 +85,9 @@ async def _list(ctx: CommandContext, arguments: dict[str, Any]) -> Any:
     archived = True if status == "archived" else None
     paging = {"cursor": arguments.get("cursor"), "limit": arguments.get("page_size") or 50}
     if arguments.get("with_progress"):
-        return await get(ctx, Route(AGENCY + "/campaigns/progress", {"archived": archived, **paging}))
+        return await get(
+            ctx, Route(AGENCY + "/campaigns/progress", {"archived": archived, **paging})
+        )
     page = await get(
         ctx,
         Route(
@@ -106,7 +108,9 @@ async def _list(ctx: CommandContext, arguments: dict[str, Any]) -> Any:
             page = {
                 **page,
                 "items": [
-                    item for item in items if isinstance(item, dict) and item.get("status") == status
+                    item
+                    for item in items
+                    if isinstance(item, dict) and item.get("status") == status
                 ],
             }
     return page
@@ -203,7 +207,9 @@ async def _execute_transition(ctx: CommandContext, action: str) -> Any:
     }
     warnings = [_TRANSITION_NOTES[action]]
     if action == "launch":
-        launchability = view.get("launchability") if isinstance(view.get("launchability"), dict) else {}
+        launchability = (
+            view.get("launchability") if isinstance(view.get("launchability"), dict) else {}
+        )
         data["launchability"] = launchability
         if launchability and not launchability.get("ok", True):
             warnings.append(
@@ -277,7 +283,9 @@ def _build_create_arguments(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _add_campaign_id(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--campaign-id", required=True, help="ID of the Campaign (from campaign +list).")
+    parser.add_argument(
+        "--campaign-id", required=True, help="ID of the Campaign (from campaign +list)."
+    )
 
 
 def _add_transition_arguments(*, confirm: bool):
@@ -481,7 +489,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+rename",
             summary=(
                 "Rename a Campaign in any status; its tracking pages' title follows. --dry-run "
-                "returns the old and new name without writing." + w.CONFIRM_FIRST
+                "returns the old and new name without writing."
+                + w.CONFIRM_FIRST
                 + " Role: owner, admin, or an operator or editor on the Campaign."
             ),
             adapter="campaign_rename",
@@ -492,7 +501,9 @@ def specs() -> list[CommandSpec]:
             },
             required=["campaign_id", "name"],
             output_description="dry_run, campaign, before and after name.",
-            examples=[f"museoncli campaign +rename --campaign-id {campaign} --name 'Spring launch EU' --dry-run"],
+            examples=[
+                f"museoncli campaign +rename --campaign-id {campaign} --name 'Spring launch EU' --dry-run"
+            ],
             add_arguments=_add_rename_arguments,
             build_arguments=_build_rename_arguments,
             kind=w.WRITE,

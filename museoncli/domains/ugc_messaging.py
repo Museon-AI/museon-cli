@@ -116,7 +116,12 @@ async def _execute_send(ctx: CommandContext) -> Any:
     data: dict[str, Any] = {
         "dry_run": args["dry_run"],
         "conversation": pick(
-            conversation, "enrollment_id", "campaign_name", "enrollment_status", "can_send", "blockers"
+            conversation,
+            "enrollment_id",
+            "campaign_name",
+            "enrollment_status",
+            "can_send",
+            "blockers",
         ),
         "body": args["body"],
         "idempotency_key": key,
@@ -178,7 +183,9 @@ async def _execute_resend_card(ctx: CommandContext) -> Any:
     data: dict[str, Any] = {
         "dry_run": args["dry_run"],
         "kind": kebab(card),
-        "earlier_deliveries": [pick(row, "intent_id", "kind", "status", "error_code") for row in deliveries],
+        "earlier_deliveries": [
+            pick(row, "intent_id", "kind", "status", "error_code") for row in deliveries
+        ],
     }
     warnings = ["The creator gets the card again; the delivery ledger picks the channel."]
     if args["dry_run"]:
@@ -203,9 +210,11 @@ async def _execute_retry(ctx: CommandContext) -> Any:
         "delivery": pick(delivery, "intent_id", "kind", "status", "error_code"),
     }
     if args["dry_run"]:
-        return data, ["Retrying delivers the message to the creator again."], [
-            _ask_next_step("which message would be delivered again")
-        ]
+        return (
+            data,
+            ["Retrying delivers the message to the creator again."],
+            [_ask_next_step("which message would be delivered again")],
+        )
     data["result"] = await call(
         ctx, "POST", f"/enrollments/{args['enrollment_id']}/messages/{args['id']}/retry"
     )
@@ -261,7 +270,9 @@ def _send_args(args: argparse.Namespace) -> dict[str, Any]:
     if about_creative and args.campaign_id is None:
         raise ValueError("--creative-id needs --campaign-id (the video's UGC campaign).")
     if not about_creative and args.campaign_id is not None:
-        raise ValueError("--campaign-id goes with --creative-id; a project message needs only --enrollment-id.")
+        raise ValueError(
+            "--campaign-id goes with --creative-id; a project message needs only --enrollment-id."
+        )
     return {
         **(
             {
@@ -384,7 +395,8 @@ def specs() -> list[CommandSpec]:
                 "(read on their MuseOn project page); --campaign-id with --creative-id writes "
                 "about one video and pushes it to their Discord. An idempotency key makes a "
                 "retry safe; the CLI makes one when left out and returns it."
-                + OUTBOUND_NOTE + ROLE_MESSAGE
+                + OUTBOUND_NOTE
+                + ROLE_MESSAGE
             ),
             adapter_tool_name="ugc_message_send",
             input_schema=_schema(

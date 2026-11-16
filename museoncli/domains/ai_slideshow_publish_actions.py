@@ -150,8 +150,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+schedule-approve",
             summary=(
                 "Approve one scheduled item of a pool account's publish plan (an item whose "
-                "account requires approval before publish), so it can go out at its time."
-                + _STAFF
+                "account requires approval before publish), so it can go out at its time." + _STAFF
             ),
             risk_level="write",
             adapter_tool_name="social_account_schedule_approve",

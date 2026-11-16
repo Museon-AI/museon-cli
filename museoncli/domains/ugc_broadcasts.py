@@ -127,7 +127,9 @@ def reach(selection: dict[str, Any], audience: dict[str, Any]) -> dict[str, Any]
             if selection.get("to_all_private_channels")
             else len(selection.get("private_channel_ids") or [])
         ),
-        "direct_messages": count("direct_messages") if selection.get("to_all_direct_messages") else 0,
+        "direct_messages": count("direct_messages")
+        if selection.get("to_all_direct_messages")
+        else 0,
         "public_channels": [
             {"channel_id": cid, "name": channels.get(cid)}
             for cid in selection.get("guild_channel_ids") or []
@@ -146,10 +148,18 @@ def _reach_warnings(selection: dict[str, Any], audience: dict[str, Any]) -> list
             f"{numbers['direct_messages']} direct messages exceed the limit of {limit}; "
             "the server refuses the send (broadcast_too_many_direct_messages)."
         )
-    if not (numbers["private_channels"] or numbers["direct_messages"] or numbers["public_channels"]):
+    if not (
+        numbers["private_channels"] or numbers["direct_messages"] or numbers["public_channels"]
+    ):
         warnings.append("It reaches nobody: pick private channels, direct messages or channels.")
-    known = {str(item.get("channel_id")) for item in audience.get("channels") or [] if isinstance(item, dict)}
-    unknown = [cid for cid in selection.get("guild_channel_ids") or [] if known and cid not in known]
+    known = {
+        str(item.get("channel_id"))
+        for item in audience.get("channels") or []
+        if isinstance(item, dict)
+    }
+    unknown = [
+        cid for cid in selection.get("guild_channel_ids") or [] if known and cid not in known
+    ]
     if unknown:
         warnings.append(f"Channel {unknown[0]} is not a public channel of the Campaign's server.")
     if selection.get("purpose") == "recruitment" and audience.get("recruitment_blockers"):
@@ -219,7 +229,11 @@ async def _execute_create(ctx: CommandContext) -> Any:
         return created, [], ["Nothing is sent yet: run +send (now) or +schedule (later)."]
     audience = await _audience(ctx, args["campaign_id"], selection["purpose"])
     data = {"dry_run": True, "draft": selection, "would_reach_now": reach(selection, audience)}
-    return data, _reach_warnings(selection, audience), [ask_first("the draft and who it would reach")]
+    return (
+        data,
+        _reach_warnings(selection, audience),
+        [ask_first("the draft and who it would reach")],
+    )
 
 
 async def _execute_update(ctx: CommandContext) -> Any:
@@ -247,9 +261,16 @@ async def _execute_update(ctx: CommandContext) -> Any:
     if args.get("dry_run"):
         audience = await _audience(ctx, args["campaign_id"], selection.get("purpose") or "notice")
         data["would_reach_now"] = reach(selection, audience)
-        return data, [*warnings, *_reach_warnings(selection, audience)], [ask_first("these changes")]
+        return (
+            data,
+            [*warnings, *_reach_warnings(selection, audience)],
+            [ask_first("these changes")],
+        )
     data["broadcast"] = await ctx.api_data_v2(
-        ctx.cfg, "PUT", _path(args), json_body=_write_body(selection, current.get("attachments") or [])
+        ctx.cfg,
+        "PUT",
+        _path(args),
+        json_body=_write_body(selection, current.get("attachments") or []),
     )
     return data, [], []
 
@@ -290,7 +311,8 @@ def _confirmed(action: str, *, what: str, allowed: str | None, warn: str | None 
             body = {"scheduled_at": args["scheduled_at"]}
         if action == "retry":
             failed = [
-                item for item in detail.get("deliveries") or []
+                item
+                for item in detail.get("deliveries") or []
                 if isinstance(item, dict) and item.get("can_retry")
             ]
             data["retryable_deliveries"] = len(failed)
@@ -317,7 +339,11 @@ async def _execute_unschedule(ctx: CommandContext) -> Any:
     current = _broadcast(await _detail(ctx))
     data: dict[str, Any] = {"dry_run": bool(args.get("dry_run")), "broadcast": _line(current)}
     if current.get("status") != "scheduled":
-        return data, [f"The broadcast is {current.get('status')}, not scheduled; nothing to cancel."], []
+        return (
+            data,
+            [f"The broadcast is {current.get('status')}, not scheduled; nothing to cancel."],
+            [],
+        )
     if args.get("dry_run"):
         return data, [], [ask_first("the schedule that would be cancelled")]
     data["broadcast"] = await ctx.api_data_v2(ctx.cfg, "POST", _path(args, "/unschedule"))
@@ -409,7 +435,12 @@ def _selection_edits(args: argparse.Namespace) -> dict[str, Any]:
         if len(body.strip()) > BODY_MAX:
             raise ValueError(f"--body is {len(body.strip())} characters; at most {BODY_MAX}.")
         edits["body"] = body
-    for name in ("purpose", "to_all_private_channels", "to_all_direct_messages", "mention_creators"):
+    for name in (
+        "purpose",
+        "to_all_private_channels",
+        "to_all_direct_messages",
+        "mention_creators",
+    ):
         value = getattr(args, name)
         if value is not None:
             edits[name] = value
@@ -591,8 +622,16 @@ def specs() -> list[CommandSpec]:
                     "campaign_id": _CAMPAIGN_ID,
                     "statuses": {"type": "array", "items": {"type": "string", "enum": STATUSES}},
                     "purpose": {"type": "string", "enum": PURPOSES},
-                    "cursor": {"type": ["string", "null"], "description": "next_cursor from the previous page."},
-                    "page_size": {"type": "integer", "minimum": 1, "maximum": PAGE_LIMIT, "default": 20},
+                    "cursor": {
+                        "type": ["string", "null"],
+                        "description": "next_cursor from the previous page.",
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": PAGE_LIMIT,
+                        "default": 20,
+                    },
                 },
                 ["campaign_id"],
             ),
@@ -610,8 +649,12 @@ def specs() -> list[CommandSpec]:
                 "withdrawn, with a Discord link) and its history." + _ROLE
             ),
             adapter_tool_name="ugc_broadcast_get",
-            input_schema=schema({"campaign_id": _CAMPAIGN_ID, "id": _BROADCAST_ID}, ["campaign_id", "id"]),
-            output_schema=_direct_output_schema("broadcast, deliveries, history, attachment_previews."),
+            input_schema=schema(
+                {"campaign_id": _CAMPAIGN_ID, "id": _BROADCAST_ID}, ["campaign_id", "id"]
+            ),
+            output_schema=_direct_output_schema(
+                "broadcast, deliveries, history, attachment_previews."
+            ),
             examples=[f"museoncli ugc broadcast +get --campaign-id {campaign} --id {broadcast}"],
             add_arguments=_add_get_arguments,
             build_arguments=_ids,
@@ -665,7 +708,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+send",
             summary=(
                 "Send a draft or scheduled broadcast now; the recipients are fixed at this moment. "
-                "Without --yes it is refused with a preview of the message and who it would reach." + _ROLE
+                "Without --yes it is refused with a preview of the message and who it would reach."
+                + _ROLE
             ),
             adapter_tool_name="ugc_broadcast_send",
             input_schema=schema(_ID_INPUT, ["campaign_id", "id"]),
@@ -734,7 +778,9 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="ugc_broadcast_retry",
             input_schema=schema(_ID_INPUT, ["campaign_id", "id"]),
             output_schema=_VIEW_OUT,
-            examples=[f"museoncli ugc broadcast +retry --campaign-id {campaign} --id {broadcast} --yes"],
+            examples=[
+                f"museoncli ugc broadcast +retry --campaign-id {campaign} --id {broadcast} --yes"
+            ],
             add_arguments=_add_confirmed_arguments,
             build_arguments=_build_confirmed_arguments,
             **confirmed,  # type: ignore[arg-type]
@@ -787,7 +833,9 @@ EXECUTORS = {
         _confirmed("send", what="the message and who it would reach", allowed="send")
     ),
     "ugc.broadcast-schedule": with_notes(
-        _confirmed("schedule", what="the message, when it goes and who it would reach", allowed="schedule")
+        _confirmed(
+            "schedule", what="the message, when it goes and who it would reach", allowed="schedule"
+        )
     ),
     "ugc.broadcast-unschedule": with_notes(_execute_unschedule),
     "ugc.broadcast-retry": with_notes(

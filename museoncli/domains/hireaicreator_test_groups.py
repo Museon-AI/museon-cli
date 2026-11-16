@@ -65,9 +65,7 @@ PREVIEW = {
     "schedule_timezone": nullable(TZ),
     "publish_times": nullable(arr(S, maximum=100)),
 }
-READBACK = (
-    "Read test-group +get and +get-publishing for the same organization and group before dependent writes."
-)
+READBACK = "Read test-group +get and +get-publishing for the same organization and group before dependent writes."
 
 
 def page(maximum=100, search_length=120):
