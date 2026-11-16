@@ -2,6 +2,13 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 2.2.0
+
+Declarative Agentic Campaign specs.
+
+- New `agentic-campaign +apply-spec --campaign-id <id> --file spec.yaml`: one YAML/JSON file declares Personas and Topics under your own keys, Formats by key -> id, and Plans with their format x topic pairs, an optional exact member roster and an optional dated calendar (`schedule.rule` walks the pairs one per day; `schedule.cells` pins any day, optionally for one account). Without `--preview-token` it previews the diff and returns a token; with the token it applies. Re-applying the same file changes nothing; a changed day re-commits only that Plan. Applying generates nothing by itself.
+- `ai-slideshow publish +create-schedule`, `+preview-schedule-plan`, `+submit-schedule-plan`, the managed-publishing skill and the task guide point multi-day Campaign calendars to `+apply-spec`.
+
 ## 2.1.0
 
 Agentic Creative Campaign publish time and one-off Plan posts.

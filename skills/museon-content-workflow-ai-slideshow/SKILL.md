@@ -66,6 +66,42 @@ Do not schedule a local Codex loop or use the manual generation path for this in
 
 To make up a missed day or add a post for one member, use `plan +extra-post`
 with a stable idempotency key; it does not change the daily cadence.
+
+### Whole Campaign from one file (`agentic-campaign +apply-spec`)
+
+When the user hands over a plan of personas, topics and a day-by-day schedule
+(for example a document listing each account's 14 days), write ONE spec file and
+apply it instead of chaining plan, supply, member and schedule commands:
+
+```yaml
+version: 1
+publish: {timezone: Europe/London, windows: [{start: "20:00", end: "20:01"}]}
+formats: {R02: <ready format id>}          # formats are only referenced
+personas:
+  EN-01: {name: ..., description: ...}      # your own keys
+topics:
+  EN-01-D01: {title: ..., narrative: ...}
+plans:
+  EN-01:
+    persona: EN-01
+    accounts: ["@handle"]                   # optional exact roster
+    pairs: [{format: R02, topic: EN-01-D01}]
+    schedule:                               # optional calendar
+      rule: {type: sequence, start: 2026-11-17}   # one pair per day, in order
+      cells:                                # any single day; wins over the rule
+        - {date: 2026-11-18, format: R02, topic: EN-01-D01}
+        - {date: 2026-11-19, account: "@handle", format: R02, topic: EN-01-D01}
+```
+
+1. `museoncli agentic-campaign +apply-spec --campaign-id <id> --file spec.yaml`
+   previews: it writes nothing and returns the diff and a `preview_token`.
+2. Show the diff to the user. On their go-ahead run the same command with
+   `--preview-token <token>`. A changed campaign after the preview is refused;
+   preview again.
+3. Re-applying the same file is a no-op; editing one day re-commits only that
+   Plan. Calendar dates are in the Campaign publish timezone. Days without a
+   cell keep the Plan's rotation. Plans without accounts keep their calendar
+   until accounts join. Applying generates nothing by itself.
 Maintenance uses the same Plan and resource IDs. Retire references through a
 reviewed supply update; do not erase their history. Reconcile the full desired
 account list to add/remove members. Pause/resume/stop selected accounts through
@@ -82,6 +118,7 @@ stop on a handover conflict. Never overwrite the old Plan's persona identity.
 | Find or maintain inputs | `museoncli ai-slideshow asset +list` |
 | Generate from explicit assets | `museoncli ai-slideshow generation +create` |
 | Inspect or change account asset pools | `museoncli ai-slideshow publish +bulk-preview-asset-pools` |
+| Create or overwrite a whole Agentic Campaign (personas, topics, plans, calendar) | `museoncli agentic-campaign +apply-spec` |
 | Preview or apply schedule plans | `museoncli ai-slideshow publish +preview-schedule-plan` |
 | Inspect account publish configuration | `museoncli ai-slideshow publish +get-config` |
 | Read or change a product's CTA targets | `museoncli ai-slideshow cta-target +list --product-id <id>` |
@@ -89,7 +126,7 @@ stop on a handover conflict. Never overwrite the old Plan's persona identity.
 ## DON'T
 
 - **DON'T** bind generation to an account or schedule.
-- **DON'T** expect a manual publish schedule on an Agentic Creative Campaign account to add a post: `publish +create-schedule` / `+submit-schedule-plan` on such an account makes that row the day's Plan post and replaces the automatic post of the day (even if already generated) unless it is publishing. Use it when the operator prepared that day's post by hand. To add a post on top of the daily one use `agentic-campaign plan +extra-post`; to post a new format/topic add the pair with `plan +supply-update` (other pairs are rejected with `AGENTIC_PLAN_PAIR_NOT_IN_PLAN`).
+- **DON'T** expect a manual publish schedule on an Agentic Creative Campaign account to add a post: `publish +create-schedule` / `+submit-schedule-plan` on such an account makes that row the day's Plan post and replaces the automatic post of the day (even if already generated) unless it is publishing. Use it when the operator prepared that day's post by hand; for a multi-day calendar of a Campaign use `agentic-campaign +apply-spec` instead. To add a post on top of the daily one use `agentic-campaign plan +extra-post`; to post a new format/topic add the pair with `plan +supply-update` (other pairs are rejected with `AGENTIC_PLAN_PAIR_NOT_IN_PLAN`).
 - **DON'T** treat generation creation or a batch job receipt as terminal success.
 - **DON'T** add evaluator or CTA inputs, or bind generation itself to an account or schedule.
 - **DON'T** confuse a product's CTA targets (`cta-target`, what its posts point viewers to) with generation inputs. Listing, creating and editing them is staff only; `+retire` takes owner, admin or operator and `--yes` after the user agrees. `+create` has no idempotency key: list before retrying an unknown outcome.

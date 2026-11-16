@@ -519,6 +519,7 @@ def specs() -> list[CommandSpec]:
         _supply_spec(),
         _account_control_spec(),
         _extra_post_spec(),
+        _apply_spec_spec(),
         *_managed_read_specs(),
         CommandSpec(
             domain=domain,
@@ -1775,6 +1776,196 @@ async def _execute_extra_post(ctx: CommandContext) -> Any:
     )
 
 
+def _add_apply_spec_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--campaign-id", required=True)
+    parser.add_argument("--file", required=True, help="Spec file (YAML or JSON)")
+    parser.add_argument(
+        "--preview-token",
+        help="Token from the preview of this same file; omit it to preview without writing",
+    )
+    parser.add_argument("--dry-run", action="store_true")
+
+
+def _load_spec_file(path: str) -> dict[str, Any]:
+    import yaml
+
+    with open(path, encoding="utf-8") as handle:
+        loaded = yaml.safe_load(handle)
+    if not isinstance(loaded, dict):
+        raise ValueError(f"{path} must hold one spec object")
+    return loaded
+
+
+def _build_apply_spec_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return compact_params(
+        {
+            "campaign_id": args.campaign_id,
+            "spec": _load_spec_file(args.file),
+            "preview_token": args.preview_token,
+            "dry_run": args.dry_run,
+        }
+    )
+
+
+async def _execute_apply_spec(ctx: CommandContext) -> Any:
+    token = ctx.arguments.get("preview_token")
+    return await ctx.api_data_v2(
+        ctx.cfg,
+        "POST",
+        f"/agentic-creative-campaigns/{ctx.arguments['campaign_id']}:apply-spec",
+        json_body=compact_params(
+            {
+                "spec": ctx.arguments["spec"],
+                "dry_run": not token,
+                "preview_token": token,
+            }
+        ),
+    )
+
+
+def _spec_reference() -> dict[str, Any]:
+    return {"type": "string", "minLength": 1, "maxLength": 120}
+
+
+def _apply_spec_spec() -> CommandSpec:
+    pair = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {"format": _spec_reference(), "topic": _spec_reference()},
+        "required": ["format", "topic"],
+    }
+    cell = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "date": {"type": "string", "format": "date"},
+            "account": {
+                "type": "string",
+                "description": "Member account id or @handle; omit for every member",
+            },
+            "format": _spec_reference(),
+            "topic": _spec_reference(),
+        },
+        "required": ["date", "format", "topic"],
+    }
+    spec_schema = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "version": {"const": 1},
+            "publish": {
+                "type": "object",
+                "properties": {
+                    "timezone": {"type": "string"},
+                    "windows": _campaign_config_schema()["properties"]["preferred_publish_windows"],
+                },
+            },
+            "formats": {
+                "type": "object",
+                "description": "Format key -> existing ready format id (formats come from source posts)",
+                "additionalProperties": {"type": "string", "format": "uuid"},
+            },
+            "personas": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "description": {"type": "string"},
+                        "tags": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["name", "description"],
+                },
+            },
+            "topics": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "narrative": {"type": "string"},
+                        "keywords": {"type": "array", "items": {"type": "string"}},
+                        "tags": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["title", "narrative"],
+                },
+            },
+            "plans": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "properties": {
+                        "persona": _spec_reference(),
+                        "name": {"type": "string"},
+                        "accounts": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Exact member roster (ids or @handles); omit to leave members as they are",
+                        },
+                        "pairs": {"type": "array", "items": pair, "maxItems": 100},
+                        "schedule": {
+                            "type": "object",
+                            "properties": {
+                                "rule": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {"const": "sequence"},
+                                        "start": {"type": "string", "format": "date"},
+                                        "days": {"type": "integer", "minimum": 1},
+                                    },
+                                    "required": ["type", "start"],
+                                },
+                                "cells": {"type": "array", "items": cell},
+                            },
+                        },
+                    },
+                    "required": ["persona"],
+                },
+            },
+        },
+        "required": ["version"],
+    }
+    return CommandSpec(
+        domain=Domain.AGENTIC_CAMPAIGN,
+        shortcut="+apply-spec",
+        summary=(
+            "Create or overwrite a whole Agentic Campaign from one spec file: Personas and "
+            "Topics declared inline under your own keys, Formats referenced by key -> id, and "
+            "Plans with their format x topic pairs, optional member accounts and an optional "
+            "dated calendar (a sequence rule over the pairs plus explicit cells; a cell may "
+            "name one account). Run once without --preview-token to see the diff and get a "
+            "token, show the diff to the user, then run again with --preview-token to apply. "
+            "Re-applying the same file is a no-op; a changed day re-commits only that Plan. "
+            "Calendar dates are in the Campaign publish timezone. Applying never generates "
+            "content by itself; posts are generated for member accounts as their days come up. "
+            "Prefer this over chaining +plan-create / plan +supply-update / plan "
+            "+members-reconcile / per-day schedules."
+        ),
+        risk_level="write",
+        execution="direct",
+        adapter_tool_name="agentic_campaign_apply_spec",
+        input_schema=_schema(
+            {
+                "campaign_id": _uuid_property("Agentic Creative Campaign id"),
+                "spec": spec_schema,
+                "preview_token": {"type": "string", "minLength": 16, "maxLength": 128},
+                "dry_run": {"type": "boolean", "default": False},
+            },
+            required=["campaign_id", "spec"],
+        ),
+        output_schema=_direct_output_schema(
+            "Per-resource diff (create/update/unchanged), counts, warnings and preview_token."
+        ),
+        examples=[
+            "museoncli agentic-campaign +apply-spec --campaign-id 22222222-2222-4222-8222-222222222222 --file campaign.yaml",
+            "museoncli agentic-campaign +apply-spec --campaign-id 22222222-2222-4222-8222-222222222222 --file campaign.yaml --preview-token spec-0123456789abcdef",
+        ],
+        add_arguments=_add_apply_spec_arguments,
+        build_arguments=_build_apply_spec_arguments,
+        supports_dry_run=True,
+    )
+
+
 def _extra_post_spec() -> CommandSpec:
     return CommandSpec(
         domain=Domain.AGENTIC_CAMPAIGN,
@@ -2001,6 +2192,7 @@ EXECUTORS = {
     "agentic-campaign.plan-extra-post": _managed_enveloped(
         _execute_extra_post, redact_api_errors=True
     ),
+    "agentic-campaign.apply-spec": _managed_enveloped(_execute_apply_spec, redact_api_errors=True),
     "agentic-campaign.plan-supply-update": _managed_enveloped(
         _execute_supply, redact_api_errors=True
     ),
