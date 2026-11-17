@@ -299,6 +299,172 @@ def test_sharing_refuses_noncanonical_document_ids(monkeypatch, command: str) ->
     assert server.requests == []
 
 
+@pytest.mark.parametrize("private", [False, True])
+def test_upload_custom_name_does_not_override_privacy(monkeypatch, tmp_path: Path, private) -> None:
+    path = tmp_path / "proposal.html"
+    path.write_text("<p>Proposal</p>", encoding="utf-8")
+    share_url = None if private else "https://museon.ai/share/manus-proposal"
+    server = Server(
+        {
+            ("POST", LIBRARY): _library(
+                {
+                    "id": DOC,
+                    "share_slug": "manus-proposal",
+                    "share_url": share_url,
+                }
+            )
+        }
+    )
+    result = run(
+        monkeypatch,
+        server,
+        [
+            "html-documents",
+            "+upload",
+            "--file",
+            str(path),
+            "--title",
+            "Proposal",
+            "--share-slug",
+            " Manus-Proposal ",
+            *(["--private"] if private else []),
+        ],
+    )
+    sent = body(server.requests[0])
+    assert sent["share_slug"] == "manus-proposal"
+    assert sent["is_shared"] is not private
+    assert result["data"]["share_url"] == share_url
+
+
+@pytest.mark.parametrize(
+    ("options", "expected"),
+    [
+        ([], None),
+        (["--share-slug", " Manus-Proposal "], {"share_slug": "manus-proposal"}),
+        (["--args-json", '{"share_slug":"manus-proposal"}'], {"share_slug": "manus-proposal"}),
+        (["--random-link"], {"share_slug": None}),
+        (["--args-json", '{"share_slug":null}'], {"share_slug": None}),
+        (["--args-json", '{"random_link":true}'], {"share_slug": None}),
+        (["--args-json", '{"random_link":false}'], None),
+    ],
+)
+def test_share_distinguishes_keep_name_rename_and_clear(monkeypatch, options, expected) -> None:
+    server = Server(
+        {("POST", f"{LIBRARY}/{DOC}/share"): _library({"id": DOC, "share_url": SHARE_URL})}
+    )
+    run(monkeypatch, server, ["html-documents", "+share", "--id", DOC, *options])
+    assert len(server.requests) == 1
+    assert body(server.requests[0]) == expected
+
+
+@pytest.mark.parametrize(
+    "slug", ["", "ab", "a" * 81, "has space", "../page", "a--b", "-abc", "abc-", 4]
+)
+def test_share_rejects_invalid_custom_name_without_a_write(monkeypatch, slug) -> None:
+    server = Server({})
+    with pytest.raises(ValueError, match="--share-slug"):
+        run(
+            monkeypatch,
+            server,
+            [
+                "html-documents",
+                "+share",
+                "--id",
+                DOC,
+                "--args-json",
+                json.dumps({"share_slug": slug}),
+            ],
+        )
+    assert server.requests == []
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"share_slug": "manus-proposal", "random_link": True},
+        {"share_slug": None, "random_link": True},
+        {"random_link": "false"},
+    ],
+)
+def test_share_rejects_ambiguous_link_choices(monkeypatch, payload) -> None:
+    server = Server({})
+    with pytest.raises(ValueError):
+        run(
+            monkeypatch,
+            server,
+            [
+                "html-documents",
+                "+share",
+                "--id",
+                DOC,
+                "--args-json",
+                json.dumps(payload),
+            ],
+        )
+    assert server.requests == []
+
+
+def test_custom_name_dry_run_does_not_reserve_name(monkeypatch) -> None:
+    server = Server({})
+    result = run(
+        monkeypatch,
+        server,
+        [
+            "html-documents",
+            "+share",
+            "--id",
+            DOC,
+            "--share-slug",
+            "manus-proposal",
+            "--dry-run",
+        ],
+    )
+    assert result["data"]["arguments"]["share_slug"] == "manus-proposal"
+    assert server.requests == []
+
+
+@pytest.mark.parametrize(
+    ("code", "status", "message"),
+    [
+        (
+            "share_slug_taken",
+            409,
+            "This share link name belongs to another document. Choose another name.",
+        ),
+        ("share_slug_reserved", 422, "This share link name is reserved. Choose another name."),
+        (
+            "invalid_share_slug",
+            422,
+            "Use a share link name of 3-80 letters/digits separated by single hyphens.",
+        ),
+    ],
+)
+def test_custom_name_refusals_preserve_server_code_without_retry(
+    monkeypatch, code, status, message
+) -> None:
+    requests = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(status, json={"detail": {"code": code}})
+
+    payload = _refused(
+        monkeypatch,
+        answer,
+        [
+            "html-documents",
+            "+share",
+            "--id",
+            DOC,
+            "--share-slug",
+            "manus-proposal",
+        ],
+    )
+    assert payload["error"]["server_code"] == code
+    assert payload["error"]["message"] == message
+    assert len(requests) == 1
+
+
 @pytest.mark.parametrize(
     "prepare",
     [

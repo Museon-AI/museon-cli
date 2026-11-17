@@ -71,7 +71,10 @@ HTML 上传现在默认开启链接分享。执行
 `museoncli html-documents +upload --file ./proposal.html --title "客户方案"`，
 把返回的 `data.share_url` 发给客户，对方无需登录即可打开，任何持有链接的人均可查看。
 内部资料请加 `--private`；已有文档仍保持私密，直到用 `html-documents +share --id <文档ID>`
-主动开启分享。`+unshare --id <文档ID>` 停止通过当前链接访问；重新分享会生成新链接。
+主动开启分享。`+unshare --id <文档ID>` 停止通过当前链接访问；重新分享恢复预留的自定义名，
+没有自定义名时生成新的随机链接。上传或分享时加 `--share-slug manus-proposal`，即可选择
+`museon.ai/share/manus-proposal`；私有上传也能预留名字，文档仍不会公开。
+用 `html-documents +share --id <文档ID> --random-link` 可清空自定义名、切回随机链接。
 上传结果不确定时先用 `+list` 找回文档和分享链接，重复上传会新建文档。
 此改动依赖支持 HTML 分享的服务端版本。
 

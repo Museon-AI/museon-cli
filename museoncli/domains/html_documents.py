@@ -8,6 +8,7 @@ sends that organization as ``X-Organization-Id`` and never a workspace or a
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +34,18 @@ _MAX_FILENAME = 180
 _FOLDER = "72defd40-39ad-40d3-8105-8f23a9a016da"
 _DOCUMENT = "11111111-1111-4111-8111-111111111111"
 _EDIT = " Needs asset edit on the organization; the server decides."
+_SHARE_SLUG = {
+    "type": ["string", "null"],
+    "minLength": 3,
+    "maxLength": 80,
+    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    "description": (
+        "Custom customer link name, e.g. manus-proposal for museon.ai/share/manus-proposal. "
+        "3-80 letters/digits separated by single hyphens; normalized to lowercase. "
+        "The server checks reserved and taken names. Private uploads may reserve a name "
+        "without enabling sharing. Null uses a random link."
+    ),
+}
 
 _UPLOAD = {
     "file": string_property("Local HTML file to upload.", max_length=4096),
@@ -44,6 +57,7 @@ _UPLOAD = {
         max_length=_MAX_FILENAME,
     ),
     "folder_id": uuid_property("Folder to store the document in (html-documents +list)."),
+    "share_slug": _SHARE_SLUG,
     "private": {
         "type": "boolean",
         "default": False,
@@ -70,9 +84,21 @@ _FOLDER_CREATE = {
     "dry_run": DRY_RUN_PROPERTY,
 }
 _INSTALL = {"dry_run": DRY_RUN_PROPERTY}
-_SHARE = {
+_DOCUMENT_ACTION = {
     "id": uuid_property("Document to share or stop sharing (html-documents +list)."),
     "dry_run": DRY_RUN_PROPERTY,
+}
+_SHARE = {
+    **_DOCUMENT_ACTION,
+    "share_slug": _SHARE_SLUG,
+    "random_link": {
+        "type": "boolean",
+        "default": False,
+        "description": (
+            "Clear the custom link name and switch to a random link. "
+            "Cannot be combined with share_slug."
+        ),
+    },
 }
 
 
@@ -183,6 +209,8 @@ async def _execute_upload(ctx: CommandContext) -> Any:
         body["filename"] = filename
     if arguments.get("folder_id"):
         body["folder_id"] = arguments["folder_id"]
+    if "share_slug" in arguments:
+        body["share_slug"] = arguments["share_slug"]
     data = await ctx.api_data(
         ctx.cfg,
         "POST",
@@ -207,10 +235,16 @@ def _sharing_result(data: Any, *, shared: bool) -> tuple[Any, list[str], list[st
 
 
 async def _execute_share(ctx: CommandContext) -> Any:
+    body: dict[str, Any] = {}
+    if ctx.arguments.get("random_link"):
+        body["share_slug"] = None
+    elif "share_slug" in ctx.arguments:
+        body["share_slug"] = ctx.arguments["share_slug"]
     data = await ctx.api_data(
         ctx.cfg,
         "POST",
         f"{_library(require_organization(ctx))}/{ctx.arguments['id']}/share",
+        json_body=body or None,
     )
     return _sharing_result(data, shared=True)
 
@@ -272,6 +306,7 @@ def _add_upload_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--title")
     parser.add_argument("--filename")
     parser.add_argument("--folder-id", dest="folder_id")
+    parser.add_argument("--share-slug", dest="share_slug")
     parser.add_argument(
         "--private",
         action="store_true",
@@ -281,12 +316,15 @@ def _add_upload_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _build_upload_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    payload = merged_input(args, ("file", "title", "filename", "folder_id", "private"))
+    payload = merged_input(
+        args, ("file", "title", "filename", "folder_id", "private", "share_slug")
+    )
     reject_unknown(payload, _UPLOAD)
     require(payload, "file", "title")
     private = payload.setdefault("private", False)
     if not isinstance(private, bool):
         raise ValueError("private must be a boolean (true or false).")
+    _normalize_share_slug(payload)
     title = str(payload["title"]).strip()
     if not 1 <= len(title) <= 200:
         raise ValueError("--title must be 1-200 characters.")
@@ -365,17 +403,51 @@ def _build_install_arguments(args: argparse.Namespace) -> dict[str, Any]:
     return payload
 
 
-def _add_share_arguments(parser: argparse.ArgumentParser) -> None:
+def _normalize_share_slug(payload: dict[str, Any]) -> None:
+    value = payload.get("share_slug")
+    if value is None:
+        return
+    if not isinstance(value, str):
+        raise ValueError("--share-slug must be text or null.")
+    value = value.strip().lower()
+    if not 3 <= len(value) <= 80 or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", value):
+        raise ValueError("--share-slug must be 3-80 letters/digits separated by single hyphens.")
+    payload["share_slug"] = value
+
+
+def _add_document_arguments(parser: argparse.ArgumentParser) -> None:
     add_structured_arguments(parser)
     parser.add_argument("--id")
     parser.add_argument("--dry-run", action="store_true")
 
 
-def _build_share_arguments(args: argparse.Namespace) -> dict[str, Any]:
+def _add_share_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_document_arguments(parser)
+    choice = parser.add_mutually_exclusive_group()
+    choice.add_argument("--share-slug", dest="share_slug")
+    choice.add_argument("--random-link", action="store_true")
+
+
+def _build_document_arguments(args: argparse.Namespace) -> dict[str, Any]:
     payload = merged_input(args, ("id",))
+    reject_unknown(payload, _DOCUMENT_ACTION)
+    require(payload, "id")
+    payload["id"] = uuid_arg(str(payload["id"]), flag="--id", lookup=_id_lookup_hint())
+    _dry_run(args, payload)
+    return payload
+
+
+def _build_share_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = merged_input(args, ("id", "share_slug", "random_link"))
     reject_unknown(payload, _SHARE)
     require(payload, "id")
     payload["id"] = uuid_arg(str(payload["id"]), flag="--id", lookup=_id_lookup_hint())
+    random_link = payload.get("random_link", False)
+    if not isinstance(random_link, bool):
+        raise ValueError("random_link must be a boolean (true or false).")
+    if random_link and "share_slug" in payload:
+        raise ValueError("Use only one of --share-slug and --random-link.")
+    _normalize_share_slug(payload)
     _dry_run(args, payload)
     return payload
 
@@ -389,7 +461,8 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Upload one local HTML file with --title and return a Museon share_url that "
                 "customers can open without signing in. Anyone with the link can view it; "
-                "use --private to keep it inside the organization. The stored filename is "
+                "use --private to keep it inside the organization. --share-slug chooses a "
+                "custom link name (or reserves it for a private upload). The stored filename is "
                 "--filename, or the file's basename when it is "
                 "one *.html or *.htm name with no '..' or slash; otherwise the server names it "
                 "from the title. Titles may repeat, so a second upload is a second document: "
@@ -400,11 +473,15 @@ def specs() -> list[CommandSpec]:
             adapter_tool_name="html_documents_upload",
             input_schema=schema(_UPLOAD, ["file", "title"]),
             output_schema=output_schema(
-                "data: id, title, filename, folder_id, slug, updated_at, html, share_url. "
+                "data: id, title, filename, folder_id, slug, updated_at, html, share_slug, share_url. "
                 "Give the customer share_url exactly as returned; it is null for private uploads."
             ),
             examples=[
                 'museoncli html-documents +upload --file ./proposal.html --title "Customer proposal"',
+                (
+                    "museoncli html-documents +upload --file ./proposal.html "
+                    '--title "Manus proposal" --share-slug manus-proposal'
+                ),
                 (
                     "museoncli html-documents +upload --file ./guide.html "
                     f'--title "Architecture notes" --private --filename guide.html --folder-id {_FOLDER}'
@@ -428,7 +505,7 @@ def specs() -> list[CommandSpec]:
             input_schema=schema(_LIST),
             output_schema=output_schema(
                 "data: folders (id, name, document_count), root_count, and documents "
-                "(id, title, filename, folder_id, slug, updated_at, share_url). "
+                "(id, title, filename, folder_id, slug, updated_at, share_slug, share_url). "
                 "share_url is null when sharing is off."
             ),
             examples=["museoncli html-documents +list --q architecture --folder root"],
@@ -440,17 +517,24 @@ def specs() -> list[CommandSpec]:
             shortcut="+share",
             summary=(
                 "Enable customer sharing for one existing HTML document. Anyone with the "
-                "returned share_url can view it without signing in. An active link is reused; "
-                "after +unshare this creates a new link and the old one stays invalid." + _EDIT
+                "returned share_url can view it without signing in. Omit link options to keep "
+                "its current custom name; use --share-slug to set or rename it, or --random-link "
+                "to clear the custom name. Old custom names stop resolving after a rename "
+                "and stay reserved to this document." + _EDIT
             ),
             risk_level="write",
             execution="direct",
             adapter_tool_name="html_documents_share",
             input_schema=schema(_SHARE, ["id"]),
             output_schema=output_schema(
-                "data: the document with share_url. Give this URL to the customer exactly as returned."
+                "data: the document with share_slug and share_url. "
+                "Give this URL to the customer exactly as returned."
             ),
-            examples=[f"museoncli html-documents +share --id {_DOCUMENT}"],
+            examples=[
+                f"museoncli html-documents +share --id {_DOCUMENT}",
+                f"museoncli html-documents +share --id {_DOCUMENT} --share-slug manus-proposal",
+                f"museoncli html-documents +share --id {_DOCUMENT} --random-link",
+            ],
             add_arguments=_add_share_arguments,
             build_arguments=_build_share_arguments,
             supports_dry_run=True,
@@ -461,16 +545,17 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "Stop customer sharing for one HTML document. Its current link stops working "
                 "for new visits; already downloaded copies cannot be recalled. The document "
-                "stays in the organization library. Sharing it again creates a new link." + _EDIT
+                "stays in the organization library. Sharing again restores its custom name "
+                "when one is reserved, or creates a new random link." + _EDIT
             ),
             risk_level="write",
             execution="direct",
             adapter_tool_name="html_documents_unshare",
-            input_schema=schema(_SHARE, ["id"]),
+            input_schema=schema(_DOCUMENT_ACTION, ["id"]),
             output_schema=output_schema("data: the document with share_url set to null."),
             examples=[f"museoncli html-documents +unshare --id {_DOCUMENT}"],
-            add_arguments=_add_share_arguments,
-            build_arguments=_build_share_arguments,
+            add_arguments=_add_document_arguments,
+            build_arguments=_build_document_arguments,
             supports_dry_run=True,
         ),
         CommandSpec(

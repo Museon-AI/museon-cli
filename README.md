@@ -92,7 +92,11 @@ HTML uploads now enable link sharing by default. Use
 and give the customer the returned `data.share_url`. Anyone with that link can open it.
 For internal material, add `--private`; existing documents remain private until explicitly
 shared with `html-documents +share --id <document-id>`. `+unshare --id <document-id>`
-stops new visits through the current link; sharing again creates a new link.
+stops new visits through the current link; sharing again restores a custom name
+or creates a new random link. Add `--share-slug manus-proposal` when uploading or
+sharing to choose `museon.ai/share/manus-proposal`. A private upload can reserve
+that name without making the document public. To return to a random link, use
+`html-documents +share --id <document-id> --random-link`.
 Use `+list` to recover document IDs and share URLs after an uncertain upload result;
 uploading again creates another document. This change requires the HTML-sharing API release.
 

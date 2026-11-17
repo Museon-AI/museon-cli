@@ -802,9 +802,9 @@ See: `organizations`
 
 1. `museoncli html-documents +list` (read): folder is omitted, root, or a folder id; q searches titles.
 2. `museoncli html-documents folder +create --name <name>` (write): One level only. The body is the name. No idempotency key: after an unknown outcome, list first.
-3. `museoncli html-documents +upload --file <file> --title <title>` (write): Public by default: give the customer the returned share_url. Anyone with the link can open it without signing in. Use --private for organization-only documents. A second upload creates a second document; after an unknown result, list before retrying.
-4. `museoncli html-documents +share --id <html-documents-id>` (write): Enable sharing for an existing document; reuses its active link. Share only content intended for anyone with the link.
-5. `museoncli html-documents +unshare --id <html-documents-id>` (write): Stop new visits through the current link. The document stays in the library; sharing again creates a new link.
+3. `museoncli html-documents +upload --file <file> --title <title>` (write): Public by default: give the customer share_url. --share-slug chooses a custom link name; --private keeps the document internal, even when a name is reserved. A second upload creates a second document; after an unknown result, list before retrying.
+4. `museoncli html-documents +share --id <html-documents-id>` (write): Enable sharing for an existing document. Omit link options to keep the custom name, --share-slug to rename, or --random-link to clear it. Old names stay reserved to this document.
+5. `museoncli html-documents +unshare --id <html-documents-id>` (write): Stop new visits through the current link. Sharing again restores the reserved custom name, or creates a new random link.
 6. `museoncli html-documents +install-defaults` (write): Copies the three built-in guides into this organization. A second call does not duplicate them.
 
 ### Use or write the organization's Business Skills
