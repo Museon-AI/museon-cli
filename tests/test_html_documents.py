@@ -18,6 +18,7 @@ from museoncli.main import ApiRequestError, UsageError
 FOLDER = "72defd40-39ad-40d3-8105-8f23a9a016da"
 OTHER = "70000000-0000-4000-8000-000000000002"
 DOC = "11111111-1111-4111-8111-111111111111"
+SHARE_URL = "https://museon.ai/share/html/test-random-token"
 LIBRARY = f"/api/v1/organizations/{ORG}/html-documents"
 
 
@@ -35,6 +36,7 @@ def _document(html: str) -> dict:
             "slug": None,
             "updated_at": "2026-11-17T12:00:00Z",
             "html": html,
+            "share_url": SHARE_URL,
         }
     )
 
@@ -68,10 +70,14 @@ def test_upload_posts_title_html_basename_and_folder(monkeypatch, tmp_path: Path
         "filename": "guide.html",
         "folder_id": FOLDER,
         "html": html,
+        "is_shared": True,
     }
     assert "parent_id" not in body(sent)
     assert result["data"]["id"] == DOC
-    assert result["next_steps"] == ["museoncli html-documents +list"]
+    assert result["next_steps"] == [
+        f"Share this link with your customer: {SHARE_URL}",
+        "museoncli html-documents +list",
+    ]
 
 
 def test_upload_omits_filename_when_the_basename_is_not_one_html_name(
@@ -93,8 +99,8 @@ def test_upload_omits_filename_when_the_basename_is_not_one_html_name(
     )
 
     assert [body(request) for request in server.requests] == [
-        {"title": "Notes", "html": "<p>Notes</p>"},
-        {"title": "Dotted", "html": "<p>Dotted</p>"},
+        {"title": "Notes", "html": "<p>Notes</p>", "is_shared": True},
+        {"title": "Dotted", "html": "<p>Dotted</p>", "is_shared": True},
     ]
 
 
@@ -189,6 +195,274 @@ def test_upload_dry_run_reads_the_file_and_sends_nothing(monkeypatch, tmp_path: 
     assert arguments["dry_run"] is True
     assert "html" not in arguments
     assert "parent_id" not in arguments
+    assert arguments["private"] is False
+
+
+@pytest.mark.parametrize("privacy_args", [["--private"], ["--args-json", '{"private":true}']])
+def test_private_upload_never_enables_sharing(monkeypatch, tmp_path: Path, privacy_args) -> None:
+    path = tmp_path / "private.html"
+    path.write_text("<p>Internal notes</p>", encoding="utf-8")
+
+    def answer(request: httpx.Request) -> dict:
+        assert body(request)["is_shared"] is False
+        return _library({"id": DOC, "share_url": None})
+
+    server = Server({("POST", LIBRARY): answer})
+    result = run(
+        monkeypatch,
+        server,
+        ["html-documents", "+upload", "--file", str(path), "--title", "Notes", *privacy_args],
+    )
+    assert result["data"]["share_url"] is None
+    assert result["warnings"] == []
+    assert result["next_steps"] == ["museoncli html-documents +list"]
+
+
+@pytest.mark.parametrize("private", ["false", "true", None, 0, 1])
+def test_upload_rejects_ambiguous_privacy_values(monkeypatch, tmp_path: Path, private) -> None:
+    path = tmp_path / "private.html"
+    path.write_text("<p>Internal notes</p>", encoding="utf-8")
+    server = Server({})
+    with pytest.raises(ValueError, match="private must be a boolean"):
+        run(
+            monkeypatch,
+            server,
+            [
+                "html-documents",
+                "+upload",
+                "--file",
+                str(path),
+                "--title",
+                "Notes",
+                "--args-json",
+                json.dumps({"private": private}),
+            ],
+        )
+    assert server.requests == []
+
+
+def test_upload_without_returned_share_link_does_not_claim_publication(
+    monkeypatch, tmp_path: Path
+) -> None:
+    path = tmp_path / "guide.html"
+    path.write_text("<p>Notes</p>", encoding="utf-8")
+    server = Server({("POST", LIBRARY): _library({"id": DOC})})
+    result = run(
+        monkeypatch,
+        server,
+        ["html-documents", "+upload", "--file", str(path), "--title", "Notes"],
+    )
+    assert len(server.writes()) == 1
+    assert result["warnings"] and "No share URL" in result["warnings"][0]
+    assert result["next_steps"] == ["museoncli html-documents +list"]
+
+
+@pytest.mark.parametrize(
+    ("command", "method", "share_url"),
+    [("+share", "POST", SHARE_URL), ("+unshare", "DELETE", None)],
+)
+def test_sharing_targets_explicit_organization_without_rebuilding_links(
+    monkeypatch, command: str, method: str, share_url: str | None
+) -> None:
+    path = f"/api/v1/organizations/{OTHER}/html-documents/{DOC}/share"
+    server = Server({(method, path): _library({"id": DOC, "share_url": share_url})})
+    result = run(
+        monkeypatch,
+        server,
+        ["html-documents", command, "--id", DOC, "--organization-id", OTHER],
+    )
+    assert len(server.requests) == 1
+    request = server.requests[0]
+    assert request.headers["X-Organization-Id"] == OTHER
+    assert not request.content
+    assert result["data"]["share_url"] == share_url
+    assert result["organization"] == {"id": OTHER, "name": None}
+    if share_url:
+        assert share_url in result["next_steps"][0]
+    else:
+        assert result["next_steps"] == []
+
+
+@pytest.mark.parametrize("command", ["+share", "+unshare"])
+def test_sharing_dry_run_does_not_change_visibility(monkeypatch, command: str) -> None:
+    server = Server({})
+    result = run(monkeypatch, server, ["html-documents", command, "--id", DOC, "--dry-run"])
+    assert result["data"]["dry_run"] is True
+    assert server.requests == []
+
+
+@pytest.mark.parametrize("command", ["+share", "+unshare"])
+def test_sharing_refuses_noncanonical_document_ids(monkeypatch, command: str) -> None:
+    server = Server({})
+    with pytest.raises(ValueError, match=r"--id.*canonical UUID"):
+        run(monkeypatch, server, ["html-documents", command, "--id", "customer-doc"])
+    assert server.requests == []
+
+
+@pytest.mark.parametrize("private", [False, True])
+def test_upload_custom_name_does_not_override_privacy(monkeypatch, tmp_path: Path, private) -> None:
+    path = tmp_path / "proposal.html"
+    path.write_text("<p>Proposal</p>", encoding="utf-8")
+    share_url = None if private else "https://museon.ai/share/manus-proposal"
+    server = Server(
+        {
+            ("POST", LIBRARY): _library(
+                {
+                    "id": DOC,
+                    "share_slug": "manus-proposal",
+                    "share_url": share_url,
+                }
+            )
+        }
+    )
+    result = run(
+        monkeypatch,
+        server,
+        [
+            "html-documents",
+            "+upload",
+            "--file",
+            str(path),
+            "--title",
+            "Proposal",
+            "--share-slug",
+            " Manus-Proposal ",
+            *(["--private"] if private else []),
+        ],
+    )
+    sent = body(server.requests[0])
+    assert sent["share_slug"] == "manus-proposal"
+    assert sent["is_shared"] is not private
+    assert result["data"]["share_url"] == share_url
+
+
+@pytest.mark.parametrize(
+    ("options", "expected"),
+    [
+        ([], None),
+        (["--share-slug", " Manus-Proposal "], {"share_slug": "manus-proposal"}),
+        (["--args-json", '{"share_slug":"manus-proposal"}'], {"share_slug": "manus-proposal"}),
+        (["--random-link"], {"share_slug": None}),
+        (["--args-json", '{"share_slug":null}'], {"share_slug": None}),
+        (["--args-json", '{"random_link":true}'], {"share_slug": None}),
+        (["--args-json", '{"random_link":false}'], None),
+    ],
+)
+def test_share_distinguishes_keep_name_rename_and_clear(monkeypatch, options, expected) -> None:
+    server = Server(
+        {("POST", f"{LIBRARY}/{DOC}/share"): _library({"id": DOC, "share_url": SHARE_URL})}
+    )
+    run(monkeypatch, server, ["html-documents", "+share", "--id", DOC, *options])
+    assert len(server.requests) == 1
+    assert body(server.requests[0]) == expected
+
+
+@pytest.mark.parametrize(
+    "slug", ["", "ab", "a" * 81, "has space", "../page", "a--b", "-abc", "abc-", 4]
+)
+def test_share_rejects_invalid_custom_name_without_a_write(monkeypatch, slug) -> None:
+    server = Server({})
+    with pytest.raises(ValueError, match="--share-slug"):
+        run(
+            monkeypatch,
+            server,
+            [
+                "html-documents",
+                "+share",
+                "--id",
+                DOC,
+                "--args-json",
+                json.dumps({"share_slug": slug}),
+            ],
+        )
+    assert server.requests == []
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"share_slug": "manus-proposal", "random_link": True},
+        {"share_slug": None, "random_link": True},
+        {"random_link": "false"},
+    ],
+)
+def test_share_rejects_ambiguous_link_choices(monkeypatch, payload) -> None:
+    server = Server({})
+    with pytest.raises(ValueError):
+        run(
+            monkeypatch,
+            server,
+            [
+                "html-documents",
+                "+share",
+                "--id",
+                DOC,
+                "--args-json",
+                json.dumps(payload),
+            ],
+        )
+    assert server.requests == []
+
+
+def test_custom_name_dry_run_does_not_reserve_name(monkeypatch) -> None:
+    server = Server({})
+    result = run(
+        monkeypatch,
+        server,
+        [
+            "html-documents",
+            "+share",
+            "--id",
+            DOC,
+            "--share-slug",
+            "manus-proposal",
+            "--dry-run",
+        ],
+    )
+    assert result["data"]["arguments"]["share_slug"] == "manus-proposal"
+    assert server.requests == []
+
+
+@pytest.mark.parametrize(
+    ("code", "status", "message"),
+    [
+        (
+            "share_slug_taken",
+            409,
+            "This share link name belongs to another document. Choose another name.",
+        ),
+        ("share_slug_reserved", 422, "This share link name is reserved. Choose another name."),
+        (
+            "invalid_share_slug",
+            422,
+            "Use a share link name of 3-80 letters/digits separated by single hyphens.",
+        ),
+    ],
+)
+def test_custom_name_refusals_preserve_server_code_without_retry(
+    monkeypatch, code, status, message
+) -> None:
+    requests = []
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(status, json={"detail": {"code": code}})
+
+    payload = _refused(
+        monkeypatch,
+        answer,
+        [
+            "html-documents",
+            "+share",
+            "--id",
+            DOC,
+            "--share-slug",
+            "manus-proposal",
+        ],
+    )
+    assert payload["error"]["server_code"] == code
+    assert payload["error"]["message"] == message
+    assert len(requests) == 1
 
 
 @pytest.mark.parametrize(

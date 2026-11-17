@@ -67,6 +67,17 @@ https://www.museon.ai/cli/install.md
 `ai-slideshow` 保留素材、独立生成与旧 slideshow 发布。五个集成 skill 分别承载基础原子能力、研究、HireAICreator、slideshow 与 Campaign（campaigns）流程。Agent 使用这些原子命令编排工作流。
 写入后必须回读所属业务状态，不能把请求成功当成任务完成。
 
+HTML 上传现在默认开启链接分享。执行
+`museoncli html-documents +upload --file ./proposal.html --title "客户方案"`，
+把返回的 `data.share_url` 发给客户，对方无需登录即可打开，任何持有链接的人均可查看。
+内部资料请加 `--private`；已有文档仍保持私密，直到用 `html-documents +share --id <文档ID>`
+主动开启分享。`+unshare --id <文档ID>` 停止通过当前链接访问；重新分享恢复预留的自定义名，
+没有自定义名时生成新的随机链接。上传或分享时加 `--share-slug manus-proposal`，即可选择
+`museon.ai/share/manus-proposal`；私有上传也能预留名字，文档仍不会公开。
+用 `html-documents +share --id <文档ID> --random-link` 可清空自定义名、切回随机链接。
+上传结果不确定时先用 `+list` 找回文档和分享链接，重复上传会新建文档。
+此改动依赖支持 HTML 分享的服务端版本。
+
 某件事该用哪个命令？`museoncli guide` 按章节列出所有任务（UGC Campaign 运营按实际工作顺序排列，
 另有内容追踪、数据分析、账号与发布、AI 图文、调研、组织）；`museoncli guide <task-id>` 给出该任务按顺序的命令、
 必填参数、风险和注意事项；`museoncli guide --search <词>` 用用户自己的话（中英文都可）查任务和命令。
@@ -111,7 +122,7 @@ MuseOn 只有组织：访问权限由组织角色加 Campaign 范围决定。每
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v2.3.1/museoncli-2.3.1-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v3.0.0/museoncli-3.0.0-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：

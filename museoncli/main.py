@@ -137,6 +137,9 @@ _HTML_DOCUMENT_CODE_MESSAGES = {
     "invalid_folder_name": "Enter a folder name.",
     "invalid_slug": "Slug is not valid.",
     "slug_taken": "A document with this slug already exists.",
+    "invalid_share_slug": "Use a share link name of 3-80 letters/digits separated by single hyphens.",
+    "share_slug_reserved": "This share link name is reserved. Choose another name.",
+    "share_slug_taken": "This share link name belongs to another document. Choose another name.",
     "invalid_document": "Document could not be saved.",
 }
 
