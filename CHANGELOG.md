@@ -2,6 +2,15 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 2.3.1
+
+Fixes from production QA of 2.3.0 `html-documents` errors.
+
+- A business error whose body is only `{"code": "..."}` (or one JSON encoding of that object) no longer lands in `error.message` as that JSON. The envelope sets `error.server_code`. HTML document codes that carry no message of their own use a sentence: `folder_not_found` is `Folder not found`, `folder_name_taken` is `A folder with this name already exists`, and the same for `document_not_found`, `folder_not_empty`, `html_too_large`, `invalid_filename`, `invalid_html`, `invalid_title`, `invalid_folder`, `invalid_folder_name`, `invalid_slug`, `slug_taken`, and `invalid_document`. A body that already has its own message is unchanged. An unknown code-only object keeps the JSON text it showed before.
+- A bad id on `html-documents` says to look it up with `+list`. That domain has no `+get`. Other commands still say `+list or +get`.
+- `html-documents +list --folder` accepts `root` in any case and sends `root`. Any other non-UUID says the literal `root` is valid.
+- `html-documents +list --q` that is empty or only whitespace is a usage error (exit 2) and sends no request. The schema already required `minLength` 1.
+
 ## 2.3.0
 
 Organization HTML document library.
