@@ -2,6 +2,19 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## Unreleased
+
+- HTML uploads now enable customer link sharing by default and return `data.share_url`.
+  Anyone with that link can view the document without signing in. Add `--private`
+  (or `"private": true` in structured input) to preserve organization-only access.
+  Existing documents and built-in guides remain private until explicitly shared.
+- New `html-documents +share --id <document-id>` and `+unshare --id <document-id>`
+  enable and stop link access without uploading a duplicate document. An active
+  link is reused; after stopping sharing, enabling it again returns a new link.
+- Migration: scripts uploading internal HTML must add `--private` before upgrading.
+  Deploy the corresponding HTML-sharing API before releasing this CLI change.
+  This visibility-default change requires a major version release.
+
 ## 2.3.1
 
 Fixes from production QA of 2.3.0 `html-documents` errors.

@@ -77,6 +77,7 @@ at the last published release until a separate release is approved.
 | Analyze video content | `content-analysis` |
 | Upload files, import image URLs and read media records | `media` |
 | Validate, host and share durable reports | `artifacts` |
+| Upload HTML pages and share them with customers without a login | `html-documents` |
 | Connect and inspect accounts, use bound phones, read performance and edit profiles | `social-account` |
 | Schedule Agent work and retain run memory | `routines` |
 | Discover organization methodology | `skills` |
@@ -85,6 +86,15 @@ Eight bundled Skills teach discovery, research, durable artifacts, account acces
 The CLI executes atomic operations; the Agent composes workflows. Museon checks user,
 organization role and Campaign scope for every request. Verify writes with
 readback from the owning domain, not with a request receipt alone.
+
+HTML uploads now enable link sharing by default. Use
+`museoncli html-documents +upload --file ./proposal.html --title "Customer proposal"`
+and give the customer the returned `data.share_url`. Anyone with that link can open it.
+For internal material, add `--private`; existing documents remain private until explicitly
+shared with `html-documents +share --id <document-id>`. `+unshare --id <document-id>`
+stops new visits through the current link; sharing again creates a new link.
+Use `+list` to recover document IDs and share URLs after an uncertain upload result;
+uploading again creates another document. This change requires the HTML-sharing API release.
 
 Which command does a job? `museoncli guide` lists every task by chapter (UGC Campaign
 operations in the order the work happens, tracking, analytics, accounts and publishing,

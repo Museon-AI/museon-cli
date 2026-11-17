@@ -796,14 +796,16 @@ See: `organizations`
 1. `museoncli organization member +list` (read): Role and Campaign scope per member (owner, admin, operator).
 2. `museoncli organization billing +get` (read): Plan, AI credits and usage (owner, admin).
 
-### Upload HTML documents into the organization library
+### Upload and share HTML pages with customers
 
-`museoncli guide html-documents` · when: html document; html library; upload html; html folder; HTML 文档; 文档库
+`museoncli guide html-documents` · when: html document; html library; upload html; html folder; share html; HTML 文档; 文档库; 客户分享; 网页分享
 
 1. `museoncli html-documents +list` (read): folder is omitted, root, or a folder id; q searches titles.
 2. `museoncli html-documents folder +create --name <name>` (write): One level only. The body is the name. No idempotency key: after an unknown outcome, list first.
-3. `museoncli html-documents +upload --file <file> --title <title>` (write): Title is required. The filename is the file's basename when that is one .html or .htm name; otherwise the server names it from the title.
-4. `museoncli html-documents +install-defaults` (write): Copies the three built-in guides into this organization. A second call does not duplicate them.
+3. `museoncli html-documents +upload --file <file> --title <title>` (write): Public by default: give the customer the returned share_url. Anyone with the link can open it without signing in. Use --private for organization-only documents. A second upload creates a second document; after an unknown result, list before retrying.
+4. `museoncli html-documents +share --id <html-documents-id>` (write): Enable sharing for an existing document; reuses its active link. Share only content intended for anyone with the link.
+5. `museoncli html-documents +unshare --id <html-documents-id>` (write): Stop new visits through the current link. The document stays in the library; sharing again creates a new link.
+6. `museoncli html-documents +install-defaults` (write): Copies the three built-in guides into this organization. A second call does not duplicate them.
 
 ### Use or write the organization's Business Skills
 

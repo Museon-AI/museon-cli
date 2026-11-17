@@ -18,6 +18,7 @@ from museoncli.main import ApiRequestError, UsageError
 FOLDER = "72defd40-39ad-40d3-8105-8f23a9a016da"
 OTHER = "70000000-0000-4000-8000-000000000002"
 DOC = "11111111-1111-4111-8111-111111111111"
+SHARE_URL = "https://museon.ai/share/html/test-random-token"
 LIBRARY = f"/api/v1/organizations/{ORG}/html-documents"
 
 
@@ -35,6 +36,7 @@ def _document(html: str) -> dict:
             "slug": None,
             "updated_at": "2026-11-17T12:00:00Z",
             "html": html,
+            "share_url": SHARE_URL,
         }
     )
 
@@ -68,10 +70,14 @@ def test_upload_posts_title_html_basename_and_folder(monkeypatch, tmp_path: Path
         "filename": "guide.html",
         "folder_id": FOLDER,
         "html": html,
+        "is_shared": True,
     }
     assert "parent_id" not in body(sent)
     assert result["data"]["id"] == DOC
-    assert result["next_steps"] == ["museoncli html-documents +list"]
+    assert result["next_steps"] == [
+        f"Share this link with your customer: {SHARE_URL}",
+        "museoncli html-documents +list",
+    ]
 
 
 def test_upload_omits_filename_when_the_basename_is_not_one_html_name(
@@ -93,8 +99,8 @@ def test_upload_omits_filename_when_the_basename_is_not_one_html_name(
     )
 
     assert [body(request) for request in server.requests] == [
-        {"title": "Notes", "html": "<p>Notes</p>"},
-        {"title": "Dotted", "html": "<p>Dotted</p>"},
+        {"title": "Notes", "html": "<p>Notes</p>", "is_shared": True},
+        {"title": "Dotted", "html": "<p>Dotted</p>", "is_shared": True},
     ]
 
 
@@ -189,6 +195,108 @@ def test_upload_dry_run_reads_the_file_and_sends_nothing(monkeypatch, tmp_path: 
     assert arguments["dry_run"] is True
     assert "html" not in arguments
     assert "parent_id" not in arguments
+    assert arguments["private"] is False
+
+
+@pytest.mark.parametrize("privacy_args", [["--private"], ["--args-json", '{"private":true}']])
+def test_private_upload_never_enables_sharing(monkeypatch, tmp_path: Path, privacy_args) -> None:
+    path = tmp_path / "private.html"
+    path.write_text("<p>Internal notes</p>", encoding="utf-8")
+
+    def answer(request: httpx.Request) -> dict:
+        assert body(request)["is_shared"] is False
+        return _library({"id": DOC, "share_url": None})
+
+    server = Server({("POST", LIBRARY): answer})
+    result = run(
+        monkeypatch,
+        server,
+        ["html-documents", "+upload", "--file", str(path), "--title", "Notes", *privacy_args],
+    )
+    assert result["data"]["share_url"] is None
+    assert result["warnings"] == []
+    assert result["next_steps"] == ["museoncli html-documents +list"]
+
+
+@pytest.mark.parametrize("private", ["false", "true", None, 0, 1])
+def test_upload_rejects_ambiguous_privacy_values(monkeypatch, tmp_path: Path, private) -> None:
+    path = tmp_path / "private.html"
+    path.write_text("<p>Internal notes</p>", encoding="utf-8")
+    server = Server({})
+    with pytest.raises(ValueError, match="private must be a boolean"):
+        run(
+            monkeypatch,
+            server,
+            [
+                "html-documents",
+                "+upload",
+                "--file",
+                str(path),
+                "--title",
+                "Notes",
+                "--args-json",
+                json.dumps({"private": private}),
+            ],
+        )
+    assert server.requests == []
+
+
+def test_upload_without_returned_share_link_does_not_claim_publication(
+    monkeypatch, tmp_path: Path
+) -> None:
+    path = tmp_path / "guide.html"
+    path.write_text("<p>Notes</p>", encoding="utf-8")
+    server = Server({("POST", LIBRARY): _library({"id": DOC})})
+    result = run(
+        monkeypatch,
+        server,
+        ["html-documents", "+upload", "--file", str(path), "--title", "Notes"],
+    )
+    assert len(server.writes()) == 1
+    assert result["warnings"] and "No share URL" in result["warnings"][0]
+    assert result["next_steps"] == ["museoncli html-documents +list"]
+
+
+@pytest.mark.parametrize(
+    ("command", "method", "share_url"),
+    [("+share", "POST", SHARE_URL), ("+unshare", "DELETE", None)],
+)
+def test_sharing_targets_explicit_organization_without_rebuilding_links(
+    monkeypatch, command: str, method: str, share_url: str | None
+) -> None:
+    path = f"/api/v1/organizations/{OTHER}/html-documents/{DOC}/share"
+    server = Server({(method, path): _library({"id": DOC, "share_url": share_url})})
+    result = run(
+        monkeypatch,
+        server,
+        ["html-documents", command, "--id", DOC, "--organization-id", OTHER],
+    )
+    assert len(server.requests) == 1
+    request = server.requests[0]
+    assert request.headers["X-Organization-Id"] == OTHER
+    assert not request.content
+    assert result["data"]["share_url"] == share_url
+    assert result["organization"] == {"id": OTHER, "name": None}
+    if share_url:
+        assert share_url in result["next_steps"][0]
+    else:
+        assert result["next_steps"] == []
+
+
+@pytest.mark.parametrize("command", ["+share", "+unshare"])
+def test_sharing_dry_run_does_not_change_visibility(monkeypatch, command: str) -> None:
+    server = Server({})
+    result = run(monkeypatch, server, ["html-documents", command, "--id", DOC, "--dry-run"])
+    assert result["data"]["dry_run"] is True
+    assert server.requests == []
+
+
+@pytest.mark.parametrize("command", ["+share", "+unshare"])
+def test_sharing_refuses_noncanonical_document_ids(monkeypatch, command: str) -> None:
+    server = Server({})
+    with pytest.raises(ValueError, match=r"--id.*canonical UUID"):
+        run(monkeypatch, server, ["html-documents", command, "--id", "customer-doc"])
+    assert server.requests == []
 
 
 @pytest.mark.parametrize(

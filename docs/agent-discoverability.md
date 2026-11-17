@@ -22,7 +22,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-499 commands across 18 domains (source of truth: `museoncli schema`).
+501 commands across 18 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -608,8 +608,10 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 | command | risk | dry-run | confirm | execution | summary |
 |---|---|---|---|---|---|
-| `html-documents +upload` | write | yes | — | direct | Upload one local HTML file into this organization's document library with --title. The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides. |
+| `html-documents +upload` | write | yes | — | direct | Upload one local HTML file with --title and return a Museon share_url that customers can open without signing in. Anyone with the link can view it; use --private to keep it inside the organization. The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides. |
 | `html-documents +list` | read | — | — | direct | List this organization's HTML documents and its one-level folders. --q searches titles. --folder is omitted (every document), root (no folder), or a folder id. Anyone who can read the organization's assets can list; the server decides. |
+| `html-documents +share` | write | yes | — | direct | Enable customer sharing for one existing HTML document. Anyone with the returned share_url can view it without signing in. An active link is reused; after +unshare this creates a new link and the old one stays invalid. Needs asset edit on the organization; the server decides. |
+| `html-documents +unshare` | write | yes | — | direct | Stop customer sharing for one HTML document. Its current link stops working for new visits; already downloaded copies cannot be recalled. The document stays in the organization library. Sharing it again creates a new link. Needs asset edit on the organization; the server decides. |
 | `html-documents folder +create` | write | yes | — | direct | Create one folder in this organization's HTML document library. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides. |
 | `html-documents +install-defaults` | write | yes | — | direct | Copy the three built-in HTML guides into this organization. Running it again does not add duplicates. Needs asset edit on the organization; the server decides. |
 

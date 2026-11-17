@@ -869,12 +869,14 @@ chapters:
           - organization.member-list: "Role and Campaign scope per member (owner, admin, operator)."
           - organization.billing-get: "Plan, AI credits and usage (owner, admin)."
       - id: html-documents
-        title: Upload HTML documents into the organization library
-        when: ["html document", "html library", "upload html", "html folder", "HTML 文档", "文档库"]
+        title: Upload and share HTML pages with customers
+        when: ["html document", "html library", "upload html", "html folder", "share html", "HTML 文档", "文档库", "客户分享", "网页分享"]
         steps:
           - html-documents.list: "folder is omitted, root, or a folder id; q searches titles."
           - html-documents.folder-create: "One level only. The body is the name. No idempotency key: after an unknown outcome, list first."
-          - html-documents.upload: "Title is required. The filename is the file's basename when that is one .html or .htm name; otherwise the server names it from the title."
+          - html-documents.upload: "Public by default: give the customer the returned share_url. Anyone with the link can open it without signing in. Use --private for organization-only documents. A second upload creates a second document; after an unknown result, list before retrying."
+          - html-documents.share: "Enable sharing for an existing document; reuses its active link. Share only content intended for anyone with the link."
+          - html-documents.unshare: "Stop new visits through the current link. The document stays in the library; sharing again creates a new link."
           - html-documents.install-defaults: "Copies the three built-in guides into this organization. A second call does not duplicate them."
       - id: business-skills
         title: Use or write the organization's Business Skills
