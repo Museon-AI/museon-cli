@@ -76,6 +76,7 @@ from museoncli.domains import (
     ugc_client_reports,
     analytics_boards,
     organization_settings,
+    html_documents,
 )
 
 
@@ -124,6 +125,7 @@ _DOMAIN_MODULES = (
     ugc_client_reports,
     analytics_boards,
     organization_settings,
+    html_documents,
 )
 
 

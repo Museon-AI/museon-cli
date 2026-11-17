@@ -104,9 +104,10 @@ Public evidence from the web, social platforms, communities and ad libraries; Ho
 
 ## 7. Organization, Business Skills and routines
 
-Who is in the organization and its billing; the organization's Business Skills (methodology the Agent loads before strategic work); routines that run work on a schedule.
+Who is in the organization and its billing; the organization's HTML document library; its Business Skills (methodology the Agent loads before strategic work); routines that run work on a schedule.
 
 - **Read members, roles and billing** (`org-members`): `museoncli organization member +list` → `museoncli organization billing +get`
+- **Upload HTML documents into the organization library** (`html-documents`): `museoncli html-documents +list` → `museoncli html-documents folder +create` → `museoncli html-documents +upload` → `museoncli html-documents +install-defaults`
 - **Use or write the organization's Business Skills** (`business-skills`): `museoncli skills +list` → `museoncli skills +get` → `museoncli skills +create` → `museoncli skills +update`
 - **Schedule recurring work (routines)** (`routines`): `museoncli routines +list` → `museoncli routines +get` → `museoncli routines +create-draft` → `museoncli routines +accept-draft` → `museoncli routines +create-ad-hoc` → `museoncli routines +rebuild-ad-hoc` → `museoncli routines +pause` → `museoncli routines +resume` → `museoncli routines +cancel` → `museoncli routines +get-memory` → `museoncli routines +record`
 

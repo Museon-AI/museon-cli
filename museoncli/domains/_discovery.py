@@ -215,6 +215,7 @@ DOMAIN_HELP = {
     "staff-ops": "MuseOn staff diagnostics.",
     "analytics": "Multi-Campaign analytics boards.",
     "organization": "Organization members and billing.",
+    "html-documents": "The organization's HTML documents: list, upload, folders, built-in guides.",
     "routines": "Recurring Agent work on a schedule, with memory.",
 }
 

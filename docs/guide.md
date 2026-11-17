@@ -785,7 +785,7 @@ See: `safe-writes`
 
 ## 7. Organization, Business Skills and routines
 
-Who is in the organization and its billing; the organization's Business Skills (methodology the Agent loads before strategic work); routines that run work on a schedule.
+Who is in the organization and its billing; the organization's HTML document library; its Business Skills (methodology the Agent loads before strategic work); routines that run work on a schedule.
 
 See: `organizations`
 
@@ -795,6 +795,15 @@ See: `organizations`
 
 1. `museoncli organization member +list` (read): Role and Campaign scope per member (owner, admin, operator).
 2. `museoncli organization billing +get` (read): Plan, AI credits and usage (owner, admin).
+
+### Upload HTML documents into the organization library
+
+`museoncli guide html-documents` · when: html document; html library; upload html; html folder; HTML 文档; 文档库
+
+1. `museoncli html-documents +list` (read): folder is omitted, root, or a folder id; q searches titles.
+2. `museoncli html-documents folder +create --name <name>` (write): One level only. The body is the name. No idempotency key: after an unknown outcome, list first.
+3. `museoncli html-documents +upload --file <file> --title <title>` (write): Title is required. The filename is the file's basename when that is one .html or .htm name; otherwise the server names it from the title.
+4. `museoncli html-documents +install-defaults` (write): Copies the three built-in guides into this organization. A second call does not duplicate them.
 
 ### Use or write the organization's Business Skills
 

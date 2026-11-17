@@ -22,7 +22,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-495 commands across 17 domains (source of truth: `museoncli schema`).
+499 commands across 18 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -603,6 +603,15 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 |---|---|---|---|---|---|
 | `organization member +list` | read | — | — | direct | List the organization's members with their role (owner, admin, operator, member) and Campaign scope (all or chosen Campaigns). Owner, admin and operator read it. |
 | `organization billing +get` | read | — | — | direct | Read the organization's billing overview: plan and subscription, AI credit balance and usage. Owner and admin only. |
+
+### html-documents
+
+| command | risk | dry-run | confirm | execution | summary |
+|---|---|---|---|---|---|
+| `html-documents +upload` | write | yes | — | direct | Upload one local HTML file into this organization's document library with --title. The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides. |
+| `html-documents +list` | read | — | — | direct | List this organization's HTML documents and its one-level folders. --q searches titles. --folder is omitted (every document), root (no folder), or a folder id. Anyone who can read the organization's assets can list; the server decides. |
+| `html-documents folder +create` | write | yes | — | direct | Create one folder in this organization's HTML document library. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides. |
+| `html-documents +install-defaults` | write | yes | — | direct | Copy the three built-in HTML guides into this organization. Running it again does not add duplicates. Needs asset edit on the organization; the server decides. |
 
 <!-- END GENERATED COMMANDS -->
 
