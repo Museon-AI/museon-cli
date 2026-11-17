@@ -11848,6 +11848,116 @@
           "transport": "agent_cli_api"
         }
       ],
+      "html-documents": [
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "html-documents.upload",
+          "cli": "museoncli html-documents +upload",
+          "domain": "html-documents",
+          "execution": "direct",
+          "name": "html-documents.upload",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+upload",
+          "stability": "stable",
+          "summary": "Upload one local HTML file into this organization's document library with --title. The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "html-documents.list",
+          "cli": "museoncli html-documents +list",
+          "domain": "html-documents",
+          "execution": "direct",
+          "name": "html-documents.list",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "List this organization's HTML documents and its one-level folders. --q searches titles. --folder is omitted (every document), root (no folder), or a folder id. Anyone who can read the organization's assets can list; the server decides.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "html-documents.folder-create",
+          "cli": "museoncli html-documents folder +create",
+          "domain": "html-documents",
+          "execution": "direct",
+          "name": "html-documents.folder-create",
+          "requires_confirmation": false,
+          "resource": "folder",
+          "risk_level": "write",
+          "shortcut": "+create",
+          "stability": "stable",
+          "summary": "Create one folder in this organization's HTML document library. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "organization_member"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "html-documents.install-defaults",
+          "cli": "museoncli html-documents +install-defaults",
+          "domain": "html-documents",
+          "execution": "direct",
+          "name": "html-documents.install-defaults",
+          "requires_confirmation": false,
+          "resource": null,
+          "risk_level": "write",
+          "shortcut": "+install-defaults",
+          "stability": "stable",
+          "summary": "Copy the three built-in HTML guides into this organization. Running it again does not add duplicates. Needs asset edit on the organization; the server decides.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        }
+      ],
       "media": [
         {
           "authorization": {
@@ -18361,7 +18471,8 @@
       "staff-ops",
       "routines",
       "analytics",
-      "organization"
+      "organization",
+      "html-documents"
     ]
   },
   "contract_revision": "2.2.0",
@@ -64347,6 +64458,433 @@
       "shortcut": "+resume",
       "stability": "stable",
       "summary": "Resume warmup with optimistic version control; requires --yes. May start automated generation/publication.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "html-documents.folder-create": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "html-documents.folder-create",
+      "cli": "museoncli html-documents folder +create",
+      "domain": "html-documents",
+      "examples": [
+        "museoncli html-documents folder +create --name Guides"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Folder name. Folders are one level and cannot contain a folder.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "html-documents.folder-create",
+      "output_schema": {
+        "description": "data: id, name, document_count.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "folder",
+      "risk_level": "write",
+      "shortcut": "+create",
+      "stability": "stable",
+      "summary": "Create one folder in this organization's HTML document library. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "html-documents.install-defaults": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "html-documents.install-defaults",
+      "cli": "museoncli html-documents +install-defaults",
+      "domain": "html-documents",
+      "examples": [
+        "museoncli html-documents +install-defaults"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "html-documents.install-defaults",
+      "output_schema": {
+        "description": "data: the library after the guides are copied (folders, root_count, documents).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+install-defaults",
+      "stability": "stable",
+      "summary": "Copy the three built-in HTML guides into this organization. Running it again does not add duplicates. Needs asset edit on the organization; the server decides.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "html-documents.list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "html-documents.list",
+      "cli": "museoncli html-documents +list",
+      "domain": "html-documents",
+      "examples": [
+        "museoncli html-documents +list --q architecture --folder root"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "folder": {
+            "description": "Which documents to list: omit for all, root for documents in no folder, or a folder id.",
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "q": {
+            "description": "Search document titles. The title matches when it contains this text.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "html-documents.list",
+      "output_schema": {
+        "description": "data: folders (id, name, document_count), root_count, and documents (id, title, filename, folder_id, slug, updated_at).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "List this organization's HTML documents and its one-level folders. --q searches titles. --folder is omitted (every document), root (no folder), or a folder id. Anyone who can read the organization's assets can list; the server decides.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "html-documents.upload": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "organization_member"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "html-documents.upload",
+      "cli": "museoncli html-documents +upload",
+      "domain": "html-documents",
+      "examples": [
+        "museoncli html-documents +upload --file ./guide.html --title \"Architecture notes\"",
+        "museoncli html-documents +upload --file ./guide.html --title \"Architecture notes\" --filename guide.html --folder-id 72defd40-39ad-40d3-8105-8f23a9a016da"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "dry_run": {
+            "description": "Read and preview only; write nothing.",
+            "type": "boolean"
+          },
+          "file": {
+            "description": "Local HTML file to upload.",
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "filename": {
+            "description": "Stored filename. A path is reduced to its basename, and only a single *.html or *.htm name with no '..' or slash is sent. Omit it to use that basename when the file has one, or to let the server name the file from the title.",
+            "maxLength": 180,
+            "minLength": 1,
+            "type": "string"
+          },
+          "folder_id": {
+            "description": "Folder to store the document in (html-documents +list). Canonical UUID copied from a previous command response; never a placeholder.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "description": "Document title.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "html-documents.upload",
+      "output_schema": {
+        "description": "data: id, title, filename, folder_id, slug, updated_at, html.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": null,
+      "risk_level": "write",
+      "shortcut": "+upload",
+      "stability": "stable",
+      "summary": "Upload one local HTML file into this organization's document library with --title. The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

@@ -857,9 +857,9 @@ chapters:
   - id: organization
     title: "7. Organization, Business Skills and routines"
     summary: >-
-      Who is in the organization and its billing; the organization's Business Skills
-      (methodology the Agent loads before strategic work); routines that run work on a
-      schedule.
+      Who is in the organization and its billing; the organization's HTML document
+      library; its Business Skills (methodology the Agent loads before strategic work);
+      routines that run work on a schedule.
     see: [organizations]
     tasks:
       - id: org-members
@@ -868,6 +868,14 @@ chapters:
         steps:
           - organization.member-list: "Role and Campaign scope per member (owner, admin, operator)."
           - organization.billing-get: "Plan, AI credits and usage (owner, admin)."
+      - id: html-documents
+        title: Upload HTML documents into the organization library
+        when: ["html document", "html library", "upload html", "html folder", "HTML 文档", "文档库"]
+        steps:
+          - html-documents.list: "folder is omitted, root, or a folder id; q searches titles."
+          - html-documents.folder-create: "One level only. The body is the name. No idempotency key: after an unknown outcome, list first."
+          - html-documents.upload: "Title is required. The filename is the file's basename when that is one .html or .htm name; otherwise the server names it from the title."
+          - html-documents.install-defaults: "Copies the three built-in guides into this organization. A second call does not duplicate them."
       - id: business-skills
         title: Use or write the organization's Business Skills
         when: ["business skill", "methodology", "playbook", "业务技能", "方法论", "sop"]
