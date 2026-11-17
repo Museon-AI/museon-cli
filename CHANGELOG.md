@@ -2,6 +2,15 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 2.3.0
+
+Organization HTML document library.
+
+- New `html-documents +upload --file <path> --title <title> [--filename <name>] [--folder-id <id>]`: upload one local HTML file into the selected organization's document library. The stored filename is `--filename`, or the file's basename when that is one `*.html` or `*.htm` name with no `..` or slash; otherwise the server names the file from the title.
+- `html-documents +list [--q <text>] [--folder root|<id>]` lists the organization's documents and its one-level folders. `--q` searches titles. Omit `--folder` for every document, pass `root` for documents in no folder, or pass a folder id.
+- `html-documents folder +create --name <name>` creates one folder. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, `+list` before retrying.
+- `html-documents +install-defaults` copies the three built-in guides into the organization. Running it again does not add duplicates.
+
 ## 2.2.0
 
 Declarative Agentic Campaign specs.
