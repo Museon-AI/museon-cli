@@ -18475,7 +18475,7 @@
       "html-documents"
     ]
   },
-  "contract_revision": "2.3.0",
+  "contract_revision": "2.3.1",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
