@@ -123,9 +123,27 @@ def cli_outdated_error(response: httpx.Response) -> CliOutdatedError:
     )
 
 
+# The HTML document API answers with {"code": "..."} and no message text.
+_HTML_DOCUMENT_CODE_MESSAGES = {
+    "folder_not_found": "Folder not found",
+    "folder_name_taken": "A folder with this name already exists",
+    "document_not_found": "Document not found",
+    "folder_not_empty": "Move or delete the documents in this folder first.",
+    "html_too_large": "This HTML file is too large.",
+    "invalid_filename": "Use a single HTML filename, without a folder path.",
+    "invalid_html": "The file has no HTML to store.",
+    "invalid_title": "Enter a title.",
+    "invalid_folder": "Folder must be root or a folder id.",
+    "invalid_folder_name": "Enter a folder name.",
+    "invalid_slug": "Slug is not valid.",
+    "slug_taken": "A document with this slug already exists.",
+    "invalid_document": "Document could not be saved.",
+}
+
 # Messages for server codes whose body carries no readable text of its own.
 _SERVER_CODE_MESSAGES = {
     "organization_workspace_mismatch": ORGANIZATION_WORKSPACE_MISMATCH_MESSAGE,
+    **_HTML_DOCUMENT_CODE_MESSAGES,
 }
 
 
@@ -225,6 +243,13 @@ def main(*, update: dict[str, Any] | None = None) -> None:
     _ACTIVE_UPDATE.set(update)
     try:
         result = asyncio.run(dispatch(args))
+    except UsageError as exc:
+        # Argument checks inside a command (not argparse) are usage errors too.
+        payload, code = error_envelope(exc, command=exc.command or command)
+        if deprecations:
+            payload["warnings"] = deprecations
+        emit(with_notice(payload, args, update))
+        raise SystemExit(code) from None
     except KeyboardInterrupt:
         emit(
             {
@@ -1171,12 +1196,47 @@ def exception_detail(exc: Exception) -> Any:
     return exc.detail if isinstance(exc, ApiRequestError) else str(exc)
 
 
+def _coded_body(value: Any) -> dict[str, Any] | None:
+    """A business error ``{"code": ...}``, or one JSON encoding of that object."""
+    if isinstance(value, str):
+        text = value.strip()
+        if len(text) > 2000 or not (text.startswith("{") and text.endswith("}")):
+            return None
+        try:
+            value = json.loads(text)
+        except json.JSONDecodeError:
+            return None
+    if isinstance(value, dict):
+        code = value.get("code")
+        if isinstance(code, str) and code:
+            return value
+    return None
+
+
+def _server_business_error(detail: Any) -> dict[str, Any] | None:
+    """The coded object in an API failure, including one nested encoding of it."""
+    coded = _coded_body(detail)
+    if coded is not None:
+        return coded
+    if isinstance(detail, dict):
+        for key in ("message", "detail", "error"):
+            coded = _coded_body(detail.get(key))
+            if coded is not None:
+                return coded
+    return None
+
+
 def error_envelope(exc: Exception, *, command: str | None) -> tuple[dict[str, Any], int]:
     """Render one failure as the JSON error contract and its exit code.
 
     ``reason`` and ``detail`` keep their released meaning; ``error`` adds a stable
     shape: ``code`` (the same category as ``reason``), a readable ``message``, the
     server's own ``server_code`` when it sent one, ``http_status`` and ``retryable``.
+
+    A body that is only ``{"code": "..."}`` — or one JSON encoding of that object,
+    which used to be copied into ``message`` — sets ``server_code``. A code with a
+    known sentence uses that sentence. A body that already has its own message is
+    left alone.
     """
     reason = reason_from_exception(exc)
     detail = exception_detail(exc)
@@ -1184,10 +1244,21 @@ def error_envelope(exc: Exception, *, command: str | None) -> tuple[dict[str, An
     error: dict[str, Any] = {"code": reason, "message": message.removeprefix(f"{reason}: ")}
     if isinstance(exc, ApiRequestError):
         error["http_status"] = exc.status_code
-    if isinstance(detail, dict) and isinstance(detail.get("code"), str) and detail["code"]:
-        error["server_code"] = detail["code"]
-        if detail["code"] in _SERVER_CODE_MESSAGES and not detail.get("message"):
-            error["message"] = _SERVER_CODE_MESSAGES[detail["code"]]
+    coded = _server_business_error(detail)
+    if coded is not None:
+        error["server_code"] = coded["code"]
+        own = coded.get("message")
+        if isinstance(detail, dict) and detail is not coded:
+            own = detail.get("message", own)
+        human_own = isinstance(own, str) and bool(own) and _coded_body(own) is None
+        # Blank, or a message that is itself the encoded code object. A non-string
+        # message (validation fields) is neither, so the dumped text stays.
+        missing_text = own in (None, "") or (isinstance(own, str) and not human_own)
+        mapped = _SERVER_CODE_MESSAGES.get(coded["code"])
+        if human_own and isinstance(detail, str):
+            error["message"] = own
+        elif mapped is not None and missing_text:
+            error["message"] = mapped
     if isinstance(exc, CliOutdatedError):
         error["hint"] = exc.detail.get("install_hint")
     if isinstance(exc, RemovedCommandError):

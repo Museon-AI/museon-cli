@@ -23,13 +23,16 @@ from museoncli.execution import CommandContext, Executor
 Notes = tuple[Any, list[str], list[str]]
 
 
-def uuid_arg(value: Any, *, flag: str) -> str:
+_UUID_LOOKUP = "Look the ID up first with the matching +list or +get command."
+
+
+def uuid_arg(value: Any, *, flag: str, lookup: str | None = None) -> str:
     try:
         return str(UUID(str(value)))
     except (TypeError, ValueError):
         raise ValueError(
             f"{flag} must be a canonical UUID (e.g. 72defd40-39ad-40d3-8105-8f23a9a016da), "
-            f"got {value!r}. Look the ID up first with the matching +list or +get command."
+            f"got {value!r}. {lookup or _UUID_LOOKUP}"
         ) from None
 
 
