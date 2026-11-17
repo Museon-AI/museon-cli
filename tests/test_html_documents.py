@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
+import httpx
 import pytest
 from routes_stub import ORG, Server, body, query, run
 
+import museoncli.main as cli
+from museoncli.config import AuthState, Config, OrganizationState
 from museoncli.domains.html_documents import MAX_HTML_BYTES
+from museoncli.main import ApiRequestError, UsageError
 
 FOLDER = "72defd40-39ad-40d3-8105-8f23a9a016da"
 OTHER = "70000000-0000-4000-8000-000000000002"
@@ -253,9 +258,58 @@ def test_list_sends_q_and_folder_and_nothing_else(monkeypatch) -> None:
 def test_list_with_no_filters_sends_no_query(monkeypatch) -> None:
     server = Server({("GET", LIBRARY): _library({"folders": [], "root_count": 1, "documents": []})})
 
-    run(monkeypatch, server, ["html-documents", "+list", "--q", "  ", "--folder", " "])
+    run(monkeypatch, server, ["html-documents", "+list", "--folder", " "])
 
     assert query(server.requests[0]) == {}
+
+
+@pytest.mark.parametrize("blank", ["", " ", "\t", "\n"])
+def test_list_rejects_an_empty_search(monkeypatch, capsys, blank: str) -> None:
+    server = Server({("GET", LIBRARY): _library({"folders": [], "documents": []})})
+
+    with pytest.raises(UsageError, match="--q"):
+        run(monkeypatch, server, ["html-documents", "+list", "--q", blank])
+    assert server.requests == []
+
+    cfg = Config(
+        api_base_url="https://api.example.test/api/v1",
+        auth=AuthState(api_key="test-only"),
+        organization=OrganizationState(id=ORG, name="MuseOn"),
+    )
+    monkeypatch.setattr(cli, "load_config", lambda: cfg)
+    monkeypatch.setattr(sys, "argv", ["museoncli", "html-documents", "+list", "--q", blank])
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main()
+
+    assert exc_info.value.code == 2
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["reason"] == "usage_error"
+    assert payload["command"] == "html-documents.list"
+    assert payload["error"]["code"] == "usage_error"
+    assert payload["error"]["message"] == "--q must be 1-200 characters."
+    assert "html-documents +list --help" in payload["error"]["hint"]
+
+
+def test_list_rejects_a_blank_search_from_args_json(monkeypatch) -> None:
+    server = Server({})
+
+    with pytest.raises(UsageError, match="--q"):
+        run(
+            monkeypatch,
+            server,
+            ["html-documents", "+list", "--args-json", json.dumps({"q": "  "})],
+        )
+
+    assert server.requests == []
+
+
+@pytest.mark.parametrize("literal", ["root", "ROOT", "Root", "rOoT"])
+def test_list_accepts_root_in_any_case(monkeypatch, literal: str) -> None:
+    server = Server({("GET", LIBRARY): _library({"folders": [], "root_count": 0, "documents": []})})
+
+    run(monkeypatch, server, ["html-documents", "+list", "--folder", literal])
+
+    assert query(server.requests[0]) == {"folder": "root"}
 
 
 def test_list_accepts_a_folder_id_and_rejects_anything_else(monkeypatch) -> None:
@@ -264,9 +318,47 @@ def test_list_accepts_a_folder_id_and_rejects_anything_else(monkeypatch) -> None
     run(monkeypatch, server, ["html-documents", "+list", "--folder", FOLDER])
     assert query(server.requests[0]) == {"folder": FOLDER}
 
-    with pytest.raises(ValueError, match="--folder"):
+    with pytest.raises(ValueError, match="--folder") as exc_info:
         run(monkeypatch, server, ["html-documents", "+list", "--folder", "not-a-folder"])
+    message = str(exc_info.value)
+    assert "root" in message
+    assert "+list" in message
+    assert "+get" not in message
     assert len(server.requests) == 1
+
+
+def test_upload_folder_id_hint_names_only_list(monkeypatch, tmp_path: Path) -> None:
+    path = tmp_path / "guide.html"
+    path.write_text("<p>Hi</p>", encoding="utf-8")
+    server = Server({})
+
+    with pytest.raises(ValueError, match="--folder-id") as exc_info:
+        run(
+            monkeypatch,
+            server,
+            [
+                "html-documents",
+                "+upload",
+                "--file",
+                str(path),
+                "--title",
+                "Notes",
+                "--folder-id",
+                "nope",
+            ],
+        )
+
+    message = str(exc_info.value)
+    assert "+list" in message
+    assert "+get" not in message
+    assert server.requests == []
+
+
+def test_shared_uuid_hint_still_names_list_and_get() -> None:
+    from museoncli.domains._writes import uuid_arg
+
+    with pytest.raises(ValueError, match=r"\+list or \+get"):
+        uuid_arg("nope", flag="--id")
 
 
 def test_folder_create_posts_the_name_only(monkeypatch) -> None:
@@ -331,3 +423,64 @@ def test_install_defaults_dry_run_sends_nothing(monkeypatch) -> None:
 
     assert server.requests == []
     assert result["data"]["dry_run"] is True
+
+
+def _refused(monkeypatch, answer, argv: list[str]) -> dict:
+    with pytest.raises(ApiRequestError) as caught:
+        run(monkeypatch, answer, argv)
+    payload, _code = cli.error_envelope(caught.value, command="html-documents.list")
+    return payload
+
+
+def test_folder_not_found_is_a_sentence_and_a_server_code(monkeypatch, tmp_path: Path) -> None:
+    """The API returns {"detail": {"code": ...}} and no message. 2.3.0 printed that object."""
+    path = tmp_path / "guide.html"
+    path.write_text("<p>Hi</p>", encoding="utf-8")
+
+    def answer(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            404,
+            json={
+                "detail": {"code": "folder_not_found"},
+                "error": {
+                    "code": "folder_not_found",
+                    "message": "{'code': 'folder_not_found'}",
+                    "retryable": False,
+                },
+            },
+        )
+
+    payload = _refused(
+        monkeypatch,
+        answer,
+        [
+            "html-documents",
+            "+upload",
+            "--file",
+            str(path),
+            "--title",
+            "Notes",
+            "--folder-id",
+            FOLDER,
+        ],
+    )
+
+    assert payload["reason"] == "not_found"
+    assert payload["error"]["server_code"] == "folder_not_found"
+    assert payload["error"]["message"] == "Folder not found"
+    assert payload["error"]["http_status"] == 404
+    assert "folder_not_found" not in payload["error"]["message"]
+
+
+def test_a_json_encoded_folder_name_taken_body_is_decoded(monkeypatch) -> None:
+    def answer(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(409, json={"detail": json.dumps({"code": "folder_name_taken"})})
+
+    payload = _refused(
+        monkeypatch, answer, ["html-documents", "folder", "+create", "--name", "Guides"]
+    )
+
+    assert payload["reason"] == "conflict"
+    assert payload["error"]["server_code"] == "folder_name_taken"
+    assert payload["error"]["message"] == "A folder with this name already exists"
+    assert payload["detail"] == '{"code": "folder_name_taken"}'

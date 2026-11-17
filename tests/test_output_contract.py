@@ -65,6 +65,52 @@ def test_failures_share_one_envelope_and_a_meaningful_exit_code(
     assert payload["error"]["message"]
 
 
+def test_a_validation_body_keeps_its_fields_in_the_message() -> None:
+    detail = {
+        "code": "invalid_enum",
+        "field": "payload.category",
+        "received": "EDUCATION",
+        "suggested_values": ["LEARNING_PLATFORMS"],
+    }
+    payload, _code = main_module.error_envelope(ApiRequestError(422, detail), command="media.get")
+
+    assert payload["error"]["server_code"] == "invalid_enum"
+    assert "payload.category" in payload["error"]["message"]
+    assert payload["detail"] == detail
+
+
+def test_a_code_only_body_keeps_its_message_until_the_code_has_a_sentence() -> None:
+    """Other commands that already show a JSON code object stay on that text."""
+    unknown = ApiRequestError(404, {"code": "campaign_missing"})
+    payload, _code = main_module.error_envelope(unknown, command="campaign.get")
+
+    assert payload["error"]["server_code"] == "campaign_missing"
+    assert payload["error"]["message"] == '{"code": "campaign_missing"}'
+    assert payload["detail"] == {"code": "campaign_missing"}
+
+
+def test_an_encoded_server_body_surfaces_its_code_and_its_own_message() -> None:
+    raw = '{"code": "version_conflict", "message": "Video version conflict"}'
+    payload, code = main_module.error_envelope(ApiRequestError(409, raw), command="media.get")
+
+    assert code == 5
+    assert payload["detail"] == raw
+    assert payload["error"]["server_code"] == "version_conflict"
+    assert payload["error"]["message"] == "Video version conflict"
+
+
+def test_a_message_that_is_only_an_encoded_code_uses_the_known_sentence() -> None:
+    detail = {"message": json.dumps({"code": "folder_not_found"})}
+    payload, code = main_module.error_envelope(
+        ApiRequestError(404, detail), command="html-documents.upload"
+    )
+
+    assert code == 3
+    assert payload["error"]["server_code"] == "folder_not_found"
+    assert payload["error"]["message"] == "Folder not found"
+    assert payload["detail"] == detail
+
+
 def test_usage_errors_are_json_on_stdout_with_exit_code_2(monkeypatch, capsys) -> None:
     monkeypatch.setattr(sys, "argv", ["museoncli", "hireaicreator", "video", "+get", "--bogus", "1"])
     with pytest.raises(SystemExit) as exc_info:

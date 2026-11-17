@@ -118,6 +118,41 @@ def _library(organization_id: str) -> str:
     return f"/organizations/{organization_id}/html-documents"
 
 
+def _id_lookup_hint() -> str:
+    """Name only the list/get shortcuts this domain actually registers."""
+    present = {
+        spec.shortcut
+        for spec in specs()
+        if spec.resource is None and spec.shortcut in {"+list", "+get"}
+    }
+    names = [name for name in ("+list", "+get") if name in present]
+    which = " or ".join(names) if names else "+list"
+    return f"Look the ID up first with the matching {which} command."
+
+
+def _blank_query() -> None:
+    from museoncli.main import UsageError
+
+    raise UsageError("--q must be 1-200 characters.", command="html-documents.list")
+
+
+def _folder_argument(value: str) -> str:
+    """``root`` in any case, or a folder id. Anything else says ``root`` is valid."""
+    if value.lower() == "root":
+        return "root"
+    try:
+        return uuid_arg(value, flag="--folder", lookup=_id_lookup_hint())
+    except ValueError:
+        raise ValueError(
+            "--folder must be the literal root or a canonical UUID "
+            f"(e.g. {_FOLDER}), got {value!r}. {_id_lookup_hint()}"
+        ) from None
+
+
+def _folder_id_argument(value: str) -> str:
+    return uuid_arg(value, flag="--folder-id", lookup=_id_lookup_hint())
+
+
 # -- executors ---------------------------------------------------------------
 
 
@@ -143,8 +178,8 @@ async def _execute_upload(ctx: CommandContext) -> Any:
 async def _execute_list(ctx: CommandContext) -> Any:
     arguments = ctx.arguments
     folder = arguments.get("folder")
-    if isinstance(folder, str) and folder != "root":
-        folder = uuid_arg(folder, flag="--folder")
+    if isinstance(folder, str) and folder.strip():
+        folder = _folder_argument(folder.strip())
     params: dict[str, Any] = {}
     if arguments.get("q"):
         params["q"] = arguments["q"]
@@ -209,7 +244,7 @@ def _build_upload_arguments(args: argparse.Namespace) -> dict[str, Any]:
     else:
         payload["filename"] = resolved
     if payload.get("folder_id"):
-        payload["folder_id"] = uuid_arg(payload["folder_id"], flag="--folder-id")
+        payload["folder_id"] = _folder_id_argument(str(payload["folder_id"]))
     else:
         payload.pop("folder_id", None)
     _read_html(Path(str(payload["file"])).expanduser())
@@ -229,21 +264,18 @@ def _build_list_arguments(args: argparse.Namespace) -> dict[str, Any]:
     query = payload.get("q")
     if isinstance(query, str):
         query = query.strip()
-        if query:
-            if len(query) > 200:
-                raise ValueError("--q must be at most 200 characters.")
-            payload["q"] = query
-        else:
-            payload.pop("q", None)
+        if not query:
+            _blank_query()
+        if len(query) > 200:
+            raise ValueError("--q must be at most 200 characters.")
+        payload["q"] = query
     folder = payload.get("folder")
     if isinstance(folder, str):
         folder = folder.strip()
         if not folder:
             payload.pop("folder", None)
-        elif folder != "root":
-            payload["folder"] = uuid_arg(folder, flag="--folder")
         else:
-            payload["folder"] = folder
+            payload["folder"] = _folder_argument(folder)
     return payload
 
 
