@@ -2,6 +2,14 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 3.0.1
+
+Staff-only HTML document management, matching the admin UI. Other domains are unchanged.
+
+- The six private `html-documents` commands (`+list`, `+upload`, `+share`, `+unshare`, `folder +create`, `+install-defaults`) stay organization-bound and now also require Museon staff (`required_roles: staff`, `resource_policy: staff_with_organization_asset_access`). Listing still needs asset read; writing still needs asset edit. The CLI records that and does not enforce it: a caller who is not staff is the server's 403.
+- Customer share links stay anonymous. They are not one of these commands.
+- The command contract revision moves with the package to 3.0.1. Sync the API's vendored `agent_cli_command_catalog.json` to this revision before tagging, or a byte compare against the published catalog fails.
+
 ## 3.0.0
 
 - HTML uploads now enable customer link sharing by default and return `data.share_url`.
