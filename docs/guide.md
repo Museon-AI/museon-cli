@@ -800,7 +800,7 @@ See: `organizations`
 
 `museoncli guide html-documents` · when: html document; html library; upload html; html folder; share html; HTML 文档; 文档库; 客户分享; 网页分享
 
-1. `museoncli html-documents +list` (read): folder is omitted, root, or a folder id; q searches titles.
+1. `museoncli html-documents +list` (read): Museon staff only, plus asset read; the server decides. folder is omitted, root, or a folder id; q searches titles.
 2. `museoncli html-documents folder +create --name <name>` (write): One level only. The body is the name. No idempotency key: after an unknown outcome, list first.
 3. `museoncli html-documents +upload --file <file> --title <title>` (write): Public by default: give the customer share_url. --share-slug chooses a custom link name; --private keeps the document internal, even when a name is reserved. A second upload creates a second document; after an unknown result, list before retrying.
 4. `museoncli html-documents +share --id <html-documents-id>` (write): Enable sharing for an existing document. Omit link options to keep the custom name, --share-slug to rename, or --random-link to clear it. Old names stay reserved to this document.

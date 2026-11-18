@@ -11855,12 +11855,12 @@
             "enforcement": "museon_server",
             "organization_bound": true,
             "required_roles": [
-              "organization_member"
+              "staff"
             ],
             "required_scopes": [
               "agent_cli.access"
             ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
+            "resource_policy": "staff_with_organization_asset_access"
           },
           "capability_key": "html-documents.upload",
           "cli": "museoncli html-documents +upload",
@@ -11872,7 +11872,7 @@
           "risk_level": "write",
           "shortcut": "+upload",
           "stability": "stable",
-          "summary": "Upload one local HTML file with --title and return a Museon share_url that customers can open without signing in. Anyone with the link can view it; use --private to keep it inside the organization. --share-slug chooses a custom link name (or reserves it for a private upload). The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides.",
+          "summary": "Upload one local HTML file with --title and return a Museon share_url that customers can open without signing in. Anyone with the link can view it; use --private to keep it inside the organization. --share-slug chooses a custom link name (or reserves it for a private upload). The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -11882,12 +11882,12 @@
             "enforcement": "museon_server",
             "organization_bound": true,
             "required_roles": [
-              "organization_member"
+              "staff"
             ],
             "required_scopes": [
               "agent_cli.access"
             ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
+            "resource_policy": "staff_with_organization_asset_access"
           },
           "capability_key": "html-documents.list",
           "cli": "museoncli html-documents +list",
@@ -11899,7 +11899,7 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "List this organization's HTML documents and its one-level folders. --q searches titles. --folder is omitted (every document), root (no folder), or a folder id. Anyone who can read the organization's assets can list; the server decides.",
+          "summary": "List this organization's HTML documents and its one-level folders. --q searches titles. --folder is omitted (every document), root (no folder), or a folder id. Museon staff only, and needs asset read on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -11909,12 +11909,12 @@
             "enforcement": "museon_server",
             "organization_bound": true,
             "required_roles": [
-              "organization_member"
+              "staff"
             ],
             "required_scopes": [
               "agent_cli.access"
             ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
+            "resource_policy": "staff_with_organization_asset_access"
           },
           "capability_key": "html-documents.share",
           "cli": "museoncli html-documents +share",
@@ -11926,7 +11926,7 @@
           "risk_level": "write",
           "shortcut": "+share",
           "stability": "stable",
-          "summary": "Enable customer sharing for one existing HTML document. Anyone with the returned share_url can view it without signing in. Omit link options to keep its current custom name; use --share-slug to set or rename it, or --random-link to clear the custom name. Old custom names stop resolving after a rename and stay reserved to this document. Needs asset edit on the organization; the server decides.",
+          "summary": "Enable customer sharing for one existing HTML document. Anyone with the returned share_url can view it without signing in. Omit link options to keep its current custom name; use --share-slug to set or rename it, or --random-link to clear the custom name. Old custom names stop resolving after a rename and stay reserved to this document. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -11936,12 +11936,12 @@
             "enforcement": "museon_server",
             "organization_bound": true,
             "required_roles": [
-              "organization_member"
+              "staff"
             ],
             "required_scopes": [
               "agent_cli.access"
             ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
+            "resource_policy": "staff_with_organization_asset_access"
           },
           "capability_key": "html-documents.unshare",
           "cli": "museoncli html-documents +unshare",
@@ -11953,7 +11953,7 @@
           "risk_level": "write",
           "shortcut": "+unshare",
           "stability": "stable",
-          "summary": "Stop customer sharing for one HTML document. Its current link stops working for new visits; already downloaded copies cannot be recalled. The document stays in the organization library. Sharing again restores its custom name when one is reserved, or creates a new random link. Needs asset edit on the organization; the server decides.",
+          "summary": "Stop customer sharing for one HTML document. Its current link stops working for new visits; already downloaded copies cannot be recalled. The document stays in the organization library. Sharing again restores its custom name when one is reserved, or creates a new random link. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -11963,12 +11963,12 @@
             "enforcement": "museon_server",
             "organization_bound": true,
             "required_roles": [
-              "organization_member"
+              "staff"
             ],
             "required_scopes": [
               "agent_cli.access"
             ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
+            "resource_policy": "staff_with_organization_asset_access"
           },
           "capability_key": "html-documents.folder-create",
           "cli": "museoncli html-documents folder +create",
@@ -11980,7 +11980,7 @@
           "risk_level": "write",
           "shortcut": "+create",
           "stability": "stable",
-          "summary": "Create one folder in this organization's HTML document library. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides.",
+          "summary": "Create one folder in this organization's HTML document library. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, +list before retrying. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         },
@@ -11990,12 +11990,12 @@
             "enforcement": "museon_server",
             "organization_bound": true,
             "required_roles": [
-              "organization_member"
+              "staff"
             ],
             "required_scopes": [
               "agent_cli.access"
             ],
-            "resource_policy": "server_evaluated_organization_and_resource_access"
+            "resource_policy": "staff_with_organization_asset_access"
           },
           "capability_key": "html-documents.install-defaults",
           "cli": "museoncli html-documents +install-defaults",
@@ -12007,7 +12007,7 @@
           "risk_level": "write",
           "shortcut": "+install-defaults",
           "stability": "stable",
-          "summary": "Copy the three built-in HTML guides into this organization. Running it again does not add duplicates. Needs asset edit on the organization; the server decides.",
+          "summary": "Copy the three built-in HTML guides into this organization. Running it again does not add duplicates. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
         }
@@ -64521,12 +64521,12 @@
         "enforcement": "museon_server",
         "organization_bound": true,
         "required_roles": [
-          "organization_member"
+          "staff"
         ],
         "required_scopes": [
           "agent_cli.access"
         ],
-        "resource_policy": "server_evaluated_organization_and_resource_access"
+        "resource_policy": "staff_with_organization_asset_access"
       },
       "capability_key": "html-documents.folder-create",
       "cli": "museoncli html-documents folder +create",
@@ -64615,7 +64615,7 @@
       "risk_level": "write",
       "shortcut": "+create",
       "stability": "stable",
-      "summary": "Create one folder in this organization's HTML document library. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides.",
+      "summary": "Create one folder in this organization's HTML document library. Folders do not nest, and the request sends the name only. No idempotency key: after an unknown outcome, +list before retrying. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -64625,12 +64625,12 @@
         "enforcement": "museon_server",
         "organization_bound": true,
         "required_roles": [
-          "organization_member"
+          "staff"
         ],
         "required_scopes": [
           "agent_cli.access"
         ],
-        "resource_policy": "server_evaluated_organization_and_resource_access"
+        "resource_policy": "staff_with_organization_asset_access"
       },
       "capability_key": "html-documents.install-defaults",
       "cli": "museoncli html-documents +install-defaults",
@@ -64711,7 +64711,7 @@
       "risk_level": "write",
       "shortcut": "+install-defaults",
       "stability": "stable",
-      "summary": "Copy the three built-in HTML guides into this organization. Running it again does not add duplicates. Needs asset edit on the organization; the server decides.",
+      "summary": "Copy the three built-in HTML guides into this organization. Running it again does not add duplicates. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -64721,12 +64721,12 @@
         "enforcement": "museon_server",
         "organization_bound": true,
         "required_roles": [
-          "organization_member"
+          "staff"
         ],
         "required_scopes": [
           "agent_cli.access"
         ],
-        "resource_policy": "server_evaluated_organization_and_resource_access"
+        "resource_policy": "staff_with_organization_asset_access"
       },
       "capability_key": "html-documents.list",
       "cli": "museoncli html-documents +list",
@@ -64815,7 +64815,7 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "List this organization's HTML documents and its one-level folders. --q searches titles. --folder is omitted (every document), root (no folder), or a folder id. Anyone who can read the organization's assets can list; the server decides.",
+      "summary": "List this organization's HTML documents and its one-level folders. --q searches titles. --folder is omitted (every document), root (no folder), or a folder id. Museon staff only, and needs asset read on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -64825,12 +64825,12 @@
         "enforcement": "museon_server",
         "organization_bound": true,
         "required_roles": [
-          "organization_member"
+          "staff"
         ],
         "required_scopes": [
           "agent_cli.access"
         ],
-        "resource_policy": "server_evaluated_organization_and_resource_access"
+        "resource_policy": "staff_with_organization_asset_access"
       },
       "capability_key": "html-documents.share",
       "cli": "museoncli html-documents +share",
@@ -64935,7 +64935,7 @@
       "risk_level": "write",
       "shortcut": "+share",
       "stability": "stable",
-      "summary": "Enable customer sharing for one existing HTML document. Anyone with the returned share_url can view it without signing in. Omit link options to keep its current custom name; use --share-slug to set or rename it, or --random-link to clear the custom name. Old custom names stop resolving after a rename and stay reserved to this document. Needs asset edit on the organization; the server decides.",
+      "summary": "Enable customer sharing for one existing HTML document. Anyone with the returned share_url can view it without signing in. Omit link options to keep its current custom name; use --share-slug to set or rename it, or --random-link to clear the custom name. Old custom names stop resolving after a rename and stay reserved to this document. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -64945,12 +64945,12 @@
         "enforcement": "museon_server",
         "organization_bound": true,
         "required_roles": [
-          "organization_member"
+          "staff"
         ],
         "required_scopes": [
           "agent_cli.access"
         ],
-        "resource_policy": "server_evaluated_organization_and_resource_access"
+        "resource_policy": "staff_with_organization_asset_access"
       },
       "capability_key": "html-documents.unshare",
       "cli": "museoncli html-documents +unshare",
@@ -65038,7 +65038,7 @@
       "risk_level": "write",
       "shortcut": "+unshare",
       "stability": "stable",
-      "summary": "Stop customer sharing for one HTML document. Its current link stops working for new visits; already downloaded copies cannot be recalled. The document stays in the organization library. Sharing again restores its custom name when one is reserved, or creates a new random link. Needs asset edit on the organization; the server decides.",
+      "summary": "Stop customer sharing for one HTML document. Its current link stops working for new visits; already downloaded copies cannot be recalled. The document stays in the organization library. Sharing again restores its custom name when one is reserved, or creates a new random link. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
@@ -65048,12 +65048,12 @@
         "enforcement": "museon_server",
         "organization_bound": true,
         "required_roles": [
-          "organization_member"
+          "staff"
         ],
         "required_scopes": [
           "agent_cli.access"
         ],
-        "resource_policy": "server_evaluated_organization_and_resource_access"
+        "resource_policy": "staff_with_organization_asset_access"
       },
       "capability_key": "html-documents.upload",
       "cli": "museoncli html-documents +upload",
@@ -65177,7 +65177,7 @@
       "risk_level": "write",
       "shortcut": "+upload",
       "stability": "stable",
-      "summary": "Upload one local HTML file with --title and return a Museon share_url that customers can open without signing in. Anyone with the link can view it; use --private to keep it inside the organization. --share-slug chooses a custom link name (or reserves it for a private upload). The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Needs asset edit on the organization; the server decides.",
+      "summary": "Upload one local HTML file with --title and return a Museon share_url that customers can open without signing in. Anyone with the link can view it; use --private to keep it inside the organization. --share-slug chooses a custom link name (or reserves it for a private upload). The stored filename is --filename, or the file's basename when it is one *.html or *.htm name with no '..' or slash; otherwise the server names it from the title. Titles may repeat, so a second upload is a second document: after an unknown outcome, +list before retrying. Museon staff only, and needs asset edit on the organization. A staff API key does not gain staff support outside its organization role, and stays inside the organization it was issued in. The server decides.",
       "supports_dry_run": true,
       "transport": "agent_cli_api"
     },

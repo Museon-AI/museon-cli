@@ -2,7 +2,10 @@
 
 Documents and one-level folders belong to the organization in the path. The CLI
 sends that organization as ``X-Organization-Id`` and never a workspace or a
-``parent_id``. Reads need asset read and writes need asset edit; the server decides.
+``parent_id``. Private management is Museon staff plus the organization's asset
+permission (read to list, edit to write). That is catalog metadata only: the CLI
+does not enforce it, and the server decides. A customer share link is anonymous
+and is not one of these commands.
 """
 
 from __future__ import annotations
@@ -33,7 +36,16 @@ MAX_HTML_BYTES = 1_500_000
 _MAX_FILENAME = 180
 _FOLDER = "72defd40-39ad-40d3-8105-8f23a9a016da"
 _DOCUMENT = "11111111-1111-4111-8111-111111111111"
-_EDIT = " Needs asset edit on the organization; the server decides."
+_STAFF_ROLES = ("staff",)
+_STAFF_POLICY = "staff_with_organization_asset_access"
+_STAFF_KEY = (
+    "A staff API key does not gain staff support outside its organization role, and "
+    "stays inside the organization it was issued in. The server decides."
+)
+_EDIT = (
+    " Museon staff only, and needs asset edit on the organization. " + _STAFF_KEY
+)
+_READ = "Museon staff only, and needs asset read on the organization. " + _STAFF_KEY
 _SHARE_SLUG = {
     "type": ["string", "null"],
     "minLength": 3,
@@ -490,6 +502,8 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_upload_arguments,
             build_arguments=_build_upload_arguments,
             supports_dry_run=True,
+            required_roles=_STAFF_ROLES,
+            resource_policy=_STAFF_POLICY,
         ),
         CommandSpec(
             domain=domain,
@@ -497,7 +511,7 @@ def specs() -> list[CommandSpec]:
             summary=(
                 "List this organization's HTML documents and its one-level folders. --q searches "
                 "titles. --folder is omitted (every document), root (no folder), or a folder id. "
-                "Anyone who can read the organization's assets can list; the server decides."
+                + _READ
             ),
             risk_level="read",
             execution="direct",
@@ -511,6 +525,8 @@ def specs() -> list[CommandSpec]:
             examples=["museoncli html-documents +list --q architecture --folder root"],
             add_arguments=_add_list_arguments,
             build_arguments=_build_list_arguments,
+            required_roles=_STAFF_ROLES,
+            resource_policy=_STAFF_POLICY,
         ),
         CommandSpec(
             domain=domain,
@@ -538,6 +554,8 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_share_arguments,
             build_arguments=_build_share_arguments,
             supports_dry_run=True,
+            required_roles=_STAFF_ROLES,
+            resource_policy=_STAFF_POLICY,
         ),
         CommandSpec(
             domain=domain,
@@ -557,6 +575,8 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_document_arguments,
             build_arguments=_build_document_arguments,
             supports_dry_run=True,
+            required_roles=_STAFF_ROLES,
+            resource_policy=_STAFF_POLICY,
         ),
         CommandSpec(
             domain=domain,
@@ -576,6 +596,8 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_folder_arguments,
             build_arguments=_build_folder_arguments,
             supports_dry_run=True,
+            required_roles=_STAFF_ROLES,
+            resource_policy=_STAFF_POLICY,
         ),
         CommandSpec(
             domain=domain,
@@ -595,6 +617,8 @@ def specs() -> list[CommandSpec]:
             add_arguments=_add_install_arguments,
             build_arguments=_build_install_arguments,
             supports_dry_run=True,
+            required_roles=_STAFF_ROLES,
+            resource_policy=_STAFF_POLICY,
         ),
     ]
 

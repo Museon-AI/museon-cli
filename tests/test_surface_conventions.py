@@ -190,13 +190,17 @@ def test_command_specs_publish_auth_and_capability_metadata() -> None:
             if (
                 spec.schema_name in STAFF_COMMANDS
                 or spec.resource_policy == "staff_global_cloud_phone_management"
+                or spec.resource_policy == "staff_with_organization_asset_access"
             ):
                 assert spec.required_roles == ("staff",)
             elif spec.schema_name in ADMIN_OR_STAFF_COMMANDS:
                 assert spec.required_roles == ("organization_admin_or_staff",)
             else:
                 assert spec.required_roles == ("organization_member",)
-            if spec.resource_policy == "staff_global_cloud_phone_management":
+            if spec.resource_policy == "staff_with_organization_asset_access":
+                assert spec.domain.value == "html-documents"
+                assert spec.organization_bound is True
+            elif spec.resource_policy == "staff_global_cloud_phone_management":
                 assert spec.organization_bound == (
                     spec.resource == "recovery"
                     or spec.schema_name == "cloud-phone.recovery-job-create"

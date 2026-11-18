@@ -758,3 +758,54 @@ def test_a_json_encoded_folder_name_taken_body_is_decoded(monkeypatch) -> None:
     assert payload["error"]["server_code"] == "folder_name_taken"
     assert payload["error"]["message"] == "A folder with this name already exists"
     assert payload["detail"] == '{"code": "folder_name_taken"}'
+
+
+_PRIVATE = {
+    "html-documents.upload",
+    "html-documents.list",
+    "html-documents.share",
+    "html-documents.unshare",
+    "html-documents.folder-create",
+    "html-documents.install-defaults",
+}
+
+
+def test_private_management_catalog_requires_staff_and_stays_organization_bound() -> None:
+    """Staff is catalog metadata. Organization asset checks stay, and the server enforces both."""
+    from museoncli.domains import command_specs
+    from museoncli.domains._shared import _spec_schema_payload
+
+    html = [spec for spec in command_specs() if spec.domain.value == "html-documents"]
+    assert {spec.schema_name for spec in html} == _PRIVATE
+    for spec in html:
+        assert spec.required_roles == ("staff",)
+        assert spec.organization_bound is True
+        assert spec.resource_policy == "staff_with_organization_asset_access"
+        assert spec.required_scopes == ("agent_cli.access",)
+        authorization = _spec_schema_payload(spec)["authorization"]
+        assert authorization == {
+            "authentication_required": True,
+            "required_scopes": ["agent_cli.access"],
+            "required_roles": ["staff"],
+            "organization_bound": True,
+            "resource_policy": "staff_with_organization_asset_access",
+            "enforcement": "museon_server",
+        }
+        assert "Museon staff only" in spec.summary
+        assert "organization" in spec.summary
+
+    skills = next(spec for spec in command_specs() if spec.schema_name == "skills.list")
+    assert skills.required_roles == ("organization_member",)
+    assert skills.resource_policy == "server_evaluated_organization_and_resource_access"
+
+
+def test_listing_does_not_stop_a_caller_the_cli_cannot_tell_is_staff(monkeypatch) -> None:
+    """A non-staff denial is the server's 403. The CLI still sends the organization request."""
+    server = Server({("GET", LIBRARY): _library({"folders": [], "root_count": 0, "documents": []})})
+
+    run(monkeypatch, server, ["html-documents", "+list"])
+
+    sent = server.requests[0]
+    assert (sent.method, sent.url.path) == ("GET", LIBRARY)
+    assert sent.headers["X-Organization-Id"] == ORG
+    assert "is_staff" not in {name.lower() for name in sent.headers}
