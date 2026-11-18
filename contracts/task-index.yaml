@@ -872,7 +872,7 @@ chapters:
         title: Upload and share HTML pages with customers
         when: ["html document", "html library", "upload html", "html folder", "share html", "HTML 文档", "文档库", "客户分享", "网页分享"]
         steps:
-          - html-documents.list: "folder is omitted, root, or a folder id; q searches titles."
+          - html-documents.list: "Museon staff only, plus asset read; the server decides. folder is omitted, root, or a folder id; q searches titles."
           - html-documents.folder-create: "One level only. The body is the name. No idempotency key: after an unknown outcome, list first."
           - html-documents.upload: "Public by default: give the customer share_url. --share-slug chooses a custom link name; --private keeps the document internal, even when a name is reserved. A second upload creates a second document; after an unknown result, list before retrying."
           - html-documents.share: "Enable sharing for an existing document. Omit link options to keep the custom name, --share-slug to rename, or --random-link to clear it. Old names stay reserved to this document."
