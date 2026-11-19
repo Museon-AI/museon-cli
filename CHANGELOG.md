@@ -2,6 +2,16 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 3.1.0
+
+Creator Sourcing for MuseOn staff, matching the internal `/creator-sourcing` page. Other domains are unchanged.
+
+- `ugc sourcing +list` finds creators for a new project: everyone who joined the community or applied, with how they joined, what they declared, their projects and performance. It takes the page's filters (country, language, topic, content type, platform, how they joined, cooperation, project, last post, note, minimum average views and followers, viral only), its sorts and offset paging.
+- `ugc sourcing +forms --id` reads every form one person filled in: the community registration form and each project application.
+- `ugc sourcing +works --id` reads their newest works in our projects with views, stills and media links.
+- All three are staff only (`required_roles: staff`, `resource_policy: staff_with_organization_creator_read`). The CLI records that and does not enforce it: the server checks that the key's holder is staff and the key's organization holds creator read. The team's notes stay in the web.
+- The command contract revision moves with the package to 3.1.0. Sync the API's vendored `agent_cli_command_catalog.json` to this revision before tagging.
+
 ## 3.0.1
 
 Staff-only HTML document management, matching the admin UI. Other domains are unchanged.

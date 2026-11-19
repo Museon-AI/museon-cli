@@ -18431,6 +18431,87 @@
             "enforcement": "museon_server",
             "organization_bound": true,
             "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_with_organization_creator_read"
+          },
+          "capability_key": "ugc.sourcing-list",
+          "cli": "museoncli ugc sourcing +list",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.sourcing-list",
+          "requires_confirmation": false,
+          "resource": "sourcing",
+          "risk_level": "read",
+          "shortcut": "+list",
+          "stability": "stable",
+          "summary": "Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. MuseOn staff only, as in the web.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_with_organization_creator_read"
+          },
+          "capability_key": "ugc.sourcing-forms",
+          "cli": "museoncli ugc sourcing +forms",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.sourcing-forms",
+          "requires_confirmation": false,
+          "resource": "sourcing",
+          "risk_level": "read",
+          "shortcut": "+forms",
+          "stability": "stable",
+          "summary": "Read every form one creator filled in, newest first: the community registration form (naming the project it was sent with, if any) and each project application with its answers, accounts and sample videos. MuseOn staff only, as in the web.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_with_organization_creator_read"
+          },
+          "capability_key": "ugc.sourcing-works",
+          "cli": "museoncli ugc sourcing +works",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.sourcing-works",
+          "requires_confirmation": false,
+          "resource": "sourcing",
+          "risk_level": "read",
+          "shortcut": "+works",
+          "stability": "stable",
+          "summary": "Read one creator's newest works in our projects (up to `limit`): each cut's still, media and original links, project, platform, publish date and views of its latest post. MuseOn staff only, as in the web.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
               "organization_member"
             ],
             "required_scopes": [
@@ -18529,7 +18610,7 @@
       "html-documents"
     ]
   },
-  "contract_revision": "3.0.1",
+  "contract_revision": "3.1.0",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -89066,6 +89147,463 @@
       "stability": "stable",
       "summary": "Change a Campaign's own reminder policy: Feishu on/off, workdays, days off, which task kinds are reminded, digest times, overdue escalation, timezone. inherit falls back to the organization's. Fails if someone saved since your read. --dry-run returns the changes without writing. For the Campaign's operations team (owner, admin, or an operator on it).",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "ugc.sourcing-forms": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_with_organization_creator_read"
+      },
+      "capability_key": "ugc.sourcing-forms",
+      "cli": "museoncli ugc sourcing +forms",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc sourcing +forms --id <creator_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "UGC creator id from sourcing +list.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.sourcing-forms",
+      "output_schema": {
+        "description": "creator_id and the forms (items).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "sourcing",
+      "risk_level": "read",
+      "shortcut": "+forms",
+      "stability": "stable",
+      "summary": "Read every form one creator filled in, newest first: the community registration form (naming the project it was sent with, if any) and each project application with its answers, accounts and sample videos. MuseOn staff only, as in the web.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.sourcing-list": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_with_organization_creator_read"
+      },
+      "capability_key": "ugc.sourcing-list",
+      "cli": "museoncli ugc sourcing +list",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc sourcing +list --country US --language en --platform tiktok --sort avg-views --page-size 20"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "activity": {
+            "description": "When they last posted in our projects.",
+            "enum": [
+              "all",
+              "within-7",
+              "within-30",
+              "within-90",
+              "inactive-30",
+              "inactive-90",
+              "never"
+            ],
+            "type": "string"
+          },
+          "campaign_id": {
+            "description": "Only people in this project (UGC Campaign id).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "category": {
+            "description": "Primary topic they declared, e.g. technology. Repeatable.",
+            "items": {
+              "description": "Primary topic they declared, e.g. technology. Repeatable.",
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array"
+          },
+          "content_type": {
+            "description": "Content type they declared, e.g. tutorials. Repeatable.",
+            "items": {
+              "description": "Content type they declared, e.g. tutorials. Repeatable.",
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array"
+          },
+          "cooperation": {
+            "description": "Worked with us before or not.",
+            "enum": [
+              "all",
+              "cooperated",
+              "working",
+              "never",
+              "pending"
+            ],
+            "type": "string"
+          },
+          "country": {
+            "description": "ISO country code they declared, e.g. US. Repeatable.",
+            "items": {
+              "description": "ISO country code they declared, e.g. US. Repeatable.",
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array"
+          },
+          "language": {
+            "description": "Language tag they speak, e.g. en. Repeatable.",
+            "items": {
+              "description": "Language tag they speak, e.g. en. Repeatable.",
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 0,
+            "type": "array"
+          },
+          "min_avg_views": {
+            "description": "Average views of their confirmed posts at least this.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "min_followers": {
+            "description": "Largest follower count at least this.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "note": {
+            "description": "Whether the team wrote a note.",
+            "enum": [
+              "all",
+              "with",
+              "without"
+            ],
+            "type": "string"
+          },
+          "page": {
+            "description": "Page number, starting at 1.",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "page_size": {
+            "description": "Records per page (1-100, default 50).",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "platform": {
+            "description": "Has an account on this platform. Repeatable.",
+            "items": {
+              "description": "Has an account on this platform. Repeatable.",
+              "enum": [
+                "instagram",
+                "tiktok",
+                "youtube",
+                "facebook",
+                "x"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 0,
+            "type": "array"
+          },
+          "search": {
+            "description": "Name, handle or note contains this.",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "sort": {
+            "description": "Order (default newest).",
+            "enum": [
+              "newest",
+              "avg-views",
+              "viral",
+              "followers",
+              "last-post",
+              "posts"
+            ],
+            "type": "string"
+          },
+          "source": {
+            "description": "How they joined. Repeatable.",
+            "items": {
+              "description": "How they joined. Repeatable.",
+              "enum": [
+                "community",
+                "community-referral",
+                "recruitment-link",
+                "creator-referral",
+                "apply-page",
+                "invitation",
+                "discord",
+                "import",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            "maxItems": 9,
+            "minItems": 0,
+            "type": "array"
+          },
+          "viral_only": {
+            "description": "Only people with a confirmed post past 10,000 views.",
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "name": "ugc.sourcing-list",
+      "output_schema": {
+        "description": "A page of creators (items), total, offset, limit and notes_visible.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "sourcing",
+      "risk_level": "read",
+      "shortcut": "+list",
+      "stability": "stable",
+      "summary": "Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. MuseOn staff only, as in the web.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.sourcing-works": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_with_organization_creator_read"
+      },
+      "capability_key": "ugc.sourcing-works",
+      "cli": "museoncli ugc sourcing +works",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc sourcing +works --id <creator_id>"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "UGC creator id from sourcing +list.",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "ugc.sourcing-works",
+      "output_schema": {
+        "description": "creator_id, the works (items) and limit.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "sourcing",
+      "risk_level": "read",
+      "shortcut": "+works",
+      "stability": "stable",
+      "summary": "Read one creator's newest works in our projects (up to `limit`): each cut's still, media and original links, project, platform, publish date and views of its latest post. MuseOn staff only, as in the web.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "ugc.task-claim": {

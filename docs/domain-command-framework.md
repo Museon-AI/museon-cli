@@ -59,7 +59,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-501 commands across 18 domains (source of truth: `museoncli schema`).
+504 commands across 18 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -584,6 +584,9 @@ The tables below are generated — edit code, then run
 | `ugc enrollment +get-contract` | read | — | — | direct | Read one enrollment's contract: its state (draft, sent, signed, terminated), rendered terms and signatures. Owner/admin and the Campaign's operators; members cannot read it. |
 | `ugc creator +list` | read | — | — | direct | List the creators the organization works with across its Campaigns, newest first: name, accounts and Campaigns. Operating organization's owner, admin and operators (an operator sees their assigned Campaigns' creators). |
 | `ugc creator +get` | read | — | — | direct | Read one creator of the organization: profile, accounts and the Campaigns they are in. Same visibility as creator +list. |
+| `ugc sourcing +list` | read | — | — | direct | Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. MuseOn staff only, as in the web. |
+| `ugc sourcing +forms` | read | — | — | direct | Read every form one creator filled in, newest first: the community registration form (naming the project it was sent with, if any) and each project application with its answers, accounts and sample videos. MuseOn staff only, as in the web. |
+| `ugc sourcing +works` | read | — | — | direct | Read one creator's newest works in our projects (up to `limit`): each cut's still, media and original links, project, platform, publish date and views of its latest post. MuseOn staff only, as in the web. |
 | `ugc client-report +list` | read | — | — | direct | List a Campaign's generated client reports (daily and weekly), newest first: type, title, status (draft, in review, ready, sent, skipped), period, revision and due time. The operating organization's owner, admin and the Campaign's operators; a shared Campaign's partner cannot read them. |
 | `ugc client-report +get` | read | — | — | direct | Read one client report in full: its Markdown, language variants, data scope, history and the actions the caller may take. Same visibility as client-report +list. |
 | `ugc client-report-config +get` | read | — | — | direct | Read a Campaign's client report settings: which reports are on, the client and internal groups they go to, schedule and language, with the settings' version that a settings write needs. Same visibility as client-report +list. |
