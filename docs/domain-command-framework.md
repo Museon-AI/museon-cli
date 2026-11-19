@@ -59,7 +59,7 @@ The tables below are generated — edit code, then run
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-504 commands across 18 domains (source of truth: `museoncli schema`).
+505 commands across 18 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -584,7 +584,8 @@ The tables below are generated — edit code, then run
 | `ugc enrollment +get-contract` | read | — | — | direct | Read one enrollment's contract: its state (draft, sent, signed, terminated), rendered terms and signatures. Owner/admin and the Campaign's operators; members cannot read it. |
 | `ugc creator +list` | read | — | — | direct | List the creators the organization works with across its Campaigns, newest first: name, accounts and Campaigns. Operating organization's owner, admin and operators (an operator sees their assigned Campaigns' creators). |
 | `ugc creator +get` | read | — | — | direct | Read one creator of the organization: profile, accounts and the Campaigns they are in. Same visibility as creator +list. |
-| `ugc sourcing +list` | read | — | — | direct | Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. MuseOn staff only, as in the web. |
+| `ugc sourcing +list` | read | — | — | direct | Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their latest form answers (`form_answers`), sample videos and work link, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. Narrow by form answers with --answer; `sourcing +questions` lists the questions and choices. MuseOn staff only, as in the web. |
+| `ugc sourcing +questions` | read | — | — | direct | List the form questions creators in scope answered, most answered first: each question's label and type, how many people answered it, and for a choice question how many chose each value. Use a label and value with `sourcing +list --answer 'QUESTION::VALUE'`. MuseOn staff only, as in the web. |
 | `ugc sourcing +forms` | read | — | — | direct | Read every form one creator filled in, newest first: the community registration form (naming the project it was sent with, if any) and each project application with its answers, accounts and sample videos. MuseOn staff only, as in the web. |
 | `ugc sourcing +works` | read | — | — | direct | Read one creator's newest works in our projects (up to `limit`): each cut's still, media and original links, project, platform, publish date and views of its latest post. MuseOn staff only, as in the web. |
 | `ugc client-report +list` | read | — | — | direct | List a Campaign's generated client reports (daily and weekly), newest first: type, title, status (draft, in review, ready, sent, skipped), period, revision and due time. The operating organization's owner, admin and the Campaign's operators; a shared Campaign's partner cannot read them. |

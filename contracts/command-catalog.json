@@ -18448,7 +18448,34 @@
           "risk_level": "read",
           "shortcut": "+list",
           "stability": "stable",
-          "summary": "Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. MuseOn staff only, as in the web.",
+          "summary": "Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their latest form answers (`form_answers`), sample videos and work link, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. Narrow by form answers with --answer; `sourcing +questions` lists the questions and choices. MuseOn staff only, as in the web.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "staff_with_organization_creator_read"
+          },
+          "capability_key": "ugc.sourcing-questions",
+          "cli": "museoncli ugc sourcing +questions",
+          "domain": "ugc",
+          "execution": "direct",
+          "name": "ugc.sourcing-questions",
+          "requires_confirmation": false,
+          "resource": "sourcing",
+          "risk_level": "read",
+          "shortcut": "+questions",
+          "stability": "stable",
+          "summary": "List the form questions creators in scope answered, most answered first: each question's label and type, how many people answered it, and for a choice question how many chose each value. Use a label and value with `sourcing +list --answer 'QUESTION::VALUE'`. MuseOn staff only, as in the web.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -18610,7 +18637,7 @@
       "html-documents"
     ]
   },
-  "contract_revision": "3.1.0",
+  "contract_revision": "3.2.0",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -89265,7 +89292,7 @@
       "cli": "museoncli ugc sourcing +list",
       "domain": "ugc",
       "examples": [
-        "museoncli ugc sourcing +list --country US --language en --platform tiktok --sort avg-views --page-size 20"
+        "museoncli ugc sourcing +list --country US --language en --answer 'Which of these have you done before?::3D design' --sort avg-views --page-size 20"
       ],
       "execution": "direct",
       "input_schema": {
@@ -89284,16 +89311,11 @@
             ],
             "type": "string"
           },
-          "campaign_id": {
-            "description": "Only people in this project (UGC Campaign id).",
-            "format": "uuid",
-            "type": "string"
-          },
-          "category": {
-            "description": "Primary topic they declared, e.g. technology. Repeatable.",
+          "answer": {
+            "description": "Their latest answer to a form question holds this value, written QUESTION::VALUE with the question and value exactly as `sourcing +questions` lists them (question in any case). Repeatable: values of one question match any, different questions must all match.",
             "items": {
-              "description": "Primary topic they declared, e.g. technology. Repeatable.",
-              "maxLength": 80,
+              "description": "Form answer filter.",
+              "maxLength": 300,
               "minLength": 1,
               "type": "string"
             },
@@ -89301,15 +89323,54 @@
             "minItems": 0,
             "type": "array"
           },
-          "content_type": {
-            "description": "Content type they declared, e.g. tutorials. Repeatable.",
+          "campaign_id": {
+            "description": "Only people in this project (UGC Campaign id).",
+            "format": "uuid",
+            "type": "string"
+          },
+          "category": {
+            "description": "Primary topic they declared. Repeatable.",
             "items": {
-              "description": "Content type they declared, e.g. tutorials. Repeatable.",
-              "maxLength": 80,
-              "minLength": 1,
+              "description": "Primary topic they declared. Repeatable.",
+              "enum": [
+                "beauty",
+                "fashion",
+                "food",
+                "pets",
+                "technology",
+                "gaming",
+                "home",
+                "fitness",
+                "travel",
+                "parenting",
+                "lifestyle",
+                "other",
+                "exploring"
+              ],
               "type": "string"
             },
-            "maxItems": 50,
+            "maxItems": 13,
+            "minItems": 0,
+            "type": "array"
+          },
+          "content_type": {
+            "description": "Content type they declared. Repeatable.",
+            "items": {
+              "description": "Content type they declared. Repeatable.",
+              "enum": [
+                "tutorial",
+                "review",
+                "unboxing",
+                "vlog",
+                "comedy",
+                "testimonial",
+                "screen-recording",
+                "other",
+                "exploring"
+              ],
+              "type": "string"
+            },
+            "maxItems": 9,
             "minItems": 0,
             "type": "array"
           },
@@ -89325,10 +89386,10 @@
             "type": "string"
           },
           "country": {
-            "description": "ISO country code they declared, e.g. US. Repeatable.",
+            "description": "Two-letter ISO country code they declared, e.g. US. Repeatable.",
             "items": {
-              "description": "ISO country code they declared, e.g. US. Repeatable.",
-              "maxLength": 80,
+              "description": "Two-letter ISO country code they declared, e.g. US. Repeatable.",
+              "maxLength": 40,
               "minLength": 1,
               "type": "string"
             },
@@ -89337,10 +89398,10 @@
             "type": "array"
           },
           "language": {
-            "description": "Language tag they speak, e.g. en. Repeatable.",
+            "description": "Language code they speak, e.g. en, es, zh-Hant (not a language name). Repeatable.",
             "items": {
-              "description": "Language tag they speak, e.g. en. Repeatable.",
-              "maxLength": 80,
+              "description": "Language code they speak, e.g. en, es, zh-Hant (not a language name). Repeatable.",
+              "maxLength": 40,
               "minLength": 1,
               "type": "string"
             },
@@ -89354,7 +89415,7 @@
             "type": "integer"
           },
           "min_followers": {
-            "description": "Largest follower count at least this.",
+            "description": "Largest follower count at least this, among the accounts they post with in our projects (the accounts on their forms are not measured).",
             "minimum": 0,
             "type": "integer"
           },
@@ -89396,7 +89457,7 @@
             "type": "array"
           },
           "search": {
-            "description": "Name, handle or note contains this.",
+            "description": "Name, handle, note or any form answer contains this.",
             "maxLength": 200,
             "minLength": 1,
             "type": "string"
@@ -89503,7 +89564,98 @@
       "risk_level": "read",
       "shortcut": "+list",
       "stability": "stable",
-      "summary": "Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. MuseOn staff only, as in the web.",
+      "summary": "Find creators for a new project: everyone who joined the community or applied to a project, filtered and sorted, with how they joined, what they declared, their latest form answers (`form_answers`), sample videos and work link, their projects, performance (posts, average and best views, viral posts, last post), latest stills and the team's note. Total in `total`. Narrow by form answers with --answer; `sourcing +questions` lists the questions and choices. MuseOn staff only, as in the web.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "ugc.sourcing-questions": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "staff_with_organization_creator_read"
+      },
+      "capability_key": "ugc.sourcing-questions",
+      "cli": "museoncli ugc sourcing +questions",
+      "domain": "ugc",
+      "examples": [
+        "museoncli ugc sourcing +questions"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "name": "ugc.sourcing-questions",
+      "output_schema": {
+        "description": "The questions (items), each with label, type, people and options.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "sourcing",
+      "risk_level": "read",
+      "shortcut": "+questions",
+      "stability": "stable",
+      "summary": "List the form questions creators in scope answered, most answered first: each question's label and type, how many people answered it, and for a choice question how many chose each value. Use a label and value with `sourcing +list --answer 'QUESTION::VALUE'`. MuseOn staff only, as in the web.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },

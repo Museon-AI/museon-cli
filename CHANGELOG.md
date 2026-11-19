@@ -2,6 +2,15 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 3.2.0
+
+Creator Sourcing reads what people wrote on their forms. Other domains are unchanged.
+
+- `ugc sourcing +questions` lists the form questions people answered, most answered first, with how many answered each and, for a choice question, how many chose each value.
+- `ugc sourcing +list --answer 'QUESTION::VALUE'` narrows by their latest answer to a question (the same question on every project's form counts as one). Values of one question match any; different questions must all match. Each row now carries `form_answers`, `sample_videos` and `creator_link`, and `--search` also matches answer text.
+- `--category` and `--content-type` take only the creator form's values, and `--country` / `--language` take only codes (`US`, `en`, `zh-Hant`; country in any case). A misspelt value used to match nobody without a word; it is now refused with the accepted values.
+- The command contract revision moves with the package to 3.2.0. Sync the API's vendored `agent_cli_command_catalog.json` to this revision before tagging.
+
 ## 3.1.0
 
 Creator Sourcing for MuseOn staff, matching the internal `/creator-sourcing` page. Other domains are unchanged.
