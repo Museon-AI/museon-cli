@@ -191,6 +191,7 @@ def test_command_specs_publish_auth_and_capability_metadata() -> None:
                 spec.schema_name in STAFF_COMMANDS
                 or spec.resource_policy == "staff_global_cloud_phone_management"
                 or spec.resource_policy == "staff_with_organization_asset_access"
+                or spec.resource_policy == "staff_with_organization_creator_read"
             ):
                 assert spec.required_roles == ("staff",)
             elif spec.schema_name in ADMIN_OR_STAFF_COMMANDS:
@@ -199,6 +200,10 @@ def test_command_specs_publish_auth_and_capability_metadata() -> None:
                 assert spec.required_roles == ("organization_member",)
             if spec.resource_policy == "staff_with_organization_asset_access":
                 assert spec.domain.value == "html-documents"
+                assert spec.organization_bound is True
+            elif spec.resource_policy == "staff_with_organization_creator_read":
+                assert spec.schema_name.startswith("ugc.sourcing-")
+                assert spec.risk_level == "read"
                 assert spec.organization_bound is True
             elif spec.resource_policy == "staff_global_cloud_phone_management":
                 assert spec.organization_bound == (
