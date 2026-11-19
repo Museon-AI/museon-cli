@@ -279,6 +279,44 @@ def assert_organization_only(request: httpx.Request) -> None:
             },
         ),
         (
+            # Codes are sent as the profile stores them; the form answer filter goes as typed.
+            [
+                "ugc",
+                "sourcing",
+                "+list",
+                "--country",
+                "us",
+                "--language",
+                "ZH-Hant",
+                "--category",
+                "technology",
+                "--content-type",
+                "screen-recording",
+                "--answer",
+                "Which of these have you done before?::3D design",
+                "--answer",
+                "Which of these have you done before?::Vibe coding",
+            ],
+            f"/api/v2/ugc/agency/{ORG}/creator-library",
+            {
+                "countries": ["US"],
+                "languages": ["zh-Hant"],
+                "categories": ["technology"],
+                "content_types": ["screen_recording"],
+                "answer": [
+                    "Which of these have you done before?::3D design",
+                    "Which of these have you done before?::Vibe coding",
+                ],
+                "offset": ["0"],
+                "limit": ["50"],
+            },
+        ),
+        (
+            ["ugc", "sourcing", "+questions"],
+            f"/api/v2/ugc/agency/{ORG}/creator-library/form-questions",
+            {},
+        ),
+        (
             ["ugc", "sourcing", "+forms", "--id", CREATOR],
             f"/api/v2/ugc/agency/{ORG}/creator-library/{CREATOR}/applications",
             {},
@@ -320,6 +358,30 @@ def test_each_read_calls_the_webs_route(server, argv, path, expected):
     assert set(result) == {"command", "data", "next_steps", "run", "warnings", "organization"}
     assert result["organization"]["id"] == ORG
     assert result["data"] in ({"items": [], "next_cursor": None}, BOARD_BODY)
+
+
+@pytest.mark.parametrize(
+    "flags",
+    [
+        ["--country", "USA"],
+        ["--language", "english"],
+        ["--answer", "3D design"],
+    ],
+)
+def test_sourcing_refuses_a_value_that_would_match_nobody(server, flags):
+    """A language name or a three-letter country used to answer an empty page as if nobody
+    matched; it is refused before any request."""
+    envelope = fail("ugc", "sourcing", "+list", *flags)
+
+    assert envelope["ok"] is False
+    assert server["requests"] == []
+
+
+@pytest.mark.parametrize("flags", [["--category", "tech"], ["--content-type", "tutorials"]])
+def test_sourcing_takes_only_the_forms_topics_and_content_types(server, flags):
+    with pytest.raises(SystemExit):
+        run("ugc", "sourcing", "+list", *flags)
+    assert server["requests"] == []
 
 
 def test_a_task_is_read_with_its_events(server):
