@@ -65205,7 +65205,7 @@
             "type": "boolean"
           },
           "file": {
-            "description": "Local HTML file to upload.",
+            "description": "Local UTF-8 HTML file, up to 5 MB (5,000,000 bytes).",
             "maxLength": 4096,
             "minLength": 1,
             "type": "string"
@@ -65317,7 +65317,7 @@
             "type": "boolean"
           },
           "file": {
-            "description": "Local HTML file to upload.",
+            "description": "Local UTF-8 HTML file, up to 5 MB (5,000,000 bytes).",
             "maxLength": 4096,
             "minLength": 1,
             "type": "string"

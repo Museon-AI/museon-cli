@@ -32,7 +32,7 @@ from museoncli.domains._org_commands import (
 from museoncli.domains._writes import uuid_arg
 from museoncli.execution import CommandContext, direct_enveloped
 
-MAX_HTML_BYTES = 1_500_000
+MAX_HTML_BYTES = 5_000_000
 _MAX_FILENAME = 180
 _FOLDER = "72defd40-39ad-40d3-8105-8f23a9a016da"
 _DOCUMENT = "11111111-1111-4111-8111-111111111111"
@@ -60,7 +60,7 @@ _SHARE_SLUG = {
 }
 
 _UPLOAD = {
-    "file": string_property("Local HTML file to upload.", max_length=4096),
+    "file": string_property("Local UTF-8 HTML file, up to 5 MB (5,000,000 bytes).", max_length=4096),
     "title": string_property("Document title.", max_length=200),
     "filename": string_property(
         "Stored filename. A path is reduced to its basename, and only a single "

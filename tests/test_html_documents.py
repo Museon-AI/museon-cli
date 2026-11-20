@@ -124,6 +124,25 @@ def test_update_dry_run_validates_without_sending_a_request(monkeypatch, tmp_pat
     assert server.requests == []
 
 
+@pytest.mark.parametrize(
+    ("command", "options"),
+    [("+upload", ["--title", "Academy"]), ("+update", ["--id", DOC])],
+)
+def test_accepts_five_megabytes_of_utf8_html(monkeypatch, tmp_path: Path, command, options) -> None:
+    path = tmp_path / "academy.html"
+    path.write_text("é" * 2_500_000, encoding="utf-8")
+    server = Server({})
+    argv = ["html-documents", command, "--file", str(path), *options, "--dry-run"]
+
+    assert run(monkeypatch, server, argv)["data"]["dry_run"] is True
+
+    with path.open("a", encoding="utf-8") as file:
+        file.write("!")
+    with pytest.raises(ValueError, match="5000000 bytes"):
+        run(monkeypatch, server, argv)
+    assert server.requests == []
+
+
 def test_upload_omits_filename_when_the_basename_is_not_one_html_name(
     monkeypatch, tmp_path: Path
 ) -> None:

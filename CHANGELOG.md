@@ -4,6 +4,7 @@ Museon CLI follows semantic versioning for its package and command contract.
 
 ## 3.3.0
 
+- HTML uploads and updates accept UTF-8 files up to 5 MB (5,000,000 bytes) on servers with the increased HTML document limit.
 - `html-documents +update --id <document-id> --file <file>` replaces the HTML of an existing document and preserves its share URL and visibility.
 
 ## 3.2.0
