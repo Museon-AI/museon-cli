@@ -75,6 +75,10 @@ HTML 上传现在默认开启链接分享。执行
 没有自定义名时生成新的随机链接。上传或分享时加 `--share-slug manus-proposal`，即可选择
 `museon.ai/share/manus-proposal`；私有上传也能预留名字，文档仍不会公开。
 用 `html-documents +share --id <文档ID> --random-link` 可清空自定义名、切回随机链接。
+
+要在原链接更新页面，先用 `museoncli html-documents +list` 查找文档 ID，再运行
+`museoncli html-documents +update --id <文档ID> --file ./academy.html`。
+更新后，原分享链接和分享状态都会保留。
 上传结果不确定时先用 `+list` 找回文档和分享链接，重复上传会新建文档。
 此改动依赖支持 HTML 分享的服务端版本。
 
@@ -122,7 +126,7 @@ MuseOn 只有组织：访问权限由组织角色加 Campaign 范围决定。每
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v3.2.0/museoncli-3.2.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v3.3.0/museoncli-3.3.0-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：
