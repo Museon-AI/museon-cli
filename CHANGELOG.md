@@ -2,6 +2,10 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 3.3.0
+
+- `html-documents +update --id <document-id> --file <file>` replaces the HTML of an existing document and preserves its share URL and visibility.
+
 ## 3.2.0
 
 Creator Sourcing reads what people wrote on their forms. Other domains are unchanged.
