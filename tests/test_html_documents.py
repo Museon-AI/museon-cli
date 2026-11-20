@@ -80,6 +80,50 @@ def test_upload_posts_title_html_basename_and_folder(monkeypatch, tmp_path: Path
     ]
 
 
+@pytest.mark.parametrize("share_url", ["https://museon.ai/share/academy", SHARE_URL, None])
+def test_update_replaces_content_on_the_existing_document(
+    monkeypatch, tmp_path: Path, share_url: str | None
+) -> None:
+    path = tmp_path / "new-courses.html"
+    html = "<h1>New courses</h1>"
+    path.write_text(html, encoding="utf-8")
+    document_path = f"/api/v1/organizations/{OTHER}/html-documents/{DOC}"
+    server = Server({("PATCH", document_path): _library({"id": DOC, "share_url": share_url})})
+
+    result = run(
+        monkeypatch,
+        server,
+        [
+            "html-documents",
+            "+update",
+            "--organization-id",
+            OTHER,
+            "--args-json",
+            json.dumps({"id": DOC, "file": str(path)}),
+        ],
+    )
+
+    (sent,) = server.requests
+    assert sent.headers["X-Organization-Id"] == OTHER
+    assert body(sent) == {"html": html}
+    assert result["data"] == {"id": DOC, "share_url": share_url}
+
+
+def test_update_dry_run_validates_without_sending_a_request(monkeypatch, tmp_path: Path) -> None:
+    path = tmp_path / "academy.html"
+    path.write_text("<p>Courses</p>", encoding="utf-8")
+    server = Server({})
+    argv = ["html-documents", "+update", "--id", DOC, "--file", str(path), "--dry-run"]
+
+    result = run(monkeypatch, server, argv)
+    assert result["data"]["dry_run"] is True
+
+    path.write_text(" ", encoding="utf-8")
+    with pytest.raises(ValueError, match="--file"):
+        run(monkeypatch, server, argv)
+    assert server.requests == []
+
+
 def test_upload_omits_filename_when_the_basename_is_not_one_html_name(
     monkeypatch, tmp_path: Path
 ) -> None:
@@ -762,6 +806,7 @@ def test_a_json_encoded_folder_name_taken_body_is_decoded(monkeypatch) -> None:
 
 _PRIVATE = {
     "html-documents.upload",
+    "html-documents.update",
     "html-documents.list",
     "html-documents.share",
     "html-documents.unshare",

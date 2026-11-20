@@ -97,6 +97,11 @@ or creates a new random link. Add `--share-slug manus-proposal` when uploading o
 sharing to choose `museon.ai/share/manus-proposal`. A private upload can reserve
 that name without making the document public. To return to a random link, use
 `html-documents +share --id <document-id> --random-link`.
+
+To refresh the content at an existing link, find the document ID with
+`museoncli html-documents +list` and run
+`museoncli html-documents +update --id <document-id> --file ./academy.html`.
+The page keeps its current share URL and sharing status.
 Use `+list` to recover document IDs and share URLs after an uncertain upload result;
 uploading again creates another document. This change requires the HTML-sharing API release.
 

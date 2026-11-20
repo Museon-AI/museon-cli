@@ -100,6 +100,11 @@ _DOCUMENT_ACTION = {
     "id": uuid_property("Document to share or stop sharing (html-documents +list)."),
     "dry_run": DRY_RUN_PROPERTY,
 }
+_UPDATE = {
+    "id": uuid_property("Existing document to update (html-documents +list)."),
+    "file": _UPLOAD["file"],
+    "dry_run": DRY_RUN_PROPERTY,
+}
 _SHARE = {
     **_DOCUMENT_ACTION,
     "share_slug": _SHARE_SLUG,
@@ -244,6 +249,16 @@ def _sharing_result(data: Any, *, shared: bool) -> tuple[Any, list[str], list[st
     if share_url:
         next_steps.insert(0, f"Share this link with your customer: {share_url}")
     return data, warnings, next_steps
+
+
+async def _execute_update(ctx: CommandContext) -> Any:
+    arguments = ctx.arguments
+    return await ctx.api_data(
+        ctx.cfg,
+        "PATCH",
+        f"{_library(require_organization(ctx))}/{arguments['id']}",
+        json_body={"html": _read_html(Path(str(arguments["file"])).expanduser())},
+    )
 
 
 async def _execute_share(ctx: CommandContext) -> Any:
@@ -433,6 +448,21 @@ def _add_document_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--dry-run", action="store_true")
 
 
+def _add_update_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_document_arguments(parser)
+    parser.add_argument("--file")
+
+
+def _build_update_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = merged_input(args, ("id", "file"))
+    reject_unknown(payload, _UPDATE)
+    require(payload, "id", "file")
+    payload["id"] = uuid_arg(str(payload["id"]), flag="--id", lookup=_id_lookup_hint())
+    _read_html(Path(str(payload["file"])).expanduser())
+    _dry_run(args, payload)
+    return payload
+
+
 def _add_share_arguments(parser: argparse.ArgumentParser) -> None:
     _add_document_arguments(parser)
     choice = parser.add_mutually_exclusive_group()
@@ -478,7 +508,8 @@ def specs() -> list[CommandSpec]:
                 "--filename, or the file's basename when it is "
                 "one *.html or *.htm name with no '..' or slash; otherwise the server names it "
                 "from the title. Titles may repeat, so a second upload is a second document: "
-                "after an unknown outcome, +list before retrying." + _EDIT
+                "after an unknown outcome, +list before retrying. To replace content at an "
+                "existing link, use +update." + _EDIT
             ),
             risk_level="write",
             execution="direct",
@@ -501,6 +532,28 @@ def specs() -> list[CommandSpec]:
             ],
             add_arguments=_add_upload_arguments,
             build_arguments=_build_upload_arguments,
+            supports_dry_run=True,
+            required_roles=_STAFF_ROLES,
+            resource_policy=_STAFF_POLICY,
+        ),
+        CommandSpec(
+            domain=domain,
+            shortcut="+update",
+            summary=(
+                "Replace an existing document's HTML with a local file. The document keeps "
+                "its current sharing status and URL. Find its ID with +list." + _EDIT
+            ),
+            risk_level="write",
+            execution="direct",
+            adapter_tool_name="html_documents_update",
+            input_schema=schema(_UPDATE, ["id", "file"]),
+            output_schema=output_schema(
+                "data: the updated document with its existing share_slug and share_url. "
+                "share_url is null when sharing is off."
+            ),
+            examples=[f"museoncli html-documents +update --id {_DOCUMENT} --file ./academy.html"],
+            add_arguments=_add_update_arguments,
+            build_arguments=_build_update_arguments,
             supports_dry_run=True,
             required_roles=_STAFF_ROLES,
             resource_policy=_STAFF_POLICY,
@@ -625,6 +678,7 @@ def specs() -> list[CommandSpec]:
 
 EXECUTORS = {
     "html-documents.upload": with_notes(_execute_upload),
+    "html-documents.update": direct_enveloped(_execute_update),
     "html-documents.list": direct_enveloped(_execute_list),
     "html-documents.share": with_notes(_execute_share),
     "html-documents.unshare": direct_enveloped(_execute_unshare),
