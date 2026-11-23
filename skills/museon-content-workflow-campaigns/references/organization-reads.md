@@ -25,7 +25,7 @@ Pages follow `next_cursor` with `--cursor`.
 | --- | --- | --- |
 | Everything the setup page shows, at once | `campaign setup +get --campaign-id <id> [--section <name> ...]` | per section, below |
 | Type, approval mode, platforms, budget cap, product, readiness, briefs (payscales and contract for the team) | `campaign settings +get --campaign-id <id>` | anyone who sees the Campaign |
-| PM / OP | `campaign staff +list --campaign-id <id>` | owner, admin, the Campaign's operators |
+| PMs | `campaign staff +list --campaign-id <id>` | owner, admin, the Campaign's operators |
 | Delivery targets | `ugc delivery-target +list --campaign-id <id>` | same |
 | Payscales and rates | `ugc payscale +list --campaign-id <id>` | same |
 | Contract template | `ugc contract-template +get --campaign-id <id>` | owner, admin, the Campaign's operators |

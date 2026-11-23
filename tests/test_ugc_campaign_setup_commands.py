@@ -473,8 +473,8 @@ def test_a_pay_rule_on_a_newly_allowed_platform_goes_after_the_settings(cli_run)
     assert body(second)["expected_updated_at"] == LATER
 
 
-def test_staff_set_replaces_one_role_and_keeps_the_other(cli_run) -> None:
-    staff = {"managers": [{"id": USER_A, "name": "Ann"}], "operators": [{"id": USER_B, "name": "Bo"}], "updated_at": UPDATED}
+def test_staff_set_replaces_the_pms(cli_run) -> None:
+    staff = {"managers": [{"id": USER_A, "name": "Ann"}], "updated_at": UPDATED}
     server = Server(
         {
             ("GET", f"{UGC}/campaigns/{CAMPAIGN}/staff"): staff,
@@ -488,7 +488,7 @@ def test_staff_set_replaces_one_role_and_keeps_the_other(cli_run) -> None:
 
     assert code == 0
     assert body(server.only_write()) == {
-        "manager_user_ids": [USER_B], "operator_user_ids": [USER_B], "expected_updated_at": UPDATED,
+        "manager_user_ids": [USER_B], "expected_updated_at": UPDATED,
     }
 
 

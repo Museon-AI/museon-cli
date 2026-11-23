@@ -983,7 +983,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+submit-profile-edit",
             legacy_shortcuts=("+profile-edit-submit",),
             summary=(
-                "Submit a TikTok profile edit task for one account. "
+                "Submit a TikTok or Instagram profile edit task for one account. "
                 "Use +get-profile-edit to confirm completion."
             ),
             risk_level="write",
@@ -1012,7 +1012,7 @@ def specs() -> list[CommandSpec]:
             shortcut="+bulk-submit-profile-edit",
             legacy_shortcuts=("+profile-edit-batch-submit",),
             summary=(
-                "Submit a TikTok profile edit task for multiple accounts in one batch. "
+                "Submit a TikTok or Instagram profile edit task for multiple accounts in one batch. "
                 "Use +get-profile-edit to poll the single task for all account statuses."
             ),
             risk_level="write",

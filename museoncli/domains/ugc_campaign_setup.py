@@ -6,7 +6,7 @@
   (approval mode, platforms, budget cap, language), product and promotion context,
   readiness and confirmed steps, the briefs, and for the Campaign's team also the
   payscales, pay defaults and contract template.
-- One command per section the page reads beside it: staff (PM/OP), delivery targets,
+- One command per section the page reads beside it: staff (PMs), delivery targets,
   payscales and rates, the contract template, the Discord server link, DM rules and
   automations.
 - ``campaign setup +get`` reads all of those at once (a fixed handful of requests) and
@@ -38,7 +38,7 @@ TEAM = (
 #: Section -> (route suffix, what it is). The order is the setup page's.
 SECTIONS: dict[str, tuple[str, str]] = {
     "settings": ("", "the Campaign view: type, settings, product, readiness, briefs"),
-    "staff": ("/staff", "PM / OP"),
+    "staff": ("/staff", "PMs"),
     "targets": ("/targets", "delivery targets"),
     "payscales": ("/payscales", "payscales and their rates"),
     "contract-template": ("/contract-template", "the contract template"),
@@ -112,7 +112,7 @@ def specs() -> list[CommandSpec]:
             "staff",
             "list",
             "/staff",
-            "List a Campaign's staff (PM / OP) with their roles." + TEAM,
+            "List a Campaign's staff: its PMs." + TEAM,
             Domain.CAMPAIGN,
         ),
         _one(

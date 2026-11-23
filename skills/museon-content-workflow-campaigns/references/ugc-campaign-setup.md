@@ -40,7 +40,7 @@ museoncli campaign +launch --campaign-id C --expected-status draft --yes
 | Approval/join mode, budget cap, post grouping, platforms, Discord onboarding | `campaign settings +update --campaign-id C [--approval-mode auto\|manual] [--join-mode open\|invite-only] [--budget-cap-cents N\|none] ...` |
 | Languages, countries, stay/warmup/trial rules, content intake, apply form | `... +update --settings-json '{"stay_rules": {"inactivity_days": 7}}'` (nested rules change only the keys given) |
 | Pay by number of platforms | `... +update --platform-pay-rules-json '{"single_bps":10000,"rules":[{"count":2,"multiplier_bps":12000}]}'` |
-| PMs and OPs | `campaign staff +set --campaign-id C --manager-user-id U --operator-user-id U` |
+| PMs | `campaign staff +set --campaign-id C --manager-user-id U` |
 | Delivery targets | `ugc delivery-target +create/+update/+delete --campaign-id C [--target-views N] [--target-posts N] [--target-creators N] [--start-date D] [--due-date D]` (*yes* on delete). A target's dates are its own window; they never move the Campaign's start day, which is set separately |
 | Contract | `ugc contract-template +set --campaign-id C --source default\|custom [--body-file F] [--terms-json ...]` (dry run returns the filled preview) |
 | Payscales and rates | `ugc payscale +create/+update/+delete`, `ugc pay-rate +create/+update/+delete` (dry run of a rate prices a video under it and refuses a rate the server would 422: a `video-content` rate needs a `description` (the sentence a post is judged against), `lifetime-views` needs `min_creator_views`, `base_fee_cents` goes with `base_rate_mode: per_video`; *yes* on delete) |

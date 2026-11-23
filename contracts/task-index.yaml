@@ -201,7 +201,7 @@ chapters:
         steps:
           - campaign.create: "--type ugc; data.campaign.id is the new --campaign-id. Rerun an unknown outcome with the returned idempotency key."
           - campaign.settings-update: "Approval and join mode, budget cap, platforms, languages, rules; only the fields passed change."
-          - campaign.staff-set: "PMs (--manager-user-id) and OPs (--operator-user-id); user ids from organization member +list."
+          - campaign.staff-set: "PMs (--manager-user-id); user ids from organization member +list."
           - ugc.delivery-target-create: "A target's dates are its own window; they never move the Campaign's start day."
           - ugc.contract-template-set: "--source default or custom; the dry run returns the filled preview."
           - ugc.payscale-create: "The default payscale exists already; add custom ones only when creators are paid differently."
@@ -229,7 +229,7 @@ chapters:
         when: ["change settings", "edit campaign", "budget cap", "change payscale", "pay rate", "delivery target", "discord", "修改设置", "改预算", "改价格", "目标"]
         steps:
           - campaign.settings-update: "Writes the whole settings object back with only your fields changed; brand editors may not change the team's settings."
-          - campaign.staff-set: "A role not passed keeps its people; --no-managers / --no-operators empties it."
+          - campaign.staff-set: "The PMs passed replace the current ones; --no-managers removes them all."
           - ugc.delivery-target-update: "'none' clears a figure or date."
           - ugc.delivery-target-delete
           - ugc.payscale-update

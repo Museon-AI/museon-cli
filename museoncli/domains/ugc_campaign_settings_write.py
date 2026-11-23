@@ -3,7 +3,7 @@
 - `campaign settings +update`: the settings object (`PUT /campaigns/{id}/settings`),
   merged from the live settings with only the passed fields changed, plus the
   publishing-platform pay rule (`PATCH /campaigns/{id}/pricing`), in the page's order.
-- `campaign staff +set`: the Campaign team, PMs and OPs (`PUT .../staff`).
+- `campaign staff +set`: the Campaign team, its PMs (`PUT .../staff`).
 - `delivery-target`: the delivery targets (`/campaigns/{id}/targets`).
 - `contract-template +set`: the creator contract (`PUT .../contract-template`).
 - `discord-server`: the Campaign's Discord server (`.../discord/guild-link`, `.../guild/initialize`).
@@ -226,24 +226,21 @@ async def _execute_staff_set(ctx: CommandContext) -> Any:
     stored = await w.call(ctx, "GET", f"/campaigns/{campaign_id}/staff")
     stored = stored if isinstance(stored, dict) else {}
     token = w.check_token("updated_at", stored.get("updated_at"), args.get("expected_updated_at"))
-    before = {
-        "manager_user_ids": [item["id"] for item in _people(stored.get("managers"))],
-        "operator_user_ids": [item["id"] for item in _people(stored.get("operators"))],
-    }
-    after = {key: args.get(key, before[key]) for key in before}
+    before = [item["id"] for item in _people(stored.get("managers"))]
+    wanted = args.get("manager_user_ids")
+    if wanted is None:
+        wanted = [] if args.get("no_managers") else before
+    after = {"manager_user_ids": wanted}
     data: dict[str, Any] = {
         "dry_run": args["dry_run"],
-        "before": {
-            "managers": _people(stored.get("managers")),
-            "operators": _people(stored.get("operators")),
-        },
+        "before": {"managers": _people(stored.get("managers"))},
         "after": after,
         "expected_updated_at": token,
     }
-    if all(sorted(after[key]) == sorted(before[key]) for key in before):
+    if sorted(after["manager_user_ids"]) == sorted(before):
         return data, [w.nothing_to_write("the current team")], []
     if args["dry_run"]:
-        return data, [], w.ask("the PMs and OPs before and after")
+        return data, [], w.ask("the PMs before and after")
     written = await w.call(
         ctx, "PUT", f"/campaigns/{campaign_id}/staff", body={**after, "expected_updated_at": token}
     )
@@ -987,34 +984,25 @@ def _build_settings_arguments(args: argparse.Namespace) -> dict[str, Any]:
 def _add_staff_arguments(parser: argparse.ArgumentParser) -> None:
     w.add_campaign_id(parser)
     parser.add_argument("--manager-user-id", action="append", dest="manager_user_ids")
-    parser.add_argument("--operator-user-id", action="append", dest="operator_user_ids")
     parser.add_argument("--no-managers", action="store_true")
-    parser.add_argument("--no-operators", action="store_true")
     _add_expected_updated_at(parser)
     w.add_dry_run(parser)
 
 
 def _build_staff_arguments(args: argparse.Namespace) -> dict[str, Any]:
     out = _common(args)
-    for key, clear, flag in (
-        ("manager_user_ids", args.no_managers, "--manager-user-id"),
-        ("operator_user_ids", args.no_operators, "--operator-user-id"),
-    ):
-        values = getattr(args, key)
-        if clear and values:
-            raise ValueError(f"Pass {flag} or its --no-* flag, not both.")
-        if clear:
-            out[key] = []
-        elif values:
-            ids = w.uuids(values, flag=flag)
-            if len(ids) > MAX_STAFF:
-                raise ValueError(f"At most {MAX_STAFF} people per role.")
-            out[key] = ids
-    if "manager_user_ids" not in out and "operator_user_ids" not in out:
-        raise ValueError(
-            "Pass the PMs (--manager-user-id) or OPs (--operator-user-id) to set, or "
-            "--no-managers / --no-operators to clear a role."
-        )
+    values = args.manager_user_ids
+    if args.no_managers and values:
+        raise ValueError("Pass --manager-user-id or --no-managers, not both.")
+    if args.no_managers:
+        out["manager_user_ids"] = []
+    elif values:
+        ids = w.uuids(values, flag="--manager-user-id")
+        if len(ids) > MAX_STAFF:
+            raise ValueError(f"At most {MAX_STAFF} PMs.")
+        out["manager_user_ids"] = ids
+    else:
+        raise ValueError("Pass the PMs (--manager-user-id), or --no-managers to remove them all.")
     return out
 
 
@@ -1433,10 +1421,9 @@ def specs() -> list[CommandSpec]:
             resource="staff",
             shortcut="+set",
             summary=(
-                "Set a Campaign's team: its PMs (--manager-user-id) and OPs (--operator-user-id), "
-                "at most 20 each; a role not passed keeps its people, --no-managers / "
-                "--no-operators empties it. --dry-run returns the team before and after without "
-                "writing." + w.CONFIRM_FIRST + _TEAM_ROLE
+                "Set a Campaign's team: its PMs (--manager-user-id, at most 20; the list "
+                "replaces the current one), or --no-managers to remove them all. --dry-run "
+                "returns the PMs before and after without writing." + w.CONFIRM_FIRST + _TEAM_ROLE
             ),
             adapter="ugc_campaign_staff_set",
             properties={
@@ -1447,19 +1434,12 @@ def specs() -> list[CommandSpec]:
                     "maxItems": MAX_STAFF,
                     "description": "User IDs of the PMs (replaces the list).",
                 },
-                "operator_user_ids": {
-                    "type": "array",
-                    "items": {"type": "string", "format": "uuid"},
-                    "maxItems": MAX_STAFF,
-                    "description": "User IDs of the OPs (replaces the list).",
-                },
                 "no_managers": {"type": "boolean", "description": "Remove every PM."},
-                "no_operators": {"type": "boolean", "description": "Remove every OP."},
                 **eua,
                 "dry_run": w.DRY_RUN,
             },
             required=["campaign_id"],
-            output_description="dry_run, before (managers, operators), after (user ids), expected_updated_at.",
+            output_description="dry_run, before (managers), after (manager user ids), expected_updated_at.",
             examples=[
                 f"museoncli campaign staff +set --campaign-id {c} --manager-user-id {w.USER} --dry-run"
             ],
