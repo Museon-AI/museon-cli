@@ -3,7 +3,7 @@
 These commands do what the web's task center, roster, content review and recruiting
 screens do, through the same routes. `--campaign-id` is the Campaign id from
 `museoncli campaign +list --type ugc`. The server decides who may write: owner and admin
-everywhere, an operator on Campaigns they are assigned to (PM/OP), Brand editors
+everywhere, an operator on Campaigns they are assigned to (as a PM), Brand editors
 only review and counting on a shared Campaign, members never. A refusal is
 `not_found` or `forbidden`; report it, never retry as someone else.
 

@@ -89,7 +89,7 @@ OUTBOUND: dict[str, Any] = {
 
 # Who may run it: the server decides per request; these lines only tell the Agent.
 ROLE_TASK = (
-    " Role: owner or admin; an operator on Campaigns they are assigned to (PM/OP); "
+    " Role: owner or admin; an operator on Campaigns they are assigned to (as a PM); "
     "members only read."
 )
 ROLE_ENROLLMENT = (
