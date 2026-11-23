@@ -2,14 +2,15 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
-## 4.0.0
+## 3.3.0
 
 A Campaign's team is one role, PM (MuseOn D-142, 2026-11-23). Other domains are unchanged.
 
-- `campaign staff +set` takes only `--manager-user-id` (the PMs, at most 20; the list replaces the current one) or `--no-managers`. `--operator-user-id` and `--no-operators` are removed, and the command no longer sends `operator_user_ids`. Its output's `before` / `after` carry only the PMs.
+- `campaign staff +set`: `--operator-user-id` and `--no-operators` are gone. `--manager-user-id` names the PMs (at most 20; the list replaces the current one) and `--no-managers` removes them all. The request no longer sends `operator_user_ids`, and the output's `before` / `after` carry only the PMs.
 - `campaign staff +list` and the setup reads describe the staff as PMs.
-- Migration: scripts passing `--operator-user-id` must pass those people as `--manager-user-id` instead (the server has treated them as PMs since 2026-11-23). This major release removes command flags.
-- The command contract revision moves with the package to 4.0.0. Sync the API's vendored `agent_cli_command_catalog.json` to this revision before tagging.
+- If a script passes `--operator-user-id`, pass those people as `--manager-user-id` instead. The server has treated them as PMs since 2026-11-23.
+- The profile-edit summaries say "TikTok or Instagram", which the server already supports.
+- The command contract revision moves with the package to 3.3.0. Sync the API's vendored `agent_cli_command_catalog.json` to this revision before tagging.
 
 ## 3.2.0
 
