@@ -35,6 +35,7 @@ STAFF_COMMANDS = {
     "staff-ops.search-code",
     "staff-ops.read-supabase",
     "staff-ops.search-logs",
+    "publish.job-verify-manual",
 }
 # positional mode selectors (never IDs)
 ALLOWED_POSITIONALS = {"routines.record": ["kind"]}

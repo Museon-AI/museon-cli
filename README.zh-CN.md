@@ -122,7 +122,7 @@ MuseOn 只有组织：访问权限由组织角色加 Campaign 范围决定。每
 固定版本的 wheel：
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v3.3.0/museoncli-3.3.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v3.4.0/museoncli-3.4.0-py3-none-any.whl"
 ```
 
 安装成功后继续配置 Skills 和浏览器授权：
