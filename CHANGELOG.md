@@ -2,6 +2,14 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 3.4.0
+
+Staff can have a failed publish job verified after posting it by hand. Other domains are unchanged.
+
+- `publish job +verify-manual --id JOB_ID [--posted-at TIME] [--post-url URL]` (staff only) declares that a failed job's video went out by hand, for example over ADB, and has MuseOn find that post on the job's account. Nothing is published or retried: the job returns to verifying and becomes published when the post is found, or fails again at `delivery.verification.deadline_at`.
+- The server refuses jobs whose own publishing attempt could still post, and jobs whose video another job is sending to the same account. Once declared, a job can no longer be retried.
+- The command contract revision moves with the package to 3.4.0. Sync the API's vendored `agent_cli_command_catalog.json` to this revision before tagging.
+
 ## 3.3.0
 
 A Campaign's team is one role, PM (MuseOn D-142, 2026-11-23). Other domains are unchanged.

@@ -22,7 +22,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 
 <!-- BEGIN GENERATED COMMANDS (scripts/gen_command_docs.py) -->
 
-505 commands across 18 domains (source of truth: `museoncli schema`).
+506 commands across 18 domains (source of truth: `museoncli schema`).
 
 ### research
 
@@ -254,6 +254,7 @@ after changing specs; `tests/test_docs_sync.py` fails CI on drift.
 | `publish job +list` | read | — | — | direct | List publish jobs (one per video and account) with status, scheduled time, error and delivery; --task-id narrows to one batch returned by publish post +schedule. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs. |
 | `publish job +get` | read | — | — | direct | Read one publish job's status, scheduled time, error and delivery. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs. |
 | `publish job +cancel` | write | yes | — | direct | Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires an organization role that can edit. |
+| `publish job +verify-manual` | write | yes | — | direct | Staff only: declare that a failed publish job was posted by hand (for example over ADB) and have Museon find that post on the job's account. Nothing is published or retried. The job goes back to verifying; it is published once the post is found, or fails again at delivery.verification.deadline_at. Refused unless the job's own publishing attempt can no longer post (never submitted, or its cloud-phone run ended) and no other job sends the same video to the same account; once declared, the job can never be retried. Without --post-url the post must be within four hours of --posted-at. |
 
 ### cloud-phone
 

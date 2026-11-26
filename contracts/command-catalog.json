@@ -12564,6 +12564,33 @@
           "summary": "Cancel a publish job that has not been published yet (scheduled no more than an hour ago). Requires an organization role that can edit.",
           "supports_dry_run": true,
           "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "publish.job-verify-manual",
+          "cli": "museoncli publish job +verify-manual",
+          "domain": "publish",
+          "execution": "direct",
+          "name": "publish.job-verify-manual",
+          "requires_confirmation": false,
+          "resource": "job",
+          "risk_level": "write",
+          "shortcut": "+verify-manual",
+          "stability": "stable",
+          "summary": "Staff only: declare that a failed publish job was posted by hand (for example over ADB) and have Museon find that post on the job's account. Nothing is published or retried. The job goes back to verifying; it is published once the post is found, or fails again at delivery.verification.deadline_at. Refused unless the job's own publishing attempt can no longer post (never submitted, or its cloud-phone run ended) and no other job sends the same video to the same account; once declared, the job can never be retried. Without --post-url the post must be within four hours of --posted-at.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
         }
       ],
       "research": [
@@ -18637,7 +18664,7 @@
       "html-documents"
     ]
   },
-  "contract_revision": "3.3.0",
+  "contract_revision": "3.4.0",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -67324,6 +67351,116 @@
       "stability": "stable",
       "summary": "List publish jobs (one per video and account) with status, scheduled time, error and delivery; --task-id narrows to one batch returned by publish post +schedule. delivery.stage tells where the post stands: verifying means the publishing service already reported its result (delivery.upstream) and Museon is confirming the post on the platform until delivery.verification.deadline_at; published, failed and cancelled are final. delivery is null for older jobs.",
       "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "publish.job-verify-manual": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "publish.job-verify-manual",
+      "cli": "museoncli publish job +verify-manual",
+      "domain": "publish",
+      "examples": [
+        "museoncli publish job +verify-manual --id <job-id>",
+        "museoncli schema publish.job-verify-manual"
+      ],
+      "execution": "direct",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "post_url": {
+            "description": "The post's link on the job's platform, when known.",
+            "maxLength": 2048,
+            "minLength": 1,
+            "type": "string"
+          },
+          "posted_at": {
+            "description": "When the post went out by hand, with a timezone offset. Omit only when it went out just now.",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "publish.job-verify-manual",
+      "output_schema": {
+        "description": "Unmodified API resource or receipt. museoncli publish job +get --id JOB_ID (batch jobs); delivery.stage stays verifying until the post is found (published) or the deadline passes (failed).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "job",
+      "risk_level": "write",
+      "shortcut": "+verify-manual",
+      "stability": "stable",
+      "summary": "Staff only: declare that a failed publish job was posted by hand (for example over ADB) and have Museon find that post on the job's account. Nothing is published or retried. The job goes back to verifying; it is published once the post is found, or fails again at delivery.verification.deadline_at. Refused unless the job's own publishing attempt can no longer post (never submitted, or its cloud-phone run ended) and no other job sends the same video to the same account; once declared, the job can never be retried. Without --post-url the post must be within four hours of --posted-at.",
+      "supports_dry_run": true,
       "transport": "agent_cli_api"
     },
     "publish.post-schedule": {

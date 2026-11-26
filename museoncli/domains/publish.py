@@ -348,4 +348,44 @@ def specs() -> list[CommandSpec]:
             ),
             readback="museoncli publish job +get --id JOB_ID; verify status cancelled.",
         ),
+        _verify_manual_spec(),
     ]
+
+
+def _verify_manual_spec() -> CommandSpec:
+    spec = _command(
+        "job",
+        "verify-manual",
+        "POST",
+        "/pool-accounts/jobs/{id}/manual-publication",
+        {
+            "posted_at": {
+                **DT,
+                "description": "When the post went out by hand, with a timezone offset. "
+                "Omit only when it went out just now.",
+            },
+            "post_url": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2048,
+                "description": "The post's link on the job's platform, when known.",
+            },
+        },
+        write=True,
+        domain=Domain.PUBLISH,
+        summary=(
+            "Staff only: declare that a failed publish job was posted by hand (for example "
+            "over ADB) and have Museon find that post on the job's account. Nothing is "
+            "published or retried. The job goes back to verifying; it is published once the "
+            "post is found, or fails again at delivery.verification.deadline_at. Refused "
+            "unless the job's own publishing attempt can no longer post (never submitted, or "
+            "its cloud-phone run ended) and no other job sends the same video to the same "
+            "account; once declared, the job can never be retried. "
+            "Without --post-url the post must be within four hours of --posted-at."
+        ),
+        readback=(
+            "museoncli publish job +get --id JOB_ID (batch jobs); delivery.stage stays "
+            "verifying until the post is found (published) or the deadline passes (failed)."
+        ),
+    )
+    return replace(spec, required_roles=("staff",))
