@@ -2,6 +2,14 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 3.5.1
+
+Staff credential lookups under `social-account credentials` now resolve accounts across the full pool by `platform + handle` in addition to UUID `--id`. Other domains are unchanged.
+
+- `social-account credentials +totp-code` and `+get` accept either `--id ACCOUNT_ID` or `--platform PLATFORM --handle HANDLE` (full-pool lookup not restricted to the current organization; returns 409 candidates when multiple active accounts match).
+- `social-account credentials +bulk-status`, `+bulk-totp-codes`, and `+bulk-get` accept `--id`, `--platform PLATFORM --handle H1 --handle H2 ...`, and mixed-platform `--account platform:handle` targets (or `accounts` in `--args-json`), with per-item `ambiguous` candidate reporting when duplicates exist.
+- The command contract revision moves with the package to 3.5.1. Sync the API's vendored `agent_cli_command_catalog.json` to this revision before tagging.
+
 ## 3.5.0
 
 Staff can generate live 6-digit 2FA codes and resolve login credentials for pool social accounts through the encrypted credential vault. Other domains are unchanged.

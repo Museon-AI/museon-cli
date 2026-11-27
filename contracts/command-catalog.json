@@ -13943,7 +13943,7 @@
           "risk_level": "read",
           "shortcut": "+get",
           "stability": "stable",
-          "summary": "Staff only: reveal one pool social account's resolved login credentials (effective login type, password, shared mailbox/Google SSO, Facebook Page parent inheritance, live 6-digit TOTP code, verification links, and third-party SSO). Permanent TOTP seeds stay hidden unless --include-totp-secret is passed. Every call is audited.",
+          "summary": "Staff only: reveal one pool social account's resolved login credentials (effective login type, password, shared mailbox/Google SSO, Facebook Page parent inheritance, live 6-digit TOTP code, verification links, and third-party SSO). Accepts --id or full-pool --platform + --handle. Permanent TOTP seeds stay hidden unless --include-totp-secret is passed. Every call is audited.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -14001,7 +14001,7 @@
           "risk_level": "read",
           "shortcut": "+bulk-status",
           "stability": "stable",
-          "summary": "Staff only: check non-secret credential coverage and login types for up to 200 pool social accounts in one request (has_password, has_totp, second_factor_kind, effective_login_type, shared email count, FB parent link). Never decrypts or returns secrets.",
+          "summary": "Staff only: check non-secret credential coverage and login types for up to 200 pool social accounts in one request by --id, --platform + --handle, or --account platform:handle (has_password, has_totp, second_factor_kind, effective_login_type, shared email count, FB parent link). Never decrypts secrets.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -14059,7 +14059,7 @@
           "risk_level": "read",
           "shortcut": "+bulk-totp-codes",
           "stability": "stable",
-          "summary": "Staff only: generate live 6-digit 2FA TOTP codes for up to 50 pool social accounts in one request without exposing passwords or permanent TOTP seeds. Every account lookup is audited.",
+          "summary": "Staff only: generate live 6-digit 2FA TOTP codes for up to 50 pool social accounts in one request by --id, --platform + --handle, or --account platform:handle without exposing passwords or permanent TOTP seeds. Every account lookup is audited.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -14117,7 +14117,7 @@
           "risk_level": "read",
           "shortcut": "+bulk-get",
           "stability": "stable",
-          "summary": "Staff only: reveal resolved login credentials for up to 20 pool social accounts in one audited request (--reason required). Permanent TOTP seeds stay omitted unless --include-totp-secret is passed.",
+          "summary": "Staff only: reveal resolved login credentials for up to 20 pool social accounts in one audited request (--reason required) by --id, --platform + --handle, or --account platform:handle. Permanent TOTP seeds stay omitted unless --include-totp-secret is passed.",
           "supports_dry_run": false,
           "transport": "agent_cli_api"
         },
@@ -19013,7 +19013,7 @@
       "html-documents"
     ]
   },
-  "contract_revision": "3.5.0",
+  "contract_revision": "3.5.1",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -73066,7 +73066,8 @@
       "cli": "museoncli social-account credentials +bulk-get",
       "domain": "social-account",
       "examples": [
-        "museoncli social-account credentials +bulk-get --id <pool_account_id_1> --id <pool_account_id_2> --reason 'batch cloud-phone login'"
+        "museoncli social-account credentials +bulk-get --id <pool_account_id_1> --id <pool_account_id_2> --reason 'batch cloud-phone login'",
+        "museoncli social-account credentials +bulk-get --account tiktok:@user1 --account instagram:@user2 --reason 'batch cloud-phone login'"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -73101,12 +73102,49 @@
         }
       ],
       "input_schema": {
+        "anyOf": [
+          {
+            "required": [
+              "account_ids"
+            ]
+          },
+          {
+            "required": [
+              "accounts"
+            ]
+          }
+        ],
         "properties": {
           "account_ids": {
             "items": {
               "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
               "format": "uuid",
               "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "accounts": {
+            "description": "Full-pool (platform, handle) targets.",
+            "items": {
+              "properties": {
+                "handle": {
+                  "description": "Full-pool account handle (leading @ optional).",
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "platform": {
+                  "description": "Platform name or alias (tiktok/tk, instagram/ig, facebook/fb, youtube/yt, x, linkedin, threads).",
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "platform",
+                "handle"
+              ],
+              "type": "object"
             },
             "maxItems": 20,
             "minItems": 1,
@@ -73125,7 +73163,6 @@
           }
         },
         "required": [
-          "account_ids",
           "reason"
         ],
         "type": "object"
@@ -73191,7 +73228,7 @@
       "risk_level": "read",
       "shortcut": "+bulk-get",
       "stability": "stable",
-      "summary": "Staff only: reveal resolved login credentials for up to 20 pool social accounts in one audited request (--reason required). Permanent TOTP seeds stay omitted unless --include-totp-secret is passed.",
+      "summary": "Staff only: reveal resolved login credentials for up to 20 pool social accounts in one audited request (--reason required) by --id, --platform + --handle, or --account platform:handle. Permanent TOTP seeds stay omitted unless --include-totp-secret is passed.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -73212,7 +73249,9 @@
       "cli": "museoncli social-account credentials +bulk-status",
       "domain": "social-account",
       "examples": [
-        "museoncli social-account credentials +bulk-status --id <pool_account_id_1> --id <pool_account_id_2>"
+        "museoncli social-account credentials +bulk-status --id <pool_account_id_1> --id <pool_account_id_2>",
+        "museoncli social-account credentials +bulk-status --platform tiktok --handle @user1 --handle @user2",
+        "museoncli social-account credentials +bulk-status --account tiktok:@user1 --account instagram:@user2"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -73247,6 +73286,18 @@
         }
       ],
       "input_schema": {
+        "anyOf": [
+          {
+            "required": [
+              "account_ids"
+            ]
+          },
+          {
+            "required": [
+              "accounts"
+            ]
+          }
+        ],
         "properties": {
           "account_ids": {
             "items": {
@@ -73257,11 +73308,33 @@
             "maxItems": 200,
             "minItems": 1,
             "type": "array"
+          },
+          "accounts": {
+            "description": "Full-pool (platform, handle) targets.",
+            "items": {
+              "properties": {
+                "handle": {
+                  "description": "Full-pool account handle (leading @ optional).",
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "platform": {
+                  "description": "Platform name or alias (tiktok/tk, instagram/ig, facebook/fb, youtube/yt, x, linkedin, threads).",
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "platform",
+                "handle"
+              ],
+              "type": "object"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
           }
         },
-        "required": [
-          "account_ids"
-        ],
         "type": "object"
       },
       "name": "social-account.credentials-bulk-status",
@@ -73325,7 +73398,7 @@
       "risk_level": "read",
       "shortcut": "+bulk-status",
       "stability": "stable",
-      "summary": "Staff only: check non-secret credential coverage and login types for up to 200 pool social accounts in one request (has_password, has_totp, second_factor_kind, effective_login_type, shared email count, FB parent link). Never decrypts or returns secrets.",
+      "summary": "Staff only: check non-secret credential coverage and login types for up to 200 pool social accounts in one request by --id, --platform + --handle, or --account platform:handle (has_password, has_totp, second_factor_kind, effective_login_type, shared email count, FB parent link). Never decrypts secrets.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -73346,7 +73419,8 @@
       "cli": "museoncli social-account credentials +bulk-totp-codes",
       "domain": "social-account",
       "examples": [
-        "museoncli social-account credentials +bulk-totp-codes --id <pool_account_id_1> --id <pool_account_id_2> --reason 'batch login'"
+        "museoncli social-account credentials +bulk-totp-codes --id <pool_account_id_1> --id <pool_account_id_2> --reason 'batch login'",
+        "museoncli social-account credentials +bulk-totp-codes --platform tiktok --handle @user1 --handle @user2 --reason 'batch login'"
       ],
       "execution": "direct",
       "frontend_url_templates": [
@@ -73381,12 +73455,49 @@
         }
       ],
       "input_schema": {
+        "anyOf": [
+          {
+            "required": [
+              "account_ids"
+            ]
+          },
+          {
+            "required": [
+              "accounts"
+            ]
+          }
+        ],
         "properties": {
           "account_ids": {
             "items": {
               "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
               "format": "uuid",
               "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "accounts": {
+            "description": "Full-pool (platform, handle) targets.",
+            "items": {
+              "properties": {
+                "handle": {
+                  "description": "Full-pool account handle (leading @ optional).",
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "platform": {
+                  "description": "Platform name or alias (tiktok/tk, instagram/ig, facebook/fb, youtube/yt, x, linkedin, threads).",
+                  "minLength": 1,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "platform",
+                "handle"
+              ],
+              "type": "object"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -73401,9 +73512,6 @@
             ]
           }
         },
-        "required": [
-          "account_ids"
-        ],
         "type": "object"
       },
       "name": "social-account.credentials-bulk-totp-codes",
@@ -73467,7 +73575,7 @@
       "risk_level": "read",
       "shortcut": "+bulk-totp-codes",
       "stability": "stable",
-      "summary": "Staff only: generate live 6-digit 2FA TOTP codes for up to 50 pool social accounts in one request without exposing passwords or permanent TOTP seeds. Every account lookup is audited.",
+      "summary": "Staff only: generate live 6-digit 2FA TOTP codes for up to 50 pool social accounts in one request by --id, --platform + --handle, or --account platform:handle without exposing passwords or permanent TOTP seeds. Every account lookup is audited.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -73636,7 +73744,7 @@
       "domain": "social-account",
       "examples": [
         "museoncli social-account credentials +get --id <pool_account_id>",
-        "museoncli social-account credentials +get --id <pool_account_id> --reason 'relogin on cloud phone'",
+        "museoncli social-account credentials +get --platform tiktok --handle @demo --reason 'relogin on cloud phone'",
         "museoncli social-account credentials +get --id <pool_account_id> --include-totp-secret"
       ],
       "execution": "direct",
@@ -73672,16 +73780,49 @@
         }
       ],
       "input_schema": {
+        "oneOf": [
+          {
+            "not": {
+              "required": [
+                "handle"
+              ]
+            },
+            "required": [
+              "account_id"
+            ]
+          },
+          {
+            "not": {
+              "required": [
+                "account_id"
+              ]
+            },
+            "required": [
+              "platform",
+              "handle"
+            ]
+          }
+        ],
         "properties": {
           "account_id": {
-            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID. Mutually exclusive with platform + handle.",
             "format": "uuid",
+            "type": "string"
+          },
+          "handle": {
+            "description": "Full-pool account handle (leading @ optional). Mutually exclusive with account_id; requires platform.",
+            "minLength": 1,
             "type": "string"
           },
           "include_totp_secret": {
             "default": false,
             "description": "Include the permanent Base32 TOTP seed in the response. Omit unless provisioning a new authenticator; the live 6-digit code is already included.",
             "type": "boolean"
+          },
+          "platform": {
+            "description": "Platform name or alias (tiktok/tk, instagram/ig, facebook/fb, youtube/yt, x, linkedin, threads). Required with handle.",
+            "minLength": 1,
+            "type": "string"
           },
           "reason": {
             "description": "Optional short operational reason recorded in the audit log.",
@@ -73692,9 +73833,6 @@
             ]
           }
         },
-        "required": [
-          "account_id"
-        ],
         "type": "object"
       },
       "name": "social-account.credentials-get",
@@ -73758,7 +73896,7 @@
       "risk_level": "read",
       "shortcut": "+get",
       "stability": "stable",
-      "summary": "Staff only: reveal one pool social account's resolved login credentials (effective login type, password, shared mailbox/Google SSO, Facebook Page parent inheritance, live 6-digit TOTP code, verification links, and third-party SSO). Permanent TOTP seeds stay hidden unless --include-totp-secret is passed. Every call is audited.",
+      "summary": "Staff only: reveal one pool social account's resolved login credentials (effective login type, password, shared mailbox/Google SSO, Facebook Page parent inheritance, live 6-digit TOTP code, verification links, and third-party SSO). Accepts --id or full-pool --platform + --handle. Permanent TOTP seeds stay hidden unless --include-totp-secret is passed. Every call is audited.",
       "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
@@ -73780,6 +73918,7 @@
       "domain": "social-account",
       "examples": [
         "museoncli social-account credentials +totp-code --id <pool_account_id>",
+        "museoncli social-account credentials +totp-code --platform tiktok --handle @demo",
         "museoncli social-account credentials +totp-code --id <pool_account_id> --reason 'cloud-phone login'"
       ],
       "execution": "direct",
@@ -73815,10 +73954,43 @@
         }
       ],
       "input_schema": {
+        "oneOf": [
+          {
+            "not": {
+              "required": [
+                "handle"
+              ]
+            },
+            "required": [
+              "account_id"
+            ]
+          },
+          {
+            "not": {
+              "required": [
+                "account_id"
+              ]
+            },
+            "required": [
+              "platform",
+              "handle"
+            ]
+          }
+        ],
         "properties": {
           "account_id": {
-            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID. Mutually exclusive with platform + handle.",
             "format": "uuid",
+            "type": "string"
+          },
+          "handle": {
+            "description": "Full-pool account handle (leading @ optional). Mutually exclusive with account_id; requires platform.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "platform": {
+            "description": "Platform name or alias (tiktok/tk, instagram/ig, facebook/fb, youtube/yt, x, linkedin, threads). Required with handle.",
+            "minLength": 1,
             "type": "string"
           },
           "reason": {
@@ -73830,9 +74002,6 @@
             ]
           }
         },
-        "required": [
-          "account_id"
-        ],
         "type": "object"
       },
       "name": "social-account.credentials-totp-code",
