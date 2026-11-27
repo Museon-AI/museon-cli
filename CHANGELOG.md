@@ -2,6 +2,15 @@
 
 Museon CLI follows semantic versioning for its package and command contract.
 
+## 3.5.0
+
+Staff can generate live 6-digit 2FA codes and resolve login credentials for pool social accounts through the encrypted credential vault. Other domains are unchanged.
+
+- `social-account credentials +totp-code --id ACCOUNT_ID [--reason TEXT]` (staff only) returns a live 6-digit TOTP code with remaining seconds, effective login type, and verification links without exposing passwords or permanent TOTP seeds.
+- `social-account credentials +get --id ACCOUNT_ID [--reason TEXT] [--include-totp-secret]` (staff only) resolves effective login credentials (including shared Google/email identities, Facebook Page parent-profile inheritance, third-party SSO, and a live 6-digit TOTP code); permanent 32-character TOTP seeds stay omitted unless `--include-totp-secret` is explicitly passed. Every call is audited and non-cacheable.
+- Batch staff credential operations under `social-account credentials`: `+bulk-status` (up to 200 accounts, non-secret metadata only), `+bulk-totp-codes` (up to 50 accounts, live 6-digit codes only), `+bulk-get` (up to 20 accounts, `--reason` required), and `+bulk-upsert` (up to 200 rows from `--file` `.csv`/`.json` or `--args-json`, with server-side redacted `--dry-run` and `--overwrite`).
+- The command contract revision moves with the package to 3.5.0. Sync the API's vendored `agent_cli_command_catalog.json` to this revision before tagging.
+
 ## 3.4.0
 
 Staff can have a failed publish job verified after posting it by hand. Other domains are unchanged.

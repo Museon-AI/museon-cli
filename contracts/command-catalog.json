@@ -13837,6 +13837,355 @@
             "enforcement": "museon_server",
             "organization_bound": true,
             "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.credentials-totp-code",
+          "cli": "museoncli social-account credentials +totp-code",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.credentials-totp-code",
+          "requires_confirmation": false,
+          "resource": "credentials",
+          "risk_level": "read",
+          "shortcut": "+totp-code",
+          "stability": "stable",
+          "summary": "Staff only: generate a live 6-digit 2FA TOTP code (with remaining seconds, effective login type, and verification links) for one pool social account without revealing passwords or the permanent TOTP seed. Every call is audited.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.credentials-get",
+          "cli": "museoncli social-account credentials +get",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.credentials-get",
+          "requires_confirmation": false,
+          "resource": "credentials",
+          "risk_level": "read",
+          "shortcut": "+get",
+          "stability": "stable",
+          "summary": "Staff only: reveal one pool social account's resolved login credentials (effective login type, password, shared mailbox/Google SSO, Facebook Page parent inheritance, live 6-digit TOTP code, verification links, and third-party SSO). Permanent TOTP seeds stay hidden unless --include-totp-secret is passed. Every call is audited.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.credentials-bulk-status",
+          "cli": "museoncli social-account credentials +bulk-status",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.credentials-bulk-status",
+          "requires_confirmation": false,
+          "resource": "credentials",
+          "risk_level": "read",
+          "shortcut": "+bulk-status",
+          "stability": "stable",
+          "summary": "Staff only: check non-secret credential coverage and login types for up to 200 pool social accounts in one request (has_password, has_totp, second_factor_kind, effective_login_type, shared email count, FB parent link). Never decrypts or returns secrets.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.credentials-bulk-totp-codes",
+          "cli": "museoncli social-account credentials +bulk-totp-codes",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.credentials-bulk-totp-codes",
+          "requires_confirmation": false,
+          "resource": "credentials",
+          "risk_level": "read",
+          "shortcut": "+bulk-totp-codes",
+          "stability": "stable",
+          "summary": "Staff only: generate live 6-digit 2FA TOTP codes for up to 50 pool social accounts in one request without exposing passwords or permanent TOTP seeds. Every account lookup is audited.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.credentials-bulk-get",
+          "cli": "museoncli social-account credentials +bulk-get",
+          "domain": "social-account",
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.credentials-bulk-get",
+          "requires_confirmation": false,
+          "resource": "credentials",
+          "risk_level": "read",
+          "shortcut": "+bulk-get",
+          "stability": "stable",
+          "summary": "Staff only: reveal resolved login credentials for up to 20 pool social accounts in one audited request (--reason required). Permanent TOTP seeds stay omitted unless --include-totp-secret is passed.",
+          "supports_dry_run": false,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
+              "staff"
+            ],
+            "required_scopes": [
+              "agent_cli.access"
+            ],
+            "resource_policy": "server_evaluated_organization_and_resource_access"
+          },
+          "capability_key": "social-account.credentials-bulk-upsert",
+          "cli": "museoncli social-account credentials +bulk-upsert",
+          "domain": "social-account",
+          "dry_run_reads_server": true,
+          "execution": "direct",
+          "frontend_url_templates": [
+            {
+              "applies_when": {},
+              "description": "Open the social accounts page.",
+              "label": "Social accounts",
+              "path_template": "/social-accounts",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts"
+            },
+            {
+              "applies_when": {},
+              "description": "Open one pool account performance page.",
+              "label": "Pool account performance",
+              "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+              "required_fields": [
+                "account_id"
+              ],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+            },
+            {
+              "applies_when": {},
+              "description": "Open the account publish calendar.",
+              "label": "Account publish calendar",
+              "path_template": "/social-accounts/calendar",
+              "required_fields": [],
+              "requires_auth": true,
+              "url_template": "{frontend_origin}/social-accounts/calendar"
+            }
+          ],
+          "name": "social-account.credentials-bulk-upsert",
+          "requires_confirmation": false,
+          "resource": "credentials",
+          "risk_level": "write",
+          "shortcut": "+bulk-upsert",
+          "stability": "stable",
+          "summary": "Staff only: batch-encrypt and upsert credentials for up to 200 pool social accounts from a local --file (.csv or .json) or --args-json. Automatically parses 2FA, drops invalid unparsed 2FA noise, links shared email identities and Facebook Page parent profiles, and keeps replaced values in encrypted previous_versions. Use --dry-run to preview redacted classifications first; responses never echo plaintext secrets.",
+          "supports_dry_run": true,
+          "transport": "agent_cli_api"
+        },
+        {
+          "authorization": {
+            "authentication_required": true,
+            "enforcement": "museon_server",
+            "organization_bound": true,
+            "required_roles": [
               "organization_member"
             ],
             "required_scopes": [
@@ -18664,7 +19013,7 @@
       "html-documents"
     ]
   },
-  "contract_revision": "3.4.0",
+  "contract_revision": "3.5.0",
   "package": "museoncli",
   "schema_version": 3,
   "schemas": {
@@ -72698,6 +73047,857 @@
       "stability": "stable",
       "summary": "Create an organization self-authorization link to connect a user-owned social account. Supports TikTok, Instagram, Facebook, YouTube, LinkedIn, and X.",
       "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "social-account.credentials-bulk-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.credentials-bulk-get",
+      "cli": "museoncli social-account credentials +bulk-get",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account credentials +bulk-get --id <pool_account_id_1> --id <pool_account_id_2> --reason 'batch cloud-phone login'"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "account_ids": {
+            "items": {
+              "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "include_totp_secret": {
+            "default": false,
+            "description": "Include permanent 32-char TOTP seeds (omit if 6-digit codes suffice).",
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "Required operational reason recorded in the audit log.",
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_ids",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.credentials-bulk-get",
+      "output_schema": {
+        "description": "Resolved login credentials and live 6-digit TOTP codes for up to 20 accounts.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "credentials",
+      "risk_level": "read",
+      "shortcut": "+bulk-get",
+      "stability": "stable",
+      "summary": "Staff only: reveal resolved login credentials for up to 20 pool social accounts in one audited request (--reason required). Permanent TOTP seeds stay omitted unless --include-totp-secret is passed.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "social-account.credentials-bulk-status": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.credentials-bulk-status",
+      "cli": "museoncli social-account credentials +bulk-status",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account credentials +bulk-status --id <pool_account_id_1> --id <pool_account_id_2>"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "account_ids": {
+            "items": {
+              "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "account_ids"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.credentials-bulk-status",
+      "output_schema": {
+        "description": "Non-secret credential coverage summary and per-account flags.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "credentials",
+      "risk_level": "read",
+      "shortcut": "+bulk-status",
+      "stability": "stable",
+      "summary": "Staff only: check non-secret credential coverage and login types for up to 200 pool social accounts in one request (has_password, has_totp, second_factor_kind, effective_login_type, shared email count, FB parent link). Never decrypts or returns secrets.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "social-account.credentials-bulk-totp-codes": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.credentials-bulk-totp-codes",
+      "cli": "museoncli social-account credentials +bulk-totp-codes",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account credentials +bulk-totp-codes --id <pool_account_id_1> --id <pool_account_id_2> --reason 'batch login'"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "account_ids": {
+            "items": {
+              "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "reason": {
+            "description": "Optional short operational reason recorded in the audit log.",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "account_ids"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.credentials-bulk-totp-codes",
+      "output_schema": {
+        "description": "Live 6-digit TOTP codes and verification URLs for each requested account.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "credentials",
+      "risk_level": "read",
+      "shortcut": "+bulk-totp-codes",
+      "stability": "stable",
+      "summary": "Staff only: generate live 6-digit 2FA TOTP codes for up to 50 pool social accounts in one request without exposing passwords or permanent TOTP seeds. Every account lookup is audited.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "social-account.credentials-bulk-upsert": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.credentials-bulk-upsert",
+      "cli": "museoncli social-account credentials +bulk-upsert",
+      "domain": "social-account",
+      "dry_run_reads_server": true,
+      "examples": [
+        "museoncli social-account credentials +bulk-upsert --file credentials.csv --dry-run",
+        "museoncli social-account credentials +bulk-upsert --file credentials.csv --overwrite --reason 'vendor password rotation'"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "items": {
+            "items": {
+              "description": "Target by account_id or platform+username, plus optional email, password, email_password, backup_email, backup_password, two_fa / 2fa, two_fa_link / 2fa_link, session_cookie / code, parent_account.",
+              "type": "object"
+            },
+            "maxItems": 200,
+            "minItems": 1,
+            "type": "array"
+          },
+          "overwrite": {
+            "default": false,
+            "description": "Overwrite existing vault fields (old values stay in previous_versions).",
+            "type": "boolean"
+          },
+          "reason": {
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.credentials-bulk-upsert",
+      "output_schema": {
+        "description": "Redacted per-row upsert status and summary counts (zero plaintext secrets).",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "credentials",
+      "risk_level": "write",
+      "shortcut": "+bulk-upsert",
+      "stability": "stable",
+      "summary": "Staff only: batch-encrypt and upsert credentials for up to 200 pool social accounts from a local --file (.csv or .json) or --args-json. Automatically parses 2FA, drops invalid unparsed 2FA noise, links shared email identities and Facebook Page parent profiles, and keeps replaced values in encrypted previous_versions. Use --dry-run to preview redacted classifications first; responses never echo plaintext secrets.",
+      "supports_dry_run": true,
+      "transport": "agent_cli_api"
+    },
+    "social-account.credentials-get": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.credentials-get",
+      "cli": "museoncli social-account credentials +get",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account credentials +get --id <pool_account_id>",
+        "museoncli social-account credentials +get --id <pool_account_id> --reason 'relogin on cloud phone'",
+        "museoncli social-account credentials +get --id <pool_account_id> --include-totp-secret"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "account_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "include_totp_secret": {
+            "default": false,
+            "description": "Include the permanent Base32 TOTP seed in the response. Omit unless provisioning a new authenticator; the live 6-digit code is already included.",
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "Optional short operational reason recorded in the audit log.",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "account_id"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.credentials-get",
+      "output_schema": {
+        "description": "Resolved login credentials and live 6-digit TOTP code for staff login.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "credentials",
+      "risk_level": "read",
+      "shortcut": "+get",
+      "stability": "stable",
+      "summary": "Staff only: reveal one pool social account's resolved login credentials (effective login type, password, shared mailbox/Google SSO, Facebook Page parent inheritance, live 6-digit TOTP code, verification links, and third-party SSO). Permanent TOTP seeds stay hidden unless --include-totp-secret is passed. Every call is audited.",
+      "supports_dry_run": false,
+      "transport": "agent_cli_api"
+    },
+    "social-account.credentials-totp-code": {
+      "authorization": {
+        "authentication_required": true,
+        "enforcement": "museon_server",
+        "organization_bound": true,
+        "required_roles": [
+          "staff"
+        ],
+        "required_scopes": [
+          "agent_cli.access"
+        ],
+        "resource_policy": "server_evaluated_organization_and_resource_access"
+      },
+      "capability_key": "social-account.credentials-totp-code",
+      "cli": "museoncli social-account credentials +totp-code",
+      "domain": "social-account",
+      "examples": [
+        "museoncli social-account credentials +totp-code --id <pool_account_id>",
+        "museoncli social-account credentials +totp-code --id <pool_account_id> --reason 'cloud-phone login'"
+      ],
+      "execution": "direct",
+      "frontend_url_templates": [
+        {
+          "applies_when": {},
+          "description": "Open the social accounts page.",
+          "label": "Social accounts",
+          "path_template": "/social-accounts",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts"
+        },
+        {
+          "applies_when": {},
+          "description": "Open one pool account performance page.",
+          "label": "Pool account performance",
+          "path_template": "/social-accounts/pool-accounts/{account_id}/performance",
+          "required_fields": [
+            "account_id"
+          ],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/pool-accounts/{account_id}/performance"
+        },
+        {
+          "applies_when": {},
+          "description": "Open the account publish calendar.",
+          "label": "Account publish calendar",
+          "path_template": "/social-accounts/calendar",
+          "required_fields": [],
+          "requires_auth": true,
+          "url_template": "{frontend_origin}/social-accounts/calendar"
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "account_id": {
+            "description": "Canonical UUID copied from a previous command response. Never pass placeholders ('?', 'TBD') or descriptive text; look the ID up first with the matching +list/+get command. Pool account UUID.",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Optional short operational reason recorded in the audit log.",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "account_id"
+        ],
+        "type": "object"
+      },
+      "name": "social-account.credentials-totp-code",
+      "output_schema": {
+        "description": "Live 6-digit TOTP code and non-secret 2FA routing metadata.",
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "data": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "next_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "organization": {
+            "description": "The organization this command addressed (id, name).",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "run": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "command",
+          "data",
+          "run",
+          "warnings",
+          "next_steps"
+        ],
+        "type": "object"
+      },
+      "requires_confirmation": false,
+      "resource": "credentials",
+      "risk_level": "read",
+      "shortcut": "+totp-code",
+      "stability": "stable",
+      "summary": "Staff only: generate a live 6-digit 2FA TOTP code (with remaining seconds, effective login type, and verification links) for one pool social account without revealing passwords or the permanent TOTP seed. Every call is audited.",
+      "supports_dry_run": false,
       "transport": "agent_cli_api"
     },
     "social-account.draft-profile-edit": {

@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import contextlib
+import csv
 import json
+from pathlib import Path
 import time
 from typing import Any
 
@@ -168,6 +170,331 @@ def _build_social_account_id_arguments(args: argparse.Namespace) -> dict[str, An
     payload = _load_structured_args(args)
     payload["account_id"] = args.account_id
     return payload
+
+
+def _add_social_account_totp_code_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_social_account_id_arguments(parser)
+    parser.add_argument(
+        "--reason",
+        help="Optional short operational reason recorded in the credential audit log.",
+    )
+
+
+def _build_social_account_totp_code_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _build_social_account_id_arguments(args)
+    if args.reason is not None:
+        payload["reason"] = args.reason
+    return payload
+
+
+def _add_social_account_credentials_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_social_account_totp_code_arguments(parser)
+    parser.add_argument(
+        "--include-totp-secret",
+        action="store_true",
+        help=(
+            "Include the permanent 32-character Base32 TOTP seed. Omit when you only need "
+            "the live 6-digit TOTP code."
+        ),
+    )
+
+
+def _build_social_account_credentials_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _build_social_account_totp_code_arguments(args)
+    payload["include_totp_secret"] = bool(args.include_totp_secret)
+    return payload
+
+
+def _social_account_totp_code_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_id": _uuid_id_schema("Pool account UUID."),
+            "reason": {
+                "type": ["string", "null"],
+                "maxLength": 200,
+                "description": "Optional short operational reason recorded in the audit log.",
+            },
+        },
+        "required": ["account_id"],
+    }
+
+
+def _social_account_credentials_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_id": _uuid_id_schema("Pool account UUID."),
+            "reason": {
+                "type": ["string", "null"],
+                "maxLength": 200,
+                "description": "Optional short operational reason recorded in the audit log.",
+            },
+            "include_totp_secret": {
+                "type": "boolean",
+                "default": False,
+                "description": (
+                    "Include the permanent Base32 TOTP seed in the response. Omit unless "
+                    "provisioning a new authenticator; the live 6-digit code is already included."
+                ),
+            },
+        },
+        "required": ["account_id"],
+    }
+
+
+SOCIAL_ACCOUNT_BULK_STATUS_MAX = 200
+SOCIAL_ACCOUNT_BULK_TOTP_MAX = 50
+SOCIAL_ACCOUNT_BULK_REVEAL_MAX = 20
+SOCIAL_ACCOUNT_BULK_UPSERT_MAX = 200
+
+
+def _add_social_account_bulk_ids_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument(
+        "--id",
+        action="append",
+        dest="account_ids",
+        help="Pool account UUID; repeat to include multiple accounts.",
+    )
+
+
+def _build_social_account_bulk_ids_arguments(
+    args: argparse.Namespace, *, command_label: str, max_items: int
+) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    raw_ids = args.account_ids if args.account_ids else payload.get("account_ids")
+    account_ids = _ordered_strings(raw_ids) if isinstance(raw_ids, list) else []
+    if not account_ids:
+        raise ValueError(f"{command_label} requires at least one --id (or account_ids).")
+    if len(account_ids) > max_items:
+        raise ValueError(f"{command_label} supports at most {max_items} accounts per request.")
+    payload["account_ids"] = account_ids
+    return payload
+
+
+def _build_social_account_bulk_status_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    return _build_social_account_bulk_ids_arguments(
+        args,
+        command_label="social-account credentials +bulk-status",
+        max_items=SOCIAL_ACCOUNT_BULK_STATUS_MAX,
+    )
+
+
+def _add_social_account_bulk_totp_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_social_account_bulk_ids_arguments(parser)
+    parser.add_argument(
+        "--reason",
+        help="Optional short operational reason recorded in the credential audit log.",
+    )
+
+
+def _build_social_account_bulk_totp_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _build_social_account_bulk_ids_arguments(
+        args,
+        command_label="social-account credentials +bulk-totp-codes",
+        max_items=SOCIAL_ACCOUNT_BULK_TOTP_MAX,
+    )
+    if args.reason is not None:
+        payload["reason"] = args.reason
+    return payload
+
+
+def _add_social_account_bulk_reveal_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_social_account_bulk_ids_arguments(parser)
+    parser.add_argument(
+        "--reason",
+        help="Required operational reason recorded in the audit log (2-200 chars).",
+    )
+    parser.add_argument(
+        "--include-totp-secret",
+        action="store_true",
+        help="Include permanent 32-char Base32 TOTP seeds; omit if 6-digit codes are enough.",
+    )
+
+
+def _build_social_account_bulk_reveal_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _build_social_account_bulk_ids_arguments(
+        args,
+        command_label="social-account credentials +bulk-get",
+        max_items=SOCIAL_ACCOUNT_BULK_REVEAL_MAX,
+    )
+    reason = str(args.reason if args.reason is not None else payload.get("reason") or "").strip()
+    if len(reason) < 2:
+        raise ValueError(
+            "social-account credentials +bulk-get requires --reason (at least 2 characters)."
+        )
+    payload["reason"] = reason
+    payload["include_totp_secret"] = bool(
+        args.include_totp_secret or payload.get("include_totp_secret", False)
+    )
+    return payload
+
+
+def _load_bulk_credential_items_from_file(path_text: str) -> list[dict[str, Any]]:
+    path = Path(path_text)
+    if not path.is_file():
+        raise ValueError(f"Credentials file not found: {path}")
+    raw_text = path.read_text(encoding="utf-8-sig")
+    if path.suffix.lower() == ".csv":
+        reader = csv.DictReader(raw_text.splitlines())
+        items: list[dict[str, Any]] = []
+        for row in reader:
+            cleaned = {
+                str(k).strip().lower(): str(v).strip()
+                for k, v in row.items()
+                if k is not None and v is not None and str(v).strip() != ""
+            }
+            if cleaned:
+                items.append(cleaned)
+        return items
+    try:
+        parsed = json.loads(raw_text)
+    except ValueError as exc:
+        raise ValueError(f"Could not parse --file as JSON or CSV: {path}") from exc
+    if isinstance(parsed, dict) and isinstance(parsed.get("items"), list):
+        parsed = parsed["items"]
+    if not isinstance(parsed, list) or not all(isinstance(x, dict) for x in parsed):
+        raise ValueError("--file JSON must be an array of objects or {'items': [...]}.")
+    return [dict(x) for x in parsed]
+
+
+def _add_social_account_bulk_upsert_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument(
+        "--file",
+        dest="file_path",
+        help="Path to a local .csv or .json file containing credential rows (max 200).",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing vault values on conflict (old values stay in previous_versions).",
+    )
+    parser.add_argument(
+        "--reason",
+        help="Optional short operational reason recorded in the audit log.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate and preview redacted classifications on the server without writing.",
+    )
+
+
+def _build_social_account_bulk_upsert_arguments(args: argparse.Namespace) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    items = (
+        _load_bulk_credential_items_from_file(args.file_path)
+        if args.file_path
+        else payload.get("items")
+    )
+    if not isinstance(items, list) or not items:
+        raise ValueError(
+            "social-account credentials +bulk-upsert requires --file or --args-json with items."
+        )
+    if len(items) > SOCIAL_ACCOUNT_BULK_UPSERT_MAX:
+        raise ValueError(
+            f"social-account credentials +bulk-upsert supports at most "
+            f"{SOCIAL_ACCOUNT_BULK_UPSERT_MAX} items per request."
+        )
+    payload["items"] = items
+    payload["overwrite"] = bool(args.overwrite or payload.get("overwrite", False))
+    if args.reason is not None:
+        payload["reason"] = args.reason
+    return payload
+
+
+def _social_account_bulk_status_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": SOCIAL_ACCOUNT_BULK_STATUS_MAX,
+                "items": _uuid_id_schema("Pool account UUID."),
+            },
+        },
+        "required": ["account_ids"],
+    }
+
+
+def _social_account_bulk_totp_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": SOCIAL_ACCOUNT_BULK_TOTP_MAX,
+                "items": _uuid_id_schema("Pool account UUID."),
+            },
+            "reason": {
+                "type": ["string", "null"],
+                "maxLength": 200,
+                "description": "Optional short operational reason recorded in the audit log.",
+            },
+        },
+        "required": ["account_ids"],
+    }
+
+
+def _social_account_bulk_reveal_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "account_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": SOCIAL_ACCOUNT_BULK_REVEAL_MAX,
+                "items": _uuid_id_schema("Pool account UUID."),
+            },
+            "reason": {
+                "type": "string",
+                "minLength": 2,
+                "maxLength": 200,
+                "description": "Required operational reason recorded in the audit log.",
+            },
+            "include_totp_secret": {
+                "type": "boolean",
+                "default": False,
+                "description": "Include permanent 32-char TOTP seeds (omit if 6-digit codes suffice).",
+            },
+        },
+        "required": ["account_ids", "reason"],
+    }
+
+
+def _social_account_bulk_upsert_input_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "items": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": SOCIAL_ACCOUNT_BULK_UPSERT_MAX,
+                "items": {
+                    "type": "object",
+                    "description": (
+                        "Target by account_id or platform+username, plus optional email, "
+                        "password, email_password, backup_email, backup_password, two_fa / 2fa, "
+                        "two_fa_link / 2fa_link, session_cookie / code, parent_account."
+                    ),
+                },
+            },
+            "overwrite": {
+                "type": "boolean",
+                "default": False,
+                "description": "Overwrite existing vault fields (old values stay in previous_versions).",
+            },
+            "reason": {
+                "type": ["string", "null"],
+                "maxLength": 200,
+            },
+        },
+        "required": ["items"],
+    }
 
 
 def _add_social_account_renew_phone_lease_arguments(parser: argparse.ArgumentParser) -> None:
@@ -815,6 +1142,181 @@ def specs() -> list[CommandSpec]:
             examples=["museoncli social-account +get --id <pool_account_id>"],
             add_arguments=_add_social_account_id_arguments,
             build_arguments=_build_social_account_id_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
+            resource="credentials",
+            shortcut="+totp-code",
+            summary=(
+                "Staff only: generate a live 6-digit 2FA TOTP code (with remaining seconds, "
+                "effective login type, and verification links) for one pool social account "
+                "without revealing passwords or the permanent TOTP seed. Every call is audited."
+            ),
+            risk_level="read",
+            execution="direct",
+            required_roles=("staff",),
+            adapter_tool_name="social_account_totp_code_get",
+            input_schema=_social_account_totp_code_input_schema(),
+            output_schema=_direct_output_schema(
+                "Live 6-digit TOTP code and non-secret 2FA routing metadata."
+            ),
+            examples=[
+                "museoncli social-account credentials +totp-code --id <pool_account_id>",
+                (
+                    "museoncli social-account credentials +totp-code --id <pool_account_id> "
+                    "--reason 'cloud-phone login'"
+                ),
+            ],
+            add_arguments=_add_social_account_totp_code_arguments,
+            build_arguments=_build_social_account_totp_code_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
+            resource="credentials",
+            shortcut="+get",
+            summary=(
+                "Staff only: reveal one pool social account's resolved login credentials "
+                "(effective login type, password, shared mailbox/Google SSO, Facebook Page "
+                "parent inheritance, live 6-digit TOTP code, verification links, and "
+                "third-party SSO). Permanent TOTP seeds stay hidden unless "
+                "--include-totp-secret is passed. Every call is audited."
+            ),
+            risk_level="read",
+            execution="direct",
+            required_roles=("staff",),
+            adapter_tool_name="social_account_credentials_get",
+            input_schema=_social_account_credentials_input_schema(),
+            output_schema=_direct_output_schema(
+                "Resolved login credentials and live 6-digit TOTP code for staff login."
+            ),
+            examples=[
+                "museoncli social-account credentials +get --id <pool_account_id>",
+                (
+                    "museoncli social-account credentials +get --id <pool_account_id> "
+                    "--reason 'relogin on cloud phone'"
+                ),
+                (
+                    "museoncli social-account credentials +get --id <pool_account_id> "
+                    "--include-totp-secret"
+                ),
+            ],
+            add_arguments=_add_social_account_credentials_arguments,
+            build_arguments=_build_social_account_credentials_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
+            resource="credentials",
+            shortcut="+bulk-status",
+            summary=(
+                "Staff only: check non-secret credential coverage and login types for up to "
+                "200 pool social accounts in one request (has_password, has_totp, "
+                "second_factor_kind, effective_login_type, shared email count, FB parent link). "
+                "Never decrypts or returns secrets."
+            ),
+            risk_level="read",
+            execution="direct",
+            required_roles=("staff",),
+            adapter_tool_name="social_account_credentials_bulk_status",
+            input_schema=_social_account_bulk_status_input_schema(),
+            output_schema=_direct_output_schema(
+                "Non-secret credential coverage summary and per-account flags."
+            ),
+            examples=[
+                (
+                    "museoncli social-account credentials +bulk-status "
+                    "--id <pool_account_id_1> --id <pool_account_id_2>"
+                ),
+            ],
+            add_arguments=_add_social_account_bulk_ids_arguments,
+            build_arguments=_build_social_account_bulk_status_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
+            resource="credentials",
+            shortcut="+bulk-totp-codes",
+            summary=(
+                "Staff only: generate live 6-digit 2FA TOTP codes for up to 50 pool social "
+                "accounts in one request without exposing passwords or permanent TOTP seeds. "
+                "Every account lookup is audited."
+            ),
+            risk_level="read",
+            execution="direct",
+            required_roles=("staff",),
+            adapter_tool_name="social_account_totp_codes_bulk_get",
+            input_schema=_social_account_bulk_totp_input_schema(),
+            output_schema=_direct_output_schema(
+                "Live 6-digit TOTP codes and verification URLs for each requested account."
+            ),
+            examples=[
+                (
+                    "museoncli social-account credentials +bulk-totp-codes "
+                    "--id <pool_account_id_1> --id <pool_account_id_2> --reason 'batch login'"
+                ),
+            ],
+            add_arguments=_add_social_account_bulk_totp_arguments,
+            build_arguments=_build_social_account_bulk_totp_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
+            resource="credentials",
+            shortcut="+bulk-get",
+            summary=(
+                "Staff only: reveal resolved login credentials for up to 20 pool social accounts "
+                "in one audited request (--reason required). Permanent TOTP seeds stay omitted "
+                "unless --include-totp-secret is passed."
+            ),
+            risk_level="read",
+            execution="direct",
+            required_roles=("staff",),
+            adapter_tool_name="social_account_credentials_bulk_reveal",
+            input_schema=_social_account_bulk_reveal_input_schema(),
+            output_schema=_direct_output_schema(
+                "Resolved login credentials and live 6-digit TOTP codes for up to 20 accounts."
+            ),
+            examples=[
+                (
+                    "museoncli social-account credentials +bulk-get "
+                    "--id <pool_account_id_1> --id <pool_account_id_2> "
+                    "--reason 'batch cloud-phone login'"
+                ),
+            ],
+            add_arguments=_add_social_account_bulk_reveal_arguments,
+            build_arguments=_build_social_account_bulk_reveal_arguments,
+        ),
+        CommandSpec(
+            domain=Domain.SOCIAL_ACCOUNT,
+            resource="credentials",
+            shortcut="+bulk-upsert",
+            summary=(
+                "Staff only: batch-encrypt and upsert credentials for up to 200 pool social "
+                "accounts from a local --file (.csv or .json) or --args-json. Automatically "
+                "parses 2FA, drops invalid unparsed 2FA noise, links shared email identities "
+                "and Facebook Page parent profiles, and keeps replaced values in encrypted "
+                "previous_versions. Use --dry-run to preview redacted classifications first; "
+                "responses never echo plaintext secrets."
+            ),
+            risk_level="write",
+            execution="direct",
+            required_roles=("staff",),
+            supports_dry_run=True,
+            dry_run_reads_server=True,
+            adapter_tool_name="social_account_credentials_bulk_upsert",
+            input_schema=_social_account_bulk_upsert_input_schema(),
+            output_schema=_direct_output_schema(
+                "Redacted per-row upsert status and summary counts (zero plaintext secrets)."
+            ),
+            examples=[
+                (
+                    "museoncli social-account credentials +bulk-upsert "
+                    "--file credentials.csv --dry-run"
+                ),
+                (
+                    "museoncli social-account credentials +bulk-upsert "
+                    "--file credentials.csv --overwrite --reason 'vendor password rotation'"
+                ),
+            ],
+            add_arguments=_add_social_account_bulk_upsert_arguments,
+            build_arguments=_build_social_account_bulk_upsert_arguments,
         ),
         CommandSpec(
             domain=Domain.SOCIAL_ACCOUNT,
@@ -1548,6 +2050,127 @@ async def _execute_profile_edit_batch_submit(ctx: CommandContext) -> Any:
     return result
 
 
+async def _execute_totp_code_get(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    api_data = ctx.api_data
+    account_id = str(arguments.get("account_id") or "")
+    if not account_id:
+        raise RuntimeError("social-account.get-totp-code requires account_id")
+    body = _without_none({"reason": arguments.get("reason")})
+    return agent_domain_result(
+        await api_data(
+            cfg,
+            "POST",
+            f"/agent-cli/pool-accounts/{account_id}/totp-code",
+            json_body=body,
+        )
+    )
+
+
+async def _execute_credentials_get(ctx: CommandContext) -> Any:
+    cfg = ctx.cfg
+    arguments = ctx.arguments
+    api_data = ctx.api_data
+    account_id = str(arguments.get("account_id") or "")
+    if not account_id:
+        raise RuntimeError("social-account.get-credentials requires account_id")
+    body = _without_none(
+        {
+            "reason": arguments.get("reason"),
+            "include_totp_secret": bool(arguments.get("include_totp_secret", False)),
+        }
+    )
+    return agent_domain_result(
+        await api_data(
+            cfg,
+            "POST",
+            f"/agent-cli/pool-accounts/{account_id}/credentials",
+            json_body=body,
+        )
+    )
+
+
+async def _execute_credentials_bulk_status(ctx: CommandContext) -> Any:
+    account_ids = ctx.arguments.get("account_ids")
+    if not isinstance(account_ids, list) or not account_ids:
+        raise RuntimeError("social-account.bulk-get-credential-status requires account_ids")
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/pool-accounts/credentials/status",
+            json_body={"account_ids": account_ids},
+        )
+    )
+
+
+async def _execute_totp_codes_bulk_get(ctx: CommandContext) -> Any:
+    account_ids = ctx.arguments.get("account_ids")
+    if not isinstance(account_ids, list) or not account_ids:
+        raise RuntimeError("social-account.bulk-get-totp-codes requires account_ids")
+    body = _without_none(
+        {
+            "account_ids": account_ids,
+            "reason": ctx.arguments.get("reason"),
+        }
+    )
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/pool-accounts/totp-codes/bulk",
+            json_body=body,
+        )
+    )
+
+
+async def _execute_credentials_bulk_reveal(ctx: CommandContext) -> Any:
+    account_ids = ctx.arguments.get("account_ids")
+    if not isinstance(account_ids, list) or not account_ids:
+        raise RuntimeError("social-account.bulk-get-credentials requires account_ids")
+    reason = str(ctx.arguments.get("reason") or "").strip()
+    if len(reason) < 2:
+        raise RuntimeError("social-account.bulk-get-credentials requires reason")
+    body = {
+        "account_ids": account_ids,
+        "reason": reason,
+        "include_totp_secret": bool(ctx.arguments.get("include_totp_secret", False)),
+    }
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/pool-accounts/credentials/bulk-reveal",
+            json_body=body,
+        )
+    )
+
+
+async def _execute_credentials_bulk_upsert(ctx: CommandContext) -> Any:
+    items = ctx.arguments.get("items")
+    if not isinstance(items, list) or not items:
+        raise RuntimeError("social-account.bulk-upsert-credentials requires items")
+    body = _without_none(
+        {
+            "items": items,
+            "dry_run": bool(
+                getattr(ctx.args, "dry_run", False) or ctx.arguments.get("dry_run", False)
+            ),
+            "overwrite": bool(ctx.arguments.get("overwrite", False)),
+            "reason": ctx.arguments.get("reason"),
+        }
+    )
+    return agent_domain_result(
+        await ctx.api_data(
+            ctx.cfg,
+            "POST",
+            "/agent-cli/pool-accounts/credentials/bulk-upsert",
+            json_body=body,
+        )
+    )
+
+
 EXECUTORS = {
     "social-account.create-connect-link": direct_enveloped(_execute_connect_link_create),
     "social-account.get-connect-link": direct_enveloped(_execute_connect_link_status),
@@ -1555,6 +2178,12 @@ EXECUTORS = {
     "social-account.get-stream-url": direct_enveloped(_execute_stream_url),
     "social-account.renew-phone-lease": direct_enveloped(_execute_renew_phone_lease),
     "social-account.get": direct_enveloped(_execute_get),
+    "social-account.credentials-totp-code": direct_enveloped(_execute_totp_code_get),
+    "social-account.credentials-get": direct_enveloped(_execute_credentials_get),
+    "social-account.credentials-bulk-status": direct_enveloped(_execute_credentials_bulk_status),
+    "social-account.credentials-bulk-totp-codes": direct_enveloped(_execute_totp_codes_bulk_get),
+    "social-account.credentials-bulk-get": direct_enveloped(_execute_credentials_bulk_reveal),
+    "social-account.credentials-bulk-upsert": direct_enveloped(_execute_credentials_bulk_upsert),
     "social-account.get-performance": direct_enveloped(_execute_performance_get),
     "social-account.list": direct_enveloped(_execute_list),
     "social-account.bulk-generate-avatars": direct_enveloped(_execute_avatar_generate_batch),

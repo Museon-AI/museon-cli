@@ -36,6 +36,12 @@ STAFF_COMMANDS = {
     "staff-ops.read-supabase",
     "staff-ops.search-logs",
     "publish.job-verify-manual",
+    "social-account.credentials-totp-code",
+    "social-account.credentials-get",
+    "social-account.credentials-bulk-status",
+    "social-account.credentials-bulk-totp-codes",
+    "social-account.credentials-bulk-get",
+    "social-account.credentials-bulk-upsert",
 }
 # positional mode selectors (never IDs)
 ALLOWED_POSITIONALS = {"routines.record": ["kind"]}
