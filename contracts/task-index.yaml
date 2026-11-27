@@ -621,11 +621,17 @@ chapters:
           - publish.job-verify-manual: "Staff, after posting a failed job by hand: pass --posted-at (and --post-url when known); it only verifies, never republishes."
       - id: cloud-phone-session
         title: Drive an account's cloud phone
-        when: ["adb", "cloud phone", "connect phone", "stream", "phone screen", "云手机", "连手机", "投屏"]
+        when: ["adb", "cloud phone", "connect phone", "stream", "phone screen", "totp", "2fa", "login credentials", "云手机", "连手机", "投屏", "验证码", "账号密码"]
         steps:
           - social-account.connect-adb: "Waits up to two minutes for a cold phone; on CLOUD_PHONE_BOOTING run it once more."
           - social-account.renew-phone-lease: "The relay renews every minute while ADB traffic flows."
           - social-account.get-stream-url
+          - social-account.credentials-totp-code: "Staff: generate a live 6-digit 2FA code without exposing passwords or permanent TOTP seeds."
+          - social-account.credentials-get: "Staff: reveal resolved login password, shared mailbox/Google SSO, FB parent inheritance, and live 6-digit TOTP code (permanent seed omitted unless --include-totp-secret)."
+          - social-account.credentials-bulk-status: "Staff: inspect non-secret credential coverage and login types for up to 200 accounts."
+          - social-account.credentials-bulk-totp-codes: "Staff: generate live 6-digit 2FA codes for up to 50 accounts without passwords or seeds."
+          - social-account.credentials-bulk-get: "Staff: reveal resolved login credentials for up to 20 accounts (--reason required; seeds omitted unless --include-totp-secret)."
+          - social-account.credentials-bulk-upsert: "Staff: batch-encrypt up to 200 credential rows from --file (.csv/.json) or --args-json; preview with --dry-run."
       - id: cloud-phone-fleet
         title: Read the phone fleet and fix phones' IPs
         when: ["fleet", "phones", "phone health", "ip health", "attention", "set proxy", "手机列表", "设备", "换ip", "代理"]

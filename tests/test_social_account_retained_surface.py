@@ -8,6 +8,12 @@ from museoncli.domains import command_executors, get_command_spec, schema_payloa
 RETAINED = {
     "list",
     "get",
+    "credentials-totp-code",
+    "credentials-get",
+    "credentials-bulk-status",
+    "credentials-bulk-totp-codes",
+    "credentials-bulk-get",
+    "credentials-bulk-upsert",
     "connect-adb",
     "get-stream-url",
     "renew-phone-lease",
