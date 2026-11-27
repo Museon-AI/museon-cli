@@ -49,7 +49,7 @@ verify `museoncli version`,
 then resume the original task:
 
 ```bash
-uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v3.5.0/museoncli-3.5.0-py3-none-any.whl"
+uv tool install "https://github.com/Museon-AI/museon-cli/releases/download/v3.5.1/museoncli-3.5.1-py3-none-any.whl"
 ```
 
 Read [operating-model.md](references/operating-model.md) for risk, async work, authentication,

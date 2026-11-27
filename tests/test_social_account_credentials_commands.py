@@ -317,3 +317,222 @@ def test_bulk_upsert_reads_csv_file_and_routes_dry_run_to_server(
         }
     ]
     assert_organization_only(server)
+
+
+def test_single_totp_and_get_support_platform_and_handle_full_pool_lookup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    server = Server(
+        {
+            ("POST", "/api/v1/agent-cli/pool-accounts/totp-code"): {
+                "success": True,
+                "data": {
+                    "domain": "pool-account",
+                    "action": "totp-code",
+                    "resource_id": ACCOUNT_ID,
+                    "result": {
+                        "pool_account_id": ACCOUNT_ID,
+                        "platform": "tiktok",
+                        "code": "987654",
+                        "expires_in_seconds": 17,
+                    },
+                },
+            },
+            ("POST", "/api/v1/agent-cli/pool-accounts/credentials"): {
+                "success": True,
+                "data": {
+                    "domain": "pool-account",
+                    "action": "credentials-reveal",
+                    "resource_id": ACCOUNT_ID,
+                    "result": {
+                        "pool_account_id": ACCOUNT_ID,
+                        "platform": "tiktok",
+                        "username": "demo_user",
+                        "password": "resolved-password",
+                        "totp_code": "987654",
+                        "totp_secret": None,
+                    },
+                },
+            },
+        }
+    )
+
+    totp_out = run(
+        monkeypatch,
+        server,
+        [
+            "social-account",
+            "credentials",
+            "+totp-code",
+            "--platform",
+            "tiktok",
+            "--handle",
+            "@demo_user",
+            "--reason",
+            "staff check",
+        ],
+    )
+    assert totp_out["data"]["code"] == "987654"
+    assert body(server.requests[0]) == {
+        "platform": "tiktok",
+        "handle": "@demo_user",
+        "reason": "staff check",
+    }
+
+    cred_out = run(
+        monkeypatch,
+        server,
+        [
+            "social-account",
+            "credentials",
+            "+get",
+            "--platform",
+            "tk",
+            "--handle",
+            "demo_user",
+        ],
+    )
+    assert cred_out["data"]["password"] == "resolved-password"
+    assert body(server.requests[1]) == {
+        "platform": "tk",
+        "handle": "demo_user",
+        "include_totp_secret": False,
+    }
+
+    with pytest.raises(ValueError, match="not both"):
+        run(
+            monkeypatch,
+            server,
+            [
+                "social-account",
+                "credentials",
+                "+totp-code",
+                "--id",
+                ACCOUNT_ID,
+                "--platform",
+                "tiktok",
+                "--handle",
+                "demo_user",
+            ],
+        )
+
+    with pytest.raises(ValueError, match="requires --id or both --platform and --handle"):
+        run(
+            monkeypatch,
+            server,
+            ["social-account", "credentials", "+get", "--handle", "demo_user"],
+        )
+
+
+def test_bulk_commands_support_platform_handles_and_mixed_account_refs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    server = Server(
+        {
+            ("POST", "/api/v1/agent-cli/pool-accounts/credentials/status"): {
+                "success": True,
+                "data": {
+                    "domain": "pool-account",
+                    "action": "credentials-bulk-status",
+                    "result": {"items": [], "summary": {"requested": 2, "found": 2}},
+                },
+            },
+            ("POST", "/api/v1/agent-cli/pool-accounts/totp-codes/bulk"): {
+                "success": True,
+                "data": {
+                    "domain": "pool-account",
+                    "action": "totp-codes-bulk",
+                    "result": {"items": [], "summary": {"requested": 2, "generated": 2}},
+                },
+            },
+            ("POST", "/api/v1/agent-cli/pool-accounts/credentials/bulk-reveal"): {
+                "success": True,
+                "data": {
+                    "domain": "pool-account",
+                    "action": "credentials-bulk-reveal",
+                    "result": {"items": [], "summary": {"requested": 2, "revealed": 2}},
+                },
+            },
+        }
+    )
+
+    run(
+        monkeypatch,
+        server,
+        [
+            "social-account",
+            "credentials",
+            "+bulk-status",
+            "--platform",
+            "tiktok",
+            "--handle",
+            "@a",
+            "--handle",
+            "@b",
+        ],
+    )
+    assert body(server.requests[0]) == {
+        "accounts": [
+            {"platform": "tiktok", "handle": "@a"},
+            {"platform": "tiktok", "handle": "@b"},
+        ]
+    }
+
+    run(
+        monkeypatch,
+        server,
+        [
+            "social-account",
+            "credentials",
+            "+bulk-totp-codes",
+            "--account",
+            "tiktok:@a",
+            "--account",
+            "instagram:b",
+            "--reason",
+            "batch login",
+        ],
+    )
+    assert body(server.requests[1]) == {
+        "accounts": [
+            {"platform": "tiktok", "handle": "@a"},
+            {"platform": "instagram", "handle": "b"},
+        ],
+        "reason": "batch login",
+    }
+
+    run(
+        monkeypatch,
+        server,
+        [
+            "social-account",
+            "credentials",
+            "+bulk-get",
+            "--id",
+            ACCOUNT_ID,
+            "--account",
+            "youtube:yt_demo",
+            "--reason",
+            "mixed batch",
+        ],
+    )
+    assert body(server.requests[2]) == {
+        "account_ids": [ACCOUNT_ID],
+        "accounts": [{"platform": "youtube", "handle": "yt_demo"}],
+        "reason": "mixed batch",
+        "include_totp_secret": False,
+    }
+
+    with pytest.raises(ValueError, match="requires --platform"):
+        run(
+            monkeypatch,
+            server,
+            ["social-account", "credentials", "+bulk-status", "--handle", "@a"],
+        )
+
+    with pytest.raises(ValueError, match="Invalid --account"):
+        run(
+            monkeypatch,
+            server,
+            ["social-account", "credentials", "+bulk-status", "--account", "no_colon_here"],
+        )

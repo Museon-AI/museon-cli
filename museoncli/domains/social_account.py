@@ -172,8 +172,64 @@ def _build_social_account_id_arguments(args: argparse.Namespace) -> dict[str, An
     return payload
 
 
+def _add_social_account_credential_target_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_common_adapter_arguments(parser)
+    parser.add_argument(
+        "--id",
+        dest="account_id",
+        help="Pool account UUID. Mutually exclusive with --handle / --platform.",
+    )
+    parser.add_argument(
+        "--platform",
+        help=(
+            "Account platform (e.g. tiktok, instagram, facebook, youtube, x, linkedin, "
+            "or aliases tk/ig/fb/yt). Required when using --handle."
+        ),
+    )
+    parser.add_argument(
+        "--handle",
+        help=(
+            "Account username/handle resolved across the full pool (not restricted to the "
+            "current organization). Leading @ is optional; requires --platform."
+        ),
+    )
+
+
+def _build_social_account_credential_target_arguments(
+    args: argparse.Namespace, *, command_label: str
+) -> dict[str, Any]:
+    payload = _load_structured_args(args)
+    if args.account_id is not None:
+        payload["account_id"] = args.account_id
+    if args.platform is not None:
+        payload["platform"] = args.platform
+    if args.handle is not None:
+        payload["handle"] = args.handle
+
+    account_id = str(payload.get("account_id") or "").strip()
+    platform = str(payload.get("platform") or "").strip()
+    handle = str(payload.get("handle") or payload.get("username") or "").strip()
+    if account_id and (platform or handle):
+        raise ValueError(
+            f"{command_label} accepts either --id or (--platform and --handle), not both."
+        )
+    if account_id:
+        payload["account_id"] = account_id
+        payload.pop("platform", None)
+        payload.pop("handle", None)
+        payload.pop("username", None)
+        return payload
+    if platform and handle:
+        payload["platform"] = platform
+        payload["handle"] = handle
+        payload.pop("account_id", None)
+        payload.pop("username", None)
+        return payload
+    raise ValueError(f"{command_label} requires --id or both --platform and --handle.")
+
+
 def _add_social_account_totp_code_arguments(parser: argparse.ArgumentParser) -> None:
-    _add_social_account_id_arguments(parser)
+    _add_social_account_credential_target_arguments(parser)
     parser.add_argument(
         "--reason",
         help="Optional short operational reason recorded in the credential audit log.",
@@ -181,7 +237,9 @@ def _add_social_account_totp_code_arguments(parser: argparse.ArgumentParser) -> 
 
 
 def _build_social_account_totp_code_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    payload = _build_social_account_id_arguments(args)
+    payload = _build_social_account_credential_target_arguments(
+        args, command_label="social-account credentials +totp-code"
+    )
     if args.reason is not None:
         payload["reason"] = args.reason
     return payload
@@ -200,8 +258,14 @@ def _add_social_account_credentials_arguments(parser: argparse.ArgumentParser) -
 
 
 def _build_social_account_credentials_arguments(args: argparse.Namespace) -> dict[str, Any]:
-    payload = _build_social_account_totp_code_arguments(args)
-    payload["include_totp_secret"] = bool(args.include_totp_secret)
+    payload = _build_social_account_credential_target_arguments(
+        args, command_label="social-account credentials +get"
+    )
+    if args.reason is not None:
+        payload["reason"] = args.reason
+    payload["include_totp_secret"] = bool(
+        args.include_totp_secret or payload.get("include_totp_secret", False)
+    )
     return payload
 
 
@@ -209,14 +273,35 @@ def _social_account_totp_code_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "account_id": _uuid_id_schema("Pool account UUID."),
+            "account_id": _uuid_id_schema(
+                "Pool account UUID. Mutually exclusive with platform + handle."
+            ),
+            "platform": {
+                "type": "string",
+                "minLength": 1,
+                "description": (
+                    "Platform name or alias (tiktok/tk, instagram/ig, facebook/fb, youtube/yt, "
+                    "x, linkedin, threads). Required with handle."
+                ),
+            },
+            "handle": {
+                "type": "string",
+                "minLength": 1,
+                "description": (
+                    "Full-pool account handle (leading @ optional). Mutually exclusive with "
+                    "account_id; requires platform."
+                ),
+            },
             "reason": {
                 "type": ["string", "null"],
                 "maxLength": 200,
                 "description": "Optional short operational reason recorded in the audit log.",
             },
         },
-        "required": ["account_id"],
+        "oneOf": [
+            {"required": ["account_id"], "not": {"required": ["handle"]}},
+            {"required": ["platform", "handle"], "not": {"required": ["account_id"]}},
+        ],
     }
 
 
@@ -224,7 +309,25 @@ def _social_account_credentials_input_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "account_id": _uuid_id_schema("Pool account UUID."),
+            "account_id": _uuid_id_schema(
+                "Pool account UUID. Mutually exclusive with platform + handle."
+            ),
+            "platform": {
+                "type": "string",
+                "minLength": 1,
+                "description": (
+                    "Platform name or alias (tiktok/tk, instagram/ig, facebook/fb, youtube/yt, "
+                    "x, linkedin, threads). Required with handle."
+                ),
+            },
+            "handle": {
+                "type": "string",
+                "minLength": 1,
+                "description": (
+                    "Full-pool account handle (leading @ optional). Mutually exclusive with "
+                    "account_id; requires platform."
+                ),
+            },
             "reason": {
                 "type": ["string", "null"],
                 "maxLength": 200,
@@ -239,7 +342,10 @@ def _social_account_credentials_input_schema() -> dict[str, Any]:
                 ),
             },
         },
-        "required": ["account_id"],
+        "oneOf": [
+            {"required": ["account_id"], "not": {"required": ["handle"]}},
+            {"required": ["platform", "handle"], "not": {"required": ["account_id"]}},
+        ],
     }
 
 
@@ -247,6 +353,41 @@ SOCIAL_ACCOUNT_BULK_STATUS_MAX = 200
 SOCIAL_ACCOUNT_BULK_TOTP_MAX = 50
 SOCIAL_ACCOUNT_BULK_REVEAL_MAX = 20
 SOCIAL_ACCOUNT_BULK_UPSERT_MAX = 200
+
+
+def _social_account_handle_ref_schema() -> dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "platform": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Platform name or alias (tiktok/tk, instagram/ig, facebook/fb, youtube/yt, x, linkedin, threads).",
+            },
+            "handle": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Full-pool account handle (leading @ optional).",
+            },
+        },
+        "required": ["platform", "handle"],
+    }
+
+
+def _parse_account_ref(raw: str) -> dict[str, str]:
+    text = raw.strip()
+    if ":" not in text:
+        raise ValueError(
+            f"Invalid --account value {raw!r}; expected '<platform>:<handle>' (e.g. 'tiktok:@demo')."
+        )
+    platform, handle = text.split(":", 1)
+    platform = platform.strip()
+    handle = handle.strip()
+    if not platform or not handle:
+        raise ValueError(
+            f"Invalid --account value {raw!r}; expected '<platform>:<handle>' (e.g. 'tiktok:@demo')."
+        )
+    return {"platform": platform, "handle": handle}
 
 
 def _add_social_account_bulk_ids_arguments(parser: argparse.ArgumentParser) -> None:
@@ -257,6 +398,22 @@ def _add_social_account_bulk_ids_arguments(parser: argparse.ArgumentParser) -> N
         dest="account_ids",
         help="Pool account UUID; repeat to include multiple accounts.",
     )
+    parser.add_argument(
+        "--platform",
+        help="Shared platform for repeated --handle values (e.g. tiktok, instagram, facebook, youtube).",
+    )
+    parser.add_argument(
+        "--handle",
+        action="append",
+        dest="handles",
+        help="Full-pool account handle (requires --platform); repeat for multiple handles on that platform.",
+    )
+    parser.add_argument(
+        "--account",
+        action="append",
+        dest="account_refs",
+        help="Mixed-platform target in '<platform>:<handle>' form (e.g. tiktok:@foo); repeatable.",
+    )
 
 
 def _build_social_account_bulk_ids_arguments(
@@ -265,11 +422,47 @@ def _build_social_account_bulk_ids_arguments(
     payload = _load_structured_args(args)
     raw_ids = args.account_ids if args.account_ids else payload.get("account_ids")
     account_ids = _ordered_strings(raw_ids) if isinstance(raw_ids, list) else []
-    if not account_ids:
-        raise ValueError(f"{command_label} requires at least one --id (or account_ids).")
-    if len(account_ids) > max_items:
+
+    accounts: list[dict[str, str]] = []
+    if isinstance(payload.get("accounts"), list):
+        for entry in payload["accounts"]:
+            if not isinstance(entry, dict):
+                raise ValueError(f"{command_label} accounts entries must be objects.")
+            p = str(entry.get("platform") or "").strip()
+            h = str(entry.get("handle") or entry.get("username") or "").strip()
+            if not p or not h:
+                raise ValueError(f"{command_label} accounts entries require platform and handle.")
+            accounts.append({"platform": p, "handle": h})
+
+    if args.handles:
+        platform = str(args.platform or "").strip()
+        if not platform:
+            raise ValueError(f"{command_label} requires --platform when using --handle.")
+        for h in _ordered_strings(args.handles):
+            accounts.append({"platform": platform, "handle": h})
+    elif args.platform and not args.handles:
+        raise ValueError(f"{command_label} received --platform without any --handle.")
+
+    if args.account_refs:
+        for raw_ref in args.account_refs:
+            accounts.append(_parse_account_ref(str(raw_ref)))
+
+    total = len(account_ids) + len(accounts)
+    if total == 0:
+        raise ValueError(
+            f"{command_label} requires at least one --id, (--platform + --handle), or --account."
+        )
+    if total > max_items:
         raise ValueError(f"{command_label} supports at most {max_items} accounts per request.")
-    payload["account_ids"] = account_ids
+
+    if account_ids:
+        payload["account_ids"] = account_ids
+    else:
+        payload.pop("account_ids", None)
+    if accounts:
+        payload["accounts"] = accounts
+    else:
+        payload.pop("accounts", None)
     return payload
 
 
@@ -415,8 +608,18 @@ def _social_account_bulk_status_input_schema() -> dict[str, Any]:
                 "maxItems": SOCIAL_ACCOUNT_BULK_STATUS_MAX,
                 "items": _uuid_id_schema("Pool account UUID."),
             },
+            "accounts": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": SOCIAL_ACCOUNT_BULK_STATUS_MAX,
+                "items": _social_account_handle_ref_schema(),
+                "description": "Full-pool (platform, handle) targets.",
+            },
         },
-        "required": ["account_ids"],
+        "anyOf": [
+            {"required": ["account_ids"]},
+            {"required": ["accounts"]},
+        ],
     }
 
 
@@ -430,13 +633,23 @@ def _social_account_bulk_totp_input_schema() -> dict[str, Any]:
                 "maxItems": SOCIAL_ACCOUNT_BULK_TOTP_MAX,
                 "items": _uuid_id_schema("Pool account UUID."),
             },
+            "accounts": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": SOCIAL_ACCOUNT_BULK_TOTP_MAX,
+                "items": _social_account_handle_ref_schema(),
+                "description": "Full-pool (platform, handle) targets.",
+            },
             "reason": {
                 "type": ["string", "null"],
                 "maxLength": 200,
                 "description": "Optional short operational reason recorded in the audit log.",
             },
         },
-        "required": ["account_ids"],
+        "anyOf": [
+            {"required": ["account_ids"]},
+            {"required": ["accounts"]},
+        ],
     }
 
 
@@ -450,6 +663,13 @@ def _social_account_bulk_reveal_input_schema() -> dict[str, Any]:
                 "maxItems": SOCIAL_ACCOUNT_BULK_REVEAL_MAX,
                 "items": _uuid_id_schema("Pool account UUID."),
             },
+            "accounts": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": SOCIAL_ACCOUNT_BULK_REVEAL_MAX,
+                "items": _social_account_handle_ref_schema(),
+                "description": "Full-pool (platform, handle) targets.",
+            },
             "reason": {
                 "type": "string",
                 "minLength": 2,
@@ -462,7 +682,11 @@ def _social_account_bulk_reveal_input_schema() -> dict[str, Any]:
                 "description": "Include permanent 32-char TOTP seeds (omit if 6-digit codes suffice).",
             },
         },
-        "required": ["account_ids", "reason"],
+        "required": ["reason"],
+        "anyOf": [
+            {"required": ["account_ids"]},
+            {"required": ["accounts"]},
+        ],
     }
 
 
@@ -1162,6 +1386,7 @@ def specs() -> list[CommandSpec]:
             ),
             examples=[
                 "museoncli social-account credentials +totp-code --id <pool_account_id>",
+                "museoncli social-account credentials +totp-code --platform tiktok --handle @demo",
                 (
                     "museoncli social-account credentials +totp-code --id <pool_account_id> "
                     "--reason 'cloud-phone login'"
@@ -1178,8 +1403,9 @@ def specs() -> list[CommandSpec]:
                 "Staff only: reveal one pool social account's resolved login credentials "
                 "(effective login type, password, shared mailbox/Google SSO, Facebook Page "
                 "parent inheritance, live 6-digit TOTP code, verification links, and "
-                "third-party SSO). Permanent TOTP seeds stay hidden unless "
-                "--include-totp-secret is passed. Every call is audited."
+                "third-party SSO). Accepts --id or full-pool --platform + --handle. "
+                "Permanent TOTP seeds stay hidden unless --include-totp-secret is passed. "
+                "Every call is audited."
             ),
             risk_level="read",
             execution="direct",
@@ -1192,7 +1418,7 @@ def specs() -> list[CommandSpec]:
             examples=[
                 "museoncli social-account credentials +get --id <pool_account_id>",
                 (
-                    "museoncli social-account credentials +get --id <pool_account_id> "
+                    "museoncli social-account credentials +get --platform tiktok --handle @demo "
                     "--reason 'relogin on cloud phone'"
                 ),
                 (
@@ -1209,9 +1435,9 @@ def specs() -> list[CommandSpec]:
             shortcut="+bulk-status",
             summary=(
                 "Staff only: check non-secret credential coverage and login types for up to "
-                "200 pool social accounts in one request (has_password, has_totp, "
-                "second_factor_kind, effective_login_type, shared email count, FB parent link). "
-                "Never decrypts or returns secrets."
+                "200 pool social accounts in one request by --id, --platform + --handle, or "
+                "--account platform:handle (has_password, has_totp, second_factor_kind, "
+                "effective_login_type, shared email count, FB parent link). Never decrypts secrets."
             ),
             risk_level="read",
             execution="direct",
@@ -1226,6 +1452,14 @@ def specs() -> list[CommandSpec]:
                     "museoncli social-account credentials +bulk-status "
                     "--id <pool_account_id_1> --id <pool_account_id_2>"
                 ),
+                (
+                    "museoncli social-account credentials +bulk-status "
+                    "--platform tiktok --handle @user1 --handle @user2"
+                ),
+                (
+                    "museoncli social-account credentials +bulk-status "
+                    "--account tiktok:@user1 --account instagram:@user2"
+                ),
             ],
             add_arguments=_add_social_account_bulk_ids_arguments,
             build_arguments=_build_social_account_bulk_status_arguments,
@@ -1236,7 +1470,8 @@ def specs() -> list[CommandSpec]:
             shortcut="+bulk-totp-codes",
             summary=(
                 "Staff only: generate live 6-digit 2FA TOTP codes for up to 50 pool social "
-                "accounts in one request without exposing passwords or permanent TOTP seeds. "
+                "accounts in one request by --id, --platform + --handle, or --account "
+                "platform:handle without exposing passwords or permanent TOTP seeds. "
                 "Every account lookup is audited."
             ),
             risk_level="read",
@@ -1252,6 +1487,10 @@ def specs() -> list[CommandSpec]:
                     "museoncli social-account credentials +bulk-totp-codes "
                     "--id <pool_account_id_1> --id <pool_account_id_2> --reason 'batch login'"
                 ),
+                (
+                    "museoncli social-account credentials +bulk-totp-codes "
+                    "--platform tiktok --handle @user1 --handle @user2 --reason 'batch login'"
+                ),
             ],
             add_arguments=_add_social_account_bulk_totp_arguments,
             build_arguments=_build_social_account_bulk_totp_arguments,
@@ -1262,8 +1501,9 @@ def specs() -> list[CommandSpec]:
             shortcut="+bulk-get",
             summary=(
                 "Staff only: reveal resolved login credentials for up to 20 pool social accounts "
-                "in one audited request (--reason required). Permanent TOTP seeds stay omitted "
-                "unless --include-totp-secret is passed."
+                "in one audited request (--reason required) by --id, --platform + --handle, or "
+                "--account platform:handle. Permanent TOTP seeds stay omitted unless "
+                "--include-totp-secret is passed."
             ),
             risk_level="read",
             execution="direct",
@@ -1277,6 +1517,11 @@ def specs() -> list[CommandSpec]:
                 (
                     "museoncli social-account credentials +bulk-get "
                     "--id <pool_account_id_1> --id <pool_account_id_2> "
+                    "--reason 'batch cloud-phone login'"
+                ),
+                (
+                    "museoncli social-account credentials +bulk-get "
+                    "--account tiktok:@user1 --account instagram:@user2 "
                     "--reason 'batch cloud-phone login'"
                 ),
             ],
@@ -2054,15 +2299,35 @@ async def _execute_totp_code_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
     api_data = ctx.api_data
-    account_id = str(arguments.get("account_id") or "")
-    if not account_id:
-        raise RuntimeError("social-account.get-totp-code requires account_id")
-    body = _without_none({"reason": arguments.get("reason")})
+    account_id = str(arguments.get("account_id") or "").strip()
+    if account_id:
+        body = _without_none({"reason": arguments.get("reason")})
+        return agent_domain_result(
+            await api_data(
+                cfg,
+                "POST",
+                f"/agent-cli/pool-accounts/{account_id}/totp-code",
+                json_body=body,
+            )
+        )
+    platform = str(arguments.get("platform") or "").strip()
+    handle = str(arguments.get("handle") or "").strip()
+    if not platform or not handle:
+        raise RuntimeError(
+            "social-account.credentials-totp-code requires account_id or (platform + handle)"
+        )
+    body = _without_none(
+        {
+            "platform": platform,
+            "handle": handle,
+            "reason": arguments.get("reason"),
+        }
+    )
     return agent_domain_result(
         await api_data(
             cfg,
             "POST",
-            f"/agent-cli/pool-accounts/{account_id}/totp-code",
+            "/agent-cli/pool-accounts/totp-code",
             json_body=body,
         )
     )
@@ -2072,11 +2337,32 @@ async def _execute_credentials_get(ctx: CommandContext) -> Any:
     cfg = ctx.cfg
     arguments = ctx.arguments
     api_data = ctx.api_data
-    account_id = str(arguments.get("account_id") or "")
-    if not account_id:
-        raise RuntimeError("social-account.get-credentials requires account_id")
+    account_id = str(arguments.get("account_id") or "").strip()
+    if account_id:
+        body = _without_none(
+            {
+                "reason": arguments.get("reason"),
+                "include_totp_secret": bool(arguments.get("include_totp_secret", False)),
+            }
+        )
+        return agent_domain_result(
+            await api_data(
+                cfg,
+                "POST",
+                f"/agent-cli/pool-accounts/{account_id}/credentials",
+                json_body=body,
+            )
+        )
+    platform = str(arguments.get("platform") or "").strip()
+    handle = str(arguments.get("handle") or "").strip()
+    if not platform or not handle:
+        raise RuntimeError(
+            "social-account.credentials-get requires account_id or (platform + handle)"
+        )
     body = _without_none(
         {
+            "platform": platform,
+            "handle": handle,
             "reason": arguments.get("reason"),
             "include_totp_secret": bool(arguments.get("include_totp_secret", False)),
         }
@@ -2085,36 +2371,43 @@ async def _execute_credentials_get(ctx: CommandContext) -> Any:
         await api_data(
             cfg,
             "POST",
-            f"/agent-cli/pool-accounts/{account_id}/credentials",
+            "/agent-cli/pool-accounts/credentials",
             json_body=body,
         )
     )
 
 
+def _extract_bulk_targets(arguments: dict[str, Any], command_name: str) -> dict[str, Any]:
+    account_ids = arguments.get("account_ids")
+    accounts = arguments.get("accounts")
+    has_ids = isinstance(account_ids, list) and len(account_ids) > 0
+    has_accounts = isinstance(accounts, list) and len(accounts) > 0
+    if not has_ids and not has_accounts:
+        raise RuntimeError(f"{command_name} requires account_ids or accounts")
+    body: dict[str, Any] = {}
+    if has_ids:
+        body["account_ids"] = account_ids
+    if has_accounts:
+        body["accounts"] = accounts
+    return body
+
+
 async def _execute_credentials_bulk_status(ctx: CommandContext) -> Any:
-    account_ids = ctx.arguments.get("account_ids")
-    if not isinstance(account_ids, list) or not account_ids:
-        raise RuntimeError("social-account.bulk-get-credential-status requires account_ids")
+    body = _extract_bulk_targets(ctx.arguments, "social-account.credentials-bulk-status")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
             "POST",
             "/agent-cli/pool-accounts/credentials/status",
-            json_body={"account_ids": account_ids},
+            json_body=body,
         )
     )
 
 
 async def _execute_totp_codes_bulk_get(ctx: CommandContext) -> Any:
-    account_ids = ctx.arguments.get("account_ids")
-    if not isinstance(account_ids, list) or not account_ids:
-        raise RuntimeError("social-account.bulk-get-totp-codes requires account_ids")
-    body = _without_none(
-        {
-            "account_ids": account_ids,
-            "reason": ctx.arguments.get("reason"),
-        }
-    )
+    body = _extract_bulk_targets(ctx.arguments, "social-account.credentials-bulk-totp-codes")
+    if ctx.arguments.get("reason") is not None:
+        body["reason"] = ctx.arguments.get("reason")
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
@@ -2126,17 +2419,12 @@ async def _execute_totp_codes_bulk_get(ctx: CommandContext) -> Any:
 
 
 async def _execute_credentials_bulk_reveal(ctx: CommandContext) -> Any:
-    account_ids = ctx.arguments.get("account_ids")
-    if not isinstance(account_ids, list) or not account_ids:
-        raise RuntimeError("social-account.bulk-get-credentials requires account_ids")
+    body = _extract_bulk_targets(ctx.arguments, "social-account.credentials-bulk-get")
     reason = str(ctx.arguments.get("reason") or "").strip()
     if len(reason) < 2:
-        raise RuntimeError("social-account.bulk-get-credentials requires reason")
-    body = {
-        "account_ids": account_ids,
-        "reason": reason,
-        "include_totp_secret": bool(ctx.arguments.get("include_totp_secret", False)),
-    }
+        raise RuntimeError("social-account.credentials-bulk-get requires reason")
+    body["reason"] = reason
+    body["include_totp_secret"] = bool(ctx.arguments.get("include_totp_secret", False))
     return agent_domain_result(
         await ctx.api_data(
             ctx.cfg,
